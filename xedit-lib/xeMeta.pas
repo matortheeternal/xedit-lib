@@ -2,13 +2,6 @@ unit xeMeta;
 
 interface
 
-uses
-  SysUtils, Classes,
-  // mte modules
-  mteHelpers,
-  // xelib modules
-  xeConfiguration, xeMessages;
-
   procedure Initialize; StdCall;
   procedure Finalize; StdCall;
   procedure GetBuffer(str: PAnsiChar; len: Integer); StdCall;
@@ -22,6 +15,13 @@ var
   last_id: Cardinal;
 
 implementation
+
+uses
+  SysUtils, Classes,
+  // mte modules
+  mteHelpers,
+  // xelib modules
+  xeConfiguration, xeMessages;
 
 
 {******************************************************************************}
