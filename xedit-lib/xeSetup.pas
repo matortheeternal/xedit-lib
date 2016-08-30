@@ -3,11 +3,8 @@ unit xeSetup;
 interface
 
 uses
-  Classes,
   // xedit units
-  wbInterface, wbImplementation,
-  // lib units
-  xeConfiguration, xeMessages;
+  wbInterface, wbImplementation;
 
   // LOADING AND SETUP METHODS
   procedure SetGameMode(mode: Integer); StdCall;
@@ -15,7 +12,15 @@ uses
   function LoadPlugins(str: PAnsiChar; len: Integer): WordBool; StdCall;
   function GetGlobal(key, result: PAnsiChar; len: Integer): WordBool; StdCall;
 
+var
+  Files: array of IwbFile;
+
 implementation
+
+uses
+  Classes,
+  // lib units
+  xeConfiguration, xeMessages;
 
 {******************************************************************************}
 { LOADIND AND SETUP METHODS
