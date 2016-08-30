@@ -82,6 +82,7 @@ GETTERS AND SETTERS
   - ElementType
   - ConflictAll
   - ConflictThis
+  - GetListValues
   - SetListValues
   - GetElementListValues
   - SetElementListValues
