@@ -2,14 +2,6 @@ unit xeElements;
 
 interface
 
-uses
-  Classes, SysUtils,
-  // xedit modules
-  wbInterface, wbImplementation,
-  // xelib modules
-  xeMeta;
-
-  // ELEMENT HANDLING
   function GetElement(_element: Cardinal; key: PAnsiChar): Cardinal; StdCall;
   function NewElement(_element: Cardinal; key: PAnsiChar): Cardinal; StdCall;
   function RemoveElement(_element: Cardinal; key: PAnsiChar): WordBool; StdCall;
@@ -23,6 +15,14 @@ uses
   function IsWinningOverride(_element: Cardinal): WordBool; StdCall;
 
 implementation
+
+uses
+  Classes, SysUtils,
+  // xedit modules
+  wbInterface, wbImplementation,
+  // xelib modules
+  xeMeta;
+
 
 {******************************************************************************}
 { ELEMENT HANDLING
@@ -48,7 +48,7 @@ begin
   element := Resolve(_element);
   if Supports(element, IwbFile, _file) then
     // TODO: perhaps also by group name?
-    Result := Store(_file.GroupBySignature(StringToSignature(key)))
+    Result := Store(_file.GroupBySignature(StrToSignature(key)))
   else if Supports(element, IwbContainerElementRef, container) then
     // TODO: adjust logic here so we can check indexed paths
     Result := Store(container.ElementByPath(key));
@@ -69,7 +69,7 @@ begin
     else begin
       // no key means we're doing ElementAssign
       if (not Assigned(key)) or (Length(key) = 0) then
-        Result := Store(container.Assign(HighInteger, nil, false))
+        Result := Store(container.Assign(High(integer), nil, false))
       else begin
         keyIndex := ParseIndex(key);
         // use InsertElement if index was given, else use Add
@@ -127,7 +127,7 @@ end;
 
 function Equals(_element, _element2: Cardinal): WordBool; StdCall;
 var
-  element, element2: IInterface;
+  element, element2: IwbElement;
 begin
   Result := false;
   if Supports(Resolve(_element), IwbElement, element) then
@@ -171,11 +171,10 @@ end;
 // TODO: Determine if subrecord is winner
 function IsWinningOverride(_element: Cardinal): WordBool; StdCall;
 var
-  element: IInterface;
+  rec: IwbMainRecord;
 begin
   Result := false;
-  element := Resolve(_element);
-  if Supports(element, IwbMainRecord, rec) then
+  if Supports(Resolve(_element), IwbMainRecord, rec) then
     Result := not rec.IsWinningOverride;
 end;
 
