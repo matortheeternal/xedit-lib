@@ -7,7 +7,7 @@ interface
   function FileByLoadOrder(load_order: Integer): Integer; StdCall;
   function FileByName(name: PAnsiChar): Integer; StdCall;
   function FileByAuthor(author: PAnsiChar): Integer; StdCall;
-  function GetElementFile(_element: Integer): Integer; StdCall;
+  function GetElementFile(_id: Integer): Integer; StdCall;
   function SaveFile(_id: Integer): WordBool; StdCall;
 
 implementation
@@ -109,12 +109,12 @@ begin
     end;
 end;
 
-function GetElementFile(_element: Cardinal): Cardinal; StdCall;
+function GetElementFile(_id: Cardinal): Cardinal; StdCall;
 var
   element: IwbElement;
 begin
   Result := -1;
-  if Supports(Resolve(_element), IwbElement, element) then
+  if Supports(Resolve(_id), IwbElement, element) then
     Result := Store(element._File);
 end;
 
