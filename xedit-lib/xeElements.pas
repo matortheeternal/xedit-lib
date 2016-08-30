@@ -50,7 +50,7 @@ begin
     // TODO: perhaps also by group name?
     Result := Store(_file.GroupBySignature(StrToSignature(key)))
   else if Supports(e, IwbContainerElementRef, container) then
-    Result := Store(ElementByIP(container, string(key)));
+    Result := Store(container.ElementByPath(string(key)));
 end;
 
 // replaces ElementAssign, Add, AddElement, and InsertElement
