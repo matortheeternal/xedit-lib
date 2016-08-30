@@ -30,7 +30,7 @@ uses
 }
 {******************************************************************************}
 
-function ParseIndex(key: PWideChar): Integer;
+function ParseIndex(key: string): Integer;
 begin
   Result := -1;
   if key[0] = '[' then
@@ -41,30 +41,29 @@ end;
 // ElementBySignature.  Supports indexed paths.
 function GetElement(_id: Cardinal; key: PWideChar): Cardinal; StdCall;
 var
-  element: IInterface;
+  e: IInterface;
   _file: IwbFile;
   container: IwbContainerElementRef;
 begin
-  element := Resolve(_id);
-  if Supports(element, IwbFile, _file) then
+  e := Resolve(_id);
+  if Supports(e, IwbFile, _file) then
     // TODO: perhaps also by group name?
     Result := Store(_file.GroupBySignature(StrToSignature(key)))
-  else if Supports(element, IwbContainerElementRef, container) then
-    // TODO: adjust logic here so we can check indexed paths
-    Result := Store(container.ElementByPath(key));
+  else if Supports(e, IwbContainerElementRef, container) then
+    Result := Store(ElementByIP(container, string(key)));
 end;
 
 // replaces ElementAssign, Add, AddElement, and InsertElement
 function NewElement(_id: Cardinal; key: PWideChar): Cardinal; StdCall;
 var
-  element: IInterface;
+  e: IInterface;
   container: IwbContainerElementRef;
   keyIndex: Integer;
 begin
-  element := Resolve(_id);
-  if Supports(element, IwbContainerElementRef, container) then begin
+  e := Resolve(_id);
+  if Supports(e, IwbContainerElementRef, container) then begin
     // Use Add for files and groups
-    if Supports(element, IwbFile) or Supports(element, IwbGroupRecord) then
+    if Supports(e, IwbFile) or Supports(e, IwbGroupRecord) then
       Result := Store(container.Add(string(key), true))
     else begin
       // no key means we're doing ElementAssign
@@ -84,10 +83,11 @@ end;
 
 function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; StdCall;
 var
-  element: IInterface;
+  e: IInterface;
 begin
   Result := false;
-  element := Resolve(_id);
+  e := Resolve(_id);
+  // TODO
 end;
 
 // Replaces HasGroup and ElementExists
@@ -118,10 +118,10 @@ end;
 
 function ElementAssigned(_id: Cardinal): Cardinal; StdCall;
 var
-  element: IInterface;
+  e: IInterface;
 begin
-  element := Resolve(_id);
-  Result := Assigned(element);
+  e := Resolve(_id);
+  Result := Assigned(e);
 end;
 
 function Equals(_id, _id2: Cardinal): WordBool; StdCall;
