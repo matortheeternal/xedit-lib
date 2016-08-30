@@ -42,6 +42,7 @@ end;
 
 procedure Finalize; StdCall;
 begin
+  ResetStore;
   MessageBuffer.Free;
 end;
 
@@ -72,7 +73,13 @@ begin
 end;
 
 procedure ResetStore; StdCall;
+var
+  i: Integer;
 begin
+  for i := 0 to Pred(last_id) do begin
+    if Assigned(_store[i]) then
+      _store[i]._Release;
+  end;
   last_id = 0;
 end;
 
