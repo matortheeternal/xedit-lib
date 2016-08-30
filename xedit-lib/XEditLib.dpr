@@ -11,13 +11,27 @@ library XEditLib;
   using PChar or ShortString parameters. }
 
 uses
+  xeMessages in 'xeMessages.pas',
+  xeConfiguration in 'xeConfiguration.pas',
   xeMeta in 'xeMeta.pas',
   xeSetup in 'xeSetup.pas',
   xeFiles in 'xeFiles.pas',
   xeMasters in 'xeMasters.pas',
   xeFileValues in 'xeFileValues.pas',
   xeElements in 'xeElements.pas',
-  xeElementValues in 'xeElementValues.pas';
+  xeElementValues in 'xeElementValues.pas',
+  mteHelpers in '..\lib\mte\mteHelpers.pas',
+  CRC32 in '..\lib\mte\CRC32.pas',
+  RttiIni in '..\lib\mte\RttiIni.pas',
+  wbImplementation in '..\lib\xedit\wbImplementation.pas',
+  wbInterface in '..\lib\xedit\wbInterface.pas',
+  wbBSA in '..\lib\xedit\wbBSA.pas',
+  wbDefinitionsFNV in '..\lib\xedit\wbDefinitionsFNV.pas',
+  wbDefinitionsFO3 in '..\lib\xedit\wbDefinitionsFO3.pas',
+  wbDefinitionsFO4 in '..\lib\xedit\wbDefinitionsFO4.pas',
+  wbDefinitionsTES3 in '..\lib\xedit\wbDefinitionsTES3.pas',
+  wbDefinitionsTES4 in '..\lib\xedit\wbDefinitionsTES4.pas',
+  wbDefinitionsTES5 in '..\lib\xedit\wbDefinitionsTES5.pas';
 
 {$R *.res}
 {$MAXSTACKSIZE 2097152}

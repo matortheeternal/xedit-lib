@@ -56,15 +56,29 @@
 			<DelphiCompile Include="XEditLib.dpr">
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
+			<DCCReference Include="xeMessages.pas"/>
+			<DCCReference Include="xeConfiguration.pas"/>
 			<DCCReference Include="xeMeta.pas"/>
 			<DCCReference Include="xeSetup.pas"/>
 			<DCCReference Include="xeFiles.pas"/>
 			<DCCReference Include="xeMasters.pas"/>
 			<DCCReference Include="xeFileValues.pas"/>
 			<DCCReference Include="xeElements.pas"/>
-			<DCCReference Include="xeElementValues.pas">
+			<DCCReference Include="xeElementValues.pas"/>
+			<DCCReference Include="..\lib\mte\mteHelpers.pas"/>
+			<DCCReference Include="..\lib\mte\CRC32.pas"/>
+			<DCCReference Include="..\lib\mte\RttiIni.pas"/>
+			<DCCReference Include="..\lib\xedit\wbImplementation.pas"/>
+			<DCCReference Include="..\lib\xedit\wbInterface.pas">
 				<Form>$R *.res</Form>
 			</DCCReference>
+			<DCCReference Include="..\lib\xedit\wbBSA.pas"/>
+			<DCCReference Include="..\lib\xedit\wbDefinitionsFNV.pas"/>
+			<DCCReference Include="..\lib\xedit\wbDefinitionsFO3.pas"/>
+			<DCCReference Include="..\lib\xedit\wbDefinitionsFO4.pas"/>
+			<DCCReference Include="..\lib\xedit\wbDefinitionsTES3.pas"/>
+			<DCCReference Include="..\lib\xedit\wbDefinitionsTES4.pas"/>
+			<DCCReference Include="..\lib\xedit\wbDefinitionsTES5.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>
