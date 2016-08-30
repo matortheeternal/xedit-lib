@@ -32,7 +32,11 @@ uses
   wbDefinitionsFO4 in '..\lib\xedit\wbDefinitionsFO4.pas',
   wbDefinitionsTES3 in '..\lib\xedit\wbDefinitionsTES3.pas',
   wbDefinitionsTES4 in '..\lib\xedit\wbDefinitionsTES4.pas',
-  wbDefinitionsTES5 in '..\lib\xedit\wbDefinitionsTES5.pas';
+  wbDefinitionsTES5 in '..\lib\xedit\wbDefinitionsTES5.pas',
+  wbHelpers in '..\lib\xedit\wbHelpers.pas',
+  wbLocalization in '..\lib\xedit\wbLocalization.pas',
+  wbStreams in '..\lib\xedit\wbStreams.pas',
+  Zlibex in '..\lib\xedit\Zlibex.pas';
 
 {$R *.res}
 {$MAXSTACKSIZE 2097152}
