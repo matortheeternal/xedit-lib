@@ -87,22 +87,22 @@ end;
 
 function etToString(et: Integer): String;
 begin
-  case et of
-    etFile: Result := 'etFile';
-    etMainRecord: Result := 'etMainRecord';
-    etMainRecord: Result := 'etMainRecord';
-    etGroupRecord: Result := 'etGroupRecord';
-    etSubRecord: Result := 'etSubRecord';
-    etSubRecordStruct: Result := 'etSubRecordStruct';
-    etSubRecordArray: Result := 'etSubRecordArray';
-    etSubRecordUnion: Result := 'etSubRecordUnion';
-    etArray: Result := 'etArray';
-    etStruct: Result := 'etStruct';
-    etValue: Result := 'etValue';
-    etFlag: Result := 'etFlag';
-    etStringListTerminator: Result := 'etStringListTerminator';
-    etUnion: Result := 'etFetUnionile';
-    etStructChapter: Result := 'etStructChapter';
+  case Ord(et) of
+    Ord(etFile): Result := 'etFile';
+    Ord(etMainRecord): Result := 'etMainRecord';
+    Ord(etMainRecord): Result := 'etMainRecord';
+    Ord(etGroupRecord): Result := 'etGroupRecord';
+    Ord(etSubRecord): Result := 'etSubRecord';
+    Ord(etSubRecordStruct): Result := 'etSubRecordStruct';
+    Ord(etSubRecordArray): Result := 'etSubRecordArray';
+    Ord(etSubRecordUnion): Result := 'etSubRecordUnion';
+    Ord(etArray): Result := 'etArray';
+    Ord(etStruct): Result := 'etStruct';
+    Ord(etValue): Result := 'etValue';
+    Ord(etFlag): Result := 'etFlag';
+    Ord(etStringListTerminator): Result := 'etStringListTerminator';
+    Ord(etUnion): Result := 'etUnion';
+    Ord(etStructChapter): Result := 'etStructChapter';
   end;
 end;
 
@@ -121,26 +121,26 @@ end;
 
 function dtToString(dt: Integer): String;
 begin
-  case dt of
-    dtRecord: Result := 'dtRecord';
-    dtSubRecord: Result := 'dtSubRecord';
-    dtSubRecordArray: Result := 'dtSubRecordArray';
-    dtSubRecordStruct: Result := 'dtSubRecordStruct';
-    dtSubRecordUnion: Result := 'dtSubRecordUnion';
-    dtString: Result := 'dtString';
-    dtLString: Result := 'dtLString';
-    dtLenString: Result := 'dtLenString';
-    dtByteArray: Result := 'dtByteArray';
-    dtInteger: Result := 'dtInteger';
-    dtIntegerFormater: Result := 'dtIntegerFormater';
-    dtIntegerFormaterUnion: Result := 'dtIntegerFormaterUnion';
-    dtFlag: Result := 'dtFlag';
-    dtFloat: Result := 'dtFloat';
-    dtArray: Result := 'dtArray';
-    dtStruct: Result := 'dtStruct';
-    dtUnion: Result := 'dtUnion';
-    dtEmpty: Result := 'dtEmpty';
-    dtStructChapter: Result := 'dtStructChapter';
+  case Ord(dt) of
+    Ord(dtRecord): Result := 'dtRecord';
+    Ord(dtSubRecord): Result := 'dtSubRecord';
+    Ord(dtSubRecordArray): Result := 'dtSubRecordArray';
+    Ord(dtSubRecordStruct): Result := 'dtSubRecordStruct';
+    Ord(dtSubRecordUnion): Result := 'dtSubRecordUnion';
+    Ord(dtString): Result := 'dtString';
+    Ord(dtLString): Result := 'dtLString';
+    Ord(dtLenString): Result := 'dtLenString';
+    Ord(dtByteArray): Result := 'dtByteArray';
+    Ord(dtInteger): Result := 'dtInteger';
+    Ord(dtIntegerFormater): Result := 'dtIntegerFormater';
+    Ord(dtIntegerFormaterUnion): Result := 'dtIntegerFormaterUnion';
+    Ord(dtFlag): Result := 'dtFlag';
+    Ord(dtFloat): Result := 'dtFloat';
+    Ord(dtArray): Result := 'dtArray';
+    Ord(dtStruct): Result := 'dtStruct';
+    Ord(dtUnion): Result := 'dtUnion';
+    Ord(dtEmpty): Result := 'dtEmpty';
+    Ord(dtStructChapter): Result := 'dtStructChapter';
   end;
 end;
 
