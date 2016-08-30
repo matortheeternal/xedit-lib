@@ -4,7 +4,7 @@ interface
 
   procedure Initialize; StdCall;
   procedure Finalize; StdCall;
-  procedure GetBuffer(str: PAnsiChar; len: Integer); StdCall;
+  procedure GetBuffer(str: PWideChar; len: Integer); StdCall;
   procedure FlushBuffer; StdCall;
   function Resolve(_id: Cardinal): IInterface;
   function Store(x: IInterface): Cardinal;
@@ -46,9 +46,9 @@ begin
   MessageBuffer.Free;
 end;
 
-procedure GetBuffer(str: PAnsiChar; len: Integer); StdCall;
+procedure GetBuffer(str: PWideChar; len: Integer); StdCall;
 begin
-  StrLCopy(str, PAnsiChar(AnsiString(MessageBuffer.Text)), len);
+  StrLCopy(str, PWideChar(WideString(MessageBuffer.Text)), len);
 end;
 
 procedure FlushBuffer; StdCall;

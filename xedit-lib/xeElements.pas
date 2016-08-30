@@ -2,10 +2,10 @@ unit xeElements;
 
 interface
 
-  function GetElement(_id: Cardinal; key: PAnsiChar): Cardinal; StdCall;
-  function NewElement(_id: Cardinal; key: PAnsiChar): Cardinal; StdCall;
-  function RemoveElement(_id: Cardinal; key: PAnsiChar): WordBool; StdCall;
-  function ElementExists(_id: Cardinal; key: PAnsiChar): WordBool; StdCall;
+  function GetElement(_id: Cardinal; key: PWideChar): Cardinal; StdCall;
+  function NewElement(_id: Cardinal; key: PWideChar): Cardinal; StdCall;
+  function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; StdCall;
+  function ElementExists(_id: Cardinal; key: PWideChar): WordBool; StdCall;
   function ElementCount(_id: Cardinal): Cardinal; StdCall;
   function ElementAssigned(_id: Cardinal): Cardinal; StdCall;
   function Equals(_id, _id2: Cardinal): WordBool; StdCall;
@@ -30,7 +30,7 @@ uses
 }
 {******************************************************************************}
 
-function ParseIndex(key: PAnsiChar): Integer;
+function ParseIndex(key: PWideChar): Integer;
 begin
   Result := -1;
   if key[0] = '[' then
@@ -39,7 +39,7 @@ end;
 
 // Replaces ElementByName, ElementByPath, ElementByIndex, GroupBySignature, and
 // ElementBySignature.  Supports indexed paths.
-function GetElement(_id: Cardinal; key: PAnsiChar): Cardinal; StdCall;
+function GetElement(_id: Cardinal; key: PWideChar): Cardinal; StdCall;
 var
   element: IInterface;
   _file: IwbFile;
@@ -55,7 +55,7 @@ begin
 end;
 
 // replaces ElementAssign, Add, AddElement, and InsertElement
-function NewElement(_id: Cardinal; key: PAnsiChar): Cardinal; StdCall;
+function NewElement(_id: Cardinal; key: PWideChar): Cardinal; StdCall;
 var
   element: IInterface;
   container: IwbContainerElementRef;
@@ -82,7 +82,7 @@ begin
   end;
 end;
 
-function RemoveElement(_id: Cardinal; key: PAnsiChar): WordBool; StdCall;
+function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; StdCall;
 var
   element: IInterface;
 begin
@@ -91,7 +91,7 @@ begin
 end;
 
 // Replaces HasGroup and ElementExists
-function ElementExists(_id: Cardinal; key: PAnsiChar): WordBool; StdCall;
+function ElementExists(_id: Cardinal; key: PWideChar): WordBool; StdCall;
 var
   element: IInterface;
   _file: IwbFile;
