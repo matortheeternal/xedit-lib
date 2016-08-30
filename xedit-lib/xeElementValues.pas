@@ -9,11 +9,17 @@ interface
   function SortKey(_id: Integer; str: PWideChar; len: Integer): WordBool; StdCall;
   function ElementType(_id: Integer; str: PWideChar; len: Integer): WordBool; StdCall;
   function DefType(_id: Integer; str: PWideChar; len: Integer): WordBool; StdCall;
+  function GetValue(_id: Integer; path, str: PWideChar; len: Integer): WordBool; StdCall;
+  function SetValue(_id: Integer; path, value: PWideChar): WordBool; StdCall;
+  function GetLongValue(_id: Integer; path: PWideChar; value: Cardinal): WordBool; StdCall;
+  function SetLongValue(_id: Integer; path: PWideChar; value: Cardinal): WordBool; StdCall;
+  function GetFloatValue(_id: Integer; path: PWideChar; value: Double): WordBool; StdCall;
+  function SetFloatValue(_id: Integer; path: PWideChar; value: Double): WordBool; StdCall;
 
 implementation
 
 uses
-  Classes, SysUtils,
+  Classes, SysUtils, Variants,
   // mte modules
   mteHelpers,
   // xedit modules
@@ -146,6 +152,145 @@ begin
     s := dtToString(element.ValueDef.DefType);
     StrLCopy(str, PWideChar(WideString(s)), len);
     Result := true;
+  end;
+end;
+
+function GetValue(_id: Integer; path, str: PWideChar; len: Integer): WordBool; StdCall;
+var
+  e: IInterface;
+  container: IwbContainerElementRef;
+  element: IwbElement;
+  s: string;
+begin
+  Result := false;
+  e := Resolve(_id);
+  if Supports(e, IwbContainerElementRef, container) then begin
+    s := container.ElementEditValues[string(path)];
+    StrLCopy(str, PWideChar(WideString(s)), len);
+    Result := true;
+  end
+  else if Supports(e, IwbElement, element) then begin
+    s := element.EditValue;
+    StrLCopy(str, PWideChar(WideString(s)), len);
+    Result := true;
+  end;
+end;
+
+function SetValue(_id: Integer; path, value: PWideChar): WordBool; StdCall;
+var
+  e: IInterface;
+  container: IwbContainerElementRef;
+  element: IwbElement;
+begin
+  Result := false;
+  e := Resolve(_id);
+  if Supports(e, IwbContainerElementRef, container) then begin
+    container.ElementEditValues[string(path)] := value;
+    Result := true;
+  end
+  else if Supports(e, IwbElement, element) then begin
+    element.EditValue := value;
+    Result := true;
+  end;
+end;
+
+function GetLongValue(_id: Integer; path: PWideChar; value: Cardinal): WordBool; StdCall;
+var
+  e: IInterface;
+  container: IwbContainerElementRef;
+  element: IwbElement;
+  v: Variant;
+begin
+  Result := false;
+  e := Resolve(_id);
+  if Supports(e, IwbContainerElementRef, container) then begin
+    v := container.ElementNativeValues[string(path)];
+    if VarType(v) = varUInt64 then begin
+      value := v;
+      Result := true;
+    end;
+  end
+  else if Supports(e, IwbElement, element) then begin
+    v := element.NativeValue;
+    if VarType(v) = varUInt64 then begin
+      value := v;
+      Result := true;
+    end;
+  end;
+end;
+
+function SetLongValue(_id: Integer; path: PWideChar; value: Cardinal): WordBool; StdCall;
+var
+  e: IInterface;
+  container: IwbContainerElementRef;
+  element: IwbElement;
+  v: Variant;
+begin
+  Result := false;
+  e := Resolve(_id);
+  if Supports(e, IwbContainerElementRef, container) then begin
+    v := container.ElementNativeValues[string(path)];
+    if VarType(v) = varUInt64 then begin
+      container.ElementNativeValues[string(path)] := value;
+      Result := true;
+    end;
+  end
+  else if Supports(e, IwbElement, element) then begin
+    v := element.NativeValue;
+    if VarType(v) = varUInt64 then begin
+      element.NativeValue := value;
+      Result := true;
+    end;
+  end;
+end;
+
+function GetFloatValue(_id: Integer; path: PWideChar; value: Double): WordBool; StdCall;
+var
+  e: IInterface;
+  container: IwbContainerElementRef;
+  element: IwbElement;
+  v: Variant;
+begin
+  Result := false;
+  e := Resolve(_id);
+  if Supports(e, IwbContainerElementRef, container) then begin
+    v := container.ElementNativeValues[string(path)];
+    if VarType(v) = varDouble then begin
+      value := v;
+      Result := true;
+    end;
+  end
+  else if Supports(e, IwbElement, element) then begin
+    v := element.NativeValue;
+    if VarType(v) = varDouble then begin
+      value := v;
+      Result := true;
+    end;
+  end;
+end;
+
+function SetFloatValue(_id: Integer; path: PWideChar; value: Double): WordBool; StdCall;
+var
+  e: IInterface;
+  container: IwbContainerElementRef;
+  element: IwbElement;
+  v: Variant;
+begin
+  Result := false;
+  e := Resolve(_id);
+  if Supports(e, IwbContainerElementRef, container) then begin
+    v := container.ElementNativeValues[string(path)];
+    if VarType(v) = varDouble then begin
+      container.ElementNativeValues[string(path)] := value;
+      Result := true;
+    end;
+  end
+  else if Supports(e, IwbElement, element) then begin
+    v := element.NativeValue;
+    if VarType(v) = varDouble then begin
+      element.NativeValue := value;
+      Result := true;
+    end;
   end;
 end;
 
