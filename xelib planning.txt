@@ -86,8 +86,14 @@ GETTERS AND SETTERS
   - SetListValues
   - GetElementListValues
   - SetElementListValues
-  - GetValue: replaces GetElementEditValues, GetElementNativeValues, GetEditValue, and GetNativeValue.
-  - SetValue: replaces SetElementEditValues, SetElementNativeValues, SetEditValue, and SetNativeValue 
+  - GetValue: replaces GetElementEditValues and GetEditValue
+  - SetValue: replaces SetElementEditValues and SetEditValue 
+  - GetIntValue
+  - SetIntValue
+  - GetUIntValue
+  - SetUIntValue
+  - GetFloatValue
+  - SetFloatValue
   - SetFlag
   - GetFlag
   - ToggleFlag

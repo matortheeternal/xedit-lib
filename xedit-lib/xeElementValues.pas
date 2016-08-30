@@ -11,8 +11,10 @@ interface
   function DefType(_id: Integer; str: PWideChar; len: Integer): WordBool; StdCall;
   function GetValue(_id: Integer; path, str: PWideChar; len: Integer): WordBool; StdCall;
   function SetValue(_id: Integer; path, value: PWideChar): WordBool; StdCall;
-  function GetLongValue(_id: Integer; path: PWideChar; value: Cardinal): WordBool; StdCall;
-  function SetLongValue(_id: Integer; path: PWideChar; value: Cardinal): WordBool; StdCall;
+  function GetIntValue(_id: Integer; path: PWideChar; value: Integer): WordBool; StdCall;
+  function SetIntValue(_id: Integer; path: PWideChar; value: Integer): WordBool; StdCall;
+  function GetUIntValue(_id: Integer; path: PWideChar; value: Cardinal): WordBool; StdCall;
+  function SetUIntValue(_id: Integer; path: PWideChar; value: Cardinal): WordBool; StdCall;
   function GetFloatValue(_id: Integer; path: PWideChar; value: Double): WordBool; StdCall;
   function SetFloatValue(_id: Integer; path: PWideChar; value: Double): WordBool; StdCall;
 
@@ -194,103 +196,101 @@ begin
   end;
 end;
 
-function GetLongValue(_id: Integer; path: PWideChar; value: Cardinal): WordBool; StdCall;
+function GetNativeValue(_id: Integer; path: PWideChar): Variant;
 var
   e: IInterface;
   container: IwbContainerElementRef;
   element: IwbElement;
-  v: Variant;
+begin
+  Result := nil;
+  e := Resolve(_id);
+  if Supports(e, IwbContainerElementRef, container) then
+    Result := container.ElementNativeValues[string(path)]
+  else if Supports(e, IwbElement, element) then
+    Result := element.NativeValue;
+end;
+
+function SetNativeValue(_id: Integer; path: PWideChar; value: Variant): WordBool;
+var
+  e: IInterface;
+  container: IwbContainerElementRef;
+  element: IwbElement;
 begin
   Result := false;
   e := Resolve(_id);
-  if Supports(e, IwbContainerElementRef, container) then begin
-    v := container.ElementNativeValues[string(path)];
-    if VarType(v) = varUInt64 then begin
-      value := v;
-      Result := true;
-    end;
-  end
-  else if Supports(e, IwbElement, element) then begin
-    v := element.NativeValue;
-    if VarType(v) = varUInt64 then begin
-      value := v;
-      Result := true;
-    end;
+  if Supports(e, IwbContainerElementRef, container) then
+    container.ElementNativeValues[string(path)] := value
+  else if Supports(e, IwbElement, element) then
+    element.NativeValue := value;
+  Result := true;
+end;
+
+function GetIntValue(_id: Integer; path: PWideChar; value: Integer): WordBool; StdCall;
+begin
+  Result := false;
+  try
+    value := GetNativeValue(_id, path);
+    Result := true;
+  except
+    on x: Exception do
+      AddMessage('GetIntValue: '+x.Message);
   end;
 end;
 
-function SetLongValue(_id: Integer; path: PWideChar; value: Cardinal): WordBool; StdCall;
-var
-  e: IInterface;
-  container: IwbContainerElementRef;
-  element: IwbElement;
-  v: Variant;
+function SetIntValue(_id: Integer; path: PWideChar; value: Integer): WordBool; StdCall;
 begin
   Result := false;
-  e := Resolve(_id);
-  if Supports(e, IwbContainerElementRef, container) then begin
-    v := container.ElementNativeValues[string(path)];
-    if VarType(v) = varUInt64 then begin
-      container.ElementNativeValues[string(path)] := value;
-      Result := true;
-    end;
-  end
-  else if Supports(e, IwbElement, element) then begin
-    v := element.NativeValue;
-    if VarType(v) = varUInt64 then begin
-      element.NativeValue := value;
-      Result := true;
-    end;
+  try
+    Result := SetNativeValue(_id, path, value);
+  except
+    on x: Exception do
+      AddMessage('SetIntValue: '+x.Message);
+  end;
+end;
+
+function GetUIntValue(_id: Integer; path: PWideChar; value: Cardinal): WordBool; StdCall;
+begin
+  Result := false;
+  try
+    value := GetNativeValue(_id, path);
+    Result := true;
+  except
+    on x: Exception do
+      AddMessage('GetUIntValue: '+x.Message);
+  end;
+end;
+
+function SetUIntValue(_id: Integer; path: PWideChar; value: Cardinal): WordBool; StdCall;
+begin
+  Result := false;
+  try
+    Result := SetNativeValue(_id, path, value);
+  except
+    on x: Exception do
+      AddMessage('SetUIntValue: '+x.Message);
   end;
 end;
 
 function GetFloatValue(_id: Integer; path: PWideChar; value: Double): WordBool; StdCall;
-var
-  e: IInterface;
-  container: IwbContainerElementRef;
-  element: IwbElement;
-  v: Variant;
 begin
   Result := false;
-  e := Resolve(_id);
-  if Supports(e, IwbContainerElementRef, container) then begin
-    v := container.ElementNativeValues[string(path)];
-    if VarType(v) = varDouble then begin
-      value := v;
-      Result := true;
-    end;
-  end
-  else if Supports(e, IwbElement, element) then begin
-    v := element.NativeValue;
-    if VarType(v) = varDouble then begin
-      value := v;
-      Result := true;
-    end;
+  try
+    value := GetNativeValue(_id, path);
+    Result := true;
+  except
+    on x: Exception do
+      AddMessage('GetFloatValue: '+x.Message);
   end;
 end;
 
 function SetFloatValue(_id: Integer; path: PWideChar; value: Double): WordBool; StdCall;
-var
-  e: IInterface;
-  container: IwbContainerElementRef;
-  element: IwbElement;
-  v: Variant;
 begin
   Result := false;
-  e := Resolve(_id);
-  if Supports(e, IwbContainerElementRef, container) then begin
-    v := container.ElementNativeValues[string(path)];
-    if VarType(v) = varDouble then begin
-      container.ElementNativeValues[string(path)] := value;
-      Result := true;
-    end;
-  end
-  else if Supports(e, IwbElement, element) then begin
-    v := element.NativeValue;
-    if VarType(v) = varDouble then begin
-      element.NativeValue := value;
-      Result := true;
-    end;
+  try
+    Result := SetNativeValue(_id, path, value);
+  except
+    on x: Exception do
+      AddMessage('SetFloatValue: '+x.Message);
   end;
 end;
 
