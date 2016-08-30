@@ -33,7 +33,7 @@ uses
 function ParseIndex(key: string): Integer;
 begin
   Result := -1;
-  if key[0] = '[' then
+  if (key[1] = '[') and (key[Length(key)] = ']') then
     Result := StrToInt(Copy(key, 2, Length(key) - 2));
 end;
 
