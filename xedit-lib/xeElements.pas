@@ -45,12 +45,17 @@ var
   _file: IwbFile;
   container: IwbContainerElementRef;
 begin
-  e := Resolve(_id);
-  if Supports(e, IwbFile, _file) then
-    // TODO: perhaps also by group name?
-    Result := Store(_file.GroupBySignature(StrToSignature(key)))
-  else if Supports(e, IwbContainerElementRef, container) then
-    Result := Store(container.ElementByPath(string(key)));
+  Result := 0;
+  try
+    e := Resolve(_id);
+    if Supports(e, IwbFile, _file) then
+      // TODO: perhaps also by group name?
+      Result := Store(_file.GroupBySignature(StrToSignature(key)))
+    else if Supports(e, IwbContainerElementRef, container) then
+      Result := Store(container.ElementByPath(string(key)));
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
 end;
 
 // replaces ElementAssign, Add, AddElement, and InsertElement
@@ -60,24 +65,29 @@ var
   container: IwbContainerElementRef;
   keyIndex: Integer;
 begin
-  e := Resolve(_id);
-  if Supports(e, IwbContainerElementRef, container) then begin
-    // Use Add for files and groups
-    if Supports(e, IwbFile) or Supports(e, IwbGroupRecord) then
-      Result := Store(container.Add(string(key), true))
-    else begin
-      // no key means we're doing ElementAssign
-      if (not Assigned(key)) or (Length(key) = 0) then
-        Result := Store(container.Assign(High(integer), nil, false))
+  Result := 0;
+  try
+    e := Resolve(_id);
+    if Supports(e, IwbContainerElementRef, container) then begin
+      // Use Add for files and groups
+      if Supports(e, IwbFile) or Supports(e, IwbGroupRecord) then
+        Result := Store(container.Add(string(key), true))
       else begin
-        keyIndex := ParseIndex(key);
-        // use InsertElement if index was given, else use Add
-        if keyIndex > -1 then
-          Result := Store(container.InsertElement(keyIndex, nil))
-        else
-          Result := Store(container.Add(string(key), true));
+        // no key means we're doing ElementAssign
+        if (not Assigned(key)) or (Length(key) = 0) then
+          Result := Store(container.Assign(High(integer), nil, false))
+        else begin
+          keyIndex := ParseIndex(key);
+          // use InsertElement if index was given, else use Add
+          if keyIndex > -1 then
+            Result := Store(container.InsertElement(keyIndex, nil))
+          else
+            Result := Store(container.Add(string(key), true));
+        end;
       end;
     end;
+  except
+    on x: Exception do ExceptionHandler(x);
   end;
 end;
 
@@ -86,8 +96,12 @@ var
   e: IInterface;
 begin
   Result := false;
-  e := Resolve(_id);
-  // TODO
+  try
+    e := Resolve(_id);
+    // TODO
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
 end;
 
 // Replaces HasGroup and ElementExists
@@ -98,30 +112,43 @@ var
   container: IwbContainerElementRef;
 begin
   Result := false;
-  element := Resolve(_id);
-  if Supports(element, IwbFile, _file) then
-    // TODO: perhaps also by group name?
-    Result := _file.HasGroup(StrToSignature(key))
-  else if Supports(element, IwbContainerElementRef, container) then
-    // TODO: adjust logic here so we can check paths
-    Result := container.ElementExists[string(key)];
+  try
+    element := Resolve(_id);
+    if Supports(element, IwbFile, _file) then
+      // TODO: perhaps also by group name?
+      Result := _file.HasGroup(StrToSignature(key))
+    else if Supports(element, IwbContainerElementRef, container) then
+      // TODO: adjust logic here so we can check paths
+      Result := container.ElementExists[string(key)];
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
 end;
 
-function ElementCount(_id: Cardinal): Cardinal; StdCall;
+function ElementCount(_id: Cardinal): Integer; StdCall;
 var
   container: IwbContainerElementRef;
 begin
   Result := -1;
-  if Supports(Resolve(_id), IwbContainerElementRef, container) then
-    Result := container.ElementCount;
+  try
+    if Supports(Resolve(_id), IwbContainerElementRef, container) then
+      Result := container.ElementCount;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
 end;
 
-function ElementAssigned(_id: Cardinal): Cardinal; StdCall;
+function ElementAssigned(_id: Cardinal): WordBool; StdCall;
 var
   e: IInterface;
 begin
-  e := Resolve(_id);
-  Result := Assigned(e);
+  Result := false;
+  try
+    e := Resolve(_id);
+    Result := Assigned(e);
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
 end;
 
 function Equals(_id, _id2: Cardinal): WordBool; StdCall;
@@ -129,9 +156,13 @@ var
   element, element2: IwbElement;
 begin
   Result := false;
-  if Supports(Resolve(_id), IwbElement, element) then
-    if Supports(Resolve(_id2), IwbElement, element2) then
-      Result := element.Equals(element2);
+  try
+    if Supports(Resolve(_id), IwbElement, element) then
+      if Supports(Resolve(_id2), IwbElement, element2) then
+        Result := element.Equals(element2);
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
 end;
 
 function IsMaster(_id: Cardinal): WordBool; StdCall;
@@ -139,8 +170,12 @@ var
   rec: IwbMainRecord;
 begin
   Result := false;
-  if Supports(Resolve(_id), IwbMainRecord, rec) then
-    Result := rec.IsMaster;
+  try
+    if Supports(Resolve(_id), IwbMainRecord, rec) then
+      Result := rec.IsMaster;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
 end;
 
 function IsInjected(_id: Cardinal): WordBool; StdCall;
@@ -148,8 +183,12 @@ var
   rec: IwbMainRecord;
 begin
   Result := false;
-  if Supports(Resolve(_id), IwbMainRecord, rec) then
-    Result := rec.IsInjected;
+  try
+    if Supports(Resolve(_id), IwbMainRecord, rec) then
+      Result := rec.IsInjected;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
 end;
 
 function IsOverride(_id: Cardinal): WordBool; StdCall;
@@ -157,8 +196,12 @@ var
   rec: IwbMainRecord;
 begin
   Result := false;
-  if Supports(Resolve(_id), IwbMainRecord, rec) then
-    Result := not rec.IsMaster;
+  try
+    if Supports(Resolve(_id), IwbMainRecord, rec) then
+      Result := not rec.IsMaster;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
 end;
 
 // TODO: Determine if subrecord is winner
@@ -167,8 +210,12 @@ var
   rec: IwbMainRecord;
 begin
   Result := false;
-  if Supports(Resolve(_id), IwbMainRecord, rec) then
-    Result := not rec.IsWinningOverride;
+  try
+    if Supports(Resolve(_id), IwbMainRecord, rec) then
+      Result := not rec.IsWinningOverride;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
 end;
 
 end.

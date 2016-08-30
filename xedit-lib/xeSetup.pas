@@ -18,9 +18,9 @@ var
 implementation
 
 uses
-  Classes,
+  Classes, SysUtils,
   // lib units
-  xeConfiguration, xeMessages;
+  xeMeta, xeConfiguration, xeMessages;
 
 {******************************************************************************}
 { LOADIND AND SETUP METHODS
@@ -30,10 +30,14 @@ uses
 
 procedure SetGameMode(mode: Integer); StdCall;
 begin
-  SetGame(mode);
-  AddMessage('Game: ' + ProgramStatus.GameMode.longName);
-  AddMessage('DataPath: ' + settings.gameDataPath);
-  AddMessage(' ');
+  try
+    SetGame(mode);
+    AddMessage('Game: ' + ProgramStatus.GameMode.longName);
+    AddMessage('DataPath: ' + settings.gameDataPath);
+    AddMessage(' ');
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
 end;
 
 

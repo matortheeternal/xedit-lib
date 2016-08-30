@@ -46,6 +46,11 @@ begin
   MessageBuffer.Free;
 end;
 
+procedure ExceptionHandler(x: Exception);
+begin
+  AddMessage(Format('%s: %s', [x.StackTrace, x.Message]));
+end;
+
 procedure GetBuffer(str: PWideChar; len: Integer); StdCall;
 begin
   StrLCopy(str, PWideChar(WideString(MessageBuffer.Text)), len);

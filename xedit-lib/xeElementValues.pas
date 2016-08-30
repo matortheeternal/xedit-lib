@@ -35,9 +35,13 @@ var
   element: IwbElement;
 begin
   Result := false;
-  if Supports(Resolve(_id), IwbElement, element) then begin
-    StrLCopy(str, PWideChar(WideString(element.Name)), len);
-    Result := true;
+  try
+    if Supports(Resolve(_id), IwbElement, element) then begin
+      StrLCopy(str, PWideChar(WideString(element.Name)), len);
+      Result := true;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
   end;
 end;
 
@@ -46,9 +50,13 @@ var
   rec: IwbMainRecord;
 begin
   Result := false;
-  if Supports(Resolve(_id), IwbMainRecord, rec) then begin
-    StrLCopy(str, PWideChar(WideString(rec.EditorID)), len);
-    Result := true;
+  try
+    if Supports(Resolve(_id), IwbMainRecord, rec) then begin
+      StrLCopy(str, PWideChar(WideString(rec.EditorID)), len);
+      Result := true;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
   end;
 end;
 
@@ -57,9 +65,13 @@ var
   rec: IwbRecord;
 begin
   Result := false;
-  if Supports(Resolve(_id), IwbRecord, rec) then begin
-    StrLCopy(str, PWideChar(WideString(rec.Signature)), len);
-    Result := true;
+  try
+    if Supports(Resolve(_id), IwbRecord, rec) then begin
+      StrLCopy(str, PWideChar(WideString(rec.Signature)), len);
+      Result := true;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
   end;
 end;
 
@@ -68,9 +80,13 @@ var
   element: IwbElement;
 begin
   Result := false;
-  if Supports(Resolve(_id), IwbElement, element) then begin
-    StrLCopy(str, PWideChar(WideString(element.ShortName)), len);
-    Result := true;
+  try
+    if Supports(Resolve(_id), IwbElement, element) then begin
+      StrLCopy(str, PWideChar(WideString(element.ShortName)), len);
+      Result := true;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
   end;
 end;
 
@@ -79,9 +95,13 @@ var
   element: IwbElement;
 begin
   Result := false;
-  if Supports(Resolve(_id), IwbElement, element) then begin
-    StrLCopy(str, PWideChar(WideString(element.SortKey[false])), len);
-    Result := true;
+  try
+    if Supports(Resolve(_id), IwbElement, element) then begin
+      StrLCopy(str, PWideChar(WideString(element.SortKey[false])), len);
+      Result := true;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
   end;
 end;
 
@@ -112,10 +132,14 @@ var
   s: String;
 begin
   Result := false;
-  if Supports(Resolve(_id), IwbElement, element) then begin
-    s = etToString(element.ElementType);
-    StrLCopy(str, PWideChar(WideString(s)), len);
-    Result := true;
+  try
+    if Supports(Resolve(_id), IwbElement, element) then begin
+      s = etToString(element.ElementType);
+      StrLCopy(str, PWideChar(WideString(s)), len);
+      Result := true;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
   end;
 end;
 
@@ -150,10 +174,14 @@ var
   s: String;
 begin
   Result := false;
-  if Supports(Resolve(_id), IwbElement, element) then begin
-    s := dtToString(element.ValueDef.DefType);
-    StrLCopy(str, PWideChar(WideString(s)), len);
-    Result := true;
+  try
+    if Supports(Resolve(_id), IwbElement, element) then begin
+      s := dtToString(element.ValueDef.DefType);
+      StrLCopy(str, PWideChar(WideString(s)), len);
+      Result := true;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
   end;
 end;
 
@@ -165,16 +193,20 @@ var
   s: string;
 begin
   Result := false;
-  e := Resolve(_id);
-  if Supports(e, IwbContainerElementRef, container) then begin
-    s := container.ElementEditValues[string(path)];
-    StrLCopy(str, PWideChar(WideString(s)), len);
-    Result := true;
-  end
-  else if Supports(e, IwbElement, element) then begin
-    s := element.EditValue;
-    StrLCopy(str, PWideChar(WideString(s)), len);
-    Result := true;
+  try
+    e := Resolve(_id);
+    if Supports(e, IwbContainerElementRef, container) then begin
+      s := container.ElementEditValues[string(path)];
+      StrLCopy(str, PWideChar(WideString(s)), len);
+      Result := true;
+    end
+    else if Supports(e, IwbElement, element) then begin
+      s := element.EditValue;
+      StrLCopy(str, PWideChar(WideString(s)), len);
+      Result := true;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
   end;
 end;
 
@@ -185,14 +217,18 @@ var
   element: IwbElement;
 begin
   Result := false;
-  e := Resolve(_id);
-  if Supports(e, IwbContainerElementRef, container) then begin
-    container.ElementEditValues[string(path)] := value;
-    Result := true;
-  end
-  else if Supports(e, IwbElement, element) then begin
-    element.EditValue := value;
-    Result := true;
+  try
+    e := Resolve(_id);
+    if Supports(e, IwbContainerElementRef, container) then begin
+      container.ElementEditValues[string(path)] := value;
+      Result := true;
+    end
+    else if Supports(e, IwbElement, element) then begin
+      element.EditValue := value;
+      Result := true;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
   end;
 end;
 
@@ -232,8 +268,7 @@ begin
     value := GetNativeValue(_id, path);
     Result := true;
   except
-    on x: Exception do
-      AddMessage('GetIntValue: '+x.Message);
+    on x: Exception do ExceptionHandler(x);
   end;
 end;
 
@@ -243,8 +278,7 @@ begin
   try
     Result := SetNativeValue(_id, path, value);
   except
-    on x: Exception do
-      AddMessage('SetIntValue: '+x.Message);
+    on x: Exception do ExceptionHandler(x);
   end;
 end;
 
@@ -255,8 +289,7 @@ begin
     value := GetNativeValue(_id, path);
     Result := true;
   except
-    on x: Exception do
-      AddMessage('GetUIntValue: '+x.Message);
+    on x: Exception do ExceptionHandler(x);
   end;
 end;
 
@@ -266,8 +299,7 @@ begin
   try
     Result := SetNativeValue(_id, path, value);
   except
-    on x: Exception do
-      AddMessage('SetUIntValue: '+x.Message);
+    on x: Exception do ExceptionHandler(x);
   end;
 end;
 
@@ -278,8 +310,7 @@ begin
     value := GetNativeValue(_id, path);
     Result := true;
   except
-    on x: Exception do
-      AddMessage('GetFloatValue: '+x.Message);
+    on x: Exception do ExceptionHandler(x);
   end;
 end;
 
@@ -289,8 +320,7 @@ begin
   try
     Result := SetNativeValue(_id, path, value);
   except
-    on x: Exception do
-      AddMessage('SetFloatValue: '+x.Message);
+    on x: Exception do ExceptionHandler(x);
   end;
 end;
 
