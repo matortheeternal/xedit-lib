@@ -2,10 +2,10 @@ unit xeMasters;
 
 interface
 
-  function RemoveMaster(_file, _master: Cardinal): WordBool; StdCall;
   function CleanMasters(_id: Cardinal): WordBool; StdCall;
   function SortMasters(_id: Cardinal): WordBool; StdCall;
   function AddMaster(_id: Cardinal; masterName: PWideChar): WordBool; StdCall;
+  function GetMaster(_id: Cardinal; index: Integer): Cardinal; StdCall;
 
 implementation
 
@@ -65,10 +65,17 @@ begin
   end;
 end;
 
-function RemoveMaster(_file, _master: Cardinal): WordBool; StdCall;
+function GetMaster(_id: Cardinal; index: Integer): Cardinal; StdCall;
+var
+  _file: IwbFile;
 begin
-  Result := false;
-  // TODO
+  Result := 0;
+  try
+    if Supports(Resolve(_id), IwbFile, _file) then
+      Result := Store(_file.Masters[index]);
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
 end;
 
 end.
