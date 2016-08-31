@@ -85,8 +85,6 @@ implementation
 
 { TSettings }
 constructor TSettings.Create;
-var
-  gamePath: String;
 begin
   // default settings
   dummyPluginPath := '{{gameName}}\EmptyPlugin.esp';
@@ -256,7 +254,6 @@ end;
 function SetGameParam(param: string): boolean;
 var
   abbrName: string;
-  i: Integer;
 begin
   abbrName := Copy(param, 2, Length(param));
   Result := SetGameAbbr(abbrName);
