@@ -2,13 +2,13 @@ unit xeFiles;
 
 interface
 
-  function NewFile(filename: PAnsiChar): Integer; StdCall;
-  function FileByIndex(index: Integer): Integer; StdCall;
-  function FileByLoadOrder(load_order: Integer): Integer; StdCall;
-  function FileByName(name: PAnsiChar): Integer; StdCall;
-  function FileByAuthor(author: PAnsiChar): Integer; StdCall;
-  function GetElementFile(_id: Integer): Integer; StdCall;
-  function SaveFile(_id: Integer): WordBool; StdCall;
+  function NewFile(filename: PAnsiChar): Cardinal; StdCall;
+  function FileByIndex(index: Integer): Cardinal; StdCall;
+  function FileByLoadOrder(load_order: Integer): Cardinal; StdCall;
+  function FileByName(name: PAnsiChar): Cardinal; StdCall;
+  function FileByAuthor(author: PAnsiChar): Cardinal; StdCall;
+  function GetElementFile(_id: Cardinal): Cardinal; StdCall;
+  function SaveFile(_id: Cardinal): WordBool; StdCall;
 
 implementation
 
@@ -32,12 +32,14 @@ function NewFile(filename: PAnsiChar): Cardinal; StdCall;
 var
   LoadOrder : Integer;
   _file: IwbFile;
+  filePath: String;
 begin
   Result := 0;
   try
     // fail if the file already exists
-    if FileExists(wbDataPath + filename) then
-      raise Exception.Create(Format('File with name %s already exists.', filename));
+    filePath := wbDataPath + string(filename);
+    if FileExists(filePath) then
+      raise Exception.Create(Format('File with name %s already exists.', [filename]));
 
     // get load order for new file
     LoadOrder := 0;
@@ -49,7 +51,7 @@ begin
       raise Exception.Create('Maximum plugin count of 254 reached.');
 
     // create new file
-    _file := wbNewFile(wbDataPath + filename, LoadOrder);
+    _file := wbNewFile(filePath, LoadOrder);
     SetLength(Files, Succ(Length(Files)));
     Files[High(Files)] := _file;
     _file._AddRef;
@@ -94,7 +96,7 @@ begin
   Result := 0;
   try
     for i := Low(Files) to High(Files) do
-      if Files[i].FileName = name then begin
+      if Files[i].FileName = string(name) then begin
         Result := Store(Files[i]);
         exit;
       end;
@@ -110,7 +112,7 @@ begin
   Result := 0;
   try
     for i := Low(Files) to High(Files) do
-      if Files[i].Header.ElementEditValues('Author') = author then begin
+      if Files[i].Header.ElementEditValues['Author'] = string(author) then begin
         Result := Store(Files[i]);
         exit;
       end;
