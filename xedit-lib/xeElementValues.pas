@@ -249,19 +249,17 @@ begin
     Result := element.NativeValue;
 end;
 
-function SetNativeValue(_id: Integer; path: PWideChar; value: Variant): WordBool;
+procedure SetNativeValue(_id: Integer; path: PWideChar; value: Variant);
 var
   e: IInterface;
   container: IwbContainerElementRef;
   element: IwbElement;
 begin
-  Result := false;
   e := Resolve(_id);
   if Supports(e, IwbContainerElementRef, container) then
     container.ElementNativeValues[string(path)] := value
   else if Supports(e, IwbElement, element) then
     element.NativeValue := value;
-  Result := true;
 end;
 
 function GetIntValue(_id: Integer; path: PWideChar; out value: Integer): WordBool; StdCall;
@@ -279,7 +277,8 @@ function SetIntValue(_id: Integer; path: PWideChar; value: Integer): WordBool; S
 begin
   Result := false;
   try
-    Result := SetNativeValue(_id, path, value);
+    SetNativeValue(_id, path, value);
+    Result := true;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -300,7 +299,8 @@ function SetUIntValue(_id: Integer; path: PWideChar; value: Cardinal): WordBool;
 begin
   Result := false;
   try
-    Result := SetNativeValue(_id, path, value);
+    SetNativeValue(_id, path, value);
+    Result := true;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -321,7 +321,8 @@ function SetFloatValue(_id: Integer; path: PWideChar; value: Double): WordBool; 
 begin
   Result := false;
   try
-    Result := SetNativeValue(_id, path, value);
+    SetNativeValue(_id, path, value);
+    Result := true;
   except
     on x: Exception do ExceptionHandler(x);
   end;
