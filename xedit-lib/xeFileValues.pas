@@ -10,6 +10,7 @@ interface
   function GetDescription(_id: Cardinal; desc: PWideChar; len: Integer): WordBool; StdCall;
   function SetDescription(_id: Cardinal; desc: PWideChar): WordBool; StdCall;
   function OverrideRecordCount(_id: Cardinal; count: Integer): WordBool; StdCall;
+  function GetIsESM(_id: Cardinal; isESM: WordBool): WordBool; StdCall;
 implementation
 
 uses
@@ -142,6 +143,21 @@ begin
       count := 0;
       for i := 0 to _file.RecordCount do
         if not _file.Records[i].IsMaster then count := count + 1;
+      Result := true;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetIsESM(_id: Cardinal; isESM: WordBool): WordBool; StdCall;
+var
+  _file: IwbFile;
+begin
+  Result := false;
+  try
+    if Supports(Resolve(_id), IwbFile, _file) then begin
+      isESM := _file.IsESM;
       Result := true;
     end;
   except
