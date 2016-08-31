@@ -8,6 +8,7 @@ interface
   function GetAuthor(_id: Cardinal; author: PWideChar; len: Integer): WordBool; StdCall;
   function SetAuthor(_id: Cardinal; author: PWideChar): WordBool; StdCall;
   function GetDescription(_id: Cardinal; desc: PWideChar; len: Integer): WordBool; StdCall;
+  function SetDescription(_id: Cardinal; desc: PWideChar): WordBool; StdCall;
 implementation
 
 uses
@@ -107,6 +108,21 @@ begin
     if Supports(Resolve(_id), IwbFile, _file) then begin
       s := _file.Header.ElementEditValues['SNAM'];
       StrLCopy(desc, PWideChar(WideString(s)), len);
+      Result := true;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function SetDescription(_id: Cardinal; desc: PWideChar): WordBool; StdCall;
+var
+  _file: IwbFile;
+begin
+  Result := false;
+  try
+    if Supports(Resolve(_id), IwbFile, _file) then begin
+      _file.Header.ElementEditValues['SNAM'] := string(desc);
       Result := true;
     end;
   except
