@@ -31,7 +31,6 @@ type
     fallout3Path: string;
     falloutNVPath: string;
     constructor Create; virtual;
-    procedure UpdateForGame;
     function GameDataPath: String;
   end;
   TProgramStatus = class(TObject)
@@ -118,7 +117,6 @@ begin
   ProgramStatus.GameMode := GameArray[id];
   LoadSettings;
   SaveSettings;
-  settings.UpdateForGame;
 
   // update xEdit vars
   wbGameName := ProgramStatus.GameMode.gameName;

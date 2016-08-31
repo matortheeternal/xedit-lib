@@ -174,7 +174,7 @@ begin
   Result := false;
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
-      _file.IsESM = isESM;
+      _file.IsESM := isESM;
       Result := true;
     end;
   except

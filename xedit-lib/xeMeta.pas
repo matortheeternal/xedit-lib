@@ -90,7 +90,7 @@ begin
   Result := false;
   try
     if Globals.IndexOfName(key) > -1 then begin
-      StrLCopy(value, PWideChar(WideString(Globals[key])), len);
+      StrLCopy(value, PWideChar(WideString(Globals.Values[key])), len);
       Result := true;
     end;
   except

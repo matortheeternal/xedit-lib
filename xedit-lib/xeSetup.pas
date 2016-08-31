@@ -186,7 +186,7 @@ begin
     slLoadOrder.DelimitedText := string(loadOrder);
 
     // set filecount global
-    Globals.Values['FileCount'] := slLoadOrder.Count;
+    Globals.Values['FileCount'] := IntToStr(slLoadOrder.Count);
 
     // start loader thread
     TLoaderThread.Create;
