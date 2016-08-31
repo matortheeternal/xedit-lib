@@ -20,6 +20,7 @@ interface
   function SetFlag(_id: Integer; path, name: PWideChar; enabled: WordBool): WordBool; StdCall;
   function GetFlag(_id: Integer; path, name: PWideChar): WordBool; StdCall;
   function ToggleFlag(_id: Integer; path, name: PWideChar): WordBool; StdCall;
+  function GetEnabledFlags(_id: Integer; path, flags: PWideChar): WordBool; StdCall;
 
 implementation
 
@@ -396,6 +397,43 @@ begin
             else
               element.NativeValue = element.NativeValue or flagVal;
           end;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetEnabledFlags(_id: Integer; path, flags: PWideChar): WordBool; StdCall;
+var
+  slFlags: TStringList;
+  container: IwbContainerElementRef;
+  element: IwbElement;
+  enumDef: IwbEnumDef;
+  i: Integer;
+  flagVal: Cardinal;
+begin
+  Result := false;
+  try
+    slFlags := TStringList.Create;
+    slFlags.StrictDelimiter := true;
+    slFlags.Delimiter := ',';
+
+    try
+      if Supports(Resolve(_id), IwbContainerElementRef, container) then begin
+        element := container.ElementByPath[string(path)];
+        if Supports(element.Def, IwbEnumDef, enumDef) then
+          for i := 0 to Pred(enumDef.NameCount) do begin
+            flagVal := 1 shl i;
+            if element.NativeValue and flagVal then
+              slFlags.Add(enumDef.Names[i]);
+          end;
+      end;
+
+      // set output
+      flags := slFlags.DelimitedText;
+      Result := true;
+    finally
+      slFlags.Free;
     end;
   except
     on x: Exception do ExceptionHandler(x);

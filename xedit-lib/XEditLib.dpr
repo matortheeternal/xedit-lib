@@ -60,7 +60,7 @@ exports
   // ELEMENT VALUE METHODS
   Name, EditorID, Signature, ShortName, SortKey, ElementType, DefType, GetValue,
   SetValue, GetIntValue, SetIntValue, GetUIntValue, SetUIntValue, GetFloatValue,
-  SetFloatValue;
+  SetFloatValue, SetFlag, GetFlag, ToggleFlag, GetEnabledFlags;
 
 begin
   IsMultiThread := True;
