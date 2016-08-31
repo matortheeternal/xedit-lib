@@ -46,7 +46,7 @@ const
 
 exports
   // META METHODS
-  Initialize, Finalize, GetBuffer, FlushBuffer, ResetStore,
+  Initialize, Finalize, GetBuffer, FlushBuffer, Release, ResetStore,
   // LOADING AND SET UP METHODS
   SetGameMode, GetLoadOrder, LoadPlugins, GetGlobal,
   // FILE HANDLING METHODS
@@ -55,8 +55,12 @@ exports
   // MASTER HANDLING METHODS
   CleanMasters, SortMasters, AddMaster, RemoveMaster,
   // ELEMENT HANDLING METHODS
-  GetElement, NewElement, RemoveElement, ElementExists, ElementCount, Assigned,
-  Equals, IsMaster, IsInjected, IsOverride, IsWinningOverride;
+  GetElement, NewElement, RemoveElement, ElementExists, ElementCount,
+  ElementAssigned, Equals, IsMaster, IsInjected, IsOverride, IsWinningOverride,
+  // ELEMENT VALUE METHODS
+  Name, EditorID, Signature, ShortName, SortKey, ElementType, DefType, GetValue,
+  SetValue, GetIntValue, SetIntValue, GetUIntValue, SetUIntValue, GetFloatValue,
+  SetFloatValue;
 
 begin
   IsMultiThread := True;
