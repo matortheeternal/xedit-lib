@@ -19,6 +19,7 @@ interface
   function SetFloatValue(_id: Integer; path: PWideChar; value: Double): WordBool; StdCall;
   function SetFlag(_id: Integer; path, name: PWideChar; enabled: WordBool): WordBool; StdCall;
   function GetFlag(_id: Integer; path, name: PWideChar): WordBool; StdCall;
+  function ToggleFlag(_id: Integer; path, name: PWideChar): WordBool; StdCall;
 
 implementation
 
@@ -368,6 +369,33 @@ begin
         for i := 0 to Pred(enumDef.NameCount) do
           if SameText(enumDef.Names[i], name) then
             Result := element.NativeValue and (1 shl i);
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function ToggleFlag(_id: Integer; path, name: PWideChar): WordBool; StdCall;
+var
+  container: IwbContainerElementRef;
+  element: IwbElement;
+  enumDef: IwbEnumDef;
+  i: Integer;
+  flagVal: Cardinal;
+begin
+  Result := false;
+  try
+    if Supports(Resolve(_id), IwbContainerElementRef, container) then begin
+      element := container.ElementByPath[string(path)];
+      if Supports(element.Def, IwbEnumDef, enumDef) then
+        for i := 0 to Pred(enumDef.NameCount) do
+          if SameText(enumDef.Names[i], name) then begin
+            flagVal := 1 shl i;
+            if element.NativeValue and flagVal then
+              element.NativeValue = element.NativeValue and not flagVal
+            else
+              element.NativeValue = element.NativeValue or flagVal;
+          end;
     end;
   except
     on x: Exception do ExceptionHandler(x);
