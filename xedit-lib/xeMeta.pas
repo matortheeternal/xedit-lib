@@ -10,6 +10,7 @@ uses
   procedure ExceptionHandler(x: Exception);
   procedure GetBuffer(str: PWideChar; len: Integer); StdCall;
   procedure FlushBuffer; StdCall;
+  function GetExceptionMessage(str: PWideChar; len: Integer): WordBool; StdCall;
   function GetGlobal(key, value: PWideChar; len: Integer): WordBool; StdCall;
   function Resolve(_id: Cardinal): IInterface;
   function Store(x: IInterface): Cardinal;
@@ -20,6 +21,7 @@ var
   _store: TInterfaceList;
   _releasedIDs: TList<Cardinal>;
   nextID: Cardinal;
+  exceptionMessage: String;
 
 implementation
 
@@ -38,9 +40,13 @@ uses
 
 procedure Initialize; StdCall;
 begin
+  // initialize variables
   MessageBuffer := TStringList.Create;
   _store := TInterfaceList.Create;
   _releasedIDs := TList<Cardinal>.Create;
+  exceptionMessage := '';
+
+  // add welcome message
   AddMessage('XEditLib v' + ProgramStatus.ProgramVersion);
 
   // store global values
@@ -56,7 +62,8 @@ end;
 
 procedure ExceptionHandler(x: Exception);
 begin
-  AddMessage(Format('%s: %s', [x.StackTrace, x.Message]));
+  exceptionMessage := Format('%s: %s', [x.StackTrace, x.Message]);
+  AddMessage(exceptionMessage);
 end;
 
 procedure GetBuffer(str: PWideChar; len: Integer); StdCall;
@@ -67,6 +74,15 @@ end;
 procedure FlushBuffer; StdCall;
 begin
   MessageBuffer.Clear;
+end;
+
+function GetExceptionMessage(str: PWideChar; len: Integer): WordBool; StdCall;
+begin
+  Result := false;
+  if Length(exceptionMessage) > 0 then begin
+    StrLCopy(str, PWideChar(WideString(exceptionMessage)), len);
+    Result := true;
+  end;
 end;
 
 function GetGlobal(key, value: PWideChar; len: Integer): WordBool; StdCall;
