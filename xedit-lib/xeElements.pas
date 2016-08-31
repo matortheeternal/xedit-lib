@@ -6,8 +6,8 @@ interface
   function NewElement(_id: Cardinal; key: PWideChar): Cardinal; StdCall;
   function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; StdCall;
   function ElementExists(_id: Cardinal; key: PWideChar): WordBool; StdCall;
-  function ElementCount(_id: Cardinal): Cardinal; StdCall;
-  function ElementAssigned(_id: Cardinal): Cardinal; StdCall;
+  function ElementCount(_id: Cardinal): Integer; StdCall;
+  function ElementAssigned(_id: Cardinal): WordBool; StdCall;
   function Equals(_id, _id2: Cardinal): WordBool; StdCall;
   function IsMaster(_id: Cardinal): WordBool; StdCall;
   function IsInjected(_id: Cardinal): WordBool; StdCall;
@@ -50,9 +50,9 @@ begin
     e := Resolve(_id);
     if Supports(e, IwbFile, _file) then
       // TODO: perhaps also by group name?
-      Result := Store(_file.GroupBySignature(StrToSignature(key)))
+      Result := Store(_file.GroupBySignature[StrToSignature(key)])
     else if Supports(e, IwbContainerElementRef, container) then
-      Result := Store(container.ElementByPath(string(key)));
+      Result := Store(container.ElementByPath[string(key)]);
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -80,7 +80,7 @@ begin
           keyIndex := ParseIndex(key);
           // use InsertElement if index was given, else use Add
           if keyIndex > -1 then
-            Result := Store(container.InsertElement(keyIndex, nil))
+            Result := Store(container.Assign(keyIndex, nil, false))
           else
             Result := Store(container.Add(string(key), true));
         end;
