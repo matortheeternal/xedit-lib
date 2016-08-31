@@ -23,12 +23,7 @@ type
   TSettings = class(TObject)
   public
     [IniSection('General')]
-    dummyPluginPath: string;
-    dumpPath: string;
     language: string;
-    bPrintHashes: boolean;
-    bSaveToDisk: boolean;
-    bAllowDummies: boolean;
     [IniSection('Games')]
     skyrimPath: string;
     oblivionPath: string;
@@ -41,7 +36,7 @@ type
   end;
   TProgramStatus = class(TObject)
   public
-    bUsedDummyPlugins: boolean;
+    bLoaderDone: boolean;
     ProgramVersion: string;
     GameMode: TGameMode;
     constructor Create; virtual;
@@ -56,7 +51,7 @@ type
 
 var
   ProgramStatus: TProgramStatus;
-  PathList: TStringList;
+  Globals: TStringList;
   settings: TSettings;
   dummyPluginHash: string;
 
@@ -86,46 +81,14 @@ implementation
 { TSettings }
 constructor TSettings.Create;
 begin
-  // default settings
-  dummyPluginPath := '{{gameName}}\EmptyPlugin.esp';
-  dumpPath := '{{gameName}}\';
   language := 'English';
-  bPrintHashes := false;
-  bSaveToDisk := false;
-  bAllowDummies := false;
+
   // game paths
   falloutNVPath := GetGamePath(GameArray[0]) + 'data\';
   fallout3Path := GetGamePath(GameArray[1]) + 'data\';
   oblivionPath := GetGamePath(GameArray[2]) + 'data\';
   skyrimPath := GetGamePath(GameArray[3]) + 'data\';
   fallout4Path := GetGamePath(GameArray[4]) + 'data\';
-end;
-
-procedure TSettings.UpdateForGame;
-var
-  slMap: TStringList;
-begin
-  slMap := TStringList.Create;
-  try
-    // load values into map
-    slMap.Values['gameName'] := ProgramStatus.GameMode.gameName;
-    slMap.Values['longName'] := ProgramStatus.GameMode.longName;
-    slMap.Values['appName'] := ProgramStatus.GameMode.appName;
-    slMap.Values['abbrName'] := ProgramStatus.GameMode.abbrName;
-
-    // apply template
-    dummyPluginPath := PathList.Values['ProgramPath'] + ApplyTemplate(dummyPluginPath, slMap);
-    dumpPath := PathList.Values['ProgramPath'] + ApplyTemplate(dumpPath, slMap);
-
-    // force directories to exist
-    ForceDirectories(dumpPath);
-
-    // update empty plugin hash if empty plugin exists
-    if FileExists(dummyPluginPath) then
-      dummyPluginHash := FileCRC32(dummyPluginPath);
-  finally
-    slMap.Free;
-  end;
 end;
 
 function TSettings.GameDataPath: string;
@@ -142,7 +105,7 @@ end;
 { TProgramStatus }
 constructor TProgramStatus.Create;
 begin
-  bUsedDummyPlugins := false;
+  bLoaderDone := false;
   ProgramVersion := GetVersionMem;
 end;
 
@@ -262,24 +225,24 @@ end;
 procedure LoadSettings;
 begin
   settings := TSettings.Create;
-  TRttiIni.Load(PathList.Values['ProgramPath'] + 'settings.ini', settings);
+  TRttiIni.Load(Globals.Values['ProgramPath'] + 'settings.ini', settings);
 end;
 
 procedure SaveSettings;
 begin
-  TRttiIni.Save(PathList.Values['ProgramPath'] + 'settings.ini', settings);
+  TRttiIni.Save(Globals.Values['ProgramPath'] + 'settings.ini', settings);
 end;
 
 initialization
 begin
   ProgramStatus := TProgramStatus.Create;
-  PathList := TStringList.Create;
+  Globals := TStringList.Create;
 end;
 
 finalization
 begin
   ProgramStatus.Free;
-  PathList.Free;
+  Globals.Free;
 end;
 
 end.
