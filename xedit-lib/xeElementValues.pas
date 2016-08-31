@@ -20,7 +20,7 @@ interface
   function SetFlag(_id: Integer; path, name: PWideChar; enabled: WordBool): WordBool; StdCall;
   function GetFlag(_id: Integer; path, name: PWideChar): WordBool; StdCall;
   function ToggleFlag(_id: Integer; path, name: PWideChar): WordBool; StdCall;
-  function GetEnabledFlags(_id: Integer; path, flags: PWideChar): WordBool; StdCall;
+  function GetEnabledFlags(_id: Integer; path: PWideChar; out flags: PWideChar): WordBool; StdCall;
 
 implementation
 
@@ -342,11 +342,11 @@ begin
       if Supports(element.Def, IwbEnumDef, enumDef) then
         for i := 0 to Pred(enumDef.NameCount) do
           if SameText(enumDef.Names[i], name) then begin
-            flagVal = 1 shl i;
+            flagVal := 1 shl i;
             if enabled then
-              element.NativeValue = element.NativeValue or flagVal
+              element.NativeValue := element.NativeValue or flagVal
             else
-              element.NativeValue = element.NativeValue and not flagVal;
+              element.NativeValue := element.NativeValue and not flagVal;
           end;
     end;
   except
@@ -360,7 +360,6 @@ var
   element: IwbElement;
   enumDef: IwbEnumDef;
   i: Integer;
-  flagVal: Cardinal;
 begin
   Result := false;
   try
@@ -393,9 +392,9 @@ begin
           if SameText(enumDef.Names[i], name) then begin
             flagVal := 1 shl i;
             if element.NativeValue and flagVal then
-              element.NativeValue = element.NativeValue and not flagVal
+              element.NativeValue := element.NativeValue and not flagVal
             else
-              element.NativeValue = element.NativeValue or flagVal;
+              element.NativeValue := element.NativeValue or flagVal;
           end;
     end;
   except
@@ -403,7 +402,7 @@ begin
   end;
 end;
 
-function GetEnabledFlags(_id: Integer; path, flags: PWideChar): WordBool; StdCall;
+function GetEnabledFlags(_id: Integer; path: PWideChar; out flags: PWideChar): WordBool; StdCall;
 var
   slFlags: TStringList;
   container: IwbContainerElementRef;
@@ -430,7 +429,7 @@ begin
       end;
 
       // set output
-      flags := slFlags.DelimitedText;
+      flags := PWideChar(WideString(slFlags.DelimitedText));
       Result := true;
     finally
       slFlags.Free;
