@@ -24,7 +24,7 @@ uses
   CRC32 in '..\lib\mte\CRC32.pas',
   RttiIni in '..\lib\mte\RttiIni.pas',
   wbImplementation in '..\lib\xedit\wbImplementation.pas',
-  wbInterface in '..\lib\xedit\wbInterface.pas' {$R *.res},
+  wbInterface in '..\lib\xedit\wbInterface.pas',
   wbBSA in '..\lib\xedit\wbBSA.pas',
   wbSort in '..\lib\xedit\wbSort.pas',
   wbDefinitionsFNV in '..\lib\xedit\wbDefinitionsFNV.pas',

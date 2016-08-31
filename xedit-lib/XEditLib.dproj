@@ -69,9 +69,7 @@
 			<DCCReference Include="..\lib\mte\CRC32.pas"/>
 			<DCCReference Include="..\lib\mte\RttiIni.pas"/>
 			<DCCReference Include="..\lib\xedit\wbImplementation.pas"/>
-			<DCCReference Include="..\lib\xedit\wbInterface.pas">
-				<Form>$R *.res</Form>
-			</DCCReference>
+			<DCCReference Include="..\lib\xedit\wbInterface.pas"/>
 			<DCCReference Include="..\lib\xedit\wbBSA.pas"/>
 			<DCCReference Include="..\lib\xedit\wbSort.pas"/>
 			<DCCReference Include="..\lib\xedit\wbDefinitionsFNV.pas"/>
