@@ -14,9 +14,9 @@ type
   end;
 
   procedure SetGameMode(mode: Integer); StdCall;
-  function GetLoadOrder(str: PAnsiChar; len: Integer): WordBool; StdCall;
-  function LoadPlugins(str: PAnsiChar; len: Integer): WordBool; StdCall;
-  function GetGlobal(key, value: PAnsiChar; len: Integer): WordBool; StdCall;
+  function GetLoadOrder(str: PWideChar; len: Integer): WordBool; StdCall;
+  function LoadPlugins(loadOrder: PWideChar): WordBool; StdCall;
+  function GetLoaderDone: WordBool; StdCall;
 
 var
   Files: array of IwbFile;
@@ -102,22 +102,52 @@ begin
 end;
 
 
-function GetLoadOrder(str: PAnsiChar; len: Integer): WordBool; StdCall;
+function GetLoadOrder(str: PWideChar; len: Integer): WordBool; StdCall;
+var
+  slPlugins: TStringList;
 begin
   Result := false;
-  // TODO
+  try
+    slPlugins := TStringList.Create;
+    try
+      // TODO: load this from the right directory
+      slPlugins.LoadFromFile('loadorder.txt');
+      StrLCopy(str, PWideChar(WideString(slPlugins.Text)), len);
+      Result := true;
+    finally
+      slPlugins.Free;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
 end;
 
-function LoadPlugins(str: PAnsiChar; len: Integer): WordBool; StdCall;
+function LoadPlugins(loadOrder: PWideChar): WordBool; StdCall;
 begin
   Result := false;
-  // TODO
+  try
+    // exit if we have already started loading plugins
+    if Assigned(slLoadOrder) then exit;
+    
+    // store load order we're going to use in slLoadOrder
+    slLoadOrder := TStringList.Create;
+    slLoadOrder.StrictDelimiter := true;
+    slLoadOrder.Delimiter := ',';
+    slLoadOrder.DelimitedText := string(loadOrder);
+
+    // set filecount global
+    Globals.Values['FileCount'] := slLoadOrder.Count;
+
+    // start loader thread
+    TLoaderThread.Create;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
 end;
 
-function GetGlobal(key, value: PAnsiChar; len: Integer): WordBool; StdCall;
+function GetLoaderDone: WordBool; StdCall;
 begin
-  Result := false;
-  // TODO
+  Result := ProgramStatus.bLoaderDone;
 end;
 
 end.
