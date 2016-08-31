@@ -12,7 +12,6 @@ FILE HANDLING
   - FileByLoadOrder
   - FileByName
   - FileByAuthor
-  - FilesThatRequire
   - GetElementFile
 
 GETTERS AND SETTERS
@@ -30,6 +29,8 @@ GETTERS AND SETTERS
   
 
 MASTERS
+  - GetMasters
+  - FilesThatRequire
   - CleanMasters
   - SortMasters
   - AddFilesToList
@@ -48,7 +49,6 @@ ELEMENT HANDLING
   - GetElement: replaces ElementByName, ElementByPath, ElementByIndex, GroupBySignature, and ElementBySignature.  Supports indexed paths.
   - GetElements: gets all elements at the specified path
   - NewElement: replaces ElementAssign, Add, AddElement, and InsertElement
-  - RemoveElement: replaces Remove, RemoveByIndex, RemoveElement, and RemoveNode
   - ElementExists: replaces HasGroup and ElementExists.
   - ElementCount: same
   - Assigned: same
@@ -60,32 +60,23 @@ ELEMENT HANDLING
   - IsOverride
   - IsWinningOverride
   - IsValue
+  
+  - RemoveElement: replaces Remove, RemoveByIndex, RemoveElement, and RemoveNode
   - ElementMatches
   - StructMatches
   - MoveElementToIndex
   - GetContainer
-  - OverrideCount
-  - OverrideByIndex
   - CopyRecord: replaces wbCopyElementToFile
   - CopyElement: replaces wbCopyElementToRecord
   
 GETTERS AND SETTERS
   - Name
   - EditorID
-  - Path
   - Signature
   - ShortName
   - SortKey
-  - GetFormID
-  - SetFormID
   - DefType
   - ElementType
-  - ConflictAll
-  - ConflictThis
-  - GetListValues
-  - SetListValues
-  - GetElementListValues
-  - SetElementListValues
   - GetValue: replaces GetElementEditValues and GetEditValue
   - SetValue: replaces SetElementEditValues and SetEditValue 
   - GetIntValue
@@ -98,6 +89,14 @@ GETTERS AND SETTERS
   - GetFlag
   - ToggleFlag
   - GetEnabledFlags
+  
+  - Path
+  - ConflictAll
+  - ConflictThis
+  - GetListValues
+  - SetListValues
+  - GetElementListValues
+  - SetElementListValues
   - HasArrayValue
   - GetArrayValue
   - AddArrayValue
@@ -106,3 +105,13 @@ GETTERS AND SETTERS
   - GetArrayStruct
   - AddArrayStruct
   - DeleteArrayStruct
+  
+  
+---
+
+== RECORDS ==
+
+  - OverrideCount
+  - OverrideByIndex
+  - GetFormID
+  - SetFormID

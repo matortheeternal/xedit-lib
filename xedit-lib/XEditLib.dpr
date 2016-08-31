@@ -38,7 +38,6 @@ uses
   wbStreams in '..\lib\xedit\wbStreams.pas',
   Zlibex in '..\lib\xedit\Zlibex.pas';
 
-{$R *.res}
 {$MAXSTACKSIZE 2097152}
 
 const
@@ -53,7 +52,7 @@ exports
   NewFile, FileByIndex, FileByLoadOrder, FileByName, FileByAuthor,
   GetElementFile, SaveFile,
   // MASTER HANDLING METHODS
-  CleanMasters, SortMasters, AddMaster, RemoveMaster,
+  CleanMasters, SortMasters, AddMaster, GetMaster,
   // ELEMENT HANDLING METHODS
   GetElement, NewElement, RemoveElement, ElementExists, ElementCount,
   ElementAssigned, Equals, IsMaster, IsInjected, IsOverride, IsWinningOverride,
