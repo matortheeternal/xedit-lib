@@ -10,6 +10,7 @@ uses
   procedure ExceptionHandler(x: Exception);
   procedure GetBuffer(str: PWideChar; len: Integer); StdCall;
   procedure FlushBuffer; StdCall;
+  function GetGlobal(key, value: PWideChar; len: Integer): WordBool; StdCall;
   function Resolve(_id: Cardinal): IInterface;
   function Store(x: IInterface): Cardinal;
   procedure Release(_id: Cardinal); StdCall;
@@ -42,8 +43,9 @@ begin
   _releasedIDs := TList<Cardinal>.Create;
   AddMessage('XEditLib v' + ProgramStatus.ProgramVersion);
 
-  // get program path
-  PathList.Values['ProgramPath'] := ExtractFilePath(ParamStr(0));
+  // store global values
+  Globals.Values['ProgramPath'] := ExtractFilePath(ParamStr(0));
+  Globals.Values['Version'] := ProgramStatus.ProgramVersion;
 end;
 
 procedure Finalize; StdCall;
@@ -65,6 +67,19 @@ end;
 procedure FlushBuffer; StdCall;
 begin
   MessageBuffer.Clear;
+end;
+
+function GetGlobal(key, value: PWideChar; len: Integer): WordBool; StdCall;
+begin
+  Result := false;
+  try
+    if Globals.IndexOfName(key) > -1 then begin
+      StrLCopy(value, PWideChar(WideString(Globals[key])), len);
+      Result := true;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
 end;
 
 function Resolve(_id: Cardinal): IInterface;
