@@ -11,11 +11,11 @@ interface
   function DefType(_id: Integer; str: PWideChar; len: Integer): WordBool; StdCall;
   function GetValue(_id: Integer; path, str: PWideChar; len: Integer): WordBool; StdCall;
   function SetValue(_id: Integer; path, value: PWideChar): WordBool; StdCall;
-  function GetIntValue(_id: Integer; path: PWideChar; value: Integer): WordBool; StdCall;
+  function GetIntValue(_id: Integer; path: PWideChar; out value: Integer): WordBool; StdCall;
   function SetIntValue(_id: Integer; path: PWideChar; value: Integer): WordBool; StdCall;
-  function GetUIntValue(_id: Integer; path: PWideChar; value: Cardinal): WordBool; StdCall;
+  function GetUIntValue(_id: Integer; path: PWideChar; out value: Cardinal): WordBool; StdCall;
   function SetUIntValue(_id: Integer; path: PWideChar; value: Cardinal): WordBool; StdCall;
-  function GetFloatValue(_id: Integer; path: PWideChar; value: Double): WordBool; StdCall;
+  function GetFloatValue(_id: Integer; path: PWideChar; out value: Double): WordBool; StdCall;
   function SetFloatValue(_id: Integer; path: PWideChar; value: Double): WordBool; StdCall;
 
 implementation
@@ -105,11 +105,10 @@ begin
   end;
 end;
 
-function etToString(et: Integer): String;
+function etToString(et: TwbElementType): String;
 begin
   case Ord(et) of
     Ord(etFile): Result := 'etFile';
-    Ord(etMainRecord): Result := 'etMainRecord';
     Ord(etMainRecord): Result := 'etMainRecord';
     Ord(etGroupRecord): Result := 'etGroupRecord';
     Ord(etSubRecord): Result := 'etSubRecord';
@@ -134,7 +133,7 @@ begin
   Result := false;
   try
     if Supports(Resolve(_id), IwbElement, element) then begin
-      s = etToString(element.ElementType);
+      s := etToString(element.ElementType);
       StrLCopy(str, PWideChar(WideString(s)), len);
       Result := true;
     end;
@@ -143,7 +142,7 @@ begin
   end;
 end;
 
-function dtToString(dt: Integer): String;
+function dtToString(dt: TwbDefType): String;
 begin
   case Ord(dt) of
     Ord(dtRecord): Result := 'dtRecord';
@@ -238,7 +237,7 @@ var
   container: IwbContainerElementRef;
   element: IwbElement;
 begin
-  Result := nil;
+  Result := Variants.Null;
   e := Resolve(_id);
   if Supports(e, IwbContainerElementRef, container) then
     Result := container.ElementNativeValues[string(path)]
@@ -261,7 +260,7 @@ begin
   Result := true;
 end;
 
-function GetIntValue(_id: Integer; path: PWideChar; value: Integer): WordBool; StdCall;
+function GetIntValue(_id: Integer; path: PWideChar; out value: Integer): WordBool; StdCall;
 begin
   Result := false;
   try
@@ -282,7 +281,7 @@ begin
   end;
 end;
 
-function GetUIntValue(_id: Integer; path: PWideChar; value: Cardinal): WordBool; StdCall;
+function GetUIntValue(_id: Integer; path: PWideChar; out value: Cardinal): WordBool; StdCall;
 begin
   Result := false;
   try
@@ -303,7 +302,7 @@ begin
   end;
 end;
 
-function GetFloatValue(_id: Integer; path: PWideChar; value: Double): WordBool; StdCall;
+function GetFloatValue(_id: Integer; path: PWideChar; out value: Double): WordBool; StdCall;
 begin
   Result := false;
   try
