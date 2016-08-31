@@ -4,6 +4,7 @@ interface
 
   function GetFileHeader(_id, _res: Cardinal): WordBool; StdCall;
   function GetNextObjectId(_id, nextObjectID: Cardinal): WordBool; StdCall;
+  function SetNextObjectID(_id, nextObjectID: Cardinal): WordBool; StdCall;
 implementation
 
 uses
@@ -39,6 +40,21 @@ begin
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
       nextObjectID := _file.Header.ElementNativeValues['HEDR\Next Object ID'];
+      Result := true;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function SetNextObjectId(_id, nextObjectID: Cardinal): WordBool; StdCall;
+var
+  _file: IwbFile;
+begin
+  Result := false;
+  try
+    if Supports(Resolve(_id), IwbFile, _file) then begin
+      _file.Header.ElementNativeValues['HEDR\Next Object ID'] := nextObjectID;
       Result := true;
     end;
   except
