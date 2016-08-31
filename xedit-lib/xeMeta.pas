@@ -2,22 +2,27 @@ unit xeMeta;
 
 interface
 
+uses
+  Classes, SysUtils, Generics.Collections;
+
   procedure Initialize; StdCall;
   procedure Finalize; StdCall;
+  procedure ExceptionHandler(x: Exception);
   procedure GetBuffer(str: PWideChar; len: Integer); StdCall;
   procedure FlushBuffer; StdCall;
   function Resolve(_id: Cardinal): IInterface;
   function Store(x: IInterface): Cardinal;
+  procedure Release(_id: Cardinal); StdCall;
   procedure ResetStore; StdCall;
 
 var
-  _store: Array[0..$FFFFFFFF] of IInterface;
-  last_id: Cardinal;
+  _store: TInterfaceList;
+  _releasedIDs: TList<Cardinal>;
+  nextID: Cardinal;
 
 implementation
 
 uses
-  SysUtils, Classes,
   // mte modules
   mteHelpers,
   // xelib modules
@@ -33,8 +38,9 @@ uses
 procedure Initialize; StdCall;
 begin
   MessageBuffer := TStringList.Create;
+  _store := TInterfaceList.Create;
+  _releasedIDs := TList<Cardinal>.Create;
   AddMessage('XEditLib v' + ProgramStatus.ProgramVersion);
-  last_id := 0;
 
   // get program path
   PathList.Values['ProgramPath'] := ExtractFilePath(ParamStr(0));
@@ -67,25 +73,34 @@ begin
 end;
 
 function Store(x: IInterface): Cardinal;
+var
+  i: Integer;
 begin
-  _store[last_id] = x;
-  Result := last_id;
-  Inc(last_id);
-  if last_id = $FFFFFFFF then begin
-    AddMessage('WARNING: STORE OVERFLOW.');
-    last_id := 0;
-  end;
+  if _releasedIDs.Count > 0 then begin
+    i := _releasedIDs.First;
+    _store[i] := x;
+    _releasedIDs.Delete(0);
+    Result := i;
+  end
+  else
+    Result := _store.Add(x);
+end;
+
+procedure Release(_id: Cardinal); StdCall;
+begin
+  _store[_id]._Release;
+  _store[_id] := nil;
+  _releasedIDs.Add(_id);
 end;
 
 procedure ResetStore; StdCall;
 var
   i: Integer;
 begin
-  for i := 0 to Pred(last_id) do begin
+  for i := 0 to Pred(_store.Count) do
     if Assigned(_store[i]) then
       _store[i]._Release;
-  end;
-  last_id = 0;
+  _store.Clear;
 end;
 
 end.
