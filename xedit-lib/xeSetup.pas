@@ -91,9 +91,11 @@ procedure SetGameMode(mode: Integer); StdCall;
 begin
   try
     SetGame(mode);
-    AddMessage('Game: ' + ProgramStatus.GameMode.longName);
-    AddMessage('DataPath: ' + settings.gameDataPath);
-    AddMessage(' ');
+    // set global values
+    Globals.Values['GameName'] := ProgramStatus.GameMode.gameName;
+    Globals.Values['AppName'] := ProgramStatus.GameMode.appName;
+    Globals.Values['LongGameName'] := ProgramStatus.GameMode.longName;
+    Globals.Values['DataPath'] := settings.gameDataPath;
   except
     on x: Exception do ExceptionHandler(x);
   end;
