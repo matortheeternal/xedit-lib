@@ -45,9 +45,10 @@ const
 
 exports
   // META METHODS
-  Initialize, Finalize, GetBuffer, FlushBuffer, Release, ResetStore,
+  Initialize, Finalize, GetBuffer, FlushBuffer, GetExceptionMessage, GetGlobal,
+  Release, ResetStore,
   // LOADING AND SET UP METHODS
-  SetGameMode, GetLoadOrder, LoadPlugins, GetGlobal,
+  SetGameMode, GetLoadOrder, LoadPlugins, GetLoaderDone,
   // FILE HANDLING METHODS
   NewFile, FileByIndex, FileByLoadOrder, FileByName, FileByAuthor,
   GetElementFile, SaveFile,
