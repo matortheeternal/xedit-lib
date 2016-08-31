@@ -2,10 +2,10 @@ unit xeMasters;
 
 interface
 
-  function SortMasters(_file: Cardinal): WordBool; StdCall;
   function AddMaster(_file, _master: Cardinal): WordBool; StdCall;
   function RemoveMaster(_file, _master: Cardinal): WordBool; StdCall;
   function CleanMasters(_id: Cardinal): WordBool; StdCall;
+  function SortMasters(_id: Cardinal): WordBool; StdCall;
 
 implementation
 
@@ -37,10 +37,18 @@ begin
   end;
 end;
 
-function SortMasters(_file: Cardinal): WordBool; StdCall;
+function SortMasters(_id: Cardinal): WordBool; StdCall;
+var
+  _file: IwbFile;
 begin
   Result := false;
-  // TODO
+  try
+    if Supports(Resolve(_id), IwbFile, _file) then
+      _file.SortMasters;
+    Result := true;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
 end;
 
 function AddMaster(_file, _master: Cardinal): WordBool; StdCall;
