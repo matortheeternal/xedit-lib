@@ -6,6 +6,7 @@ interface
   function GetNextObjectId(_id, nextObjectID: Cardinal): WordBool; StdCall;
   function SetNextObjectID(_id, nextObjectID: Cardinal): WordBool; StdCall;
   function GetAuthor(_id: Cardinal; author: PWideChar; len: Integer): WordBool; StdCall;
+  function SetAuthor(_id: Cardinal; author: PWideChar): WordBool; StdCall;
 implementation
 
 uses
@@ -73,6 +74,21 @@ begin
     if Supports(Resolve(_id), IwbFile, _file) then begin
       s := _file.Header.ElementEditValues['CNAM'];
       StrLCopy(author, PWideChar(WideString(s)), len);
+      Result := true;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function SetAuthor(_id: Cardinal; author: PWideChar): WordBool; StdCall;
+var
+  _file: IwbFile;
+begin
+  Result := false;
+  try
+    if Supports(Resolve(_id), IwbFile, _file) then begin
+      _file.Header.ElementEditValues['CNAM'] := string(author);
       Result := true;
     end;
   except
