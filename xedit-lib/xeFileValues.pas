@@ -11,6 +11,8 @@ interface
   function SetDescription(_id: Cardinal; desc: PWideChar): WordBool; StdCall;
   function OverrideRecordCount(_id: Cardinal; count: Integer): WordBool; StdCall;
   function GetIsESM(_id: Cardinal; isESM: WordBool): WordBool; StdCall;
+  function SetIsESM(_id: Cardinal; isESM: WordBool): WordBool; StdCall;
+
 implementation
 
 uses
@@ -164,5 +166,21 @@ begin
     on x: Exception do ExceptionHandler(x);
   end;
 end;
+
+function SetIsESM(_id: Cardinal; isESM: WordBool): WordBool; StdCall;
+var
+  _file: IwbFile;
+begin
+  Result := false;
+  try
+    if Supports(Resolve(_id), IwbFile, _file) then begin
+      _file.IsESM = isESM;
+      Result := true;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
 
 end.
