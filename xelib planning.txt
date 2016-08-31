@@ -26,7 +26,6 @@ GETTERS AND SETTERS
   - GetOverrideRecords
   - GetIsESM
   - SetIsESM
-  
 
 MASTERS
   - GetMasters
