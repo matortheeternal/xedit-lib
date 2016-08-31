@@ -2,20 +2,19 @@ unit xeMasters;
 
 interface
 
+  function CleanMasters(_file: Cardinal): WordBool; StdCall;
+  function SortMasters(_file: Cardinal): WordBool; StdCall;
+  function AddMaster(_file, _master: Cardinal): WordBool; StdCall;
+  function RemoveMaster(_file, _master: Cardinal): WordBool; StdCall;
+
+implementation
+
 uses
-  Classes,
+  SysUtils,
   // xedit modules
   wbInterface, wbImplementation,
   // xelib modules
   xeMeta;
-
-  // MASTER HANDLING
-  function CleanMasters(_file: Integer): WordBool; StdCall;
-  function SortMasters(_file: Integer): WordBool; StdCall;
-  function AddMaster(_file, _master: Integer): WordBool; StdCall;
-  function RemoveMaster(_file, _master: Integer): WordBool; StdCall;
-
-implementation
 
 
 {******************************************************************************}
@@ -26,18 +25,26 @@ implementation
 
 function CleanMasters(_file: Cardinal): WordBool; StdCall;
 begin
+  Result := false;
+  // TODO
 end;
 
 function SortMasters(_file: Cardinal): WordBool; StdCall;
 begin
+  Result := false;
+  // TODO
 end;
 
 function AddMaster(_file, _master: Cardinal): WordBool; StdCall;
 begin
+  Result := false;
+  // TODO
 end;
 
 function RemoveMaster(_file, _master: Cardinal): WordBool; StdCall;
 begin
+  Result := false;
+  // TODO
 end;
 
 end.

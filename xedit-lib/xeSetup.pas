@@ -10,7 +10,7 @@ uses
   procedure SetGameMode(mode: Integer); StdCall;
   function GetLoadOrder(str: PAnsiChar; len: Integer): WordBool; StdCall;
   function LoadPlugins(str: PAnsiChar; len: Integer): WordBool; StdCall;
-  function GetGlobal(key, result: PAnsiChar; len: Integer): WordBool; StdCall;
+  function GetGlobal(key, value: PAnsiChar; len: Integer): WordBool; StdCall;
 
 var
   Files: array of IwbFile;
@@ -43,14 +43,20 @@ end;
 
 function GetLoadOrder(str: PAnsiChar; len: Integer): WordBool; StdCall;
 begin
+  Result := false;
+  // TODO
 end;
 
 function LoadPlugins(str: PAnsiChar; len: Integer): WordBool; StdCall;
 begin
+  Result := false;
+  // TODO
 end;
 
-function GetGlobal(key, result: PAnsiChar; len: Integer): WordBool; StdCall;
+function GetGlobal(key, value: PAnsiChar; len: Integer): WordBool; StdCall;
 begin
+  Result := false;
+  // TODO
 end;
 
 end.
