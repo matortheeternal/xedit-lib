@@ -7,8 +7,8 @@ uses
 
   function AddRecord(_id: Cardinal; sig: string; _res: PCardinal): WordBool; StdCall;
   function GetRecords(_id: Cardinal; _res: PCardinalArray): WordBool; StdCall;
+  function RecordsBySignature(_id: Cardinal; sig: string; _res: PCardinalArray): WordBool; StdCall;
   function RecordByIndex(_id: Cardinal; index: Integer; _res: PCardinal): WordBool; StdCall;
-  //function RecordsBySignature(_id: Cardinal; sig: string; _res: PCardinalArray): WordBool; StdCall;
   function RecordByFormID(_id, formID: Cardinal; _res: PCardinal): WordBool; StdCall;
   function RecordByEditorID(_id: Cardinal; edid: string; _res: PCardinal): WordBool; StdCall;
   function RecordByName(_id: Cardinal; full: string; _res: PCardinal): WordBool; StdCall;
@@ -77,6 +77,35 @@ begin
     else if Supports(e, IwbGroupRecord, group) then begin
       StoreRecords(group, _res);
       Result := true;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function RecordsBySignature(_id: Cardinal; sig: string; _res: PCardinalArray): WordBool; StdCall;
+var
+  _sig: TwbSignature;
+  _file: IwbFile;
+  i: Integer;
+  group: IwbGroupRecord;
+  rec: IwbMainRecord;
+begin
+  Result := false;
+  try
+    _sig := TwbSignature(sig);
+    if Supports(Resolve(_id), IwbFile, _file) then
+      if _file.HasGroup(_sig) then begin
+        group := _file.GroupBySignature[_sig];
+        GetMem(_res, 4 * group.ElementCount);
+        for i := 0 to Pred(group.ElementCount) do
+          _res^[i]^ := Store(group.Elements[i]);
+      end
+    else if Supports(Resolve(_id), IwbGroupRecord, group) then begin
+      GetMem(_res, 4 * group.ElementCount);
+      for i := 0 to Pred(group.ElementCount) do
+        if Supports(group.Elements[i], IwbMainRecord, rec) then
+          _res^[i]^ := Store(rec);
     end;
   except
     on x: Exception do ExceptionHandler(x);
