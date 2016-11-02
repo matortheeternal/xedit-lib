@@ -12,6 +12,7 @@ uses
   procedure FlushBuffer; StdCall;
   function GetExceptionMessage(str: PWideChar; len: Integer): WordBool; StdCall;
   function GetGlobal(key, value: PWideChar; len: Integer): WordBool; StdCall;
+  procedure StoreIfAssigned(var x: IInterface; var _res: PCardinal; var Success: WordBool);
   function Resolve(_id: Cardinal): IInterface;
   function Store(x: IInterface): Cardinal;
   procedure Release(_id: Cardinal); StdCall;
@@ -108,6 +109,14 @@ end;
 function Resolve(_id: Cardinal): IInterface;
 begin
   Result := _store[_id];
+end;
+
+procedure StoreIfAssigned(var x: IInterface; var _res: PCardinal; var Success: WordBool);
+begin
+  if Assigned(x) then begin
+    _res^ := Store(x);
+    Success := true;
+  end;
 end;
 
 function Store(x: IInterface): Cardinal;
