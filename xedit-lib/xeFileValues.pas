@@ -2,8 +2,8 @@ unit xeFileValues;
 
 interface
 
-  function GetFileHeader(_id, _res: Cardinal): WordBool; StdCall;
-  function GetNextObjectId(_id, nextObjectID: Cardinal): WordBool; StdCall;
+  function GetFileHeader(_id: Cardinal; _res: PCardinal): WordBool; StdCall;
+  function GetNextObjectId(_id: Cardinal; nextObjectID: PCardinal): WordBool; StdCall;
   function SetNextObjectID(_id, nextObjectID: Cardinal): WordBool; StdCall;
   function GetFileName(_id: Cardinal; fileName: PWideChar; len: Integer): WordBool; StdCall;
   function GetAuthor(_id: Cardinal; author: PWideChar; len: Integer): WordBool; StdCall;
@@ -26,14 +26,14 @@ uses
   xeMessages, xeMeta;
 
 
-function GetFileHeader(_id, _res: Cardinal): WordBool; StdCall;
+function GetFileHeader(_id: Cardinal; _res: PCardinal): WordBool; StdCall;
 var
   _file: IwbFile;
 begin
   Result := false;
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
-      _res := Store(_file.Header);
+      _res^ := Store(_file.Header);
       Result := true;
     end;
   except
@@ -41,14 +41,14 @@ begin
   end;
 end;
 
-function GetNextObjectId(_id, nextObjectID: Cardinal): WordBool; StdCall;
+function GetNextObjectId(_id: Cardinal; nextObjectID: PCardinal): WordBool; StdCall;
 var
   _file: IwbFile;
 begin
   Result := false;
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
-      nextObjectID := _file.Header.ElementNativeValues['HEDR\Next Object ID'];
+      nextObjectID^ := _file.Header.ElementNativeValues['HEDR\Next Object ID'];
       Result := true;
     end;
   except
