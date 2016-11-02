@@ -62,8 +62,9 @@ exports
   // GROUP HANDLING METHODS
   HasGroup, AddGroup, GetGroupSignatures, GetChildGroup,
   // RECORD HANDLING METHODS
-  AddRecord, {GetRecords,} RecordByIndex, {RecordsBySignature,} RecordByFormID,
-  RecordByEditorID, RecordByName;
+  AddRecord, GetRecords, RecordsBySignature, RecordByIndex, RecordByFormID,
+  RecordByEditorID, RecordByName, RecordSignatureFromName,
+  RecordNameFromSignature, GetRecordSignatureNameMap;
   // RECORD VALUE METHODS
 
 begin
