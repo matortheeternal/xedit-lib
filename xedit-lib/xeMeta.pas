@@ -67,8 +67,12 @@ begin
 end;
 
 procedure GetBuffer(str: PWideChar; len: Integer); StdCall;
+var
+  text: String;
 begin
-  StrLCopy(str, PWideChar(WideString(MessageBuffer.Text)), len);
+  text := MessageBuffer.Text;
+  Delete(text, Length(text), 1);
+  StrLCopy(str, PWideChar(WideString(text)), len);
 end;
 
 procedure FlushBuffer; StdCall;
