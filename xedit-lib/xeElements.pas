@@ -5,6 +5,7 @@ interface
   function GetElement(_id: Cardinal; key: PWideChar): Cardinal; StdCall;
   function NewElement(_id: Cardinal; key: PWideChar): Cardinal; StdCall;
   function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; StdCall;
+  function LinksTo(_id: Cardinal; _res: PCardinal): WordBool; StdCall;
   function ElementExists(_id: Cardinal; key: PWideChar): WordBool; StdCall;
   function ElementCount(_id: Cardinal): Integer; StdCall;
   function ElementAssigned(_id: Cardinal): WordBool; StdCall;
@@ -107,6 +108,24 @@ begin
   try
     e := Resolve(_id);
     // TODO
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function LinksTo(_id: Cardinal; _res: PCardinal): WordBool; StdCall;
+var
+  element, linkedElement: IwbElement;
+begin
+  Result := false;
+  try
+    if Supports(Resolve(_id), IwbElement, element) then begin
+      linkedElement := element.LinksTo;
+      if Assigned(linkedElement) then begin
+        _res^ := Store(linkedElement);
+        Result := true;
+      end;
+    end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
