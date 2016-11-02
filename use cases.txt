@@ -1,0 +1,50 @@
+Use Cases:
+  - Patching
+    - See MXPF
+    - Step 1: Specify what files you're patching.
+      fileNames = GetUserFileSelection();
+    
+    - Step 2: Specify a destination file for patched records, or create a new 
+      one. [Optional]
+      patchFile = FindOrCreateFileByName('MyPatch.esp');
+      
+    - Step 3: Load the records you want to patch and any other needed records
+      into arrays.
+      records = LoadRecords(fileNames, 'ARMO');
+      
+    - Step 4: Filter records. [Optional]
+      filteredRecords = records.filter(function(record) {
+        return GetIntValue(record, 'Some\\Value') > 1;
+      });
+      
+    - Step 5: Copy records to patch file. [Optional]
+      CopyRecordsToFile(records, patchFile);
+      
+    - Step 6: Create supplementary records. [Optional]
+      recordData.forEach(function(recordData) {
+        rec = NewRecord(patchFile, 'GLOB');
+        ApplyJsonToRecord(rec, recordData);
+      });
+      
+    - Step 7: Patch the records.
+      patchRecords.forEach(function(patchRecord) {
+        SetValue(patchRecord, 'Path\\To\\Something', 'SomeValue');
+      });
+      
+  - Automating batch edits
+    - See Automation Tools
+    - Select records and set values on them
+    - Set values on records that meet a condition
+    - Set values relative to other values
+    - Output values to multiple formats (JSON,XML,CSV,YAML,TXT)
+  
+  - Checking for and fixing errors
+    - Allow users to specify what plugins they want to fix errors for
+    - Find all errors in the plugins, storing the elements the errors occur on
+      in an array.
+    - Iterate through the array, displaying the errors and possible resolution 
+      options in an easy-to-use GUI.
+    - Allow for custom resolution.
+  
+  - Building new mods
+    - Build a fully-functional GUI.
