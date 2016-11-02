@@ -9,6 +9,7 @@ interface
   function FileByAuthor(author: PAnsiChar): Cardinal; StdCall;
   function GetElementFile(_id: Cardinal): Cardinal; StdCall;
   function SaveFile(_id: Cardinal): WordBool; StdCall;
+  function GetFileNames(fileNames: PWideChar; len: Integer): WordBool; StdCall;
 
 implementation
 
@@ -152,6 +153,23 @@ begin
         FileStream.Free;
       end;
     end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetFileNames(fileNames: PWideChar; len: Integer): WordBool; StdCall;
+var
+  s: String;
+  i: Integer;
+begin
+  Result := false;
+  try
+    s := '';
+    for i := Low(Files) to High(Files) do
+      s := s + Files[i].FileName + #13;
+    StrLCopy(fileNames, PWideChar(WideString(Trim(s))), len);
+    Result := true;
   except
     on x: Exception do ExceptionHandler(x);
   end;

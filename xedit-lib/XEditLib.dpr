@@ -44,7 +44,7 @@ exports
   SetGameMode, GetLoadOrder, LoadPlugins, GetLoaderDone,
   // FILE HANDLING METHODS
   NewFile, FileByIndex, FileByLoadOrder, FileByName, FileByAuthor,
-  GetElementFile, SaveFile,
+  GetElementFile, SaveFile, GetFileNames,
   // MASTER HANDLING METHODS
   CleanMasters, SortMasters, AddMaster, GetMaster,
   // FILE VALUE METHODS
