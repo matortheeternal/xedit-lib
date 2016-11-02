@@ -13,10 +13,10 @@ type
     procedure Execute; override;
   end;
 
-  procedure SetGameMode(mode: Integer); StdCall;
-  function GetLoadOrder(str: PWideChar; len: Integer): WordBool; StdCall;
-  function LoadPlugins(loadOrder: PWideChar): WordBool; StdCall;
-  function GetLoaderDone: WordBool; StdCall;
+  procedure SetGameMode(mode: Integer); cdecl;
+  function GetLoadOrder(str: PWideChar; len: Integer): WordBool; cdecl;
+  function LoadPlugins(loadOrder: PWideChar): WordBool; cdecl;
+  function GetLoaderDone: WordBool; cdecl;
 
   // LOAD ORDER HELPERS
   procedure RemoveCommentsAndEmpty(var sl: TStringList);
@@ -95,7 +95,7 @@ begin
   end;
 end;
 
-procedure SetGameMode(mode: Integer); StdCall;
+procedure SetGameMode(mode: Integer); cdecl;
 begin
   try
     SetGame(mode);
@@ -109,7 +109,7 @@ begin
   end;
 end;
 
-function GetLoadOrder(str: PWideChar; len: Integer): WordBool; StdCall;
+function GetLoadOrder(str: PWideChar; len: Integer): WordBool; cdecl;
 var
   slPlugins, slLoadOrder: TStringList;
   sLoadPath, sPath: String;
@@ -172,7 +172,7 @@ begin
   end;
 end;
 
-function LoadPlugins(loadOrder: PWideChar): WordBool; StdCall;
+function LoadPlugins(loadOrder: PWideChar): WordBool; cdecl;
 begin
   Result := false;
   try
@@ -195,7 +195,7 @@ begin
   end;
 end;
 
-function GetLoaderDone: WordBool; StdCall;
+function GetLoaderDone: WordBool; cdecl;
 begin
   Result := ProgramStatus.bLoaderDone;
 end;

@@ -5,16 +5,16 @@ interface
 uses
   xeMeta;
 
-  function AddRecord(_id: Cardinal; sig: string; _res: PCardinal): WordBool; StdCall;
-  function GetRecords(_id: Cardinal; _res: PCardinalArray): WordBool; StdCall;
-  function RecordsBySignature(_id: Cardinal; sig: string; _res: PCardinalArray): WordBool; StdCall;
-  function RecordByIndex(_id: Cardinal; index: Integer; _res: PCardinal): WordBool; StdCall;
-  function RecordByFormID(_id, formID: Cardinal; _res: PCardinal): WordBool; StdCall;
-  function RecordByEditorID(_id: Cardinal; edid: string; _res: PCardinal): WordBool; StdCall;
-  function RecordByName(_id: Cardinal; full: string; _res: PCardinal): WordBool; StdCall;
-  function RecordSignatureFromName(name, str: PWideChar): WordBool; StdCall;
-  function RecordNameFromSignature(sig, str: PWideChar; len: Integer): WordBool; StdCall;
-  function GetRecordSignatureNameMap(str: PWideChar; len: Integer): WordBool; StdCall;
+  function AddRecord(_id: Cardinal; sig: string; _res: PCardinal): WordBool; cdecl;
+  function GetRecords(_id: Cardinal; _res: PCardinalArray): WordBool; cdecl;
+  function RecordsBySignature(_id: Cardinal; sig: string; _res: PCardinalArray): WordBool; cdecl;
+  function RecordByIndex(_id: Cardinal; index: Integer; _res: PCardinal): WordBool; cdecl;
+  function RecordByFormID(_id, formID: Cardinal; _res: PCardinal): WordBool; cdecl;
+  function RecordByEditorID(_id: Cardinal; edid: string; _res: PCardinal): WordBool; cdecl;
+  function RecordByName(_id: Cardinal; full: string; _res: PCardinal): WordBool; cdecl;
+  function RecordSignatureFromName(name, str: PWideChar): WordBool; cdecl;
+  function RecordNameFromSignature(sig, str: PWideChar; len: Integer): WordBool; cdecl;
+  function GetRecordSignatureNameMap(str: PWideChar; len: Integer): WordBool; cdecl;
 
 implementation
 
@@ -28,7 +28,7 @@ uses
 var
   slRecordNameMap: TStringList;
 
-function AddRecord(_id: Cardinal; sig: string; _res: PCardinal): WordBool; StdCall;
+function AddRecord(_id: Cardinal; sig: string; _res: PCardinal): WordBool; cdecl;
 var
   _file: IwbFile;
   group: IwbGroupRecord;
@@ -66,7 +66,7 @@ begin
       _res^[i]^ := Store(rec);
 end;
 
-function GetRecords(_id: Cardinal; _res: PCardinalArray): WordBool; StdCall;
+function GetRecords(_id: Cardinal; _res: PCardinalArray): WordBool; cdecl;
 var
   e: IInterface;
   _file: IwbFile;
@@ -88,7 +88,7 @@ begin
   end;
 end;
 
-function RecordsBySignature(_id: Cardinal; sig: string; _res: PCardinalArray): WordBool; StdCall;
+function RecordsBySignature(_id: Cardinal; sig: string; _res: PCardinalArray): WordBool; cdecl;
 var
   _sig: TwbSignature;
   _file: IwbFile;
@@ -117,7 +117,7 @@ begin
   end;
 end;
 
-function RecordByIndex(_id: Cardinal; index: Integer; _res: PCardinal): WordBool; StdCall;
+function RecordByIndex(_id: Cardinal; index: Integer; _res: PCardinal): WordBool; cdecl;
 var
   e: IInterface;
   _file: IwbFile;
@@ -139,7 +139,7 @@ begin
   end;
 end;
 
-function RecordByFormID(_id, formID: Cardinal; _res: PCardinal): WordBool; StdCall;
+function RecordByFormID(_id, formID: Cardinal; _res: PCardinal): WordBool; cdecl;
 var
   _file: IwbFile;
   rec: IwbMainRecord;
@@ -168,7 +168,7 @@ begin
       end;
 end;
 
-function RecordByEditorID(_id: Cardinal; edid: string; _res: PCardinal): WordBool; StdCall;
+function RecordByEditorID(_id: Cardinal; edid: string; _res: PCardinal): WordBool; cdecl;
 var
   e: IInterface;
   _file: IwbFile;
@@ -231,7 +231,7 @@ begin
     FindRecordByName(group, full);
 end;
 
-function RecordByName(_id: Cardinal; full: string; _res: PCardinal): WordBool; StdCall;
+function RecordByName(_id: Cardinal; full: string; _res: PCardinal): WordBool; cdecl;
 var
   rec: IwbMainRecord;
 begin
@@ -244,7 +244,7 @@ begin
   end;
 end;
 
-function RecordSignatureFromName(name, str: PWideChar): WordBool; StdCall;
+function RecordSignatureFromName(name, str: PWideChar): WordBool; cdecl;
 var
   sig: String;
 begin
@@ -260,7 +260,7 @@ begin
   end;
 end;
 
-function RecordNameFromSignature(sig, str: PWideChar; len: Integer): WordBool; StdCall;
+function RecordNameFromSignature(sig, str: PWideChar; len: Integer): WordBool; cdecl;
 var
   name: String;
   RecordDef: PwbRecordDef;
@@ -277,7 +277,7 @@ begin
   end;
 end;
 
-function GetRecordSignatureNameMap(str: PWideChar; len: Integer): WordBool; StdCall;
+function GetRecordSignatureNameMap(str: PWideChar; len: Integer): WordBool; cdecl;
 var
   text: String;
 begin

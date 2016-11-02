@@ -5,11 +5,11 @@ interface
 uses
   wbInterface;
 
-  function HasGroup(_id: Cardinal; sig: string; _res: PWordBool): WordBool; StdCall;
+  function HasGroup(_id: Cardinal; sig: string; _res: PWordBool): WordBool; cdecl;
   function AddGroupIfMissing(_file: IwbFile; sig: string): IwbGroupRecord;
-  function AddGroup(_id: Cardinal; sig: string; _res: PCardinal): WordBool; StdCall;
-  function GetGroupSignatures(_id: Cardinal; groups: PWideChar; len: Integer): WordBool; StdCall;
-  function GetChildGroup(_id: Cardinal; _res: PCardinal): WordBool; StdCall;
+  function AddGroup(_id: Cardinal; sig: string; _res: PCardinal): WordBool; cdecl;
+  function GetGroupSignatures(_id: Cardinal; groups: PWideChar; len: Integer): WordBool; cdecl;
+  function GetChildGroup(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 
 implementation
 
@@ -29,7 +29,7 @@ uses
 }
 {******************************************************************************}
 
-function HasGroup(_id: Cardinal; sig: string; _res: PWordBool): WordBool; StdCall;
+function HasGroup(_id: Cardinal; sig: string; _res: PWordBool): WordBool; cdecl;
 var
   _file: IwbFile;
 begin
@@ -55,7 +55,7 @@ begin
     Supports(_file.Add(sig), IwbGroupRecord, Result);
 end;
 
-function AddGroup(_id: Cardinal; sig: string; _res: PCardinal): WordBool; StdCall;
+function AddGroup(_id: Cardinal; sig: string; _res: PCardinal): WordBool; cdecl;
 var
   _file: IwbFile;
 begin
@@ -70,7 +70,7 @@ begin
   end;
 end;
 
-function GetGroupSignatures(_id: Cardinal; groups: PWideChar; len: Integer): WordBool; StdCall;
+function GetGroupSignatures(_id: Cardinal; groups: PWideChar; len: Integer): WordBool; cdecl;
 var
   _file: IwbFile;
   s: String;
@@ -90,7 +90,7 @@ begin
   end;
 end;
 
-function GetChildGroup(_id: Cardinal; _res: PCardinal): WordBool; StdCall;
+function GetChildGroup(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 var
   _rec: IwbMainRecord;
   _group: IwbGroupRecord;

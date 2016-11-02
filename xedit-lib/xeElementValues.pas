@@ -2,26 +2,26 @@ unit xeElementValues;
 
 interface
 
-  function Name(_id: Integer; str: PWideChar; len: Integer): WordBool; StdCall;
-  function EditorID(_id: Integer; str: PWideChar; len: Integer): WordBool; StdCall;
-  function Signature(_id: Integer; str: PWideChar; len: Integer): WordBool; StdCall;
-  function ShortName(_id: Integer; str: PWideChar; len: Integer): WordBool; StdCall;
-  function SortKey(_id: Integer; str: PWideChar; len: Integer): WordBool; StdCall;
-  function ElementType(_id: Integer; str: PWideChar; len: Integer): WordBool; StdCall;
-  function DefType(_id: Integer; str: PWideChar; len: Integer): WordBool; StdCall;
-  function GetValue(_id: Integer; path, str: PWideChar; len: Integer): WordBool; StdCall;
-  function SetValue(_id: Integer; path, value: PWideChar): WordBool; StdCall;
-  function GetIntValue(_id: Integer; path: PWideChar; out value: Integer): WordBool; StdCall;
-  function SetIntValue(_id: Integer; path: PWideChar; value: Integer): WordBool; StdCall;
-  function GetUIntValue(_id: Integer; path: PWideChar; out value: Cardinal): WordBool; StdCall;
-  function SetUIntValue(_id: Integer; path: PWideChar; value: Cardinal): WordBool; StdCall;
-  function GetFloatValue(_id: Integer; path: PWideChar; out value: Double): WordBool; StdCall;
-  function SetFloatValue(_id: Integer; path: PWideChar; value: Double): WordBool; StdCall;
-  function GetLinksTo(_id: Integer; path: PWideChar; _res: PCardinal): WordBool; StdCall;
-  function SetFlag(_id: Integer; path, name: PWideChar; enabled: WordBool): WordBool; StdCall;
-  function GetFlag(_id: Integer; path, name: PWideChar): WordBool; StdCall;
-  function ToggleFlag(_id: Integer; path, name: PWideChar): WordBool; StdCall;
-  function GetEnabledFlags(_id: Integer; path: PWideChar; out flags: PWideChar): WordBool; StdCall;
+  function Name(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
+  function EditorID(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
+  function Signature(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
+  function ShortName(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
+  function SortKey(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
+  function ElementType(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
+  function DefType(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
+  function GetValue(_id: Integer; path, str: PWideChar; len: Integer): WordBool; cdecl;
+  function SetValue(_id: Integer; path, value: PWideChar): WordBool; cdecl;
+  function GetIntValue(_id: Integer; path: PWideChar; out value: Integer): WordBool; cdecl;
+  function SetIntValue(_id: Integer; path: PWideChar; value: Integer): WordBool; cdecl;
+  function GetUIntValue(_id: Integer; path: PWideChar; out value: Cardinal): WordBool; cdecl;
+  function SetUIntValue(_id: Integer; path: PWideChar; value: Cardinal): WordBool; cdecl;
+  function GetFloatValue(_id: Integer; path: PWideChar; out value: Double): WordBool; cdecl;
+  function SetFloatValue(_id: Integer; path: PWideChar; value: Double): WordBool; cdecl;
+  function GetLinksTo(_id: Integer; path: PWideChar; _res: PCardinal): WordBool; cdecl;
+  function SetFlag(_id: Integer; path, name: PWideChar; enabled: WordBool): WordBool; cdecl;
+  function GetFlag(_id: Integer; path, name: PWideChar): WordBool; cdecl;
+  function ToggleFlag(_id: Integer; path, name: PWideChar): WordBool; cdecl;
+  function GetEnabledFlags(_id: Integer; path: PWideChar; out flags: PWideChar): WordBool; cdecl;
 
 implementation
 
@@ -35,7 +35,7 @@ uses
   xeMessages, xeMeta;
 
 
-function Name(_id: Integer; str: PWideChar; len: Integer): WordBool; StdCall;
+function Name(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
 var
   element: IwbElement;
 begin
@@ -50,7 +50,7 @@ begin
   end;
 end;
 
-function EditorID(_id: Integer; str: PWideChar; len: Integer): WordBool; StdCall;
+function EditorID(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
 var
   rec: IwbMainRecord;
 begin
@@ -65,7 +65,7 @@ begin
   end;
 end;
 
-function Signature(_id: Integer; str: PWideChar; len: Integer): WordBool; StdCall;
+function Signature(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
 var
   rec: IwbRecord;
 begin
@@ -80,7 +80,7 @@ begin
   end;
 end;
 
-function ShortName(_id: Integer; str: PWideChar; len: Integer): WordBool; StdCall;
+function ShortName(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
 var
   element: IwbElement;
 begin
@@ -95,7 +95,7 @@ begin
   end;
 end;
 
-function SortKey(_id: Integer; str: PWideChar; len: Integer): WordBool; StdCall;
+function SortKey(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
 var
   element: IwbElement;
 begin
@@ -130,7 +130,7 @@ begin
   end;
 end;
 
-function ElementType(_id: Integer; str: PWideChar; len: Integer): WordBool; StdCall;
+function ElementType(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
 var
   element: IwbElement;
   s: String;
@@ -172,7 +172,7 @@ begin
   end;
 end;
 
-function DefType(_id: Integer; str: PWideChar; len: Integer): WordBool; StdCall;
+function DefType(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
 var
   element: IwbElement;
   s: String;
@@ -189,7 +189,7 @@ begin
   end;
 end;
 
-function GetValue(_id: Integer; path, str: PWideChar; len: Integer): WordBool; StdCall;
+function GetValue(_id: Integer; path, str: PWideChar; len: Integer): WordBool; cdecl;
 var
   e: IInterface;
   container: IwbContainerElementRef;
@@ -214,7 +214,7 @@ begin
   end;
 end;
 
-function SetValue(_id: Integer; path, value: PWideChar): WordBool; StdCall;
+function SetValue(_id: Integer; path, value: PWideChar): WordBool; cdecl;
 var
   e: IInterface;
   container: IwbContainerElementRef;
@@ -263,7 +263,7 @@ begin
     element.NativeValue := value;
 end;
 
-function GetIntValue(_id: Integer; path: PWideChar; out value: Integer): WordBool; StdCall;
+function GetIntValue(_id: Integer; path: PWideChar; out value: Integer): WordBool; cdecl;
 begin
   Result := false;
   try
@@ -274,7 +274,7 @@ begin
   end;
 end;
 
-function SetIntValue(_id: Integer; path: PWideChar; value: Integer): WordBool; StdCall;
+function SetIntValue(_id: Integer; path: PWideChar; value: Integer): WordBool; cdecl;
 begin
   Result := false;
   try
@@ -285,7 +285,7 @@ begin
   end;
 end;
 
-function GetUIntValue(_id: Integer; path: PWideChar; out value: Cardinal): WordBool; StdCall;
+function GetUIntValue(_id: Integer; path: PWideChar; out value: Cardinal): WordBool; cdecl;
 begin
   Result := false;
   try
@@ -296,7 +296,7 @@ begin
   end;
 end;
 
-function SetUIntValue(_id: Integer; path: PWideChar; value: Cardinal): WordBool; StdCall;
+function SetUIntValue(_id: Integer; path: PWideChar; value: Cardinal): WordBool; cdecl;
 begin
   Result := false;
   try
@@ -307,7 +307,7 @@ begin
   end;
 end;
 
-function GetFloatValue(_id: Integer; path: PWideChar; out value: Double): WordBool; StdCall;
+function GetFloatValue(_id: Integer; path: PWideChar; out value: Double): WordBool; cdecl;
 begin
   Result := false;
   try
@@ -318,7 +318,7 @@ begin
   end;
 end;
 
-function SetFloatValue(_id: Integer; path: PWideChar; value: Double): WordBool; StdCall;
+function SetFloatValue(_id: Integer; path: PWideChar; value: Double): WordBool; cdecl;
 begin
   Result := false;
   try
@@ -329,7 +329,7 @@ begin
   end;
 end;
 
-function GetLinksTo(_id: Integer; path: PWideChar; _res: PCardinal): WordBool; StdCall;
+function GetLinksTo(_id: Integer; path: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
   e: IInterface;
   container: IwbContainerElementRef;
@@ -354,7 +354,7 @@ begin
   end;
 end;
 
-function SetFlag(_id: Integer; path, name: PWideChar; enabled: WordBool): WordBool; StdCall;
+function SetFlag(_id: Integer; path, name: PWideChar; enabled: WordBool): WordBool; cdecl;
 var
   container: IwbContainerElementRef;
   element: IwbElement;
@@ -381,7 +381,7 @@ begin
   end;
 end;
 
-function GetFlag(_id: Integer; path, name: PWideChar): WordBool; StdCall;
+function GetFlag(_id: Integer; path, name: PWideChar): WordBool; cdecl;
 var
   container: IwbContainerElementRef;
   element: IwbElement;
@@ -402,7 +402,7 @@ begin
   end;
 end;
 
-function ToggleFlag(_id: Integer; path, name: PWideChar): WordBool; StdCall;
+function ToggleFlag(_id: Integer; path, name: PWideChar): WordBool; cdecl;
 var
   container: IwbContainerElementRef;
   element: IwbElement;
@@ -429,7 +429,7 @@ begin
   end;
 end;
 
-function GetEnabledFlags(_id: Integer; path: PWideChar; out flags: PWideChar): WordBool; StdCall;
+function GetEnabledFlags(_id: Integer; path: PWideChar; out flags: PWideChar): WordBool; cdecl;
 var
   slFlags: TStringList;
   container: IwbContainerElementRef;

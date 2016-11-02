@@ -2,24 +2,24 @@ unit xeElements;
 
 interface
 
-  function GetElement(_id: Cardinal; key: PWideChar): Cardinal; StdCall;
-  function NewElement(_id: Cardinal; key: PWideChar): Cardinal; StdCall;
-  function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; StdCall;
-  function LinksTo(_id: Cardinal; _res: PCardinal): WordBool; StdCall;
-  function ElementExists(_id: Cardinal; key: PWideChar): WordBool; StdCall;
-  function ElementCount(_id: Cardinal): Integer; StdCall;
-  function ElementAssigned(_id: Cardinal): WordBool; StdCall;
-  function Equals(_id, _id2: Cardinal): WordBool; StdCall;
-  function IsMaster(_id: Cardinal): WordBool; StdCall;
-  function IsInjected(_id: Cardinal): WordBool; StdCall;
-  function IsOverride(_id: Cardinal): WordBool; StdCall;
-  function IsWinningOverride(_id: Cardinal): WordBool; StdCall;
+  function GetElement(_id: Cardinal; key: PWideChar): Cardinal; cdecl;
+  function NewElement(_id: Cardinal; key: PWideChar): Cardinal; cdecl;
+  function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; cdecl;
+  function LinksTo(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
+  function ElementExists(_id: Cardinal; key: PWideChar): WordBool; cdecl;
+  function ElementCount(_id: Cardinal): Integer; cdecl;
+  function ElementAssigned(_id: Cardinal): WordBool; cdecl;
+  function Equals(_id, _id2: Cardinal): WordBool; cdecl;
+  function IsMaster(_id: Cardinal): WordBool; cdecl;
+  function IsInjected(_id: Cardinal): WordBool; cdecl;
+  function IsOverride(_id: Cardinal): WordBool; cdecl;
+  function IsWinningOverride(_id: Cardinal): WordBool; cdecl;
 
   // serialization and deserialization
-  //function ElementToJson(_id: Cardinal; str: PWideChar; len: Integer): WordBool; StdCall;
-  //function ElementToXML(_id: Cardinal; str: PWideChar; len: Integer): WordBool; StdCall;
-  //function JsonToElement(_id: Cardinal; json: PWideChar; _res: Cardinal): WordBool; StdCall;
-  //function XMLToElement(_id: Cardinal; xml: PWideChar; _res: Cardinal): WordBool; StdCall;
+  //function ElementToJson(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
+  //function ElementToXML(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
+  //function JsonToElement(_id: Cardinal; json: PWideChar; _res: Cardinal): WordBool; cdecl;
+  //function XMLToElement(_id: Cardinal; xml: PWideChar; _res: Cardinal): WordBool; cdecl;
 
 implementation
 
@@ -48,7 +48,7 @@ end;
 
 // Replaces ElementByName, ElementByPath, ElementByIndex, GroupBySignature, and
 // ElementBySignature.  Supports indexed paths.
-function GetElement(_id: Cardinal; key: PWideChar): Cardinal; StdCall;
+function GetElement(_id: Cardinal; key: PWideChar): Cardinal; cdecl;
 var
   e: IInterface;
   _file: IwbFile;
@@ -68,7 +68,7 @@ begin
 end;
 
 // replaces ElementAssign, Add, AddElement, and InsertElement
-function NewElement(_id: Cardinal; key: PWideChar): Cardinal; StdCall;
+function NewElement(_id: Cardinal; key: PWideChar): Cardinal; cdecl;
 var
   e: IInterface;
   container: IwbContainerElementRef;
@@ -100,7 +100,7 @@ begin
   end;
 end;
 
-function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; StdCall;
+function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; cdecl;
 var
   e: IInterface;
 begin
@@ -113,7 +113,7 @@ begin
   end;
 end;
 
-function LinksTo(_id: Cardinal; _res: PCardinal): WordBool; StdCall;
+function LinksTo(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 var
   element, linkedElement: IwbElement;
 begin
@@ -132,7 +132,7 @@ begin
 end;
 
 // Replaces HasGroup and ElementExists
-function ElementExists(_id: Cardinal; key: PWideChar): WordBool; StdCall;
+function ElementExists(_id: Cardinal; key: PWideChar): WordBool; cdecl;
 var
   element: IInterface;
   _file: IwbFile;
@@ -152,7 +152,7 @@ begin
   end;
 end;
 
-function ElementCount(_id: Cardinal): Integer; StdCall;
+function ElementCount(_id: Cardinal): Integer; cdecl;
 var
   container: IwbContainerElementRef;
 begin
@@ -165,7 +165,7 @@ begin
   end;
 end;
 
-function ElementAssigned(_id: Cardinal): WordBool; StdCall;
+function ElementAssigned(_id: Cardinal): WordBool; cdecl;
 var
   e: IInterface;
 begin
@@ -178,7 +178,7 @@ begin
   end;
 end;
 
-function Equals(_id, _id2: Cardinal): WordBool; StdCall;
+function Equals(_id, _id2: Cardinal): WordBool; cdecl;
 var
   element, element2: IwbElement;
 begin
@@ -192,7 +192,7 @@ begin
   end;
 end;
 
-function IsMaster(_id: Cardinal): WordBool; StdCall;
+function IsMaster(_id: Cardinal): WordBool; cdecl;
 var
   rec: IwbMainRecord;
 begin
@@ -205,7 +205,7 @@ begin
   end;
 end;
 
-function IsInjected(_id: Cardinal): WordBool; StdCall;
+function IsInjected(_id: Cardinal): WordBool; cdecl;
 var
   rec: IwbMainRecord;
 begin
@@ -218,7 +218,7 @@ begin
   end;
 end;
 
-function IsOverride(_id: Cardinal): WordBool; StdCall;
+function IsOverride(_id: Cardinal): WordBool; cdecl;
 var
   rec: IwbMainRecord;
 begin
@@ -232,7 +232,7 @@ begin
 end;
 
 // TODO: Determine if subrecord is winner
-function IsWinningOverride(_id: Cardinal): WordBool; StdCall;
+function IsWinningOverride(_id: Cardinal): WordBool; cdecl;
 var
   rec: IwbMainRecord;
 begin

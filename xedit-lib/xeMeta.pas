@@ -9,18 +9,18 @@ type
   CardinalArray = array of PCardinal;
   PCardinalArray = ^CardinalArray;
 
-  procedure Initialize; StdCall;
-  procedure Finalize; StdCall;
+  procedure Initialize; cdecl;
+  procedure Finalize; cdecl;
   procedure ExceptionHandler(x: Exception);
-  procedure GetBuffer(str: PWideChar; len: Integer); StdCall;
-  procedure FlushBuffer; StdCall;
-  function GetExceptionMessage(str: PWideChar; len: Integer): WordBool; StdCall;
-  function GetGlobal(key, value: PWideChar; len: Integer): WordBool; StdCall;
+  procedure GetBuffer(str: PWideChar; len: Integer); cdecl;
+  procedure FlushBuffer; cdecl;
+  function GetExceptionMessage(str: PWideChar; len: Integer): WordBool; cdecl;
+  function GetGlobal(key, value: PWideChar; len: Integer): WordBool; cdecl;
   procedure StoreIfAssigned(var x: IInterface; var _res: PCardinal; var Success: WordBool);
   function Resolve(_id: Cardinal): IInterface;
   function Store(x: IInterface): Cardinal;
-  procedure Release(_id: Cardinal); StdCall;
-  procedure ResetStore; StdCall;
+  procedure Release(_id: Cardinal); cdecl;
+  procedure ResetStore; cdecl;
 
 var
   _store: TInterfaceList;
@@ -43,7 +43,7 @@ uses
 }
 {******************************************************************************}
 
-procedure Initialize; StdCall;
+procedure Initialize; cdecl;
 begin
   // initialize variables
   MessageBuffer := TStringList.Create;
@@ -60,7 +60,7 @@ begin
   Globals.Values['Version'] := ProgramStatus.ProgramVersion;
 end;
 
-procedure Finalize; StdCall;
+procedure Finalize; cdecl;
 begin
   // TODO: Clear loaded files
   MessageBuffer.Free;
@@ -74,7 +74,7 @@ begin
   AddMessage(exceptionMessage);
 end;
 
-procedure GetBuffer(str: PWideChar; len: Integer); StdCall;
+procedure GetBuffer(str: PWideChar; len: Integer); cdecl;
 var
   text: String;
 begin
@@ -83,12 +83,12 @@ begin
   StrLCopy(str, PWideChar(WideString(text)), len);
 end;
 
-procedure FlushBuffer; StdCall;
+procedure FlushBuffer; cdecl;
 begin
   MessageBuffer.Clear;
 end;
 
-function GetExceptionMessage(str: PWideChar; len: Integer): WordBool; StdCall;
+function GetExceptionMessage(str: PWideChar; len: Integer): WordBool; cdecl;
 begin
   Result := false;
   if Length(exceptionMessage) > 0 then begin
@@ -97,7 +97,7 @@ begin
   end;
 end;
 
-function GetGlobal(key, value: PWideChar; len: Integer): WordBool; StdCall;
+function GetGlobal(key, value: PWideChar; len: Integer): WordBool; cdecl;
 begin
   Result := false;
   try
@@ -137,7 +137,7 @@ begin
     Result := _store.Add(x);
 end;
 
-procedure Release(_id: Cardinal); StdCall;
+procedure Release(_id: Cardinal); cdecl;
 begin
   if _id = 0 then exit;
   _store[_id]._Release;
@@ -145,7 +145,7 @@ begin
   _releasedIDs.Add(_id);
 end;
 
-procedure ResetStore; StdCall;
+procedure ResetStore; cdecl;
 begin
   _store.Clear;
   _store.Add(nil);

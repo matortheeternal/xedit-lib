@@ -2,14 +2,14 @@ unit xeFiles;
 
 interface
 
-  function NewFile(filename: PAnsiChar): Cardinal; StdCall;
-  function FileByIndex(index: Integer): Cardinal; StdCall;
-  function FileByLoadOrder(load_order: Integer): Cardinal; StdCall;
-  function FileByName(name: PAnsiChar): Cardinal; StdCall;
-  function FileByAuthor(author: PAnsiChar): Cardinal; StdCall;
-  function GetElementFile(_id: Cardinal): Cardinal; StdCall;
-  function SaveFile(_id: Cardinal): WordBool; StdCall;
-  function GetFileNames(fileNames: PWideChar; len: Integer): WordBool; StdCall;
+  function NewFile(filename: PAnsiChar): Cardinal; cdecl;
+  function FileByIndex(index: Integer): Cardinal; cdecl;
+  function FileByLoadOrder(load_order: Integer): Cardinal; cdecl;
+  function FileByName(name: PAnsiChar): Cardinal; cdecl;
+  function FileByAuthor(author: PAnsiChar): Cardinal; cdecl;
+  function GetElementFile(_id: Cardinal): Cardinal; cdecl;
+  function SaveFile(_id: Cardinal): WordBool; cdecl;
+  function GetFileNames(fileNames: PWideChar; len: Integer): WordBool; cdecl;
 
 implementation
 
@@ -29,7 +29,7 @@ uses
 }
 {******************************************************************************}
 
-function NewFile(filename: PAnsiChar): Cardinal; StdCall;
+function NewFile(filename: PAnsiChar): Cardinal; cdecl;
 var
   LoadOrder : Integer;
   _file: IwbFile;
@@ -64,7 +64,7 @@ begin
   end;
 end;
 
-function FileByIndex(index: Integer): Cardinal; StdCall;
+function FileByIndex(index: Integer): Cardinal; cdecl;
 begin
   Result := 0;
   try
@@ -74,7 +74,7 @@ begin
   end;
 end;
 
-function FileByLoadOrder(load_order: Integer): Cardinal; StdCall;
+function FileByLoadOrder(load_order: Integer): Cardinal; cdecl;
 var
   i: Integer;
 begin
@@ -90,7 +90,7 @@ begin
   end;
 end;
 
-function FileByName(name: PAnsiChar): Cardinal; StdCall;
+function FileByName(name: PAnsiChar): Cardinal; cdecl;
 var
   i: Integer;
 begin
@@ -106,7 +106,7 @@ begin
   end;
 end;
 
-function FileByAuthor(author: PAnsiChar): Cardinal; StdCall;
+function FileByAuthor(author: PAnsiChar): Cardinal; cdecl;
 var
   i: Integer;
   s: String;
@@ -125,7 +125,7 @@ begin
   end;
 end;
 
-function GetElementFile(_id: Cardinal): Cardinal; StdCall;
+function GetElementFile(_id: Cardinal): Cardinal; cdecl;
 var
   element: IwbElement;
 begin
@@ -138,7 +138,7 @@ begin
   end;
 end;
 
-function SaveFile(_id: Cardinal): WordBool; StdCall;
+function SaveFile(_id: Cardinal): WordBool; cdecl;
 var
   _file: IwbFile;
   FileStream: TFileStream;
@@ -161,7 +161,7 @@ begin
   end;
 end;
 
-function GetFileNames(fileNames: PWideChar; len: Integer): WordBool; StdCall;
+function GetFileNames(fileNames: PWideChar; len: Integer): WordBool; cdecl;
 var
   s: String;
   i: Integer;

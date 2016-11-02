@@ -2,17 +2,17 @@ unit xeFileValues;
 
 interface
 
-  function GetFileHeader(_id: Cardinal; _res: PCardinal): WordBool; StdCall;
-  function GetNextObjectId(_id: Cardinal; nextObjectID: PCardinal): WordBool; StdCall;
-  function SetNextObjectID(_id, nextObjectID: Cardinal): WordBool; StdCall;
-  function GetFileName(_id: Cardinal; fileName: PWideChar; len: Integer): WordBool; StdCall;
-  function GetAuthor(_id: Cardinal; author: PWideChar; len: Integer): WordBool; StdCall;
-  function SetAuthor(_id: Cardinal; author: PWideChar): WordBool; StdCall;
-  function GetDescription(_id: Cardinal; desc: PWideChar; len: Integer): WordBool; StdCall;
-  function SetDescription(_id: Cardinal; desc: PWideChar): WordBool; StdCall;
-  function OverrideRecordCount(_id: Cardinal; count: PInteger): WordBool; StdCall;
-  function GetIsESM(_id: Cardinal; isESM: PWordBool): WordBool; StdCall;
-  function SetIsESM(_id: Cardinal; isESM: WordBool): WordBool; StdCall;
+  function GetFileHeader(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
+  function GetNextObjectId(_id: Cardinal; nextObjectID: PCardinal): WordBool; cdecl;
+  function SetNextObjectID(_id, nextObjectID: Cardinal): WordBool; cdecl;
+  function GetFileName(_id: Cardinal; fileName: PWideChar; len: Integer): WordBool; cdecl;
+  function GetAuthor(_id: Cardinal; author: PWideChar; len: Integer): WordBool; cdecl;
+  function SetAuthor(_id: Cardinal; author: PWideChar): WordBool; cdecl;
+  function GetDescription(_id: Cardinal; desc: PWideChar; len: Integer): WordBool; cdecl;
+  function SetDescription(_id: Cardinal; desc: PWideChar): WordBool; cdecl;
+  function OverrideRecordCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
+  function GetIsESM(_id: Cardinal; isESM: PWordBool): WordBool; cdecl;
+  function SetIsESM(_id: Cardinal; isESM: WordBool): WordBool; cdecl;
 
 implementation
 
@@ -26,7 +26,7 @@ uses
   xeMessages, xeMeta;
 
 
-function GetFileHeader(_id: Cardinal; _res: PCardinal): WordBool; StdCall;
+function GetFileHeader(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 var
   _file: IwbFile;
 begin
@@ -41,7 +41,7 @@ begin
   end;
 end;
 
-function GetNextObjectId(_id: Cardinal; nextObjectID: PCardinal): WordBool; StdCall;
+function GetNextObjectId(_id: Cardinal; nextObjectID: PCardinal): WordBool; cdecl;
 var
   _file: IwbFile;
 begin
@@ -56,7 +56,7 @@ begin
   end;
 end;
 
-function SetNextObjectId(_id, nextObjectID: Cardinal): WordBool; StdCall;
+function SetNextObjectId(_id, nextObjectID: Cardinal): WordBool; cdecl;
 var
   _file: IwbFile;
 begin
@@ -71,7 +71,7 @@ begin
   end;
 end;
 
-function GetFileName(_id: Cardinal; fileName: PWideChar; len: Integer): WordBool; StdCall;
+function GetFileName(_id: Cardinal; fileName: PWideChar; len: Integer): WordBool; cdecl;
 var
   _file: IwbFile;
   s: String;
@@ -88,7 +88,7 @@ begin
   end;
 end;
 
-function GetAuthor(_id: Cardinal; author: PWideChar; len: Integer): WordBool; StdCall;
+function GetAuthor(_id: Cardinal; author: PWideChar; len: Integer): WordBool; cdecl;
 var
   _file: IwbFile;
   s: String;
@@ -105,7 +105,7 @@ begin
   end;
 end;
 
-function SetAuthor(_id: Cardinal; author: PWideChar): WordBool; StdCall;
+function SetAuthor(_id: Cardinal; author: PWideChar): WordBool; cdecl;
 var
   _file: IwbFile;
 begin
@@ -120,7 +120,7 @@ begin
   end;
 end;
 
-function GetDescription(_id: Cardinal; desc: PWideChar; len: Integer): WordBool; StdCall;
+function GetDescription(_id: Cardinal; desc: PWideChar; len: Integer): WordBool; cdecl;
 var
   _file: IwbFile;
   s: String;
@@ -137,7 +137,7 @@ begin
   end;
 end;
 
-function SetDescription(_id: Cardinal; desc: PWideChar): WordBool; StdCall;
+function SetDescription(_id: Cardinal; desc: PWideChar): WordBool; cdecl;
 var
   _file: IwbFile;
 begin
@@ -152,7 +152,7 @@ begin
   end;
 end;
 
-function OverrideRecordCount(_id: Cardinal; count: PInteger): WordBool; StdCall;
+function OverrideRecordCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
 var
   _file: IwbFile;
   i, n: Integer;
@@ -171,7 +171,7 @@ begin
   end;
 end;
 
-function GetIsESM(_id: Cardinal; isESM: PWordBool): WordBool; StdCall;
+function GetIsESM(_id: Cardinal; isESM: PWordBool): WordBool; cdecl;
 var
   _file: IwbFile;
 begin
@@ -186,7 +186,7 @@ begin
   end;
 end;
 
-function SetIsESM(_id: Cardinal; isESM: WordBool): WordBool; StdCall;
+function SetIsESM(_id: Cardinal; isESM: WordBool): WordBool; cdecl;
 var
   _file: IwbFile;
 begin

@@ -2,10 +2,10 @@ unit xeMasters;
 
 interface
 
-  function CleanMasters(_id: Cardinal): WordBool; StdCall;
-  function SortMasters(_id: Cardinal): WordBool; StdCall;
-  function AddMaster(_id: Cardinal; masterName: PWideChar): WordBool; StdCall;
-  function GetMaster(_id: Cardinal; index: Integer): Cardinal; StdCall;
+  function CleanMasters(_id: Cardinal): WordBool; cdecl;
+  function SortMasters(_id: Cardinal): WordBool; cdecl;
+  function AddMaster(_id: Cardinal; masterName: PWideChar): WordBool; cdecl;
+  function GetMaster(_id: Cardinal; index: Integer): Cardinal; cdecl;
 
 implementation
 
@@ -23,7 +23,7 @@ uses
 }
 {******************************************************************************}
 
-function CleanMasters(_id: Cardinal): WordBool; StdCall;
+function CleanMasters(_id: Cardinal): WordBool; cdecl;
 var
   _file: IwbFile;
 begin
@@ -38,7 +38,7 @@ begin
   end;
 end;
 
-function SortMasters(_id: Cardinal): WordBool; StdCall;
+function SortMasters(_id: Cardinal): WordBool; cdecl;
 var
   _file: IwbFile;
 begin
@@ -53,7 +53,7 @@ begin
   end;
 end;
 
-function AddMaster(_id: Cardinal; masterName: PWideChar): WordBool; StdCall;
+function AddMaster(_id: Cardinal; masterName: PWideChar): WordBool; cdecl;
 var
   _file: IwbFile;
 begin
@@ -68,7 +68,7 @@ begin
   end;
 end;
 
-function GetMaster(_id: Cardinal; index: Integer): Cardinal; StdCall;
+function GetMaster(_id: Cardinal; index: Integer): Cardinal; cdecl;
 var
   _file: IwbFile;
 begin
@@ -81,7 +81,7 @@ begin
   end;
 end;
 
-function GetMasters(_id: Cardinal; a: Variant; len: Integer): WordBool; StdCall;
+function GetMasters(_id: Cardinal; a: Variant; len: Integer): WordBool; cdecl;
 var
   _file: IwbFile;
 begin
@@ -96,7 +96,7 @@ begin
   end;
 end;
 
-function GetMasterFileNames(_id: Cardinal; masterNames: PWideChar; len: Integer): WordBool; StdCall;
+function GetMasterFileNames(_id: Cardinal; masterNames: PWideChar; len: Integer): WordBool; cdecl;
 var
   _file: IwbFile;
   s: String;
