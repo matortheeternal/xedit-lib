@@ -93,4 +93,24 @@ begin
   end;
 end;
 
+function GetMasterFileNames(_id: Cardinal; masterNames: PWideChar; len: Integer): WordBool; StdCall;
+var
+  _file: IwbFile;
+  s: String;
+  i: Integer;
+begin
+  Result := false;
+  try
+    if Supports(Resolve(_id), IwbFile, _file) then begin
+      s := '';
+      for i := 0 to Pred(_file.MasterCount) do
+        s := s + _file.Masters[i].FileName + #13;
+      StrLCopy(masterNames, PWideChar(WideString(Trim(s))), len);
+      Result := true;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
 end.
