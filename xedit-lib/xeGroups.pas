@@ -40,4 +40,24 @@ begin
   end;
 end;
 
+function AddGroup(_id: Cardinal; sig: string; _res: PCardinal): WordBool; StdCall;
+var
+  _file: IwbFile;
+  _sig: TwbSignature;
+begin
+  Result := false;
+  try
+    if Supports(Resolve(_id), IwbFile, _file) then begin
+      _sig := TwbSignature(sig);
+      if _file.HasGroup(_sig) then
+        _res^ := Store(_file.GroupBySignature[_sig])
+      else
+        _res^ := Store(_file.Add(sig));
+      Result := true;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
 end.
