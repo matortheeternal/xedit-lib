@@ -48,8 +48,9 @@ exports
   // MASTER HANDLING METHODS
   CleanMasters, SortMasters, AddMaster, GetMaster,
   // FILE VALUE METHODS
-  GetFileHeader, GetNextObjectId, SetNextObjectID, GetAuthor, SetAuthor,
-  GetDescription, SetDescription, OverrideRecordCount, GetIsESM, SetIsESM,
+  GetFileHeader, GetNextObjectId, SetNextObjectID, GetFileName, GetAuthor,
+  SetAuthor, GetDescription, SetDescription, OverrideRecordCount, GetIsESM,
+  SetIsESM,
   // ELEMENT HANDLING METHODS
   GetElement, NewElement, RemoveElement, ElementExists, ElementCount,
   ElementAssigned, Equals, IsMaster, IsInjected, IsOverride, IsWinningOverride,
@@ -57,6 +58,8 @@ exports
   Name, EditorID, Signature, ShortName, SortKey, ElementType, DefType, GetValue,
   SetValue, GetIntValue, SetIntValue, GetUIntValue, SetUIntValue, GetFloatValue,
   SetFloatValue, SetFlag, GetFlag, ToggleFlag, GetEnabledFlags;
+  // RECORD HANDLING METHODS
+  // RECORD VALUE METHODS
 
 begin
   IsMultiThread := True;
