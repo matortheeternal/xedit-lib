@@ -2,7 +2,11 @@ unit xeGroups;
 
 interface
 
+uses
+  wbInterface;
+
   function HasGroup(_id: Cardinal; sig: string; _res: PWordBool): WordBool; StdCall;
+  function AddGroupIfMissing(_file: IwbFile; sig: string): IwbGroupRecord;
   function AddGroup(_id: Cardinal; sig: string; _res: PCardinal): WordBool; StdCall;
   function GetGroups(_id: Cardinal; groups: PWideChar; len: Integer): WordBool; StdCall;
   function GetChildGroup(_id: Cardinal; _res: PCardinal): WordBool; StdCall;
@@ -14,7 +18,7 @@ uses
   // mte modules
   mteHelpers,
   // xedit modules
-  wbInterface, wbImplementation,
+  wbImplementation,
   // xelib modules
   xeMessages, xeMeta, xeSetup;
 
@@ -40,19 +44,25 @@ begin
   end;
 end;
 
+function AddGroupIfMissing(_file: IwbFile; sig: string): IwbGroupRecord;
+var
+  _sig: TwbSignature;
+begin
+  _sig := TwbSignature(sig);
+  if _file.HasGroup(_sig) then
+    Result := _file.GroupBySignature[_sig]
+  else
+    Supports(_file.Add(sig), IwbGroupRecord, Result);
+end;
+
 function AddGroup(_id: Cardinal; sig: string; _res: PCardinal): WordBool; StdCall;
 var
   _file: IwbFile;
-  _sig: TwbSignature;
 begin
   Result := false;
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
-      _sig := TwbSignature(sig);
-      if _file.HasGroup(_sig) then
-        _res^ := Store(_file.GroupBySignature[_sig])
-      else
-        _res^ := Store(_file.Add(sig));
+      _res^ := Store(AddGroupIfMissing(_file, sig));
       Result := true;
     end;
   except
