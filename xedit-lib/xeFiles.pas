@@ -109,14 +109,17 @@ end;
 function FileByAuthor(author: PAnsiChar): Cardinal; StdCall;
 var
   i: Integer;
+  s: String;
 begin
   Result := 0;
   try
-    for i := Low(Files) to High(Files) do
-      if Files[i].Header.ElementEditValues['Author'] = string(author) then begin
+    for i := Low(Files) to High(Files) do begin
+      s := Files[i].Header.ElementEditValues['CNAM'];
+      if SameText(s, string(author)) then begin
         Result := Store(Files[i]);
         exit;
       end;
+    end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
