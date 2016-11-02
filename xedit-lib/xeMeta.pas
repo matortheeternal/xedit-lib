@@ -44,6 +44,7 @@ begin
   MessageBuffer := TStringList.Create;
   _store := TInterfaceList.Create;
   _releasedIDs := TList<Cardinal>.Create;
+  _store.Add(nil);
   exceptionMessage := '';
 
   // add welcome message
@@ -125,19 +126,16 @@ end;
 
 procedure Release(_id: Cardinal); StdCall;
 begin
+  if _id = 0 then exit;
   _store[_id]._Release;
   _store[_id] := nil;
   _releasedIDs.Add(_id);
 end;
 
 procedure ResetStore; StdCall;
-var
-  i: Integer;
 begin
-  for i := 0 to Pred(_store.Count) do
-    if Assigned(_store[i]) then
-      _store[i]._Release;
   _store.Clear;
+  _store.Add(nil);
 end;
 
 end.
