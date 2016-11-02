@@ -14,13 +14,21 @@ interface
   function IsOverride(_id: Cardinal): WordBool; StdCall;
   function IsWinningOverride(_id: Cardinal): WordBool; StdCall;
 
+  // serialization and deserialization
+  //function ElementToJson(_id: Cardinal; str: PWideChar; len: Integer): WordBool; StdCall;
+  //function ElementToXML(_id: Cardinal; str: PWideChar; len: Integer): WordBool; StdCall;
+  //function JsonToElement(_id: Cardinal; json: PWideChar; _res: Cardinal): WordBool; StdCall;
+  //function XMLToElement(_id: Cardinal; xml: PWideChar; _res: Cardinal): WordBool; StdCall;
+
 implementation
 
 uses
   Classes, SysUtils,
-  // xedit modules
+  // third party units
+  SuperObject,
+  // xedit units
   wbInterface, wbImplementation,
-  // xelib modules
+  // xelib units
   xeMeta;
 
 
