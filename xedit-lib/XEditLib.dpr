@@ -12,6 +12,7 @@ uses
   xeElementValues in 'xeElementValues.pas',
   xeRecords in 'xeRecords.pas',
   xeRecordValues in 'xeRecordValues.pas',
+  xeGroups in 'xeGroups.pas',
   mteHelpers in '..\lib\mte\mteHelpers.pas',
   CRC32 in '..\lib\mte\CRC32.pas',
   RttiIni in '..\lib\mte\RttiIni.pas',
@@ -57,7 +58,9 @@ exports
   // ELEMENT VALUE METHODS
   Name, EditorID, Signature, ShortName, SortKey, ElementType, DefType, GetValue,
   SetValue, GetIntValue, SetIntValue, GetUIntValue, SetUIntValue, GetFloatValue,
-  SetFloatValue, SetFlag, GetFlag, ToggleFlag, GetEnabledFlags;
+  SetFloatValue, SetFlag, GetFlag, ToggleFlag, GetEnabledFlags,
+  // GROUP HANDLING METHODS
+  HasGroup, AddGroup, GetGroups, GetChildGroup;
   // RECORD HANDLING METHODS
   // RECORD VALUE METHODS
 
