@@ -53,15 +53,17 @@ exports
   SetAuthor, GetDescription, SetDescription, OverrideRecordCount, GetIsESM,
   SetIsESM,
   // ELEMENT HANDLING METHODS
-  GetElement, NewElement, RemoveElement, ElementExists, ElementCount,
+  GetElement, NewElement, RemoveElement, ElementExists, ElementCount, LinksTo,
   ElementAssigned, Equals, IsMaster, IsInjected, IsOverride, IsWinningOverride,
   // ELEMENT VALUE METHODS
   Name, EditorID, Signature, ShortName, SortKey, ElementType, DefType, GetValue,
   SetValue, GetIntValue, SetIntValue, GetUIntValue, SetUIntValue, GetFloatValue,
-  SetFloatValue, SetFlag, GetFlag, ToggleFlag, GetEnabledFlags,
+  SetFloatValue, GetLinksTo, SetFlag, GetFlag, ToggleFlag, GetEnabledFlags,
   // GROUP HANDLING METHODS
-  HasGroup, AddGroup, GetGroups, GetChildGroup;
+  HasGroup, AddGroup, GetGroupSignatures, GetChildGroup,
   // RECORD HANDLING METHODS
+  AddRecord, {GetRecords,} RecordByIndex, {RecordsBySignature,} RecordByFormID,
+  RecordByEditorID, RecordByFULL;
   // RECORD VALUE METHODS
 
 begin
