@@ -13,6 +13,7 @@ FILE HANDLING
   - FileByName
   - FileByAuthor
   - GetElementFile
+  - GetFileNames
 
 GETTERS AND SETTERS
   - GetFileHeader
@@ -28,16 +29,16 @@ GETTERS AND SETTERS
   - SetIsESM
 
 MASTERS
-  - GetMasters
-  - FilesThatRequire
+  - GetMaster
   - CleanMasters
   - SortMasters
-  - AddFilesToList
-  - AddMastersToList
   - AddMaster
-  - AddMastersToFile
+  
+  - GetAllMasters
+  - GetRequiredBy
+  - GetAllRequiredBy
+  - AddMasters
   - RemoveMaster
-  - AddLoadedFilesAsMasters
 
 
 ---
