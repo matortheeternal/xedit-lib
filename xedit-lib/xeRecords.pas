@@ -2,8 +2,11 @@ unit xeRecords;
 
 interface
 
+uses
+  xeMeta;
+
   function AddRecord(_id: Cardinal; sig: string; _res: PCardinal): WordBool; StdCall;
-  //function GetRecords(_id: Cardinal; _res: PCardinalArray): WordBool; StdCall;
+  function GetRecords(_id: Cardinal; _res: PCardinalArray): WordBool; StdCall;
   function RecordByIndex(_id: Cardinal; index: Integer; _res: PCardinal): WordBool; StdCall;
   //function RecordsBySignature(_id: Cardinal; sig: string; _res: PCardinalArray): WordBool; StdCall;
   function RecordByFormID(_id, formID: Cardinal; _res: PCardinal): WordBool; StdCall;
@@ -18,7 +21,7 @@ uses
   // xedit units
   wbInterface, wbImplementation,
   // xelib units
-  xeGroups, xeMeta;
+  xeGroups;
 
 function AddRecord(_id: Cardinal; sig: string; _res: PCardinal): WordBool; StdCall;
 var
@@ -32,6 +35,48 @@ begin
       group := AddGroupIfMissing(_file, sig);
       element := group.Add(sig);
       StoreIfAssigned(IInterface(element), _res, Result);
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+procedure StoreRecords(_file: IwbFile; _res: PCardinalArray); overload;
+var
+  i: Integer;
+begin
+  GetMem(_res, 4 * _file.RecordCount);
+  for i := 0 to Pred(_file.RecordCount) do
+    _res^[i]^ := Store(_file.Records[i]);
+end;
+
+procedure StoreRecords(group: IwbGroupRecord; _res: PCardinalArray); overload;
+var
+  i: Integer;
+  rec: IwbMainRecord;
+begin
+  GetMem(_res, 4 * group.ElementCount);
+  for i := 0 to Pred(group.ElementCount) do
+    if Supports(group.Elements[i], IwbMainRecord, rec) then
+      _res^[i]^ := Store(rec);
+end;
+
+function GetRecords(_id: Cardinal; _res: PCardinalArray): WordBool; StdCall;
+var
+  e: IInterface;
+  _file: IwbFile;
+  group: IwbGroupRecord;
+begin
+  Result := false;
+  try
+    e := Resolve(_id);
+    if Supports(e, IwbFile, _file) then begin
+      StoreRecords(_file, _res);
+      Result := true;
+    end
+    else if Supports(e, IwbGroupRecord, group) then begin
+      StoreRecords(group, _res);
+      Result := true;
     end;
   except
     on x: Exception do ExceptionHandler(x);
