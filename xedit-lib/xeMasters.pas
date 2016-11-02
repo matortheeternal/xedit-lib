@@ -78,4 +78,19 @@ begin
   end;
 end;
 
+function GetMasters(_id: Cardinal; a: Variant; len: Integer): WordBool; StdCall;
+var
+  _file: IwbFile;
+begin
+  Result := false;
+  try
+    if Supports(Resolve(_id), IwbFile, _file) then begin
+      // TODO
+      Result := true;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
 end.
