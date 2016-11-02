@@ -11,8 +11,8 @@ Specify what files you're patching.
   fileNames = GetUserFileSelection();
 ```
 
-### Step 2
-Specify a destination file for patched records, or create a new one. [Optional]
+### Step 2 [Optional]
+Specify a destination file for patched records, or create a new one.
 
 ```javascript
   patchFile = FindOrCreateFileByName('MyPatch.esp');
