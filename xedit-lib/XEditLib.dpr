@@ -63,7 +63,7 @@ exports
   HasGroup, AddGroup, GetGroupSignatures, GetChildGroup,
   // RECORD HANDLING METHODS
   AddRecord, {GetRecords,} RecordByIndex, {RecordsBySignature,} RecordByFormID,
-  RecordByEditorID, RecordByFULL;
+  RecordByEditorID, RecordByName;
   // RECORD VALUE METHODS
 
 begin
