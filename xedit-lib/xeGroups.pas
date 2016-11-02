@@ -60,4 +60,24 @@ begin
   end;
 end;
 
+function GetGroups(_id: Cardinal; groups: PWideChar; len: Integer): WordBool; StdCall;
+var
+  _file: IwbFile;
+  s: String;
+  i: Integer;
+begin
+  Result := false;
+  try
+    if Supports(Resolve(_id), IwbFile, _file) then begin
+      s := '';
+      for i := 1 to _file.ElementCount do
+        s := s + string(IwbGroupRecord(_file.Elements[i]).Signature) + #13;
+      StrLCopy(groups, PWideChar(s), len);
+      Result := true;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
 end.
