@@ -29,9 +29,10 @@ var
 begin
   Result := false;
   try
-    if Supports(Resolve(_id), IwbFile, _file) then
+    if Supports(Resolve(_id), IwbFile, _file) then begin
       _file.CleanMasters;
-    Result := true;
+      Result := true;
+    end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -43,9 +44,10 @@ var
 begin
   Result := false;
   try
-    if Supports(Resolve(_id), IwbFile, _file) then
+    if Supports(Resolve(_id), IwbFile, _file) then begin
       _file.SortMasters;
-    Result := true;
+      Result := true;
+    end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -57,9 +59,10 @@ var
 begin
   Result := false;
   try
-    if Supports(Resolve(_id), IwbFile, _file) then
+    if Supports(Resolve(_id), IwbFile, _file) then begin
       _file.AddMasterIfMissing(string(masterName));
-    Result := true;
+      Result := true;
+    end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
