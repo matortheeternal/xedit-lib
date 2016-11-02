@@ -56,8 +56,10 @@ end;
 
 procedure Finalize; StdCall;
 begin
-  ResetStore;
+  // TODO: Clear loaded files
   MessageBuffer.Free;
+  _store.Free;
+  _releasedIDs.Free;
 end;
 
 procedure ExceptionHandler(x: Exception);
