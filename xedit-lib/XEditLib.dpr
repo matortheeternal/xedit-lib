@@ -28,6 +28,7 @@ uses
   wbStreams in '..\lib\xedit\wbStreams.pas',
   Zlibex in '..\lib\xedit\Zlibex.pas';
 
+{$R *.RES}
 {$MAXSTACKSIZE 2097152}
 
 const
