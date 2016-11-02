@@ -80,4 +80,24 @@ begin
   end;
 end;
 
+function GetChildGroup(_id: Cardinal; _res: PCardinal): WordBool; StdCall;
+var
+  _rec: IwbMainRecord;
+  _group: IwbGroupRecord;
+begin
+  Result := false;
+  try
+    if Supports(Resolve(_id), IwbMainRecord, _rec) then begin
+      _group := _rec.ChildGroup;
+      if Assigned(_group) then begin
+        _res^ := Store(_group);
+        Result := true;
+      end;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+
 end.
