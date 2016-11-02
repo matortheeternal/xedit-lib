@@ -10,6 +10,8 @@ uses
   xeFileValues in 'xeFileValues.pas',
   xeElements in 'xeElements.pas',
   xeElementValues in 'xeElementValues.pas',
+  xeRecords in 'xeRecords.pas',
+  xeRecordValues in 'xeRecordValues.pas',
   mteHelpers in '..\lib\mte\mteHelpers.pas',
   CRC32 in '..\lib\mte\CRC32.pas',
   RttiIni in '..\lib\mte\RttiIni.pas',

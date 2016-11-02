@@ -65,6 +65,8 @@
 			<DCCReference Include="xeFileValues.pas"/>
 			<DCCReference Include="xeElements.pas"/>
 			<DCCReference Include="xeElementValues.pas"/>
+			<DCCReference Include="xeRecords.pas"/>
+			<DCCReference Include="xeRecordValues.pas"/>
 			<DCCReference Include="..\lib\mte\mteHelpers.pas"/>
 			<DCCReference Include="..\lib\mte\CRC32.pas"/>
 			<DCCReference Include="..\lib\mte\RttiIni.pas"/>
