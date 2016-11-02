@@ -17,6 +17,7 @@ interface
   function SetUIntValue(_id: Integer; path: PWideChar; value: Cardinal): WordBool; StdCall;
   function GetFloatValue(_id: Integer; path: PWideChar; out value: Double): WordBool; StdCall;
   function SetFloatValue(_id: Integer; path: PWideChar; value: Double): WordBool; StdCall;
+  function GetLinksTo(_id: Integer; path: PWideChar; _res: PCardinal): WordBool; StdCall;
   function SetFlag(_id: Integer; path, name: PWideChar; enabled: WordBool): WordBool; StdCall;
   function GetFlag(_id: Integer; path, name: PWideChar): WordBool; StdCall;
   function ToggleFlag(_id: Integer; path, name: PWideChar): WordBool; StdCall;
@@ -323,6 +324,31 @@ begin
   try
     SetNativeValue(_id, path, value);
     Result := true;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetLinksTo(_id: Integer; path: PWideChar; _res: PCardinal): WordBool; StdCall;
+var
+  e: IInterface;
+  container: IwbContainerElementRef;
+  element, linkedElement: IwbElement;
+begin
+  Result := false;
+  try
+    // resolve linked element
+    e := Resolve(_id);
+    if Supports(e, IwbContainerElementRef, container) then
+      linkedElement := container.ElementByPath[string(path)].LinksTo
+    else if Supports(e, IwbElement, element) then
+      linkedElement := element.LinksTo;
+
+    // return linked element if present
+    if Assigned(linkedElement) then begin
+      _res^ := Store(linkedElement);
+      Result := true;
+    end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
