@@ -121,6 +121,9 @@
 - AddGroup
 - GetGroupSignatures
 - GetChildGroup
+- GroupSignatureFromName
+- GroupNameFromSignature
+- GetGroupSignatureNameMap
   
 ## RECORDS
 
@@ -133,9 +136,6 @@
 - RecordByFormID
 - RecordByEditorID
 - RecordByName
-- RecordSignatureFromName
-- RecordNameFromSignature
-- GetRecordSignatureNameMap
 
 
 **TODO:**
