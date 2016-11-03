@@ -54,7 +54,7 @@
 - GetElement: replaces ElementByName, ElementByPath, ElementByIndex, GroupBySignature, and ElementBySignature.  Supports indexed paths.
 - GetElements: gets all elements at the specified path
 - NewElement: replaces ElementAssign, Add, AddElement, and InsertElement
-- ElementExists: replaces HasGroup and ElementExists.
+- ElementExists: combines functionality of HasGroup and ElementExists.
 - ElementCount: same
 - Assigned: same
 - Equals: same
