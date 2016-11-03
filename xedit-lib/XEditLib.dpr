@@ -60,11 +60,11 @@ exports
   SetValue, GetIntValue, SetIntValue, GetUIntValue, SetUIntValue, GetFloatValue,
   SetFloatValue, GetLinksTo, SetFlag, GetFlag, ToggleFlag, GetEnabledFlags,
   // GROUP HANDLING METHODS
-  HasGroup, AddGroup, GetGroupSignatures, GetChildGroup,
+  HasGroup, AddGroup, GetGroupSignatures, GetChildGroup, RecordSignatureFromName,
+  RecordNameFromSignature, GetRecordSignatureNameMap,
   // RECORD HANDLING METHODS
   AddRecord, GetRecords, RecordsBySignature, RecordByIndex, RecordByFormID,
-  RecordByEditorID, RecordByName, RecordSignatureFromName,
-  RecordNameFromSignature, GetRecordSignatureNameMap;
+  RecordByEditorID, RecordByName;
   // RECORD VALUE METHODS
 
 begin

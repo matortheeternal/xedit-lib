@@ -12,9 +12,6 @@ uses
   function RecordByFormID(_id, formID: Cardinal; _res: PCardinal): WordBool; cdecl;
   function RecordByEditorID(_id: Cardinal; edid: string; _res: PCardinal): WordBool; cdecl;
   function RecordByName(_id: Cardinal; full: string; _res: PCardinal): WordBool; cdecl;
-  function RecordSignatureFromName(name, str: PWideChar): WordBool; cdecl;
-  function RecordNameFromSignature(sig, str: PWideChar; len: Integer): WordBool; cdecl;
-  function GetRecordSignatureNameMap(str: PWideChar; len: Integer): WordBool; cdecl;
 
 implementation
 
@@ -24,9 +21,6 @@ uses
   wbInterface, wbImplementation,
   // xelib units
   xeGroups;
-
-var
-  slRecordNameMap: TStringList;
 
 function AddRecord(_id: Cardinal; sig: string; _res: PCardinal): WordBool; cdecl;
 var
@@ -242,80 +236,6 @@ begin
   except
     on x: Exception do ExceptionHandler(x);
   end;
-end;
-
-function RecordSignatureFromName(name, str: PWideChar): WordBool; cdecl;
-var
-  sig: String;
-begin
-  Result := false;
-  try
-    if slRecordNameMap.IndexOfName(name) > -1 then begin
-      sig := slRecordNameMap.Values[name];
-      StrLCopy(str, PWideChar(sig), 4);
-      Result := true;
-    end;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function RecordNameFromSignature(sig, str: PWideChar; len: Integer): WordBool; cdecl;
-var
-  name: String;
-  RecordDef: PwbRecordDef;
-begin
-  Result := false;
-  try
-    if wbFindRecordDef(AnsiString(sig), RecordDef) then begin
-      name := RecordDef.Name;
-      StrLCopy(str, PWideChar(name), len);
-      Result := true;
-    end;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function GetRecordSignatureNameMap(str: PWideChar; len: Integer): WordBool; cdecl;
-var
-  text: String;
-begin
-  Result := false;
-  try
-    text := slRecordNameMap.Text;
-    Delete(text, Length(text), 1);
-    StrLCopy(str, PWideChar(text), len);
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-procedure BuildRecordNameMap;
-var
-  i: Integer;
-  sig: string;
-  RecordDef: PwbRecordDef;
-begin
-  for i := 0 to Pred(wbGroupOrder.Count) do begin
-    sig := wbGroupOrder[i];
-    if wbFindRecordDef(AnsiString(sig), RecordDef) then
-      slRecordNameMap.Values[sig] := RecordDef.Name;
-  end;
-end;
-
-initialization
-begin
-  slRecordNameMap := TStringList.Create;
-  slRecordNameMap.Sorted := True;
-  slRecordNameMap.Duplicates := dupIgnore;
-  BuildRecordNameMap;
-end;
-
-
-finalization
-begin
-  slRecordNameMap.Free;
 end;
 
 end.
