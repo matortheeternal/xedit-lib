@@ -7,6 +7,7 @@ uses
 
   function GetElement(_id: Cardinal; key: PWideChar): Cardinal; cdecl;
   function GetElements(_id: Cardinal; _res: PCardinalArray): WordBool; cdecl;
+  function GetContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function NewElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
   function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; cdecl;
   function LinksTo(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
@@ -83,6 +84,24 @@ begin
       GetMem(_res, 4 * container.ElementCount);
       for i := 0 to Pred(container.ElementCount) do
         _res^[i]^ := Store(container.Elements[i]);
+      Result := True;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
+var
+  e: IInterface;
+  element: IwbElement;
+  container: IwbContainerElementRef;
+begin
+  Result := False;
+  try
+    e := Resolve(_id);
+    if Supports(e, IwbElement, element) and Assigned(element.Container) then begin
+      _res^ := Store(element.Container);
       Result := True;
     end;
   except
