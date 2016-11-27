@@ -103,11 +103,23 @@ end;
 function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; cdecl;
 var
   e: IInterface;
+  element: IwbElement;
+  container: IwbContainerElementRef;
+  keyIndex: Integer;
 begin
   Result := false;
   try
     e := Resolve(_id);
-    // TODO
+    if not Supports(e, IwbElement, element) then
+      exit;
+    if (not Assigned(key)) or (Length(key) = 0) then
+      element.Remove
+    else begin
+      if not Supports(e, IwbContainerElementRef, container) then
+        exit;
+      container.ElementByPath[key].Remove;
+    end;
+    Result := true;
   except
     on x: Exception do ExceptionHandler(x);
   end;
