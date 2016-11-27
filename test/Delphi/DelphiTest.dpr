@@ -7,7 +7,7 @@ uses
   SysUtils;
 
 type
-  CardinalArray = array of PCardinal;
+  CardinalArray = array of Cardinal;
   PCardinalArray = ^CardinalArray;
 
   // META METHODS
@@ -94,7 +94,6 @@ end;
 procedure TestFileHandling;
 var
   h: Cardinal;
-  c: Cardinal;
 begin
   h := FileByName('Skyrim.esm');
   WriteLn('Skyrim.esm returned with handle: ' + IntToStr(h));
@@ -167,9 +166,50 @@ begin
   WriteLn('Keyword 0 from ARMO record with FormID 00012E46 resolved with handle: ' + IntToStr(h));
 end;
 
+procedure WriteArray(a: CardinalArray);
+var
+  s: String;
+  i: Integer;
+begin
+  s := '  [ ';
+  for i := Low(a) to High(a) do begin
+    s := s + IntToStr(a[i]);
+    if i < High(a) then
+      s := s + ', ';
+  end;
+  s := s + ' ]';
+  WriteLn(s);
+end;
+
+procedure TestGetElements;
+var
+  f, g, r: Cardinal;
+  a: CardinalArray;
+begin
+  f := FileByName('Skyrim.esm');
+  GetElement(f, 'ARMO', @g);
+  GetElement(g, '00012E46', @r);
+
+  // test getting elements from a file
+  GetElements(f, @a);
+  WriteLn('Resolved ' + IntToStr(High(a) + 1) + ' element handles from Skyrim.esm:');
+  WriteArray(a);
+
+  // test getting elements from a group
+  GetElements(g, @a);
+  WriteLn('Resolved ' + IntToStr(High(a) + 1) + ' element handles from the Skyrim.esm\ARMO:');
+  WriteArray(a);
+
+  // test getting elements from a group
+  GetElements(r, @a);
+  WriteLn('Resolved ' + IntToStr(High(a) + 1) + ' element handles from the Skyrim.esm\ARMO\00012E46:');
+  WriteArray(a);
+end;
+
 procedure TestElementHandling;
 begin
   TestGetElement;
+  TestGetElements;
 end;
 
 begin
