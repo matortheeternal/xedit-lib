@@ -2,8 +2,12 @@ unit xeElements;
 
 interface
 
+uses
+  xeMeta;
+
   function GetElement(_id: Cardinal; key: PWideChar): Cardinal; cdecl;
-  function NewElement(_id: Cardinal; key: PWideChar): Cardinal; cdecl;
+  function GetElements(_id: Cardinal; _res: PCardinalArray): WordBool; cdecl;
+  function NewElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
   function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; cdecl;
   function LinksTo(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function ElementExists(_id: Cardinal; key: PWideChar): WordBool; cdecl;
@@ -28,9 +32,7 @@ uses
   // third party units
   SuperObject,
   // xedit units
-  wbInterface, wbImplementation,
-  // xelib units
-  xeMeta;
+  wbInterface, wbImplementation;
 
 
 {******************************************************************************}
@@ -62,6 +64,27 @@ begin
       Result := Store(_file.GroupBySignature[StrToSignature(key)])
     else if Supports(e, IwbContainerElementRef, container) then
       Result := Store(container.ElementByPath[string(key)]);
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+// returns an array of handles for the elements in a container
+function GetElements(_id: Cardinal; _res: PCardinalArray): WordBool; cdecl;
+var
+  e: IInterface;
+  container: IwbContainerElementRef;
+  i: Integer;
+begin
+  Result := False;
+  try
+    e := Resolve(_id);
+    if Supports(e, IwbContainerElementRef, container) then begin
+      GetMem(_res, 4 * container.ElementCount);
+      for i := 0 to Pred(container.ElementCount) do
+        _res^[i]^ := Store(container.Elements[i]);
+      Result := True;
+    end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
