@@ -38,7 +38,7 @@ uses
   // xedit units
   wbInterface, wbImplementation,
   // xelib units
-  xeMessages;
+  xeMessages, xeFiles;
 
 
 {******************************************************************************}
@@ -71,30 +71,60 @@ function ResolveByIndex(container: IwbContainerElementRef; index: Integer; nextP
 var
   element: IwbElement;
 begin
-  if index < container.ElementCount then begin
-    element := container.Elements[index];
+  // resolve element from container if container present
+  if Assigned(container) then begin
+    if index < container.ElementCount then
+      element := container.Elements[index];
+  end
+  // else resolve file at index
+  else
+    element := NativeFileByIndex(index);
+
+  // resolve next element if nextPath is present
+  if Length(nextPath) > 0 then
+    Result := ResolveElement(element, nextPath, _res)
+  // else store the element and return it
+  else begin
+    _res^ := Store(element);
+    Result := True;
+  end;
+end;
+
+function ResolveFileElement(path: String; _res: PCardinal): WordBool;
+var
+  key, nextPath: String;
+  index: Integer;
+  _file: IwbFile;
+begin
+  SplitPath(path, key, nextPath);
+  // resolve file by index if key is an index
+  index := ParseIndex(string(key));
+  if index > -1 then
+    Result := ResolveByIndex(nil, index, nextPath, _res)
+  // else resolve by file name
+  else begin
+    _file := NativeFileByName(string(key));
     if Length(nextPath) > 0 then
-      Result := ResolveElement(element, nextPath, _res)
+      Result := ResolveElement(_file, nextPath, _res)
     else begin
-      _res^ := Store(element);
+      _res^ := Store(_file);
       Result := True;
     end;
   end;
 end;
 
-function ResolveFileElement(_file: IwbFile; path: String; _res: PCardinal): WordBool;
+function ResolveGroupElement(_file: IwbFile; path: String; _res: PCardinal): WordBool;
 var
   key, nextPath: String;
   index: Integer;
-  element: IInterface;
   group: IwbGroupRecord;
 begin
   SplitPath(path, key, nextPath);
-  // resolve child of file by index if key is an index
+  // resolve group by index if key is an index
   index := ParseIndex(string(key));
   if index > -1 then
     Result := ResolveByIndex(_file as IwbContainerElementRef, index, nextPath, _res)
-  // else resolve child of file by group signature
+  // else resolve by group signature
   else begin
     // TODO: perhaps also by group name?
     group := _file.GroupBySignature[StrToSignature(key)];
@@ -107,19 +137,18 @@ begin
   end;
 end;
 
-function ResolveGroupElement(group: IwbGroupRecord; path: String; _res: PCardinal): WordBool;
+function ResolveRecordElement(group: IwbGroupRecord; path: String; _res: PCardinal): WordBool;
 var
   key, nextPath: String;
   index: Integer;
-  element: IInterface;
   rec: IwbMainRecord;
 begin
   SplitPath(path, key, nextPath);
-  // resolve child of group by index if key is an index
+  // resolve record by index if key is an index
   index := ParseIndex(string(key));
   if index > -1 then
     Result := ResolveByIndex(group as IwbContainerElementRef, index, nextPath, _res)
-  // else resolve child of group by formID
+  // else resolve record by formID
   else begin
     rec := group.MainRecordByFormID[StrToInt('$' + key)];
     if Length(nextPath) > 0 then
@@ -138,9 +167,9 @@ var
   container: IwbContainerElementRef;
 begin
   if Supports(e, IwbFile, _file) then
-    Result := ResolveFileElement(_file, path, _res)
+    Result := ResolveGroupElement(_file, path, _res)
   else if Supports(e, IwbGroupRecord, group) then
-    Result := ResolveGroupElement(group, path, _res)
+    Result := ResolveRecordElement(group, path, _res)
   else if Supports(e, IwbContainerElementRef, container) then begin
     _res^ := Store(container.ElementByPath[path]);
     Result := True;
@@ -155,7 +184,10 @@ var
 begin
   Result := False;
   try
-    Result := ResolveElement(Resolve(_id), string(key), _res);
+    if _id = 0 then
+      Result := ResolveFileElement(string(key), _res)
+    else
+      Result := ResolveElement(Resolve(_id), string(key), _res);
   except
     on x: Exception do ExceptionHandler(x);
   end;
