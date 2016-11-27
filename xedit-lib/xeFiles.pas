@@ -68,7 +68,7 @@ function FileByIndex(index: Integer): Cardinal; cdecl;
 begin
   Result := 0;
   try
-     Result := Store(Files[index]);
+    Result := Store(Files[index]);
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -151,6 +151,7 @@ begin
       FileStream := TFileStream.Create(path, fmCreate);
       try
         _file.WritetoStream(FileStream, false);
+        Result := True;
         // TODO: Need to handle renaming when library is finalized
       finally
         FileStream.Free;
