@@ -63,6 +63,7 @@ end;
 procedure Finalize; cdecl;
 begin
   // TODO: Clear loaded files
+  SaveBuffer;
   MessageBuffer.Free;
   _store.Free;
   _releasedIDs.Free;
