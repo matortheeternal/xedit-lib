@@ -10,9 +10,9 @@ uses
   xeFileValues in 'xeFileValues.pas',
   xeElements in 'xeElements.pas',
   xeElementValues in 'xeElementValues.pas',
-  xeRecords in 'xeRecords.pas',
-  xeRecordValues in 'xeRecordValues.pas',
-  xeGroups in 'xeGroups.pas',
+//  xeRecords in 'xeRecords.pas',
+//  xeRecordValues in 'xeRecordValues.pas',
+//  xeGroups in 'xeGroups.pas',
   mteHelpers in '..\lib\mte\mteHelpers.pas',
   CRC32 in '..\lib\mte\CRC32.pas',
   RttiIni in '..\lib\mte\RttiIni.pas',
@@ -53,18 +53,19 @@ exports
   SetAuthor, GetDescription, SetDescription, OverrideRecordCount, GetIsESM,
   SetIsESM,
   // ELEMENT HANDLING METHODS
-  GetElement, NewElement, RemoveElement, ElementExists, ElementCount, LinksTo,
-  ElementAssigned, Equals, IsMaster, IsInjected, IsOverride, IsWinningOverride,
+  GetElement, GetElements, NewElement, RemoveElement, ElementExists, ElementCount,
+  LinksTo, ElementAssigned, Equals, IsMaster, IsInjected, IsOverride,
+  IsWinningOverride,
   // ELEMENT VALUE METHODS
   Name, EditorID, Signature, ShortName, SortKey, ElementType, DefType, GetValue,
   SetValue, GetIntValue, SetIntValue, GetUIntValue, SetUIntValue, GetFloatValue,
-  SetFloatValue, GetLinksTo, SetFlag, GetFlag, ToggleFlag, GetEnabledFlags,
+  SetFloatValue, GetLinksTo, SetFlag, GetFlag, ToggleFlag, GetEnabledFlags;
   // GROUP HANDLING METHODS
-  HasGroup, AddGroup, GetGroupSignatures, GetChildGroup, RecordSignatureFromName,
-  RecordNameFromSignature, GetRecordSignatureNameMap,
+  {HasGroup, AddGroup, GetGroupSignatures, GetChildGroup, GroupSignatureFromName,
+  GroupNameFromSignature, GetGroupSignatureNameMap,
   // RECORD HANDLING METHODS
   AddRecord, GetRecords, RecordsBySignature, RecordByIndex, RecordByFormID,
-  RecordByEditorID, RecordByName;
+  RecordByEditorID, RecordByName; }
   // RECORD VALUE METHODS
 
 begin
