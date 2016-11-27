@@ -20,7 +20,7 @@ end;
 
 procedure SaveBuffer;
 begin
-  MessageBuffer.SaveToFile('mod_dump_log.txt');
+  MessageBuffer.SaveToFile('xelib_log.txt');
 end;
 
 initialization
