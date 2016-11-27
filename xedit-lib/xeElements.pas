@@ -36,7 +36,9 @@ uses
   // third party units
   SuperObject,
   // xedit units
-  wbInterface, wbImplementation;
+  wbInterface, wbImplementation,
+  // xelib units
+  xeMessages;
 
 
 {******************************************************************************}
@@ -170,9 +172,9 @@ begin
   try
     e := Resolve(_id);
     if Supports(e, IwbContainerElementRef, container) then begin
-      GetMem(_res, 4 * container.ElementCount);
+      SetLength(_res^, container.ElementCount);
       for i := 0 to Pred(container.ElementCount) do
-        _res^[i]^ := Store(container.Elements[i]);
+        _res^[i] := Store(container.Elements[i]);
       Result := True;
     end;
   except
