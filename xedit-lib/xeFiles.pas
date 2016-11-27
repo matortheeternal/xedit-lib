@@ -2,6 +2,9 @@ unit xeFiles;
 
 interface
 
+uses
+  wbInterface;
+
   function NewFile(filename: PAnsiChar): Cardinal; cdecl;
   function FileByIndex(index: Integer): Cardinal; cdecl;
   function FileByLoadOrder(load_order: Integer): Cardinal; cdecl;
@@ -11,6 +14,12 @@ interface
   function SaveFile(_id: Cardinal): WordBool; cdecl;
   function GetFileNames(fileNames: PWideChar; len: Integer): WordBool; cdecl;
 
+  // native functions
+  function NativeFileByIndex(index: Integer): IwbFile;
+  function NativeFileByLoadOrder(load_order: Integer): IwbFile;
+  function NativeFileByName(name: String): IwbFile;
+  function NativeFileByAuthor(author: String): IwbFile;
+
 implementation
 
 uses
@@ -18,7 +27,7 @@ uses
   // mte modules
   mteHelpers,
   // xedit modules
-  wbInterface, wbImplementation,
+  wbImplementation,
   // xelib modules
   xeMessages, xeMeta, xeSetup;
 
@@ -64,62 +73,99 @@ begin
   end;
 end;
 
+function NativeFileByIndex(index: Integer): IwbFile;
+begin
+  Result := Files[index];
+end;
+
 function FileByIndex(index: Integer): Cardinal; cdecl;
+var
+  _file: IwbFile;
 begin
   Result := 0;
   try
-    Result := Store(Files[index]);
+    _file := NativeFileByIndex(index);
+    if Assigned(_file) then
+      Result := Store(_file);
   except
     on x: Exception do ExceptionHandler(x);
   end;
 end;
 
-function FileByLoadOrder(load_order: Integer): Cardinal; cdecl;
+function NativeFileByLoadOrder(load_order: Integer): IwbFile;
 var
   i: Integer;
 begin
+  for i := Low(Files) to High(Files) do
+    if Files[i].LoadOrder = load_order then begin
+      Result := Files[i];
+      exit;
+    end;
+end;
+
+function FileByLoadOrder(load_order: Integer): Cardinal; cdecl;
+var
+  _file: IwbFile;
+begin
   Result := 0;
   try
-    for i := Low(Files) to High(Files) do
-      if Files[i].LoadOrder = load_order then begin
-        Result := Store(Files[i]);
-        exit;
-      end;
+    _file := NativeFileByLoadOrder(load_order);
+    if Assigned(_file) then
+      Result := Store(_file);
   except
     on x: Exception do ExceptionHandler(x);
   end;
+end;
+
+function NativeFileByName(name: String): IwbFile;
+var
+  i: Integer;
+begin
+  for i := Low(Files) to High(Files) do
+    if Files[i].FileName = string(name) then begin
+      Result := Files[i];
+      exit;
+    end;
 end;
 
 function FileByName(name: PAnsiChar): Cardinal; cdecl;
 var
   i: Integer;
+  _file: IwbFile;
 begin
   Result := 0;
   try
-    for i := Low(Files) to High(Files) do
-      if Files[i].FileName = string(name) then begin
-        Result := Store(Files[i]);
-        exit;
-      end;
+    _file := NativeFileByName(string(name));
+    if Assigned(_file) then
+      Result := Store(_file);
   except
     on x: Exception do ExceptionHandler(x);
   end;
 end;
 
-function FileByAuthor(author: PAnsiChar): Cardinal; cdecl;
+function NativeFileByAuthor(author: String): IwbFile;
 var
   i: Integer;
   s: String;
 begin
+  for i := Low(Files) to High(Files) do begin
+    s := Files[i].Header.ElementEditValues['CNAM'];
+    if SameText(s, author) then begin
+      Result := Files[i];
+      exit;
+    end;
+  end;
+end;
+
+function FileByAuthor(author: PAnsiChar): Cardinal; cdecl;
+var
+  _file: IwbFile;
+begin
   Result := 0;
   try
-    for i := Low(Files) to High(Files) do begin
-      s := Files[i].Header.ElementEditValues['CNAM'];
-      if SameText(s, string(author)) then begin
-        Result := Store(Files[i]);
-        exit;
-      end;
-    end;
+    _file := NativeFileByAuthor(string(author));
+    if Assigned(_file) then
+      Result := Store(_file);
   except
     on x: Exception do ExceptionHandler(x);
   end;
