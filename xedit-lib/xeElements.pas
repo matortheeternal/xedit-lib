@@ -68,32 +68,33 @@ begin
 end;
 
 // replaces ElementAssign, Add, AddElement, and InsertElement
-function NewElement(_id: Cardinal; key: PWideChar): Cardinal; cdecl;
+function NewElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
   e: IInterface;
   container: IwbContainerElementRef;
   keyIndex: Integer;
 begin
-  Result := 0;
+  Result := False;
   try
     e := Resolve(_id);
     if Supports(e, IwbContainerElementRef, container) then begin
       // Use Add for files and groups
       if Supports(e, IwbFile) or Supports(e, IwbGroupRecord) then
-        Result := Store(container.Add(string(key), true))
+        _res^ := Store(container.Add(string(key), true))
       else begin
-        // no key means we're doing ElementAssign
+        // no key means we're assigning an element at the end of the array
         if (not Assigned(key)) or (Length(key) = 0) then
-          Result := Store(container.Assign(High(integer), nil, false))
+          _res^ := Store(container.Assign(High(integer), nil, false))
         else begin
           keyIndex := ParseIndex(key);
-          // use InsertElement if index was given, else use Add
+          // assign element at given index if index given, else add
           if keyIndex > -1 then
-            Result := Store(container.Assign(keyIndex, nil, false))
+            _res^ := Store(container.Assign(keyIndex, nil, false))
           else
-            Result := Store(container.Add(string(key), true));
+            _res^ := Store(container.Add(string(key), true));
         end;
       end;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
