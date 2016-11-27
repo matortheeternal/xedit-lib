@@ -89,12 +89,14 @@ begin
     WriteBuffer;
     Sleep(100);
   end;
+  WriteLn(' ');
 end;
 
 procedure TestFileHandling;
 var
   h: Cardinal;
 begin
+  WriteLn('== File Handling Tests ==');
   h := FileByName('Skyrim.esm');
   WriteLn('Skyrim.esm returned with handle: ' + IntToStr(h));
   h := FileByIndex(1);
@@ -103,6 +105,7 @@ begin
   WriteLn('File with load order 01 returned with handle: ' + IntToStr(h));
   h := FileByAuthor('mcarofano');
   WriteLn('File with author "mcarofano" returned with handle: ' + IntToStr(h));
+  WriteLn(' ');
 end;
 
 procedure TestFileValues;
@@ -111,6 +114,7 @@ var
   str: PWideChar;
   bIsEsm: PWordBool;
 begin
+  WriteLn('== File Value Tests ==');
   h := FileByName('Skyrim.esm');
   GetMem(str, 4096);
   GetFileName(h, str, 4096);
@@ -122,48 +126,67 @@ begin
   GetMem(bIsEsm, 1);
   GetIsESM(h, bIsEsm);
   WriteLn('IsESM: ' + BoolToStr(bIsEsm^, true));
+  WriteLn(' ');
 end;
 
 procedure TestGetElement;
 var
   f, g, r, h: Cardinal;
 begin
-  f := FileByName('Skyrim.esm');
+  WriteLn('=== GetElement Tests ===');
+  // Test GetElement resolving a file by index
+  GetElement(0, '[0]', @f);
+  WriteLn('Resolved [0] with handle: ' + IntToStr(f));
+  // Test GetElement resolving a file by name
+  GetElement(0, 'Skyrim.esm', @f);
+  WriteLn('Resolved Skyrim.esm with handle: ' + IntToStr(f));
 
   // Test GetElement resolving file header from file
   GetElement(f, '[0]', @h);
-  WriteLn('Skyrim.esm File Header returned with handle: ' + IntToStr(h));
+  WriteLn('Skyrim.esm - Resolved [0] with handle: ' + IntToStr(h));
   // Test GetElement resolving groups from file
   GetElement(f, 'WRLD', @g);
-  WriteLn('Group WRLD from Skyrim.esm returned with handle: ' + IntToStr(g));
+  WriteLn('Skyrim.esm - Resolved WRLD with handle: ' + IntToStr(g));
   GetElement(f, 'ARMO', @g);
-  WriteLn('Group ARMO from Skyrim.esm returned with handle: ' + IntToStr(g));
+  WriteLn('Skyrim.esm - Resolved ARMO with handle: ' + IntToStr(g));
+
   // Test GetElement resolving records from group
   GetElement(g, '[0]', @r);
-  WriteLn('First child of ARMO group resolved with handle: ' + IntToStr(r));
+  WriteLn('Skyrim.esm\ARMO - Resolved [0] with handle: ' + IntToStr(r));
   GetElement(g, '[1]', @r);
-  WriteLn('Second child of ARMO group resolved with handle: ' + IntToStr(r));
+  WriteLn('Skyrim.esm\ARMO - Resolved [1] with handle: ' + IntToStr(r));
+
   // Test GetElement resolving top level fields from a record via signature
   GetElement(r, 'FULL', @h);
-  WriteLn('FULL element in ARMO record resolved with handle: ' + IntToStr(h));
+  WriteLn('Skyrim.esm\ARMO\[1] - Resolved FULL with handle: ' + IntToStr(h));
   // Test GetElement resolving top level fields from a record via name
   GetElement(r, 'Male world model', @h);
-  WriteLn('Male world model element in ARMO record resolved with handle: ' + IntToStr(h));
+  WriteLn('Skyrim.esm\ARMO\[1] - Resolved Male world model with handle: ' + IntToStr(h));
+
   // Test GetElement resolving nested fields from a record with indexes
   GetElement(r, 'KWDA\[1]', @h);
-  WriteLn('Second keyword element in ARMO record resolved with handle: ' + IntToStr(h));
+  WriteLn('Skyrim.esm\ARMO\[1] - Resolved KWDA\[1] with handle: ' + IntToStr(h));
   GetElement(r, 'BODT\[0]', @h);
-  WriteLn('First BODT child element in ARMO record resolved with handle: ' + IntToStr(h));
+  WriteLn('Skyrim.esm\ARMO\[1] - Resolved BODT\[0] with handle: ' + IntToStr(h));
 
   // Test GetElement resolving a record from a file by FormID
   GetElement(f, 'ARMO\00012E46', @r);
-  WriteLn('ARMO record with FormID 00012E46 resolved with handle: ' + IntToStr(r));
+  WriteLn('Skyrim.esm - Resolved ARMO\00012E46 with handle: ' + IntToStr(r));
   // Test GetElement resolving a record from a file by index
   GetElement(f, 'ARMO\[2]', @r);
-  WriteLn('ARMO record with at index 2 resolved with handle: ' + IntToStr(r));
+  WriteLn('Skyrim.esm - Resolved ARMO\[2] with handle: ' + IntToStr(r));
   // Test GetElement resolving an element from a file
   GetElement(f, 'ARMO\00012E46\KWDA\[0]', @h);
-  WriteLn('Keyword 0 from ARMO record with FormID 00012E46 resolved with handle: ' + IntToStr(h));
+  WriteLn('Skyrim.esm - Resolved ARMO\00012E46\KWDA\[0] with handle: ' + IntToStr(h));
+
+  // Test GetElement resolving a full path
+  GetElement(0, 'Skyrim.esm\ARMO\00013938\DATA\Value', @h);
+  WriteLn('Resolved Skyrim.esm\ARMO\00013938\DATA\Value with handle: ' + IntToStr(h));
+  // Test GetElement resolving a full path of indexes
+  GetElement(0, '[0]\[1]\[2]\[1]', @h);
+  WriteLn('Resolved [0]\[1]\[2]\[1] with handle: ' + IntToStr(h));
+  WriteLn(' ');
+
 end;
 
 procedure WriteArray(a: CardinalArray);
@@ -186,6 +209,7 @@ var
   f, g, r: Cardinal;
   a: CardinalArray;
 begin
+  WriteLn('=== GetElements Tests ===');
   f := FileByName('Skyrim.esm');
   GetElement(f, 'ARMO', @g);
   GetElement(g, '00012E46', @r);
@@ -204,12 +228,15 @@ begin
   GetElements(r, @a);
   WriteLn('Resolved ' + IntToStr(High(a) + 1) + ' element handles from the Skyrim.esm\ARMO\00012E46:');
   WriteArray(a);
+  WriteLn(' ');
 end;
 
 procedure TestElementHandling;
 begin
+  WriteLn('== Element Handling Tests ==');
   TestGetElement;
   TestGetElements;
+  WriteLn(' ');
 end;
 
 begin
