@@ -5,7 +5,7 @@ interface
 uses
   xeMeta;
 
-  function GetElement(_id: Cardinal; key: PWideChar): Cardinal; cdecl;
+  function GetElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
   function GetElements(_id: Cardinal; _res: PCardinalArray): WordBool; cdecl;
   function GetContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function NewElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
@@ -25,6 +25,9 @@ uses
   //function ElementToXML(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
   //function JsonToElement(_id: Cardinal; json: PWideChar; _res: Cardinal): WordBool; cdecl;
   //function XMLToElement(_id: Cardinal; xml: PWideChar; _res: Cardinal): WordBool; cdecl;
+
+  // local functions
+  function ResolveElement(e: IInterface; path: String; _res: PCardinal): WordBool;
 
 implementation
 
@@ -49,22 +52,108 @@ begin
     Result := StrToInt(Copy(key, 2, Length(key) - 2));
 end;
 
-// Replaces ElementByName, ElementByPath, ElementByIndex, GroupBySignature, and
-// ElementBySignature.  Supports indexed paths.
-function GetElement(_id: Cardinal; key: PWideChar): Cardinal; cdecl;
+procedure SplitPath(path: String; var key, nextPath: String);
 var
-  e: IInterface;
+  i: Integer;
+begin
+  i := Pos('\', path);
+  if i > 0 then begin
+    key := Copy(path, 1, i - 1);
+    nextPath := Copy(path, i + 1, Length(path));
+  end
+  else
+    key := path;
+end;
+
+function ResolveByIndex(container: IwbContainerElementRef; index: Integer; nextPath: String; _res: PCardinal): WordBool;
+var
+  element: IwbElement;
+begin
+  if index < container.ElementCount then begin
+    element := container.Elements[index];
+    if Length(nextPath) > 0 then
+      Result := ResolveElement(element, nextPath, _res)
+    else begin
+      _res^ := Store(element);
+      Result := True;
+    end;
+  end;
+end;
+
+function ResolveFileElement(_file: IwbFile; path: String; _res: PCardinal): WordBool;
+var
+  key, nextPath: String;
+  index: Integer;
+  element: IInterface;
+  group: IwbGroupRecord;
+begin
+  SplitPath(path, key, nextPath);
+  // resolve child of file by index if key is an index
+  index := ParseIndex(string(key));
+  if index > -1 then
+    Result := ResolveByIndex(_file as IwbContainerElementRef, index, nextPath, _res)
+  // else resolve child of file by group signature
+  else begin
+    // TODO: perhaps also by group name?
+    group := _file.GroupBySignature[StrToSignature(key)];
+    if Length(nextPath) > 0 then
+      Result := ResolveElement(group, nextPath, _res)
+    else begin
+      _res^ := Store(group);
+      Result := True;
+    end;
+  end;
+end;
+
+function ResolveGroupElement(group: IwbGroupRecord; path: String; _res: PCardinal): WordBool;
+var
+  key, nextPath: String;
+  index: Integer;
+  element: IInterface;
+  rec: IwbMainRecord;
+begin
+  SplitPath(path, key, nextPath);
+  // resolve child of group by index if key is an index
+  index := ParseIndex(string(key));
+  if index > -1 then
+    Result := ResolveByIndex(group as IwbContainerElementRef, index, nextPath, _res)
+  // else resolve child of group by formID
+  else begin
+    rec := group.MainRecordByFormID[StrToInt('$' + key)];
+    if Length(nextPath) > 0 then
+      Result := ResolveElement(rec, nextPath, _res)
+    else begin
+      _res^ := Store(rec);
+      Result := True;
+    end;
+  end;
+end;
+
+function ResolveElement(e: IInterface; path: String; _res: PCardinal): WordBool;
+var
   _file: IwbFile;
+  group: IwbGroupRecord;
   container: IwbContainerElementRef;
 begin
-  Result := 0;
+  if Supports(e, IwbFile, _file) then
+    Result := ResolveFileElement(_file, path, _res)
+  else if Supports(e, IwbGroupRecord, group) then
+    Result := ResolveGroupElement(group, path, _res)
+  else if Supports(e, IwbContainerElementRef, container) then begin
+    _res^ := Store(container.ElementByPath[path]);
+    Result := True;
+  end;
+end;
+
+// Replaces ElementByName, ElementByPath, ElementByIndex, GroupBySignature, and
+// ElementBySignature.  Supports indexed paths.
+function GetElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
+var
+  element: IwbElement;
+begin
+  Result := False;
   try
-    e := Resolve(_id);
-    if Supports(e, IwbFile, _file) then
-      // TODO: perhaps also by group name?
-      Result := Store(_file.GroupBySignature[StrToSignature(key)])
-    else if Supports(e, IwbContainerElementRef, container) then
-      Result := Store(container.ElementByPath[string(key)]);
+    Result := ResolveElement(Resolve(_id), string(key), _res);
   except
     on x: Exception do ExceptionHandler(x);
   end;
