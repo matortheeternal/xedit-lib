@@ -65,6 +65,9 @@ type
   function IsOverride(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
   function IsWinningOverride(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
 
+  // SERIALIZATION METHODS
+  function FileToJson(_id: Cardinal; desc: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
+
 procedure WriteBuffer;
 var
   str: PWideChar;
@@ -89,12 +92,14 @@ begin
     WriteBuffer;
     Sleep(100);
   end;
+  WriteBuffer;
   WriteLn(' ');
 end;
 
 procedure TestFileHandling;
 var
   h: Cardinal;
+  str: PWideChar;
 begin
   WriteLn('== File Handling Tests ==');
   h := FileByName('Skyrim.esm');
@@ -105,6 +110,11 @@ begin
   WriteLn('File with load order 01 returned with handle: ' + IntToStr(h));
   h := FileByAuthor('mcarofano');
   WriteLn('File with author "mcarofano" returned with handle: ' + IntToStr(h));
+  GetMem(str, 16384);
+  FileToJSON(h, str, 16384);
+  WriteLn('FileToJSON output: ');
+  WriteLn(str);
+  WriteBuffer;
   WriteLn(' ');
 end;
 
@@ -186,7 +196,6 @@ begin
   GetElement(0, '[0]\[1]\[2]\[1]', @h);
   WriteLn('Resolved [0]\[1]\[2]\[1] with handle: ' + IntToStr(h));
   WriteLn(' ');
-
 end;
 
 procedure WriteArray(a: CardinalArray);
