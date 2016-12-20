@@ -3,7 +3,16 @@ unit xeElements;
 interface
 
 uses
+  //xedit units
+  wbInterface,
+  // xelib units
   xeMeta;
+
+type
+  TSmashType = ( stUnknown, stRecord, stString, stInteger, stFlag, stFloat,
+    stStruct, stUnsortedArray, stUnsortedStructArray, stSortedArray,
+    stSortedStructArray, stByteArray, stUnion );
+  TSmashTypes = set of TSmashType;
 
   function GetElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
   function GetElements(_id: Cardinal; _res: PCardinalArray): WordBool; cdecl;
@@ -28,15 +37,14 @@ uses
 
   // local functions
   function ResolveElement(e: IInterface; path: String; _res: PCardinal): WordBool;
+  function GetSmashType(element: IwbElement): TSmashType;
 
 implementation
 
 uses
-  Classes, SysUtils,
-  // third party units
-  SuperObject,
+  Variants, Classes, SysUtils,
   // xedit units
-  wbInterface, wbImplementation,
+  wbImplementation,
   // xelib units
   xeMessages, xeFiles;
 
@@ -166,6 +174,7 @@ var
   group: IwbGroupRecord;
   container: IwbContainerElementRef;
 begin
+  Result := false;
   if Supports(e, IwbFile, _file) then
     Result := ResolveGroupElement(_file, path, _res)
   else if Supports(e, IwbGroupRecord, group) then
@@ -179,8 +188,6 @@ end;
 // Replaces ElementByName, ElementByPath, ElementByIndex, GroupBySignature, and
 // ElementBySignature.  Supports indexed paths.
 function GetElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
-var
-  element: IwbElement;
 begin
   Result := False;
   try
@@ -218,7 +225,6 @@ function GetContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 var
   e: IInterface;
   element: IwbElement;
-  container: IwbContainerElementRef;
 begin
   Result := False;
   try
@@ -271,7 +277,6 @@ var
   e: IInterface;
   element: IwbElement;
   container: IwbContainerElementRef;
-  keyIndex: Integer;
 begin
   Result := false;
   try
@@ -420,6 +425,75 @@ begin
       Result := not rec.IsWinningOverride;
   except
     on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+{ Returns true if @e is a sorted container }
+function IsSorted(e: IwbElement): boolean;
+var
+  Container: IwbSortableContainer;
+begin
+  Result := false;
+  if Supports(e, IwbSortableContainer, Container) then
+    Result := Container.Sorted;
+end;
+
+{ Returns true if @e is a container with struct children }
+function HasStructChildren(e: IwbElement): boolean;
+var
+  Container: IwbContainerElementRef;
+begin
+  Result := false;
+  if Supports(e, IwbContainerElementRef, Container)
+  and (Container.ElementCount > 0) then
+    Result := GetSmashType(Container.Elements[0]) = stStruct;
+end;
+
+function GetSmashType(element: IwbElement): TSmashType;
+var
+  subDef: IwbSubRecordDef;
+  dt: TwbDefType;
+  bIsSorted, bHasStructChildren: boolean;
+begin
+  dt := element.Def.DefType;
+  if Supports(element.Def, IwbSubRecordDef, subDef) then
+    dt := subDef.Value.DefType;
+
+  case Ord(dt) of
+    Ord(dtRecord): Result := stRecord;
+    Ord(dtSubRecord): Result := stUnknown;
+    Ord(dtSubRecordStruct): Result := stStruct;
+    Ord(dtSubRecordUnion): Result := stUnion;
+    Ord(dtString): Result := stString;
+    Ord(dtLString): Result := stString;
+    Ord(dtLenString): Result := stString;
+    Ord(dtByteArray): Result := stByteArray;
+    Ord(dtInteger): Result := stInteger;
+    Ord(dtIntegerFormater): Result := stInteger;
+    Ord(dtIntegerFormaterUnion): Result := stInteger;
+    Ord(dtFlag): Result := stFlag;
+    Ord(dtFloat): Result := stFloat;
+    Ord(dtSubRecordArray), Ord(dtArray): begin
+      bIsSorted := IsSorted(element);
+      bHasStructChildren := HasStructChildren(element);
+      if bIsSorted then begin
+        if bHasStructChildren then
+          Result := stSortedStructArray
+        else
+          Result := stSortedArray;
+      end
+      else begin
+        if bHasStructChildren then
+          Result := stUnsortedStructArray
+        else
+          Result := stUnsortedArray;
+      end;
+    end;
+    Ord(dtStruct): Result := stStruct;
+    Ord(dtUnion): Result := stUnion;
+    Ord(dtEmpty): Result := stUnknown;
+    Ord(dtStructChapter): Result := stStruct;
+    else Result := stUnknown;
   end;
 end;
 
