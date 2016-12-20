@@ -29,7 +29,9 @@ uses
   wbHelpers in '..\lib\xedit\wbHelpers.pas',
   wbLocalization in '..\lib\xedit\wbLocalization.pas',
   wbStreams in '..\lib\xedit\wbStreams.pas',
-  Zlibex in '..\lib\xedit\Zlibex.pas';
+  Zlibex in '..\lib\xedit\Zlibex.pas',
+  superobject in '..\lib\superobject\superobject.pas',
+  xeSerialization in 'xeSerialization.pas';
 
 {$R *.RES}
 {$MAXSTACKSIZE 2097152}
@@ -56,6 +58,8 @@ exports
   GetElement, GetElements, NewElement, RemoveElement, ElementExists, ElementCount,
   LinksTo, ElementAssigned, Equals, IsMaster, IsInjected, IsOverride,
   IsWinningOverride,
+  // SERIALIZATION METHODS
+  FileToJson;
   // ELEMENT VALUE METHODS
   Name, EditorID, Signature, ShortName, SortKey, ElementType, DefType, GetValue,
   SetValue, GetIntValue, SetIntValue, GetUIntValue, SetUIntValue, GetFloatValue,

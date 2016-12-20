@@ -130,7 +130,6 @@ end;
 
 function FileByName(name: PAnsiChar): Cardinal; cdecl;
 var
-  i: Integer;
   _file: IwbFile;
 begin
   Result := 0;

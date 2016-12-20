@@ -65,9 +65,9 @@
 - IsOverride
 - IsWinningOverride
 - IsValue
+- RemoveElement: replaces Remove, RemoveByIndex, RemoveElement, and RemoveNode
 
 **TODO:**
-- RemoveElement: replaces Remove, RemoveByIndex, RemoveElement, and RemoveNode
 - ElementMatches
 - StructMatches
 - MoveElementToIndex
