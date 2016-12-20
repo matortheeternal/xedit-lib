@@ -2287,7 +2287,7 @@ class function TSuperObject.ParseEx(tok: TSuperTokenizer; str: PSOChar; len: int
   strict: Boolean; const this: ISuperObject; options: TSuperFindOptions; const put: ISuperObject; dt: TSuperType): ISuperObject;
 
 const
-  spaces = [#32,#8,#9,#10,#12,#13];
+  spaces = [#8,#9,#10,#12,#13];
   delimiters = ['"', '.', '[', ']', '{', '}', '(', ')', ',', ':', #0];
   reserved = delimiters + spaces;
   path = ['a'..'z', 'A'..'Z', '.', '_'];
