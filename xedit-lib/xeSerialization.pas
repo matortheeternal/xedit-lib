@@ -2,7 +2,7 @@ unit xeSerialization;
 
 interface
 
-  function FileToJson(_id: Cardinal; desc: PWideChar; len: Integer): WordBool; cdecl;
+  function ElementToJson(_id: Cardinal; json: PWideChar; len: Integer): WordBool; cdecl;
 
 implementation
 
@@ -60,12 +60,28 @@ begin
   Result := obj;
 end;
 
-procedure RecordToSO(rec: IwbMainRecord; obj: ISuperObject);
+function RecordToSO(rec: IwbMainRecord; obj: ISuperObject): ISuperObject;
 var
   i: Integer;
 begin
   for i := Pred(rec.ElementCount) downto 0 do
     ElementToSO(rec.Elements[i], obj);
+  Result := obj;
+end;
+
+function GroupToSO(group: IwbGroupRecord; obj: ISuperObject): ISuperObject;
+var
+  sig: String;
+  i: Integer;
+  mainRecord: IwbMainRecord;
+begin
+  sig := String(TwbSignature(group.GroupLabel));
+  obj.O[sig] := SA([]);
+  for i := 0 to Pred(group.ElementCount) do begin
+    if Supports(group.Elements[i], IwbMainRecord, mainRecord) then
+      obj.A[sig].Add(RecordToSO(mainRecord, SO));
+  end;
+  Result := obj;
 end;
 
 function FileToSO(_file: IwbFile): ISuperObject;
@@ -73,32 +89,41 @@ var
   obj, groupsObj: ISuperObject;
   group: IwbGroupRecord;
   i: Integer;
-  sig: String;
 begin
   obj := SO;
   obj.S['Filename'] := _file.FileName;
   RecordToSO(_file.Header, obj);
   groupsObj := SO;
   for i := 1 to Pred(_file.ElementCount)  do begin
-    if Supports(_file.Elements[i], IwbGroupRecord, group) then begin
-      sig := String(TwbSignature(group.GroupLabel));
-      groupsObj.O[sig] := SA([]);
-    end;
+    if Supports(_file.Elements[i], IwbGroupRecord, group) then
+      GroupToSO(group, groupsObj);
   end;
   obj['Groups'] := groupsObj;
   Result := obj;
 end;
 
-function FileToJson(_id: Cardinal; desc: PWideChar; len: Integer): WordBool; cdecl;
+function ElementToJson(_id: Cardinal; json: PWideChar; len: Integer): WordBool; cdecl;
 var
+  e: IInterface;
   _file: IwbFile;
+  group: IwbGroupRecord;
+  rec: IwbMainRecord;
+  element: IwbElement;
   obj: ISuperObject;
 begin
   Result := false;
   try
-    if Supports(Resolve(_id), IwbFile, _file) then begin
-      obj := FileToSO(_file);
-      StrLCopy(desc, PWideChar(obj.AsJSon), len);
+    e := Resolve(_id);
+    if Supports(e, IwbFile, _file) then
+      obj := FileToSO(_file)
+    else if Supports(e, IwbGroupRecord, group) then
+      obj := GroupToSO(group, SO)
+    else if Supports(e, IwbMainRecord, rec) then
+      obj := RecordToSO(rec, SO)
+    else if Supports(e, IwbElement, element) then
+      obj := ElementToSO(element, SO);
+    if Assigned(obj) then begin
+      StrLCopy(json, PWideChar(obj.AsJSon), len);
       Result := true;
     end;
   except
