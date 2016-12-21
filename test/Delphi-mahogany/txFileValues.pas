@@ -253,8 +253,27 @@ begin
               Expect(bIsEsm^ = false, 'ESM flag should be unset');
             end);
         end);
-      // SetNextObjectID
 
+      Describe('SetNextObjectID', procedure
+        begin
+          BeforeEach(procedure
+            begin
+              GetMem(nextObjectId, 4);
+            end);
+
+          AfterEach(procedure
+            begin
+              FreeMem(nextObjectId, 4);
+            end);
+
+          It('Should set the next object ID', procedure
+            begin
+              h := FileByName('xtest-1.esp');
+              SetNextObjectID(h, 4096);
+              GetNextObjectID(h, nextObjectID);
+              Expect(nextObjectID^ = 4096, 'Next Object ID should equal 4096');
+            end);
+        end);
     end);
 end;
 
