@@ -225,7 +225,34 @@ begin
             end);
         end);
 
-      // SetIsESM
+      Describe('SetIsESM', procedure
+        begin
+          BeforeEach(procedure
+            begin
+              GetMem(bIsEsm, 1);
+            end);
+
+          AfterEach(procedure
+            begin
+              FreeMem(bIsEsm, 1);
+            end);
+
+          It('Should be able to set the ESM flag', procedure
+            begin
+              h := FileByName('xtest-2.esp');
+              SetIsEsm(h, true);
+              GetIsESM(h, bIsEsm);
+              Expect(bIsEsm^ = true, 'ESM flag should be set');
+            end);
+
+          It('Should be able to unset the ESM flag', procedure
+            begin
+              h := FileByName('xtest-2.esp');
+              SetIsEsm(h, false);
+              GetIsESM(h, bIsEsm);
+              Expect(bIsEsm^ = false, 'ESM flag should be unset');
+            end);
+        end);
       // SetNextObjectID
 
     end);
