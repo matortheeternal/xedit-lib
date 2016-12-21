@@ -161,7 +161,7 @@ begin
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
       n := 0;
-      for i := 0 to _file.RecordCount do
+      for i := 0 to Pred(_file.RecordCount) do
         if not _file.Records[i].IsMaster then n := n + 1;
       count^ := n;
       Result := true;
