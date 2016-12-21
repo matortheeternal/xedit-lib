@@ -15,7 +15,7 @@ uses
   function SetAuthor(_id: Cardinal; author: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
   function GetDescription(_id: Cardinal; desc: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
   function SetDescription(_id: Cardinal; desc: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
-  function OverrideRecordCount(_id: Cardinal; count: Integer): WordBool; cdecl; external 'XEditLib.dll';
+  function OverrideRecordCount(_id: Cardinal; count: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetIsESM(_id: Cardinal; isESM: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
   function SetIsESM(_id: Cardinal; isESM: WordBool): WordBool; cdecl; external 'XEditLib.dll';
 
@@ -33,6 +33,7 @@ var
   str: PWideChar;
   bIsEsm: PWordBool;
   nextObjectID, fileHeader: PCardinal;
+  count: PInteger;
 begin
   Describe('File Value Functions', procedure
     begin
@@ -53,7 +54,7 @@ begin
 
       Describe('GetAuthor', procedure
         begin
-          It('Should match filename used with FileByName', procedure
+          It('Should match author used with FileByAuthor', procedure
             begin
               h := FileByAuthor('mcarofano');
               GetAuthor(h, str, 4096);
@@ -159,11 +160,37 @@ begin
             end);
         end);
 
-      // OverrideRecordCount
-      // SetNextObjectID
+      Describe('OverrideRecordCount', procedure
+        begin
+          BeforeEach(procedure
+            begin
+              GetMem(count, 4);
+            end);
+
+          AfterEach(procedure
+            begin
+              FreeMem(count, 4);
+            end);
+
+          It('Should return an integer > 0 for a plugin with overrides', procedure
+            begin
+              h := FileByName('Update.esm');
+              OverrideRecordCount(h, count);
+              Expect(count^ > 0, 'Should be greater than 0 for Update.esm');
+            end);
+
+          It('Should return 0 for a plugin with no records', procedure
+            begin
+              h := FileByName('xtest-1.esp');
+              OverrideRecordCount(h, count);
+              Expect(count^ = 0, 'Should be equal to 0 for xtest-1.esp');
+            end);
+        end);
+
       // SetAuthor
       // SetDescription
       // SetIsESM
+      // SetNextObjectID
 
     end);
 end;
