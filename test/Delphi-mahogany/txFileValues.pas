@@ -206,7 +206,25 @@ begin
             end);
         end);
 
-      // SetDescription
+      Describe('SetDescription', procedure
+        begin
+          It('Should create element and set description if the plugin has no description element', procedure
+            begin
+              h := FileByName('xtest-2.esp');
+              SetDescription(h, PWideChar('Test'));
+              GetDescription(h, str, 4096);
+              Expect(str = 'Test', 'Description should be set to "Test"');
+            end);
+
+          It('Should be able to unset the description', procedure
+            begin
+              h := FileByName('xtest-2.esp');
+              SetDescription(h, PWideChar(''));
+              GetDescription(h, str, 4096);
+              Expect(str = '', 'Description should be an empty string');
+            end);
+        end);
+
       // SetIsESM
       // SetNextObjectID
 
