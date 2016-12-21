@@ -65,6 +65,7 @@
 			<DCCReference Include="xeFileValues.pas"/>
 			<DCCReference Include="xeElements.pas"/>
 			<DCCReference Include="xeElementValues.pas"/>
+			<DCCReference Include="xeSerialization.pas"/>
 			<DCCReference Include="..\lib\mte\mteHelpers.pas"/>
 			<DCCReference Include="..\lib\mte\CRC32.pas"/>
 			<DCCReference Include="..\lib\mte\RttiIni.pas"/>
@@ -83,7 +84,6 @@
 			<DCCReference Include="..\lib\xedit\wbStreams.pas"/>
 			<DCCReference Include="..\lib\xedit\Zlibex.pas"/>
 			<DCCReference Include="..\lib\superobject\superobject.pas"/>
-			<DCCReference Include="xeSerialization.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>
@@ -109,7 +109,7 @@
 						<VersionInfo Name="MajorVer">0</VersionInfo>
 						<VersionInfo Name="MinorVer">0</VersionInfo>
 						<VersionInfo Name="Release">0</VersionInfo>
-						<VersionInfo Name="Build">116</VersionInfo>
+						<VersionInfo Name="Build">120</VersionInfo>
 						<VersionInfo Name="Debug">False</VersionInfo>
 						<VersionInfo Name="PreRelease">False</VersionInfo>
 						<VersionInfo Name="Special">False</VersionInfo>
@@ -121,7 +121,7 @@
 					<VersionInfoKeys>
 						<VersionInfoKeys Name="CompanyName"/>
 						<VersionInfoKeys Name="FileDescription"/>
-						<VersionInfoKeys Name="FileVersion">0.0.0.116</VersionInfoKeys>
+						<VersionInfoKeys Name="FileVersion">0.0.0.120</VersionInfoKeys>
 						<VersionInfoKeys Name="InternalName"/>
 						<VersionInfoKeys Name="LegalCopyright"/>
 						<VersionInfoKeys Name="LegalTrademarks"/>

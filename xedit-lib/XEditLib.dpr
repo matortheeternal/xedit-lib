@@ -13,6 +13,7 @@ uses
 //  xeRecords in 'xeRecords.pas',
 //  xeRecordValues in 'xeRecordValues.pas',
 //  xeGroups in 'xeGroups.pas',
+  xeSerialization in 'xeSerialization.pas',
   mteHelpers in '..\lib\mte\mteHelpers.pas',
   CRC32 in '..\lib\mte\CRC32.pas',
   RttiIni in '..\lib\mte\RttiIni.pas',
@@ -30,8 +31,7 @@ uses
   wbLocalization in '..\lib\xedit\wbLocalization.pas',
   wbStreams in '..\lib\xedit\wbStreams.pas',
   Zlibex in '..\lib\xedit\Zlibex.pas',
-  superobject in '..\lib\superobject\superobject.pas',
-  xeSerialization in 'xeSerialization.pas';
+  superobject in '..\lib\superobject\superobject.pas';
 
 {$R *.RES}
 {$MAXSTACKSIZE 2097152}
@@ -59,7 +59,7 @@ exports
   LinksTo, ElementAssigned, Equals, IsMaster, IsInjected, IsOverride,
   IsWinningOverride,
   // SERIALIZATION METHODS
-  FileToJson;
+  ElementToJson,
   // ELEMENT VALUE METHODS
   Name, EditorID, Signature, ShortName, SortKey, ElementType, DefType, GetValue,
   SetValue, GetIntValue, SetIntValue, GetUIntValue, SetUIntValue, GetFloatValue,
