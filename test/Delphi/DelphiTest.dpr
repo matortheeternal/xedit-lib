@@ -66,7 +66,7 @@ type
   function IsWinningOverride(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
 
   // SERIALIZATION METHODS
-  function FileToJson(_id: Cardinal; desc: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
+  function ElementToJson(_id: Cardinal; json: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
 
 procedure WriteBuffer;
 var
@@ -110,8 +110,9 @@ begin
   WriteLn('File with load order 01 returned with handle: ' + IntToStr(h));
   h := FileByAuthor('mcarofano');
   WriteLn('File with author "mcarofano" returned with handle: ' + IntToStr(h));
-  GetMem(str, 16384);
-  FileToJSON(h, str, 16384);
+  GetMem(str, 1048576);  // 1MB
+  h := FileByName('WetandCold - Ashes.esp');
+  ElementToJson(h, str, 1048576);  // 1MB
   WriteLn('FileToJSON output: ');
   WriteLn(str);
   WriteBuffer;
