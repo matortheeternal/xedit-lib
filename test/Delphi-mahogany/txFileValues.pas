@@ -187,7 +187,25 @@ begin
             end);
         end);
 
-      // SetAuthor
+      Describe('SetAuthor', procedure
+        begin
+          It('Should set the author', procedure
+            begin
+              h := FileByName('xtest-1.esp');
+              SetAuthor(h, PWideChar('Test'));
+              GetAuthor(h, str, 4096);
+              Expect(str = 'Test', 'Author should be "Test"');
+            end);
+
+          It('Should be able to unset the author', procedure
+            begin
+              h := FileByName('xtest-1.esp');
+              SetAuthor(h, PWideChar(''));
+              GetAuthor(h, str, 4096);
+              Expect(str = '', 'Author should be an empty string');
+            end);
+        end);
+
       // SetDescription
       // SetIsESM
       // SetNextObjectID
