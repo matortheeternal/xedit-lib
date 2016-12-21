@@ -54,7 +54,6 @@
 			<DCCReference Include="txFileHandling.pas"/>
 			<DCCReference Include="txFileValues.pas"/>
 			<DCCReference Include="txElementValues.pas"/>
-			<DCCReference Include="txHelpers.pas"/>
 			<DCCReference Include="txSetup.pas"/>
 			<DCCReference Include="txMeta.pas"/>
 			<BuildConfiguration Include="Release">

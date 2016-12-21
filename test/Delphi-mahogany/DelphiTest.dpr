@@ -10,7 +10,6 @@ uses
   txFileHandling in 'txFileHandling.pas',
   txFileValues in 'txFileValues.pas',
   txElementValues in 'txElementValues.pas',
-  txHelpers in 'txHelpers.pas',
   txSetup in 'txSetup.pas',
   txMeta in 'txMeta.pas';
 
