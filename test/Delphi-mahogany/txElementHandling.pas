@@ -333,6 +333,62 @@ begin
               Expect(not success, 'Result should be false')
             end);
         end);
+
+      Describe('NewElement', procedure
+        begin
+          BeforeAll(procedure
+            begin
+              GetElement(0, 'xtest-2.esp', @testFile);
+              GetElement(testFile, 'ARMO', @armo);
+              GetElement(armo, '00012E46', @rec);
+            end);
+
+          It('Should create a new file if no handle given', procedure
+            begin
+              success := NewElement(0, 'NewFile-1.esp', @h);
+              Expect(success and (h > 0), 'Handle should be greater than 0');
+            end);
+
+          It('Should be able to add groups to files', procedure
+            begin
+              success := NewElement(testFile, 'ARMO', @h);
+              Expect(success and (h > 0), 'Handle should be greater than 0');
+            end);
+
+          It('Should be able to add records to groups', procedure
+            begin
+              success := NewElement(armo, 'ARMO', @h);
+              Expect(success and (h > 0), 'Handle should be greater than 0');
+            end);
+
+
+          It('Should be able to create a new element on a record', procedure
+            begin
+              success := NewElement(rec, 'Destructable', @h);
+              Expect(success and (h > 0), 'Handle should be greater than 0');
+            end);
+
+          It('Should be able to push a new element onto an array', procedure
+            begin
+              GetElement(rec, 'KWDA', @element);
+              success := NewElement(element, '', @h);
+              Expect(success and (h > 0), 'Handle should be greater than 0');
+            end);
+
+          It('Should be able to assign an element at an index in an array', procedure
+            begin
+              GetElement(rec, 'KWDA', @element);
+              success := NewElement(element, '[1]', @h);
+              Expect(success and (h > 0), 'Handle should be greater than 0');
+            end);
+
+          It('Should fail if parent element is not a container', procedure
+            begin
+              GetElement(rec, 'FULL', @element);
+              success := NewElement(element, '', @h);
+              Expect(not success, 'Result should be false');
+            end);
+        end);
     end);
 end;
 
