@@ -256,6 +256,21 @@ begin
                  Expect(not success, 'Result should be false');
                end);
             end);
+
+          Describe('Record element resolution by name', procedure
+            begin
+              It('Should return a handle if the element exists', procedure
+                begin
+                  GetElement(rec, 'Male world model', @h);
+                  Expect(h > 0, 'Handle should be greater than 0');
+                end);
+
+              It('Should fail if the element does not exist', procedure
+               begin
+                 success := GetElement(rec, 'Does not exist', @h);
+                 Expect(not success, 'Result should be false');
+               end);
+            end);
         end);
     end);
 end;
