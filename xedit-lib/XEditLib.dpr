@@ -47,7 +47,7 @@ exports
   SetGameMode, GetLoadOrder, LoadPlugins, GetLoaderDone,
   // FILE HANDLING METHODS
   NewFile, FileByIndex, FileByLoadOrder, FileByName, FileByAuthor,
-  GetElementFile, SaveFile, GetFileNames,
+  SaveFile, GetFileNames,
   // MASTER HANDLING METHODS
   CleanMasters, SortMasters, AddMaster, GetMaster,
   // FILE VALUE METHODS
@@ -55,9 +55,9 @@ exports
   SetAuthor, GetDescription, SetDescription, OverrideRecordCount, GetIsESM,
   SetIsESM,
   // ELEMENT HANDLING METHODS
-  GetElement, GetElements, NewElement, RemoveElement, ElementExists, ElementCount,
-  LinksTo, ElementAssigned, Equals, IsMaster, IsInjected, IsOverride,
-  IsWinningOverride,
+  GetElement, GetElements, GetElementFile, GetContainer, NewElement,
+  RemoveElement, ElementExists, ElementCount, LinksTo, ElementAssigned, Equals,
+  IsMaster, IsInjected, IsOverride, IsWinningOverride,
   // SERIALIZATION METHODS
   ElementToJson,
   // ELEMENT VALUE METHODS

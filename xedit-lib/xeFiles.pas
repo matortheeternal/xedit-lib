@@ -14,6 +14,7 @@ uses
   function GetFileNames(fileNames: PWideChar; len: Integer): WordBool; cdecl;
 
   // native functions
+  function NewFileElement(filename: string): IwbElement;
   function NativeFileByIndex(index: Integer): IwbFile;
   function NativeFileByLoadOrder(load_order: Integer): IwbFile;
   function NativeFileByName(name: String): IwbFile;
@@ -37,36 +38,50 @@ uses
 }
 {******************************************************************************}
 
-function NewFile(filename: PAnsiChar): Cardinal; cdecl;
+
+function NewFileElement(filename: string): IwbElement;
 var
   LoadOrder : Integer;
   _file: IwbFile;
   filePath: String;
 begin
+  if not StrEndsWith(filename, '.esp') and StrEndsWith(filename, '.esm') then
+    filename := filename + '.esp';
+
+  // fail if the file already exists
+  filePath := wbDataPath + string(filename);
+  if FileExists(filePath) then
+    raise Exception.Create(Format('File with name %s already exists.', [filename]));
+
+  // get load order for new file
+  LoadOrder := 0;
+  if Length(Files) > 0 then
+    LoadOrder := Files[High(Files)].LoadOrder + 1;
+
+  // fail if maximum load order reached
+  if LoadOrder > 254 then
+    raise Exception.Create('Maximum plugin count of 254 reached.');
+
+  // create new file
+  _file := wbNewFile(filePath, LoadOrder);
+  SetLength(Files, Succ(Length(Files)));
+  Files[High(Files)] := _file;
+  _file._AddRef;
+
+  // return file as IwbElement
+  Result := _file as IwbElement;
+end;
+
+function NewFile(filename: PAnsiChar): Cardinal; cdecl;
+var
+  element: IwbElement;
+begin
   Result := 0;
   try
-    // fail if the file already exists
-    filePath := wbDataPath + string(filename);
-    if FileExists(filePath) then
-      raise Exception.Create(Format('File with name %s already exists.', [filename]));
-
-    // get load order for new file
-    LoadOrder := 0;
-    if Length(Files) > 0 then
-      LoadOrder := Files[High(Files)].LoadOrder + 1;
-
-    // fail if maximum load order reached
-    if LoadOrder > 254 then
-      raise Exception.Create('Maximum plugin count of 254 reached.');
-
-    // create new file
-    _file := wbNewFile(filePath, LoadOrder);
-    SetLength(Files, Succ(Length(Files)));
-    Files[High(Files)] := _file;
-    _file._AddRef;
-
     // store the file and return the result
-    Result := Store(_file);
+    element := NewFileElement(string(filename));
+    if Assigned(element) then
+      Result := Store(element);
   except
     on x: Exception do ExceptionHandler(x);
   end;
