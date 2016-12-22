@@ -117,11 +117,27 @@ begin
 end;
 
 procedure TestElementHandling;
+var
+  success: WordBool;
+  h, skyrim, armo, rec: Cardinal;
 begin
-  WriteLn('== Element Handling Tests ==');
-  TestGetElement;
-  TestGetElements;
-  WriteLn(' ');
+  Describe('Element Handling', procedure
+    begin
+      Describe('GetElement', procedure
+        begin
+          BeforeAll(procedure
+            begin
+              GetElement(0, 'Skyrim.esm', @skyrim);
+              GetElement(skyrim, 'ARMO', @armo);
+              GetElement(armo, '00012E46', @rec);
+            end);
+
+          BeforeEach(procedure
+            begin
+              h := 0;
+            end);
+        end);
+    end);
 end;
 
 end.
