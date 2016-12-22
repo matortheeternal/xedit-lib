@@ -136,6 +136,21 @@ begin
             begin
               h := 0;
             end);
+
+          Describe('File resolution by index', procedure
+            begin
+              It('Should return a handle if the index is in bounds', procedure
+                begin
+                  GetElement(0, '[0]', @h);
+                  Expect(h > 0, 'Handle should be greater than 0');
+                end);
+
+              It('Should fail if index is out of bounds', procedure
+                begin
+                  success := GetElement(0, '[-1]', @h);
+                  Expect(not success, 'Result should be false');
+                end);
+            end);
         end);
     end);
 end;
