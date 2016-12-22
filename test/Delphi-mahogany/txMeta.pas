@@ -119,6 +119,30 @@ begin
               Expect(not success, 'Result should be false');
             end);
         end);
+
+      Describe('Release', procedure
+        begin
+          It('Should fail if handle is not allocated', procedure
+            begin
+              success := Release(100);
+              Expect(not success, 'Result should be false');
+            end);
+
+          It('Should fail if null handle is passed', procedure
+            begin
+              success := Release(0);
+              Expect(not success, 'Result should be false');
+            end);
+
+          It('Should free an allocated handle', procedure
+            begin
+              h1 := FileByName('Skyrim.esm');
+              success := Release(h1);
+              Expect(success, 'Result should be true');
+              h2 := FileByName('Skyrim.esm');
+              Expect(h1 = h2, 'Next allocation should use the freed handle');
+            end);
+        end);
 end;
 
 end.
