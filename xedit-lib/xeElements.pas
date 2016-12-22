@@ -44,6 +44,8 @@ implementation
 
 uses
   Variants, Classes, SysUtils,
+  // mte units
+  mteHelpers,
   // xedit units
   wbImplementation,
   // xelib units
@@ -280,32 +282,50 @@ begin
   end;
 end;
 
-// replaces ElementAssign, Add, AddElement, and InsertElement
-function NewElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
+function NewContainerElement(_id: Cardinal; key: string): IwbElement;
 var
   e: IInterface;
   container: IwbContainerElementRef;
   keyIndex: Integer;
 begin
+  e := Resolve(_id);
+  if not Supports(e, IwbContainerElementRef, container) then exit;
+  // Use Add for files and groups
+  if Supports(e, IwbFile) or Supports(e, IwbGroupRecord) then
+    Result := container.Add(key, true)
+  else begin
+    // no key means we're assigning an element at the end of the array
+    if Length(key) = 0 then
+      Result := container.Assign(High(integer), nil, false)
+    else begin
+      // assign element at given index if index given, else add
+      if ParseIndex(key, keyIndex) then begin
+        Result := container.Assign(High(integer), nil, false);
+        Result.Remove;
+        container.InsertElement(keyIndex, Result);
+      end
+      else
+        Result := container.Add(key, true);
+    end;
+  end;
+
+end;
+
+// replaces ElementAssign, Add, AddElement, and InsertElement
+function NewElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
+var
+  element: IwbElement;
+begin
   Result := False;
   try
-    e := Resolve(_id);
-    if Supports(e, IwbContainerElementRef, container) then begin
-      // Use Add for files and groups
-      if Supports(e, IwbFile) or Supports(e, IwbGroupRecord) then
-        _res^ := Store(container.Add(string(key), true))
-      else begin
-        // no key means we're assigning an element at the end of the array
-        if (not Assigned(key)) or (Length(key) = 0) then
-          _res^ := Store(container.Assign(High(integer), nil, false))
-        else begin
-          // assign element at given index if index given, else add
-          if ParseIndex(string(key), keyIndex) then
-            _res^ := Store(container.Assign(keyIndex, nil, false))
-          else
-            _res^ := Store(container.Add(string(key), true));
-        end;
-      end;
+    if _id = 0 then
+      element := NewFileElement(string(key))
+    else
+      element := NewContainerElement(_id, string(key));
+
+    // store and return element if assigned
+    if Assigned(element) then begin
+      _res^ := Store(element);
       Result := True;
     end;
   except
