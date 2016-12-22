@@ -10,7 +10,6 @@ uses
   function FileByLoadOrder(load_order: Integer): Cardinal; cdecl;
   function FileByName(name: PAnsiChar): Cardinal; cdecl;
   function FileByAuthor(author: PAnsiChar): Cardinal; cdecl;
-  function GetElementFile(_id: Cardinal): Cardinal; cdecl;
   function SaveFile(_id: Cardinal): WordBool; cdecl;
   function GetFileNames(fileNames: PWideChar; len: Integer): WordBool; cdecl;
 
@@ -165,19 +164,6 @@ begin
     _file := NativeFileByAuthor(string(author));
     if Assigned(_file) then
       Result := Store(_file);
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function GetElementFile(_id: Cardinal): Cardinal; cdecl;
-var
-  element: IwbElement;
-begin
-  Result := 0;
-  try
-    if Supports(Resolve(_id), IwbElement, element) then
-      Result := Store(element._File);
   except
     on x: Exception do ExceptionHandler(x);
   end;

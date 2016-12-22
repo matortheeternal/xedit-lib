@@ -16,6 +16,7 @@ type
 
   function GetElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
   function GetElements(_id: Cardinal; _res: PCardinalArray): WordBool; cdecl;
+  function GetElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function GetContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function NewElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
   function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; cdecl;
@@ -246,6 +247,21 @@ begin
   end;
 end;
 
+function GetElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
+var
+  element: IwbElement;
+begin
+  Result := false;
+  try
+    if Supports(Resolve(_id), IwbElement, element) then begin
+      _res^ := Store(element._File);
+      Result := True;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
 function GetContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 var
   e: IInterface;
@@ -254,6 +270,7 @@ begin
   Result := False;
   try
     e := Resolve(_id);
+    if Supports(e, IwbFile) then exit;
     if Supports(e, IwbElement, element) and Assigned(element.Container) then begin
       _res^ := Store(element.Container);
       Result := True;
