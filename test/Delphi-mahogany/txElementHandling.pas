@@ -241,6 +241,21 @@ begin
                  Expect(not success, 'Result should be false');
                end);
             end);
+
+          Describe('Record element resolution by signature', procedure
+            begin
+              It('Should return a handle if the element exists', procedure
+                begin
+                  GetElement(rec, 'FULL', @h);
+                  Expect(h > 0, 'Handle should be greater than 0');
+                end);
+
+              It('Should fail if the element does not exist', procedure
+               begin
+                 success := GetElement(rec, 'ABCD', @h);
+                 Expect(not success, 'Result should be false');
+               end);
+            end);
         end);
     end);
 end;
