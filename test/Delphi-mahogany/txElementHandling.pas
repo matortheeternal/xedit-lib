@@ -321,6 +321,15 @@ begin
                     Expect(Length(a) = 8, 'There should be 8 handles');
                   end);
               end);
+
+            Describe('File children (file header and groups)', procedure
+              begin
+                It('Should resolve the file header and all groups', procedure
+                  begin
+                    GetElements(skyrim, @a);
+                    Expect(Length(a) = 118, 'There should be 118 handles');
+                  end);
+              end);
           end);
     end);
 end;
