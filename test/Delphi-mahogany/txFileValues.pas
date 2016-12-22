@@ -31,15 +31,20 @@ procedure TestFileValues;
 var
   h: Cardinal;
   str: PWideChar;
-  bIsEsm: PWordBool;
-  nextObjectID, fileHeader: PCardinal;
-  count: PInteger;
+  bIsEsm: WordBool;
+  nextObjectID, fileHeader: Cardinal;
+  count: Integer;
 begin
   Describe('File Value Functions', procedure
     begin
       BeforeAll(procedure
         begin
           GetMem(str, 4096);
+        end);
+
+      AfterAll(procedure
+        begin
+          FreeMem(str, 4096);
         end);
 
       Describe('GetFileName', procedure
@@ -81,109 +86,69 @@ begin
 
       Describe('GetIsESM', procedure
         begin
-          BeforeEach(procedure
-            begin
-              GetMem(bIsEsm, 1);
-            end);
-
-          AfterEach(procedure
-            begin
-              FreeMem(bIsEsm, 1);
-            end);
-
           It('Should return true for ESM files', procedure
             begin
               h := FileByName('Skyrim.esm');
-              GetIsESM(h, bIsEsm);
-              Expect(Assigned(bIsEsm) and bIsEsm^, 'Should return true for Skyrim.esm');
+              GetIsESM(h, @bIsEsm);
+              Expect(bIsEsm = true, 'Should return true for Skyrim.esm');
             end);
 
           It('Should return true for ESP files with the IsESM flag', procedure
             begin
               h := FileByName('xtest-1.esp');
-              GetIsESM(h, bIsEsm);
-              Expect(bIsEsm^ = true, 'Should return true for xtest-1.esp');
+              GetIsESM(h, @bIsEsm);
+              Expect(bIsEsm = true, 'Should return true for xtest-1.esp');
             end);
 
           It('Should return false for ESP files without the IsESM flag', procedure
             begin
               h := FileByName('xtest-2.esp');
-              GetIsESM(h, bIsEsm);
-              Expect(bIsEsm^ = false, 'Should return false for xtest-2.esp');
+              GetIsESM(h, @bIsEsm);
+              Expect(bIsEsm = false, 'Should return false for xtest-2.esp');
             end);
         end);
 
       Describe('GetNextObjectID', procedure
         begin
-          BeforeEach(procedure
-            begin
-              GetMem(nextObjectId, 4);
-            end);
-
-          AfterEach(procedure
-            begin
-              FreeMem(nextObjectId, 4);
-            end);
-
           It('Should return an integer > 0 for Skyrim.esm', procedure
             begin
               h := FileByName('Skyrim.esm');
-              GetNextObjectID(h, nextObjectID);
-              Expect(nextObjectID^ > 0, 'Should be greater than 0 for Skyrim.esm');
+              GetNextObjectID(h, @nextObjectID);
+              Expect(nextObjectID > 0, 'Should be greater than 0 for Skyrim.esm');
             end);
 
           It('Should equal 2048 for xtest-1.esp', procedure
             begin
               h := FileByName('xtest-1.esp');
-              GetNextObjectID(h, nextObjectID);
-              Expect(nextObjectID^ = 2048, 'Should equal 2048 for xtest-1.esp');
+              GetNextObjectID(h, @nextObjectID);
+              Expect(nextObjectID = 2048, 'Should equal 2048 for xtest-1.esp');
             end);
         end);
 
       Describe('GetFileHeader', procedure
         begin
-          BeforeEach(procedure
-            begin
-              GetMem(fileHeader, 4);
-            end);
-
-          AfterEach(procedure
-            begin
-              FreeMem(fileHeader, 4);
-            end);
-
           It('Should return a handle if input resolves to a file', procedure
             begin
               h := FileByName('Skyrim.esm');
-              GetFileHeader(h, fileHeader);
-              Expect(fileHeader^ > 0, 'Handle should be greater than 0');
+              GetFileHeader(h, @fileHeader);
+              Expect(fileHeader > 0, 'Handle should be greater than 0');
             end);
         end);
 
       Describe('OverrideRecordCount', procedure
         begin
-          BeforeEach(procedure
-            begin
-              GetMem(count, 4);
-            end);
-
-          AfterEach(procedure
-            begin
-              FreeMem(count, 4);
-            end);
-
           It('Should return an integer > 0 for a plugin with overrides', procedure
             begin
               h := FileByName('Update.esm');
-              OverrideRecordCount(h, count);
-              Expect(count^ > 0, 'Should be greater than 0 for Update.esm');
+              OverrideRecordCount(h, @count);
+              Expect(count > 0, 'Should be greater than 0 for Update.esm');
             end);
 
           It('Should return 0 for a plugin with no records', procedure
             begin
               h := FileByName('xtest-1.esp');
-              OverrideRecordCount(h, count);
-              Expect(count^ = 0, 'Should be equal to 0 for xtest-1.esp');
+              OverrideRecordCount(h, @count);
+              Expect(count = 0, 'Should be equal to 0 for xtest-1.esp');
             end);
         end);
 
@@ -227,51 +192,31 @@ begin
 
       Describe('SetIsESM', procedure
         begin
-          BeforeEach(procedure
-            begin
-              GetMem(bIsEsm, 1);
-            end);
-
-          AfterEach(procedure
-            begin
-              FreeMem(bIsEsm, 1);
-            end);
-
           It('Should be able to set the ESM flag', procedure
             begin
               h := FileByName('xtest-2.esp');
               SetIsEsm(h, true);
-              GetIsESM(h, bIsEsm);
-              Expect(bIsEsm^ = true, 'ESM flag should be set');
+              GetIsESM(h, @bIsEsm);
+              Expect(bIsEsm = true, 'ESM flag should be set');
             end);
 
           It('Should be able to unset the ESM flag', procedure
             begin
               h := FileByName('xtest-2.esp');
               SetIsEsm(h, false);
-              GetIsESM(h, bIsEsm);
-              Expect(bIsEsm^ = false, 'ESM flag should be unset');
+              GetIsESM(h, @bIsEsm);
+              Expect(bIsEsm = false, 'ESM flag should be unset');
             end);
         end);
 
       Describe('SetNextObjectID', procedure
         begin
-          BeforeEach(procedure
-            begin
-              GetMem(nextObjectId, 4);
-            end);
-
-          AfterEach(procedure
-            begin
-              FreeMem(nextObjectId, 4);
-            end);
-
           It('Should set the next object ID', procedure
             begin
               h := FileByName('xtest-1.esp');
               SetNextObjectID(h, 4096);
-              GetNextObjectID(h, nextObjectID);
-              Expect(nextObjectID^ = 4096, 'Next Object ID should equal 4096');
+              GetNextObjectID(h, @nextObjectID);
+              Expect(nextObjectID = 4096, 'Next Object ID should equal 4096');
             end);
         end);
     end);
