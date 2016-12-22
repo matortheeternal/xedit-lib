@@ -19,8 +19,8 @@ type
   procedure StoreIfAssigned(var x: IInterface; var _res: PCardinal; var Success: WordBool);
   function Resolve(_id: Cardinal): IInterface;
   function Store(x: IInterface): Cardinal;
-  procedure Release(_id: Cardinal); cdecl;
-  procedure ResetStore; cdecl;
+  function Release(_id: Cardinal): WordBool; cdecl;
+  function ResetStore: WordBool; cdecl;
 
 var
   _store: TInterfaceList;
@@ -92,9 +92,13 @@ end;
 function GetExceptionMessage(str: PWideChar; len: Integer): WordBool; cdecl;
 begin
   Result := false;
-  if Length(exceptionMessage) > 0 then begin
-    StrLCopy(str, PWideChar(WideString(exceptionMessage)), len);
-    Result := true;
+  try
+    if Length(exceptionMessage) > 0 then begin
+      StrLCopy(str, PWideChar(WideString(exceptionMessage)), len);
+      Result := true;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
   end;
 end;
 
@@ -129,7 +133,7 @@ var
   i: Integer;
 begin
   if _releasedIDs.Count > 0 then begin
-    i := _releasedIDs.First;
+    i := _releasedIDs[0];
     _store[i] := x;
     _releasedIDs.Delete(0);
     Result := i;
@@ -138,18 +142,31 @@ begin
     Result := _store.Add(x);
 end;
 
-procedure Release(_id: Cardinal); cdecl;
+function Release(_id: Cardinal): WordBool; cdecl;
 begin
-  if _id = 0 then exit;
-  _store[_id]._Release;
-  _store[_id] := nil;
-  _releasedIDs.Add(_id);
+  Result := False;
+  try
+    if (_id = 0) or (_id >= _store.Count) then exit;
+    _store[_id]._Release;
+    _store[_id] := nil;
+    _releasedIDs.Add(_id);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
 end;
 
-procedure ResetStore; cdecl;
+function ResetStore: WordBool; cdecl;
 begin
-  _store.Clear;
-  _store.Add(nil);
+  Result := False;
+  try
+    _store.Clear;
+    _releasedIDs.Clear;
+    _store.Add(nil);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
 end;
 
 end.
