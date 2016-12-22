@@ -151,6 +151,21 @@ begin
                   Expect(not success, 'Result should be false');
                 end);
             end);
+
+          Describe('File resolution by name', procedure
+            begin
+              It('Should return a handle if a matching file is loaded', procedure
+                begin
+                  GetElement(0, 'Skyrim.esm', @h);
+                  Expect(h > 0, 'Handle should be greater than 0');
+                end);
+
+              It('Should fail if a matching file is not loaded', procedure
+                begin
+                  success := GetElement(0, 'NonExistingPlugin.esp', @h);
+                  Expect(not success, 'Result should be false');
+                end);
+            end);
         end);
     end);
 end;
