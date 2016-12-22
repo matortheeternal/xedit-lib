@@ -313,6 +313,14 @@ begin
 
        Describe('GetElements', procedure
           begin
+            Describe('Root children (files)', procedure
+              begin
+                It('Should resolve all files loaded', procedure
+                  begin
+                    GetElements(0, @a);
+                    Expect(Length(a) = 8, 'There should be 8 handles');
+                  end);
+              end);
           end);
     end);
 end;
