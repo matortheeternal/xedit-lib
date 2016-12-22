@@ -33,7 +33,7 @@ uses
 
 procedure TestElementHandling;
 var
-  success: WordBool;
+  success, b: WordBool;
   h, skyrim, testFile, armo, rec, element: Cardinal;
   a: CardinalArray;
   str: PWideChar;
@@ -386,6 +386,53 @@ begin
             begin
               GetElement(rec, 'FULL', @element);
               success := NewElement(element, '', @h);
+              Expect(not success, 'Result should be false');
+            end);
+        end);
+
+      Describe('RemoveElement', procedure
+        begin
+          BeforeAll(procedure
+            begin
+              GetElement(0, 'xtest-2.esp', @testFile);
+              GetElement(testFile, 'ARMO', @armo);
+              GetElement(armo, '00012E46', @rec);
+            end);
+
+          It('Should remove the element at the given path', procedure
+            begin
+              success := RemoveElement(rec, 'Female world model');
+              Expect(success, 'Result should be true');
+              b := not ElementExists(rec, 'Female world model');
+              Expect(b, 'The element should no longer be present');
+            end);
+
+          It('Should remove the element at the given indexed path', procedure
+            begin
+              success := RemoveElement(rec, 'KWDA\[4]');
+              Expect(success, 'Result should be true');
+              b := not ElementExists(rec, 'KWDA\[4]');
+              Expect(b, 'The element should no longer be present');
+            end);
+
+          It('Should remove the element passed if no path is given', procedure
+            begin
+              GetElement(rec, 'ZNAM', @element);
+              success := RemoveElement(element, '');
+              Expect(success, 'Result should be true');
+              b := not ElementExists(rec, 'ZNAM');
+              Expect(b, 'The element should no longer be present');
+            end);
+
+          It('Should fail if a null handle is passed', procedure
+            begin
+              success := RemoveElement(0, '');
+              Expect(not success, 'Result should be false');
+            end);
+
+          It('Should fail if no element exists at the given path', procedure
+            begin
+              success := RemoveElement(rec, 'YNAM');
               Expect(not success, 'Result should be false');
             end);
         end);
