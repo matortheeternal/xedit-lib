@@ -46,7 +46,7 @@ uses
   // xedit units
   wbImplementation,
   // xelib units
-  xeMessages, xeFiles;
+  xeMessages, xeFiles, xeSetup;
 
 
 {******************************************************************************}
@@ -208,22 +208,39 @@ begin
   end;
 end;
 
+function GetFiles(_res: PCardinalArray): WordBool;
+var
+  i: Integer;
+begin
+  SetLength(_res^, Length(Files));
+  for i := Low(Files) to High(Files) do
+    _res^[i] := Store(Files[i]);
+  Result := True;
+end;
+
+function GetChildrenElements(_id: Cardinal; _res: PCardinalArray): WordBool;
+var
+  i: Integer;
+  container: IwbContainerElementRef;
+begin
+  Result := False;
+  if Supports(Resolve(_id), IwbContainerElementRef, container) then begin
+    SetLength(_res^, container.ElementCount);
+    for i := 0 to Pred(container.ElementCount) do
+      _res^[i] := Store(container.Elements[i]);
+    Result := True;
+  end;
+end;
+
 // returns an array of handles for the elements in a container
 function GetElements(_id: Cardinal; _res: PCardinalArray): WordBool; cdecl;
-var
-  e: IInterface;
-  container: IwbContainerElementRef;
-  i: Integer;
 begin
   Result := False;
   try
-    e := Resolve(_id);
-    if Supports(e, IwbContainerElementRef, container) then begin
-      SetLength(_res^, container.ElementCount);
-      for i := 0 to Pred(container.ElementCount) do
-        _res^[i] := Store(container.Elements[i]);
-      Result := True;
-    end;
+    if _id = 0 then
+      Result := GetFiles(_res)
+    else
+      Result := GetChildrenElements(_id, _res);
   except
     on x: Exception do ExceptionHandler(x);
   end;
