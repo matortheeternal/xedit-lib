@@ -34,8 +34,9 @@ uses
 procedure TestElementHandling;
 var
   success: WordBool;
-  h, skyrim, armo, rec, element: Cardinal;
+  h, skyrim, testFile, armo, rec, element: Cardinal;
   a: CardinalArray;
+  str: PWideChar;
 begin
   Describe('Element Handling', procedure
     begin
@@ -48,17 +49,12 @@ begin
 
       Describe('GetElement', procedure
         begin
-          BeforeEach(procedure
-            begin
-              h := 0;
-            end);
-
           Describe('File resolution by index', procedure
             begin
               It('Should return a handle if the index is in bounds', procedure
                 begin
-                  GetElement(0, '[0]', @h);
-                  Expect(h > 0, 'Handle should be greater than 0');
+                  success := GetElement(0, '[0]', @h);
+                  Expect(success and (h > 0), 'Handle should be greater than 0');
                 end);
 
               It('Should fail if index is out of bounds', procedure
@@ -72,8 +68,8 @@ begin
             begin
               It('Should return a handle if a matching file is loaded', procedure
                 begin
-                  GetElement(0, 'Skyrim.esm', @h);
-                  Expect(h > 0, 'Handle should be greater than 0');
+                  success := GetElement(0, 'Skyrim.esm', @h);
+                  Expect(success and (h > 0), 'Handle should be greater than 0');
                 end);
 
               It('Should fail if a matching file is not loaded', procedure
@@ -87,23 +83,23 @@ begin
             begin
               It('Should return a handle if the index is in bounds', procedure
                 begin
-                  GetElement(skyrim, '[0]', @h);
-                  Expect(h > 0, 'Handle should be greater than 0');
+                  success := GetElement(skyrim, '[0]', @h);
+                  Expect(success and (h > 0), 'Handle should be greater than 0');
                 end);
 
               It('Should fail if index is out of bounds', procedure
-               begin
-                 success := GetElement(skyrim, '[-1]', @h);
-                 Expect(not success, 'Result should be false');
-               end);
+                begin
+                  success := GetElement(skyrim, '[-1]', @h);
+                  Expect(not success, 'Result should be false');
+                end);
             end);
 
           Describe('File group resolution by signature', procedure
             begin
               It('Should return a handle if the group exists', procedure
                 begin
-                  GetElement(skyrim, 'ARMO', @h);
-                  Expect(h > 0, 'Handle should be greater than 0');
+                  success := GetElement(skyrim, 'ARMO', @h);
+                  Expect(success and (h > 0), 'Handle should be greater than 0');
                 end);
 
               It('Should fail if the group does not exist', procedure
@@ -117,83 +113,83 @@ begin
             begin
               It('Should return a handle if the index is in bounds', procedure
                 begin
-                  GetElement(armo, '[0]', @h);
-                  Expect(h > 0, 'Handle should be greater than 0');
+                  success := GetElement(armo, '[0]', @h);
+                  Expect(success and (h > 0), 'Handle should be greater than 0');
                 end);
 
               It('Should fail if index is out of bounds', procedure
-               begin
-                 success := GetElement(armo, '[-1]', @h);
-                 Expect(not success, 'Result should be false');
-               end);
+                begin
+                  success := GetElement(armo, '[-1]', @h);
+                  Expect(not success, 'Result should be false');
+                end);
             end);
 
           Describe('Group record resolution by FormID', procedure
             begin
               It('Should return a handle if the record exists', procedure
                 begin
-                  GetElement(armo, '00012E46', @h);
-                  Expect(h > 0, 'Handle should be greater than 0');
+                  success := GetElement(armo, '00012E46', @h);
+                  Expect(success and (h > 0), 'Handle should be greater than 0');
                 end);
 
               It('Should fail if the record does not exist', procedure
-               begin
-                 success := GetElement(armo, '00000000', @h);
-                 Expect(not success, 'Result should be false');
-               end);
+                begin
+                  success := GetElement(armo, '00000000', @h);
+                  Expect(not success, 'Result should be false');
+                end);
             end);
 
           Describe('Record element resolution by index', procedure
             begin
               It('Should return a handle if the index is in bounds', procedure
-                begin
-                  GetElement(rec, '[0]', @h);
-                  Expect(h > 0, 'Handle should be greater than 0');
-                end);
+                 begin
+                   success := GetElement(rec, '[0]', @h);
+                   Expect(success and (h > 0), 'Handle should be greater than 0');
+                 end);
 
               It('Should fail if index is out of bounds', procedure
-               begin
-                 success := GetElement(rec, '[-1]', @h);
-                 Expect(not success, 'Result should be false');
-               end);
+                begin
+                  success := GetElement(rec, '[-1]', @h);
+                  Expect(not success, 'Result should be false');
+                end);
             end);
 
           Describe('Record element resolution by signature', procedure
             begin
               It('Should return a handle if the element exists', procedure
                 begin
-                  GetElement(rec, 'FULL', @h);
-                  Expect(h > 0, 'Handle should be greater than 0');
+                  success := GetElement(rec, 'FULL', @h);
+                  Expect(success and (h > 0), 'Handle should be greater than 0');
                 end);
 
               It('Should fail if the element does not exist', procedure
-               begin
-                 success := GetElement(rec, 'ABCD', @h);
-                 Expect(not success, 'Result should be false');
-               end);
+                begin
+                  success := GetElement(rec, 'ABCD', @h);
+                  Expect(not success, 'Result should be false');
+                end);
             end);
 
           Describe('Record element resolution by name', procedure
             begin
               It('Should return a handle if the element exists', procedure
                 begin
-                  GetElement(rec, 'Male world model', @h);
-                  Expect(h > 0, 'Handle should be greater than 0');
+                  success := GetElement(rec, 'Male world model', @h);
+                  Expect(success and (h > 0), 'Handle should be greater than 0');
                 end);
 
               It('Should fail if the element does not exist', procedure
-               begin
-                 success := GetElement(rec, 'Does not exist', @h);
-                 Expect(not success, 'Result should be false');
-               end);
+                begin
+                  success := GetElement(rec, 'Does not exist', @h);
+                  Expect(not success, 'Result should be false');
+                end);
             end);
 
           Describe('Record element resolution by path', procedure
             begin
               It('Should return a handle if the element exists', procedure
                 begin
-                  GetElement(rec, 'BODT - Body Template', @h);
-                  Expect(h > 0, 'Handle should be greater than 0');
+                  success := GetElement(rec, 'BODT - Body Template', @h);
+                  Expect(success and (h > 0), 'Handle should be greater than 0');
                 end);
             end);
 
@@ -201,8 +197,8 @@ begin
             begin
               It('Should resolve nested indexes correctly if the indexes are all in bounds', procedure
                 begin
-                  GetElement(0, '[0]\[1]\[2]\[1]', @h);
-                  Expect(h > 0, 'Handle should be greater than 0');
+                  success := GetElement(0, '[0]\[1]\[2]\[1]', @h);
+                  Expect(success and (h > 0), 'Handle should be greater than 0');
                 end);
 
               It('Should fail if any index is out of bounds', procedure
@@ -213,8 +209,8 @@ begin
 
               It('Should resolve paths correctly if valid', procedure
                 begin
-                  GetElement(0, 'Skyrim.esm\ARMO\00012E46\KWDA\[0]', @h);
-                  Expect(h > 0, 'Handle should be greater than 0');
+                  success := GetElement(0, 'Skyrim.esm\ARMO\00012E46\KWDA\[0]', @h);
+                  Expect(success and (h > 0), 'Handle should be greater than 0');
                 end);
 
               It('Should fail if any subpath is invalid', procedure
@@ -232,8 +228,8 @@ begin
             begin
               It('Should resolve all files loaded', procedure
                 begin
-                  GetElements(0, @a);
-                  Expect(Length(a) = 8, 'There should be 8 handles');
+                  success := GetElements(0, @a);
+                  Expect(success and (Length(a) = 8), 'There should be 8 handles');
                 end);
             end);
 
@@ -241,8 +237,8 @@ begin
             begin
               It('Should resolve the file header and all groups', procedure
                 begin
-                  GetElements(skyrim, @a);
-                  Expect(Length(a) = 118, 'There should be 118 handles');
+                  success := GetElements(skyrim, @a);
+                  Expect(success and (Length(a) = 118), 'There should be 118 handles');
                 end);
             end);
 
@@ -250,8 +246,8 @@ begin
             begin
               It('Should resolve all records', procedure
                 begin
-                  GetElements(armo, @a);
-                  Expect(Length(a) = 2762, 'There should be 2762 handles');
+                  success := GetElements(armo, @a);
+                  Expect(success and (Length(a) = 2762), 'There should be 2762 handles');
                 end);
             end);
 
@@ -259,8 +255,8 @@ begin
             begin
               It('Should resolve all children elements', procedure
                 begin
-                  GetElements(rec, @a);
-                  Expect(Length(a) = 13, 'There should be 13 handles');
+                  success := GetElements(rec, @a);
+                  Expect(success and (Length(a) = 13), 'There should be 13 handles');
                 end);
             end);
 
@@ -269,8 +265,8 @@ begin
               It('Should resolve all array elements', procedure
                 begin
                   GetElement(rec, 'KWDA', @h);
-                  GetElements(h, @a);
-                  Expect(Length(a) = 5, 'There should be 5 handles');
+                  success := GetElements(h, @a);
+                  Expect(success and (Length(a) = 5), 'There should be 5 handles');
                 end);
             end);
         end);
@@ -279,27 +275,27 @@ begin
         begin
           It('Should return the input if the input is a file', procedure
             begin
-              GetElementFile(skyrim, @h);
-              Expect(h > 0, 'Handle should be greater than 0')
+              success := GetElementFile(skyrim, @h);
+              Expect(success and (h > 0), 'Handle should be greater than 0')
             end);
 
           It('Should return the file containing a group', procedure
             begin
-              GetElementFile(armo, @h);
-              Expect(h > 0, 'Handle should be greater than 0');
+              success := GetElementFile(armo, @h);
+              Expect(success and (h > 0), 'Handle should be greater than 0');
             end);
 
           It('Should return the file containing a record', procedure
             begin
-              GetElementFile(rec, @h);
-              Expect(h > 0, 'Handle should be greater than 0');
+              success := GetElementFile(rec, @h);
+              Expect(success and (h > 0), 'Handle should be greater than 0');
             end);
 
           It('Should return the file containing an element', procedure
             begin
               GetElement(rec, 'DATA\Value', @element);
-              GetElementFile(element, @h);
-              Expect(h > 0, 'Handle should be greater than 0');
+              success := GetElementFile(element, @h);
+              Expect(success and (h > 0), 'Handle should be greater than 0');
             end);
         end);
 
@@ -307,28 +303,28 @@ begin
         begin
           It('Should return the file containing a group', procedure
             begin
-              GetContainer(armo, @h);
-              Expect(h > 0, 'Handle should be greater than 0');
+              success := GetContainer(armo, @h);
+              Expect(success and (h > 0), 'Handle should be greater than 0');
             end);
 
           It('Should return the group containing a record', procedure
             begin
-              GetContainer(rec, @h);
-              Expect(h > 0, 'Handle should be greater than 0');
+              success := GetContainer(rec, @h);
+              Expect(success and (h > 0), 'Handle should be greater than 0');
             end);
 
           It('Should return the record containing an element', procedure
             begin
               GetElement(rec, 'EDID', @element);
-              GetContainer(element, @h);
-              Expect(h > 0, 'Handle should be greater than 0');
+              success := GetContainer(element, @h);
+              Expect(success and (h > 0), 'Handle should be greater than 0');
             end);
 
           It('Should return the parent element containing a child element', procedure
             begin
               GetElement(rec, 'BODT\Armor Type', @element);
-              GetContainer(element, @h);
-              Expect(h > 0, 'Handle should be greater than 0');
+              success := GetContainer(element, @h);
+              Expect(success and (h > 0), 'Handle should be greater than 0');
             end);
 
           It('Should fail if called on a file', procedure
