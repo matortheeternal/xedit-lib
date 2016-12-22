@@ -1,4 +1,4 @@
-unit txFileHandling;
+unit txFiles;
 
 interface
 

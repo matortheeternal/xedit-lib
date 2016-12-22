@@ -308,7 +308,6 @@ begin
         Result := container.Add(key, true);
     end;
   end;
-
 end;
 
 // replaces ElementAssign, Add, AddElement, and InsertElement

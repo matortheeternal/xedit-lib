@@ -1,10 +1,10 @@
-unit txElementHandling;
+unit txElements;
 
 interface
 
 uses
   SysUtils,
-  txMeta, txFileHandling;
+  txMeta, txFiles;
 
   // ELEMENT HANDLING METHODS
   function GetElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';

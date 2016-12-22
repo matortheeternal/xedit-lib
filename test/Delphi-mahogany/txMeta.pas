@@ -27,7 +27,7 @@ type
 implementation
 
 uses
-  txFileHandling,
+  txFiles,
   maMain;
 
 procedure WriteBuffer;

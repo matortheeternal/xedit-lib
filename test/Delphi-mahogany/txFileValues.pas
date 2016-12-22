@@ -4,7 +4,7 @@ interface
 
 uses
   SysUtils,
-  txFileHandling;
+  txFiles;
 
   // FILE VALUE METHODS
   function GetFileHeader(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';

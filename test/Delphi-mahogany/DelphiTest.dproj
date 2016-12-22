@@ -50,8 +50,8 @@
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
 			<DCCReference Include="lib\maMain.pas"/>
-			<DCCReference Include="txElementHandling.pas"/>
-			<DCCReference Include="txFileHandling.pas"/>
+			<DCCReference Include="txElements.pas"/>
+			<DCCReference Include="txFiles.pas"/>
 			<DCCReference Include="txFileValues.pas"/>
 			<DCCReference Include="txElementValues.pas"/>
 			<DCCReference Include="txSetup.pas"/>
