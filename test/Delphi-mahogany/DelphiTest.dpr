@@ -13,14 +13,14 @@ uses
   txSetup in 'txSetup.pas',
   txMeta in 'txMeta.pas';
 
-procedure BuildTests;
+procedure BuildXETests;
 begin
   TestFileHandling;
   TestFileValues;
   //TestElementHandling;
 end;
 
-procedure RunMahoganyTests;
+procedure RunXETests;
 var
   LogToConsole: TMessageProc;
 begin
@@ -43,8 +43,8 @@ end;
 
 begin
   try
-    BuildTests;
-    RunMahoganyTests;
+    BuildXETests;
+    RunXETests;
   except
     on E: Exception do
       Writeln(E.ClassName, ': ', E.Message);
