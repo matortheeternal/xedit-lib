@@ -9,6 +9,7 @@ uses
   // ELEMENT HANDLING METHODS
   function GetElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function GetElements(_id: Cardinal; _res: PCardinalArray): WordBool; cdecl; external 'XEditLib.dll';
+  function GetElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function GetContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function NewElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
@@ -33,7 +34,7 @@ uses
 procedure TestElementHandling;
 var
   success: WordBool;
-  h, skyrim, armo, rec: Cardinal;
+  h, skyrim, armo, rec, element: Cardinal;
   a: CardinalArray;
 begin
   Describe('Element Handling', procedure
@@ -271,6 +272,34 @@ begin
                   GetElements(h, @a);
                   Expect(Length(a) = 5, 'There should be 5 handles');
                 end);
+            end);
+        end);
+
+      Describe('GetElementFile', procedure
+        begin
+          It('Should return the input if the input is a file', procedure
+            begin
+              GetElementFile(skyrim, @h);
+              Expect(h > 0, 'Handle should be greater than 0')
+            end);
+
+          It('Should return the file containing a group', procedure
+            begin
+              GetElementFile(armo, @h);
+              Expect(h > 0, 'Handle should be greater than 0');
+            end);
+
+          It('Should return the file containing a record', procedure
+            begin
+              GetElementFile(rec, @h);
+              Expect(h > 0, 'Handle should be greater than 0');
+            end);
+
+          It('Should return the file containing an element', procedure
+            begin
+              GetElement(rec, 'DATA\Value', @element);
+              GetElementFile(element, @h);
+              Expect(h > 0, 'Handle should be greater than 0');
             end);
         end);
     end);
