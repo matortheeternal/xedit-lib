@@ -302,6 +302,41 @@ begin
               Expect(h > 0, 'Handle should be greater than 0');
             end);
         end);
+
+      Describe('GetContainer', procedure
+        begin
+          It('Should return the file containing a group', procedure
+            begin
+              GetContainer(armo, @h);
+              Expect(h > 0, 'Handle should be greater than 0');
+            end);
+
+          It('Should return the group containing a record', procedure
+            begin
+              GetContainer(rec, @h);
+              Expect(h > 0, 'Handle should be greater than 0');
+            end);
+
+          It('Should return the record containing an element', procedure
+            begin
+              GetElement(rec, 'EDID', @element);
+              GetContainer(element, @h);
+              Expect(h > 0, 'Handle should be greater than 0');
+            end);
+
+          It('Should return the parent element containing a child element', procedure
+            begin
+              GetElement(rec, 'BODT\Armor Type', @element);
+              GetContainer(element, @h);
+              Expect(h > 0, 'Handle should be greater than 0');
+            end);
+
+          It('Should fail if called on a file', procedure
+            begin
+              success := GetContainer(skyrim, @h);
+              Expect(not success, 'Result should be false')
+            end);
+        end);
     end);
 end;
 
