@@ -348,6 +348,16 @@ begin
                     Expect(Length(a) = 13, 'There should be 13 handles');
                   end);
               end);
+
+            Describe('Element children', procedure
+              begin
+                It('Should resolve all array elements', procedure
+                  begin
+                    GetElement(rec, 'KWDA', @h);
+                    GetElements(h, @a);
+                    Expect(Length(a) = 5, 'There should be 5 handles');
+                  end);
+              end);
           end);
     end);
 end;

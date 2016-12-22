@@ -17,7 +17,7 @@ procedure BuildXETests;
 begin
   TestFileHandling;
   TestFileValues;
-  //TestElementHandling;
+  TestElementHandling;
 end;
 
 procedure RunXETests;
