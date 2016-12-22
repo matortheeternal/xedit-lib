@@ -16,14 +16,19 @@ type
   procedure FlushBuffer; cdecl; external 'XEditLib.dll';
   function GetExceptionMessage(str: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
   function GetGlobal(key, value: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
-  procedure Release(_id: Cardinal); cdecl; external 'XEditLib.dll';
-  procedure ResetStore; cdecl; external 'XEditLib.dll';
+  function Release(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
+  function ResetStore: WordBool; cdecl; external 'XEditLib.dll';
 
   // PUBLIC TESTING INTERFACE
   procedure WriteBuffer;
   procedure WriteArray(a: CardinalArray);
+  procedure TestMeta;
 
 implementation
+
+uses
+  txFileHandling,
+  maMain;
 
 procedure WriteBuffer;
 var
@@ -50,6 +55,70 @@ begin
   end;
   s := s + ' ]';
   WriteLn(s);
+end;
+
+procedure TestMeta;
+var
+  str: PWideChar;
+  success: WordBool;
+  h1, h2: Cardinal;
+begin
+  Describe('Meta Methods', procedure
+    begin
+      Describe('GetGlobal', procedure
+        begin
+          BeforeEach(procedure
+            begin
+              GetMem(str, 512);
+            end);
+
+          AfterEach(procedure
+            begin
+              FreeMem(str, 512);
+            end);
+
+          It('Should have the ProgramPath global', procedure
+            begin
+              GetGlobal(PWideChar('ProgramPath'), str, 512);
+              Expect(Length(str) > 0, 'Should return a string');
+            end);
+
+          It('Should have the Version global', procedure
+            begin
+              GetGlobal(PWideChar('Version'), str, 512);
+              Expect(Length(str) > 0, 'Should return a string');
+            end);
+
+          It('Should have the GameName global', procedure
+            begin
+              GetGlobal(PWideChar('GameName'), str, 512);
+              Expect(Length(str) > 0, 'Should return a string');
+            end);
+
+          It('Should have the AppName global', procedure
+            begin
+              GetGlobal(PWideChar('AppName'), str, 512);
+              Expect(Length(str) > 0, 'Should return a string');
+            end);
+
+          It('Should have the LongGameName global', procedure
+            begin
+              GetGlobal(PWideChar('LongGameName'), str, 512);
+              Expect(Length(str) > 0, 'Should return a string');
+            end);
+
+          It('Should have the DataPath global', procedure
+            begin
+              GetGlobal(PWideChar('DataPath'), str, 512);
+              Expect(Length(str) > 0, 'Should return a string');
+            end);
+
+          It('Should fail if global does not exist', procedure
+            begin
+              success := GetGlobal(PWideChar('DoesNotExist'), str, 512);
+              Expect(not success, 'Result should be false');
+            end);
+        end);
 end;
 
 end.
