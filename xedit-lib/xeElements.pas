@@ -55,11 +55,11 @@ uses
 }
 {******************************************************************************}
 
-function ParseIndex(key: string): Integer;
+function ParseIndex(key: string; var index: Integer): Boolean;
 begin
-  Result := -1;
-  if (key[1] = '[') and (key[Length(key)] = ']') then
-    Result := StrToInt(Copy(key, 2, Length(key) - 2));
+  Result := (key[1] = '[') and (key[Length(key)] = ']');
+  if Result then
+    index := StrToInt(Copy(key, 2, Length(key) - 2));
 end;
 
 procedure SplitPath(path: String; var key, nextPath: String);
@@ -79,6 +79,7 @@ function ResolveByIndex(container: IwbContainerElementRef; index: Integer; nextP
 var
   element: IwbElement;
 begin
+  Result := False;
   // resolve element from container if container present
   if Assigned(container) then begin
     if index < container.ElementCount then
@@ -88,6 +89,7 @@ begin
   else
     element := NativeFileByIndex(index);
 
+  if not Assigned(element) then exit;
   // resolve next element if nextPath is present
   if Length(nextPath) > 0 then
     Result := ResolveElement(element, nextPath, _res)
@@ -104,14 +106,15 @@ var
   index: Integer;
   _file: IwbFile;
 begin
+  Result := False;
   SplitPath(path, key, nextPath);
   // resolve file by index if key is an index
-  index := ParseIndex(string(key));
-  if index > -1 then
+  if ParseIndex(string(key), index) then
     Result := ResolveByIndex(nil, index, nextPath, _res)
   // else resolve by file name
   else begin
     _file := NativeFileByName(string(key));
+    if not Assigned(_file) then exit;
     if Length(nextPath) > 0 then
       Result := ResolveElement(_file, nextPath, _res)
     else begin
@@ -127,15 +130,16 @@ var
   index: Integer;
   group: IwbGroupRecord;
 begin
+  Result := False;
   SplitPath(path, key, nextPath);
   // resolve group by index if key is an index
-  index := ParseIndex(string(key));
-  if index > -1 then
+  if ParseIndex(string(key), index) then
     Result := ResolveByIndex(_file as IwbContainerElementRef, index, nextPath, _res)
   // else resolve by group signature
   else begin
     // TODO: perhaps also by group name?
     group := _file.GroupBySignature[StrToSignature(key)];
+    if not Assigned(group) then exit;
     if Length(nextPath) > 0 then
       Result := ResolveElement(group, nextPath, _res)
     else begin
@@ -151,14 +155,15 @@ var
   index: Integer;
   rec: IwbMainRecord;
 begin
+  Result := False;
   SplitPath(path, key, nextPath);
   // resolve record by index if key is an index
-  index := ParseIndex(string(key));
-  if index > -1 then
+  if ParseIndex(string(key), index) then
     Result := ResolveByIndex(group as IwbContainerElementRef, index, nextPath, _res)
   // else resolve record by formID
   else begin
     rec := group.MainRecordByFormID[StrToInt('$' + key)];
+    if not Assigned(rec) then exit;
     if Length(nextPath) > 0 then
       Result := ResolveElement(rec, nextPath, _res)
     else begin
@@ -173,14 +178,17 @@ var
   _file: IwbFile;
   group: IwbGroupRecord;
   container: IwbContainerElementRef;
+  element: IwbElement;
 begin
-  Result := false;
+  Result := False;
   if Supports(e, IwbFile, _file) then
     Result := ResolveGroupElement(_file, path, _res)
   else if Supports(e, IwbGroupRecord, group) then
     Result := ResolveRecordElement(group, path, _res)
   else if Supports(e, IwbContainerElementRef, container) then begin
-    _res^ := Store(container.ElementByPath[path]);
+    element := container.ElementByPath[path];
+    if not Assigned(element) then exit;
+    _res^ := Store(element);
     Result := True;
   end;
 end;
@@ -257,9 +265,8 @@ begin
         if (not Assigned(key)) or (Length(key) = 0) then
           _res^ := Store(container.Assign(High(integer), nil, false))
         else begin
-          keyIndex := ParseIndex(key);
           // assign element at given index if index given, else add
-          if keyIndex > -1 then
+          if ParseIndex(string(key), keyIndex) then
             _res^ := Store(container.Assign(keyIndex, nil, false))
           else
             _res^ := Store(container.Add(string(key), true));
