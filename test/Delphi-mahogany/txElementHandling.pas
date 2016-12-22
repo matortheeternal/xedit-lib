@@ -181,6 +181,21 @@ begin
                  Expect(not success, 'Result should be false');
                end);
             end);
+
+          Describe('File group resolution by signature', procedure
+            begin
+              It('Should return a handle if the group exists', procedure
+                begin
+                  GetElement(skyrim, 'ARMO', @h);
+                  Expect(h > 0, 'Handle should be greater than 0');
+                end);
+
+              It('Should fail if the group does not exist', procedure
+                begin
+                  success := GetElement(skyrim, 'ABCD', @h);
+                  Expect(not success, 'Result should be false');
+                end);
+            end);
         end);
     end);
 end;
