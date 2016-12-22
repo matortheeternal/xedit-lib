@@ -330,6 +330,15 @@ begin
                     Expect(Length(a) = 118, 'There should be 118 handles');
                   end);
               end);
+
+            Describe('Group children (records)', procedure
+              begin
+                It('Should resolve all records', procedure
+                  begin
+                    GetElements(armo, @a);
+                    Expect(Length(a) = 2762, 'There should be 2762 handles');
+                  end);
+              end);
           end);
     end);
 end;
