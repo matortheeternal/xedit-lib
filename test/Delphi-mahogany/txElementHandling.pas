@@ -281,6 +281,33 @@ begin
                 end);
             end);
 
+          Describe('Nested resolution', procedure
+            begin
+              It('Should resolve nested indexes correctly if the indexes are all in bounds', procedure
+                begin
+                  GetElement(0, '[0]\[1]\[2]\[1]', @h);
+                  Expect(h > 0, 'Handle should be greater than 0');
+                end);
+
+              It('Should fail if any index is out of bounds', procedure
+                begin
+                  success := GetElement(0, '[0]\[1]\[9999999]\[1]', @h);
+                  Expect(not success, 'Result should be false');
+                end);
+
+              It('Should resolve paths correctly if valid', procedure
+                begin
+                  GetElement(0, 'Skyrim.esm\ARMO\00012E46\KWDA\[0]', @h);
+                  Expect(h > 0, 'Handle should be greater than 0');
+                end);
+
+              It('Should fail if any subpath is invalid', procedure
+                begin
+                  success := GetElement(0, 'Skyrim.esm\ARMO\00012E46\ABCD', @h);
+                  Expect(not success, 'Result should be false');
+                end);
+            end);
+
         end);
     end);
 end;
