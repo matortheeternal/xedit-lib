@@ -143,6 +143,18 @@ begin
               Expect(h1 = h2, 'Next allocation should use the freed handle');
             end);
         end);
+
+      Describe('ResetStore', procedure
+        begin
+          It('Should clear all handles', procedure
+            begin
+              success := ResetStore;
+              Expect(success, 'Result should be true');
+              h1 := FileByName('Skyrim.esm');
+              Expect(h1 = 1, 'First handle allocated after resetting store should be 1');
+            end);
+        end);
+    end);
 end;
 
 end.

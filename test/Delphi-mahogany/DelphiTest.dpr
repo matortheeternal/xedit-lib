@@ -15,6 +15,7 @@ uses
 
 procedure BuildXETests;
 begin
+  TestMeta;
   TestFileHandling;
   TestFileValues;
   TestElementHandling;
