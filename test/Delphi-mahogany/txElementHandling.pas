@@ -196,6 +196,21 @@ begin
                   Expect(not success, 'Result should be false');
                 end);
             end);
+
+          Describe('Group element resolution by index', procedure
+            begin
+              It('Should return a handle if the index is in bounds', procedure
+                begin
+                  GetElement(armo, '[0]', @h);
+                  Expect(h > 0, 'Handle should be greater than 0');
+                end);
+
+              It('Should fail if index is out of bounds', procedure
+               begin
+                 success := GetElement(armo, '[-1]', @h);
+                 Expect(not success, 'Result should be false');
+               end);
+            end);
         end);
     end);
 end;
