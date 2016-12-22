@@ -211,6 +211,21 @@ begin
                  Expect(not success, 'Result should be false');
                end);
             end);
+
+          Describe('Group record resolution by FormID', procedure
+            begin
+              It('Should return a handle if the record exists', procedure
+                begin
+                  GetElement(armo, '00012E46', @h);
+                  Expect(h > 0, 'Handle should be greater than 0');
+                end);
+
+              It('Should fail if the record does not exist', procedure
+               begin
+                 success := GetElement(armo, '00000000', @h);
+                 Expect(not success, 'Result should be false');
+               end);
+            end);
         end);
     end);
 end;
