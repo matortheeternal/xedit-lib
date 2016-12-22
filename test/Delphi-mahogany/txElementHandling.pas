@@ -225,54 +225,54 @@ begin
 
         end);
 
-       Describe('GetElements', procedure
-          begin
-            Describe('Root children (files)', procedure
-              begin
-                It('Should resolve all files loaded', procedure
-                  begin
-                    GetElements(0, @a);
-                    Expect(Length(a) = 8, 'There should be 8 handles');
-                  end);
-              end);
+      Describe('GetElements', procedure
+        begin
+          Describe('Root children (files)', procedure
+            begin
+              It('Should resolve all files loaded', procedure
+                begin
+                  GetElements(0, @a);
+                  Expect(Length(a) = 8, 'There should be 8 handles');
+                end);
+            end);
 
-            Describe('File children (file header and groups)', procedure
-              begin
-                It('Should resolve the file header and all groups', procedure
-                  begin
-                    GetElements(skyrim, @a);
-                    Expect(Length(a) = 118, 'There should be 118 handles');
-                  end);
-              end);
+          Describe('File children (file header and groups)', procedure
+            begin
+              It('Should resolve the file header and all groups', procedure
+                begin
+                  GetElements(skyrim, @a);
+                  Expect(Length(a) = 118, 'There should be 118 handles');
+                end);
+            end);
 
-            Describe('Group children (records)', procedure
-              begin
-                It('Should resolve all records', procedure
-                  begin
-                    GetElements(armo, @a);
-                    Expect(Length(a) = 2762, 'There should be 2762 handles');
-                  end);
-              end);
+          Describe('Group children (records)', procedure
+            begin
+              It('Should resolve all records', procedure
+                begin
+                  GetElements(armo, @a);
+                  Expect(Length(a) = 2762, 'There should be 2762 handles');
+                end);
+            end);
 
-            Describe('Record children (subrecords/elements)', procedure
-              begin
-                It('Should resolve all children elements', procedure
-                  begin
-                    GetElements(rec, @a);
-                    Expect(Length(a) = 13, 'There should be 13 handles');
-                  end);
-              end);
+          Describe('Record children (subrecords/elements)', procedure
+            begin
+              It('Should resolve all children elements', procedure
+                begin
+                  GetElements(rec, @a);
+                  Expect(Length(a) = 13, 'There should be 13 handles');
+                end);
+            end);
 
-            Describe('Element children', procedure
-              begin
-                It('Should resolve all array elements', procedure
-                  begin
-                    GetElement(rec, 'KWDA', @h);
-                    GetElements(h, @a);
-                    Expect(Length(a) = 5, 'There should be 5 handles');
-                  end);
-              end);
-          end);
+          Describe('Element children', procedure
+            begin
+              It('Should resolve all array elements', procedure
+                begin
+                  GetElement(rec, 'KWDA', @h);
+                  GetElements(h, @a);
+                  Expect(Length(a) = 5, 'There should be 5 handles');
+                end);
+            end);
+        end);
     end);
 end;
 
