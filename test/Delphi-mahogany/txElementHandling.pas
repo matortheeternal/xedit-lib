@@ -120,18 +120,19 @@ procedure TestElementHandling;
 var
   success: WordBool;
   h, skyrim, armo, rec: Cardinal;
+  a: CardinalArray;
 begin
   Describe('Element Handling', procedure
     begin
+      BeforeAll(procedure
+        begin
+          GetElement(0, 'Skyrim.esm', @skyrim);
+          GetElement(skyrim, 'ARMO', @armo);
+          GetElement(armo, '00012E46', @rec);
+        end);
+
       Describe('GetElement', procedure
         begin
-          BeforeAll(procedure
-            begin
-              GetElement(0, 'Skyrim.esm', @skyrim);
-              GetElement(skyrim, 'ARMO', @armo);
-              GetElement(armo, '00012E46', @rec);
-            end);
-
           BeforeEach(procedure
             begin
               h := 0;
@@ -309,6 +310,10 @@ begin
             end);
 
         end);
+
+       Describe('GetElements', procedure
+          begin
+          end);
     end);
 end;
 
