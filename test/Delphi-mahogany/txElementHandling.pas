@@ -339,6 +339,15 @@ begin
                     Expect(Length(a) = 2762, 'There should be 2762 handles');
                   end);
               end);
+
+            Describe('Record children (subrecords/elements)', procedure
+              begin
+                It('Should resolve all children elements', procedure
+                  begin
+                    GetElements(rec, @a);
+                    Expect(Length(a) = 13, 'There should be 13 handles');
+                  end);
+              end);
           end);
     end);
 end;
