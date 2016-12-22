@@ -224,50 +224,35 @@ begin
 
       Describe('GetElements', procedure
         begin
-          Describe('Root children (files)', procedure
+          It('Should resolve root children (files)', procedure
             begin
-              It('Should resolve all files loaded', procedure
-                begin
-                  success := GetElements(0, @a);
-                  Expect(success and (Length(a) = 8), 'There should be 8 handles');
-                end);
+              success := GetElements(0, @a);
+              Expect(success and (Length(a) = 8), 'There should be 8 handles');
             end);
 
-          Describe('File children (file header and groups)', procedure
+          It('Should resolve file children (file header and groups)', procedure
             begin
-              It('Should resolve the file header and all groups', procedure
-                begin
-                  success := GetElements(skyrim, @a);
-                  Expect(success and (Length(a) = 118), 'There should be 118 handles');
-                end);
+              success := GetElements(skyrim, @a);
+              Expect(success and (Length(a) = 118), 'There should be 118 handles');
             end);
 
-          Describe('Group children (records)', procedure
+          It('Should resolve group children (records)', procedure
             begin
-              It('Should resolve all records', procedure
-                begin
-                  success := GetElements(armo, @a);
-                  Expect(success and (Length(a) = 2762), 'There should be 2762 handles');
-                end);
+                success := GetElements(armo, @a);
+                Expect(success and (Length(a) = 2762), 'There should be 2762 handles');
             end);
 
-          Describe('Record children (subrecords/elements)', procedure
+          It('Should resolve record children (subrecords/elements)', procedure
             begin
-              It('Should resolve all children elements', procedure
-                begin
-                  success := GetElements(rec, @a);
-                  Expect(success and (Length(a) = 13), 'There should be 13 handles');
-                end);
+              success := GetElements(rec, @a);
+              Expect(success and (Length(a) = 13), 'There should be 13 handles');
             end);
 
-          Describe('Element children', procedure
+          It('Should resolve element children', procedure
             begin
-              It('Should resolve all array elements', procedure
-                begin
-                  GetElement(rec, 'KWDA', @h);
-                  success := GetElements(h, @a);
-                  Expect(success and (Length(a) = 5), 'There should be 5 handles');
-                end);
+              GetElement(rec, 'KWDA', @h);
+              success := GetElements(h, @a);
+              Expect(success and (Length(a) = 5), 'There should be 5 handles');
             end);
         end);
 
