@@ -6,13 +6,16 @@ uses
   wbInterface;
 
   function HasGroup(_id: Cardinal; sig: string; _res: PWordBool): WordBool; cdecl;
-  function AddGroupIfMissing(_file: IwbFile; sig: string): IwbGroupRecord;
   function AddGroup(_id: Cardinal; sig: string; _res: PCardinal): WordBool; cdecl;
   function GetGroupSignatures(_id: Cardinal; groups: PWideChar; len: Integer): WordBool; cdecl;
   function GetChildGroup(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function GroupSignatureFromName(name, str: PWideChar): WordBool; cdecl;
   function GroupNameFromSignature(sig, str: PWideChar; len: Integer): WordBool; cdecl;
   function GetGroupSignatureNameMap(str: PWideChar; len: Integer): WordBool; cdecl;
+
+  // native functions
+  function AddGroupIfMissing(_file: IwbFile; sig: string): IwbGroupRecord;
+  procedure BuildGroupNameMap;
 
 implementation
 
@@ -27,6 +30,7 @@ uses
 
 var
   slGroupNameMap: TStringList;
+  bGroupNameMapBuilt: Boolean;
 
 
 {******************************************************************************}
@@ -121,6 +125,7 @@ var
 begin
   Result := false;
   try
+    BuildGroupNameMap;
     if slGroupNameMap.IndexOfName(name) > -1 then begin
       sig := slGroupNameMap.Values[name];
       StrLCopy(str, PWideChar(sig), 4);
@@ -154,6 +159,7 @@ var
 begin
   Result := false;
   try
+    BuildGroupNameMap;
     text := slGroupNameMap.Text;
     Delete(text, Length(text), 1);
     StrLCopy(str, PWideChar(text), len);
@@ -168,11 +174,13 @@ var
   sig: string;
   RecordDef: PwbRecordDef;
 begin
+  if bGroupNameMapBuilt then exit;
   for i := 0 to Pred(wbGroupOrder.Count) do begin
     sig := wbGroupOrder[i];
     if wbFindRecordDef(AnsiString(sig), RecordDef) then
       slGroupNameMap.Values[sig] := RecordDef.Name;
   end;
+  bGroupNameMapBuilt := True;
 end;
 
 initialization
@@ -180,7 +188,7 @@ begin
   slGroupNameMap := TStringList.Create;
   slGroupNameMap.Sorted := True;
   slGroupNameMap.Duplicates := dupIgnore;
-  BuildGroupNameMap;
+  bGroupNameMapBuilt := False;
 end;
 
 
