@@ -4,6 +4,7 @@ program DelphiTest;
 
 uses
   ShareMem,
+  Classes,
   SysUtils;
 
 type
@@ -96,7 +97,23 @@ begin
   WriteLn(' ');
 end;
 
+procedure WriteStrToFile(str, fileName: String);
+var
+  sl: TStringList;
+begin
+  sl := TStringList.Create;
+  try
+    sl.Text := str;
+    sl.SaveToFile(fileName);
+  finally
+    sl.Free;
+  end;
+end;
+
 procedure TestFileHandling;
+const
+  MB = 1048576;
+  pluginFileName = 'Dawnguard.esm';
 var
   h: Cardinal;
   str: PWideChar;
@@ -110,11 +127,11 @@ begin
   WriteLn('File with load order 01 returned with handle: ' + IntToStr(h));
   h := FileByAuthor('mcarofano');
   WriteLn('File with author "mcarofano" returned with handle: ' + IntToStr(h));
-  GetMem(str, 1048576);  // 1MB
-  h := FileByName('WetandCold - Ashes.esp');
-  ElementToJson(h, str, 1048576);  // 1MB
-  WriteLn('FileToJSON output: ');
-  WriteLn(str);
+  GetMem(str, 150 * MB);
+  h := FileByName(pluginFileName);
+  ElementToJson(h, str, 150 * MB);
+  WriteLn('FileToJSON length: '+IntToStr(Length(str)));
+  WriteStrToFile(str, pluginFileName + '.json');
   WriteBuffer;
   WriteLn(' ');
 end;
