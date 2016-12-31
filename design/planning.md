@@ -74,10 +74,11 @@
 - GetContainer
 - CopyRecord: replaces wbCopyElementToFile
 - CopyElement: replaces wbCopyElementToRecord
-  
+
 ### ELEMENT VALUES
 
 - Name
+- Path
 - EditorID
 - Signature
 - ShortName
@@ -98,13 +99,8 @@
 - GetEnabledFlags
 
 **TODO:**
-- Path
 - ConflictAll
 - ConflictThis
-- GetListValues
-- SetListValues
-- GetElementListValues
-- SetElementListValues
 - HasArrayValue
 - GetArrayValue
 - AddArrayValue
@@ -113,8 +109,14 @@
 - GetArrayStruct
 - AddArrayStruct
 - DeleteArrayStruct
-  
-  
+
+**WRAPPER ONLY?**
+- GetListValues
+- SetListValues
+- GetElementListValues
+- SetElementListValues
+
+
 ## GROUPS
 
 - HasGroup
@@ -124,7 +126,7 @@
 - GroupSignatureFromName
 - GroupNameFromSignature
 - GetGroupSignatureNameMap
-  
+
 ## RECORDS
 
 ### RECORD HANDLING
@@ -136,9 +138,6 @@
 - RecordByFormID
 - RecordByEditorID
 - RecordByName
-
-
-**TODO:**
 - OverrideCount
 - OverrideByIndex
 - GetFormID
