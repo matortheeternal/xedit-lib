@@ -15,10 +15,10 @@ uses
 
 procedure BuildXETests;
 begin
-  TestMeta;
-  TestFileHandling;
-  TestFileValues;
-  TestElementHandling;
+  BuildMetaTests;
+  BuildFileHandlingTests;
+  BuildFileValuesTests;
+  BuildElementHandlingTests;
 end;
 
 procedure RunXETests;

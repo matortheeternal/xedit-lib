@@ -16,14 +16,14 @@ uses
   function GetFileNames(fileNames: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
 
   // PUBLIC TESTING INTERFACE
-  procedure TestFileHandling;
+  procedure BuildFileHandlingTests;
 
 implementation
 
 uses
   maMain;
 
-procedure TestFileHandling;
+procedure BuildFileHandlingTests;
 var
   h: Cardinal;
 begin

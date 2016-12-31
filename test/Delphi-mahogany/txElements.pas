@@ -24,14 +24,14 @@ uses
   function IsWinningOverride(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
 
   // PUBLIC TESTING INTERFACE
-  procedure TestElementHandling;
+  procedure BuildElementHandlingTests;
 
 implementation
 
 uses
   maMain;
 
-procedure TestElementHandling;
+procedure BuildElementHandlingTests;
 var
   success, b: WordBool;
   h, skyrim, testFile, armo, rec, element: Cardinal;

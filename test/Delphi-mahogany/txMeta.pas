@@ -22,7 +22,7 @@ type
   // PUBLIC TESTING INTERFACE
   procedure WriteBuffer;
   procedure WriteArray(a: CardinalArray);
-  procedure TestMeta;
+  procedure BuildMetaTests;
 
 implementation
 
@@ -57,7 +57,7 @@ begin
   WriteLn(s);
 end;
 
-procedure TestMeta;
+procedure BuildMetaTests;
 var
   str: PWideChar;
   success: WordBool;
