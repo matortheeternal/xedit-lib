@@ -15,6 +15,7 @@ uses
   function OverrideCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
   function OverrideByIndex(_id: Cardinal; index: Integer; _res: PCardinal): WordBool; cdecl;
   function GetFormID(_id: Cardinal; formID: PCardinal): WordBool; cdecl;
+  function SetFormID(_id: Cardinal; formID: Cardinal): WordBool; cdecl;
 
 implementation
 
@@ -279,6 +280,22 @@ begin
   try
     if Supports(Resolve(_id), IwbMainRecord, rec) then begin
       formID^ := rec.LoadOrderFormID;
+      Result := true;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+// TODO: Fix references
+function SetFormID(_id: Cardinal; formID: Cardinal): WordBool; cdecl;
+var
+  rec: IwbMainRecord;
+begin
+  Result := false;
+  try
+    if Supports(Resolve(_id), IwbMainRecord, rec) then begin
+      rec.LoadOrderFormID := formID;
       Result := true;
     end;
   except
