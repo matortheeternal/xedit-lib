@@ -119,10 +119,9 @@ begin
     slPlugins := TStringList.Create;
     slLoadOrder := TStringList.Create;
 
-    try
-      // TODO: load this from the right directory
-      sLoadPath := GetCSIDLShellFolder(CSIDL_LOCAL_APPDATA) + wbGameName+'\';
-      // LOAD LIST OF ACTIVE PLUGINS (plugins.txt)
+    try                                           
+      sLoadPath := GetCSIDLShellFolder(CSIDL_LOCAL_APPDATA) + wbGameName+'\';  
+      // LOAD LIST OF ACTIVE PLUGINS (plugins.txt)      
       slPlugins := TStringList.Create;
       sPath := sLoadPath + 'plugins.txt';
       if FileExists(sPath) then
@@ -134,7 +133,7 @@ begin
       RemoveCommentsAndEmpty(slPlugins);
       RemoveMissingFiles(slPlugins);
 
-      // LOAD ORDER OF ALL PLUGINS (loadorder.txt)
+      // LOAD ORDER OF ALL PLUGINS (loadorder.txt)    
       sPath := sLoadPath + 'loadorder.txt';
       if FileExists(sPath) then
         slLoadOrder.LoadFromFile(sPath)
@@ -162,7 +161,7 @@ begin
       end;
 
       // RETURN RESULT
-      StrLCopy(str, PWideChar(WideString(slPlugins.CommaText)), len);
+      StrLCopy(str, PWideChar(WideString(slLoadOrder.CommaText)), len);
       Result := true;
     finally
       slPlugins.Free;
