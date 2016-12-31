@@ -2,14 +2,17 @@ unit xeSerialization;
 
 interface
 
+uses
+  superobject,
+  wbInterface;
+
   function ElementToJson(_id: Cardinal; json: PWideChar; len: Integer): WordBool; cdecl;
+  function ChildGroupToSO(group: IwbGroupRecord; obj: ISuperObject): ISuperObject;
 
 implementation
 
 uses
   Variants, SysUtils,
-  superobject,
-  wbInterface,
   xeMeta, xeElements, xeMessages;
 
 function ElementToSO(element: IwbElement; obj: ISuperObject): ISuperObject;
@@ -66,6 +69,21 @@ var
 begin
   for i := Pred(rec.ElementCount) downto 0 do
     ElementToSO(rec.Elements[i], obj);
+  if Assigned(rec.ChildGroup) then
+    ChildGroupToSO(rec.ChildGroup, obj);
+  Result := obj;
+end;
+
+function ChildGroupToSO(group: IwbGroupRecord; obj: ISuperObject): ISuperObject;
+var
+  i: Integer;
+  mainRecord: IwbMainRecord;
+begin
+  obj.O['Child Group'] := SA([]);
+  for i := 0 to Pred(group.ElementCount) do begin
+    if Supports(group.Elements[i], IwbMainRecord, mainRecord) then
+      obj.A['Child Group'].Add(RecordToSO(mainRecord, SO));
+  end;
   Result := obj;
 end;
 
