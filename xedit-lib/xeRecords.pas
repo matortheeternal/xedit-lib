@@ -13,6 +13,7 @@ uses
   function RecordByEditorID(_id: Cardinal; edid: string; _res: PCardinal): WordBool; cdecl;
   function RecordByName(_id: Cardinal; full: string; _res: PCardinal): WordBool; cdecl;
   function OverrideCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
+  function OverrideByIndex(_id: Cardinal; index: Integer; _res: PCardinal): WordBool; cdecl;
 
 implementation
 
@@ -247,6 +248,21 @@ begin
   try
     if Supports(Resolve(_id), IwbMainRecord, rec) then begin
       count^ := rec.OverrideCount;
+      Result := true;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function OverrideByIndex(_id: Cardinal; index: Integer; _res: PCardinal): WordBool; cdecl;
+var
+  rec: IwbMainRecord;
+begin
+  Result := false;
+  try
+    if Supports(Resolve(_id), IwbMainRecord, rec) then begin
+      _res^ := rec.Overrides[index];
       Result := true;
     end;
   except
