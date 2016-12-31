@@ -46,7 +46,7 @@ var
 begin
   GetMem(_res, 4 * _file.RecordCount);
   for i := 0 to Pred(_file.RecordCount) do
-    _res^[i]^ := Store(_file.Records[i]);
+    _res^[i] := Store(_file.Records[i]);
 end;
 
 procedure StoreRecords(group: IwbGroupRecord; _res: PCardinalArray); overload;
@@ -57,7 +57,7 @@ begin
   GetMem(_res, 4 * group.ElementCount);
   for i := 0 to Pred(group.ElementCount) do
     if Supports(group.Elements[i], IwbMainRecord, rec) then
-      _res^[i]^ := Store(rec);
+      _res^[i] := Store(rec);
 end;
 
 function GetRecords(_id: Cardinal; _res: PCardinalArray): WordBool; cdecl;
@@ -98,13 +98,13 @@ begin
         group := _file.GroupBySignature[_sig];
         GetMem(_res, 4 * group.ElementCount);
         for i := 0 to Pred(group.ElementCount) do
-          _res^[i]^ := Store(group.Elements[i]);
+          _res^[i] := Store(group.Elements[i]);
       end
     else if Supports(Resolve(_id), IwbGroupRecord, group) then begin
       GetMem(_res, 4 * group.ElementCount);
       for i := 0 to Pred(group.ElementCount) do
         if Supports(group.Elements[i], IwbMainRecord, rec) then
-          _res^[i]^ := Store(rec);
+          _res^[i] := Store(rec);
     end;
   except
     on x: Exception do ExceptionHandler(x);
