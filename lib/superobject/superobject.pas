@@ -8,6 +8,9 @@
  * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
  * the specific language governing rights and limitations under the License.
  *
+ * Embarcadero Technologies Inc is not permitted to use or redistribute
+ * this source code without explicit permission.
+ *
  * Unit owner : Henri Gourvest <hgourvest@gmail.com>
  * Web site   : http://www.progdigy.com
  *
@@ -78,37 +81,48 @@
 {$ENDIF}
 
 {$DEFINE SUPER_METHOD}
-{$DEFINE WINDOWSNT_COMPATIBILITY}
 {.$DEFINE DEBUG} // track memory leack
+
+
+{$if defined(VER210) or defined(VER220)}
+  {$define VER210ORGREATER}
+{$ifend}
+
+{$if defined(VER230) or defined(VER240)  or defined(VER250) or
+     defined(VER260) or defined(VER270)  or defined(VER280)}
+  {$define VER210ORGREATER}
+  {$define VER230ORGREATER}
+{$ifend}
+
+{$if defined(FPC) or defined(VER170) or defined(VER180) or defined(VER190)
+  or defined(VER200) or defined(VER210ORGREATER)}
+  {$DEFINE HAVE_INLINE}
+{$ifend}
+
+{$if defined(VER210ORGREATER)}
+  {$define HAVE_RTTI}
+{$ifend}
+
+{$if defined(VER230ORGREATER)}
+  {$define NEED_FORMATSETTINGS}
+{$ifend}
+
+{$if defined(FPC) and defined(VER2_6)}
+  {$define NEED_FORMATSETTINGS}
+{$ifend}
+
+{$OVERFLOWCHECKS OFF}
+{$RANGECHECKS OFF}
 
 unit superobject;
 
 interface
 uses
-  Classes
-{$IFDEF VER210}
+  Classes, supertypes
+{$IFDEF HAVE_RTTI}
   ,Generics.Collections, RTTI, TypInfo
 {$ENDIF}
   ;
-
-type
-{$IFNDEF FPC}
-  PtrInt = longint;
-  PtrUInt = Longword;
-{$ENDIF}
-  SuperInt = Int64;
-
-{$if (sizeof(Char) = 1)}
-  SOChar = WideChar;
-  SOIChar = Word;
-  PSOChar = PWideChar;
-  SOString = WideString;
-{$else}
-  SOChar = Char;
-  SOIChar = Word;
-  PSOChar = PChar;
-  SOString = string;
-{$ifend}
 
 const
   SUPER_ARRAY_LIST_DEFAULT_SIZE = 32;
@@ -213,6 +227,8 @@ type
 
     function GetValues: ISuperObject;
     function GetNames: ISuperObject;
+    function Find(const k: SOString; var value: ISuperObject): Boolean;
+    function Exists(const k: SOString): Boolean;
   end;
 
   TSuperAvlIterator = class
@@ -234,7 +250,7 @@ type
     property Current: TSuperAvlEntry read GetIter;
   end;
 
-  TSuperObjectArray = array[0..(high(PtrInt) div sizeof(TSuperObject))-1] of ISuperObject;
+  TSuperObjectArray = array[0..(high(Integer) div sizeof(TSuperObject))-1] of ISuperObject;
   PSuperObjectArray = ^TSuperObjectArray;
 
   TSuperArray = class
@@ -265,7 +281,12 @@ type
   public
     constructor Create; virtual;
     destructor Destroy; override;
-    function Add(const Data: ISuperObject): Integer;
+    function Add(const Data: ISuperObject): Integer; overload;
+    function Add(Data: SuperInt): Integer; overload;
+    function Add(const Data: SOString): Integer; overload;
+    function Add(Data: Boolean): Integer; overload;
+    function Add(Data: Double): Integer; overload;
+    function AddC(const Data: Currency): Integer;
     function Delete(index: Integer): ISuperObject;
     procedure Insert(index: Integer; const value: ISuperObject);
     procedure Clear(all: boolean = false);
@@ -282,7 +303,6 @@ type
 {$IFDEF SUPER_METHOD}
     property M[const index: integer]: TSuperMethod read GetM write PutM;
 {$ENDIF}
-//    property A[const index: integer]: TSuperArray read GetA;
   end;
 
   TSuperWriter = class
@@ -560,6 +580,7 @@ type
     function call(const path: SOString; const param: ISuperObject = nil): ISuperObject; overload;
     function call(const path, param: SOString): ISuperObject; overload;
 {$ENDIF}
+
     // clone a node
     function Clone: ISuperObject;
     function Delete(const path: SOString): ISuperObject;
@@ -610,7 +631,11 @@ type
     function GetDataPtr: Pointer;
     procedure SetDataPtr(const Value: Pointer);
   protected
+{$IFDEF FPC}
+    function QueryInterface({$IFDEF FPC_HAS_CONSTREF}constref{$ELSE}const{$ENDIF} iid: tguid; out obj): longint;{$IFNDEF WINDOWS}cdecl{$ELSE}stdcall{$ENDIF};
+{$ELSE}
     function QueryInterface(const IID: TGUID; out Obj): HResult; virtual; stdcall;
+{$ENDIF}
     function _AddRef: Integer; virtual; stdcall;
     function _Release: Integer; virtual; stdcall;
 
@@ -701,7 +726,7 @@ type
 {$ENDIF}
     property A[const path: SOString]: TSuperArray read GetA;
 
-{$IFDEF SUPER_METHOD}
+    {$IFDEF SUPER_METHOD}
     function call(const path: SOString; const param: ISuperObject = nil): ISuperObject; overload; virtual;
     function call(const path, param: SOString): ISuperObject; overload; virtual;
 {$ENDIF}
@@ -728,7 +753,7 @@ type
     property Processing: boolean read GetProcessing;
   end;
 
-{$IFDEF VER210}
+{$IFDEF HAVE_RTTI}
   TSuperRttiContext = class;
 
   TSerialFromJson = function(ctx: TSuperRttiContext; const obj: ISuperObject; var Value: TValue): Boolean;
@@ -779,6 +804,7 @@ type
 function ObjectIsError(obj: TSuperObject): boolean;
 function ObjectIsType(const obj: ISuperObject; typ: TSuperType): boolean;
 function ObjectGetType(const obj: ISuperObject): TSuperType;
+function ObjectIsNull(const obj: ISuperObject): Boolean;
 
 function ObjectFindFirst(const obj: ISuperObject; var F: TSuperObjectIter): boolean;
 function ObjectFindNext(var F: TSuperObjectIter): boolean;
@@ -790,10 +816,11 @@ function SO(const Args: array of const): ISuperObject; overload;
 
 function SA(const Args: array of const): ISuperObject; overload;
 
-function JavaToDelphiDateTime(const dt: int64): TDateTime;
-function DelphiToJavaDateTime(const dt: TDateTime): int64;
+function TryObjectToDate(const obj: ISuperObject; var dt: TDateTime): Boolean;
+function UUIDToString(const g: TGUID): SOString;
+function StringToUUID(const str: SOString; var g: TGUID): Boolean;
 
-{$IFDEF VER210}
+{$IFDEF HAVE_RTTI}
 
 type
   TSuperInvokeResult = (
@@ -809,17 +836,14 @@ function SOInvoke(const obj: TValue; const method: string; const params: string;
 {$ENDIF}
 
 implementation
-uses sysutils,
-{$IFDEF UNIX}
-  baseunix, unix, DateUtils
-{$ELSE}
-  Windows
-{$ENDIF}
+uses
+  sysutils, Windows, superdate
 {$IFDEF FPC}
   ,sockets
 {$ELSE}
   ,WinSock
-{$ENDIF};
+{$ENDIF}
+  ;
 
 {$IFDEF DEBUG}
 var
@@ -927,347 +951,65 @@ begin
 end;
 {$ifend}
 
-function CurrToStr(c: Currency): SOString;
+function FloatToJson(const value: Double): SOString;
 var
   p: PSOChar;
-  i, len: Integer;
 begin
-  Result := IntToStr(Abs(PInt64(@c)^));
-  len := Length(Result);
-  SetLength(Result, len+1);
-  if c <> 0 then
+  Result := FloatToStr(value);
+  if FormatSettings.DecimalSeparator <> '.' then
   begin
-    while len <= 4 do
-    begin
-      Result := '0' + Result;
-      inc(len);
-    end;
-
     p := PSOChar(Result);
-    inc(p, len-1);
-    i := 0;
-    repeat
-      if p^ <> '0' then
+    while p^ <> #0 do
+      if p^ <> SOChar(FormatSettings.DecimalSeparator) then
+      inc(p) else
       begin
-        len := len - i + 1;
-        repeat
-          p[1] := p^;
-          dec(p);
-          inc(i);
-        until i > 3;
-        Break;
+        p^ := '.';
+        Exit;
       end;
-      dec(p);
-      inc(i);
-      if i > 3 then
+  end;
+end;
+
+function CurrToJson(const value: Currency): SOString;
+var
+  p: PSOChar;
+begin
+  Result := CurrToStr(value);
+  if FormatSettings.DecimalSeparator <> '.' then
+  begin
+    p := PSOChar(Result);
+    while p^ <> #0 do
+      if p^ <> SOChar(FormatSettings.DecimalSeparator) then
+      inc(p) else
       begin
-        len := len - i + 1;
-        Break;
+        p^ := '.';
+        Exit;
       end;
-    until false;
-    p[1] := '.';
-    SetLength(Result, len);
-    if c < 0 then
-      Result := '-' + Result;
   end;
 end;
 
-{$IFDEF UNIX}
-  {$linklib c}
-{$ENDIF}
-function gcvt(value: Double; ndigit: longint; buf: PAnsiChar): PAnsiChar; cdecl;
-  external {$IFDEF MSWINDOWS} 'msvcrt.dll' name '_gcvt'{$ENDIF};
-
-{$IFDEF UNIX}
-type
-  ptm = ^tm;
-  tm = record
-    tm_sec: Integer;		(* Seconds: 0-59 (K&R says 0-61?) *)
-    tm_min: Integer;		(* Minutes: 0-59 *)
-    tm_hour: Integer;	(* Hours since midnight: 0-23 *)
-    tm_mday: Integer;	(* Day of the month: 1-31 *)
-    tm_mon: Integer;		(* Months *since* january: 0-11 *)
-    tm_year: Integer;	(* Years since 1900 *)
-    tm_wday: Integer;	(* Days since Sunday (0-6) *)
-    tm_yday: Integer;	(* Days since Jan. 1: 0-365 *)
-    tm_isdst: Integer;	(* +1 Daylight Savings Time, 0 No DST, -1 don't know *)
-  end;
-
-function mktime(p: ptm): LongInt; cdecl; external;
-function gmtime(const t: PLongint): ptm; cdecl; external;
-function localtime (const t: PLongint): ptm; cdecl; external;
-
-function DelphiToJavaDateTime(const dt: TDateTime): Int64;
+function TryObjectToDate(const obj: ISuperObject; var dt: TDateTime): Boolean;
 var
-  p: ptm;
-  l, ms: Integer;
-  v: Int64;
+  i: Int64;
 begin
-  v := Round((dt - 25569) * 86400000);
-  ms := v mod 1000;
-  l := v div 1000;
-  p := localtime(@l);
-  Result := Int64(mktime(p)) * 1000 + ms;
-end;
-
-function JavaToDelphiDateTime(const dt: int64): TDateTime;
-var
-  p: ptm;
-  l, ms: Integer;
-begin
-  l := dt div 1000;
-  ms := dt mod 1000;
-  p := gmtime(@l);
-  Result := EncodeDateTime(p^.tm_year+1900, p^.tm_mon+1, p^.tm_mday, p^.tm_hour, p^.tm_min, p^.tm_sec, ms);
-end;
-{$ELSE}
-
-{$IFDEF WINDOWSNT_COMPATIBILITY}
-function DayLightCompareDate(const date: PSystemTime;
-  const compareDate: PSystemTime): Integer;
-var
-  limit_day, dayinsecs, weekofmonth: Integer;
-  First: Word;
-begin
-  if (date^.wMonth < compareDate^.wMonth) then
-  begin
-    Result := -1; (* We are in a month before the date limit. *)
-    Exit;
-  end;
-
-  if (date^.wMonth > compareDate^.wMonth) then
-  begin
-    Result := 1; (* We are in a month after the date limit. *)
-    Exit;
-  end;
-
-  (* if year is 0 then date is in day-of-week format, otherwise
-   * it's absolute date.
-   *)
-  if (compareDate^.wYear = 0) then
-  begin
-    (* compareDate.wDay is interpreted as number of the week in the month
-     * 5 means: the last week in the month *)
-    weekofmonth := compareDate^.wDay;
-    (* calculate the day of the first DayOfWeek in the month *)
-    First := (6 + compareDate^.wDayOfWeek - date^.wDayOfWeek + date^.wDay) mod 7 + 1;
-    limit_day := First + 7 * (weekofmonth - 1);
-    (* check needed for the 5th weekday of the month *)
-    if (limit_day > MonthDays[(date^.wMonth=2) and IsLeapYear(date^.wYear)][date^.wMonth - 1]) then
-      dec(limit_day, 7);
-  end
+  case ObjectGetType(obj) of
+  stInt:
+    begin
+      dt := JavaToDelphiDateTime(obj.AsInteger);
+      Result := True;
+    end;
+  stString:
+    begin
+      if ISO8601DateToJavaDateTime(obj.AsString, i) then
+      begin
+        dt := JavaToDelphiDateTime(i);
+        Result := True;
+      end else
+        Result := TryStrToDateTime(obj.AsString, dt);
+    end;
   else
-    limit_day := compareDate^.wDay;
-
-  (* convert to seconds *)
-  limit_day := ((limit_day * 24  + compareDate^.wHour) * 60 + compareDate^.wMinute ) * 60;
-  dayinsecs := ((date^.wDay * 24  + date^.wHour) * 60 + date^.wMinute ) * 60 + date^.wSecond;
-  (* and compare *)
-
-  if dayinsecs < limit_day then
-    Result :=  -1 else
-    if dayinsecs > limit_day then
-      Result :=  1 else
-      Result :=  0; (* date is equal to the date limit. *)
-end;
-
-function CompTimeZoneID(const pTZinfo: PTimeZoneInformation;
-  lpFileTime: PFileTime; islocal: Boolean): LongWord;
-var
-  ret: Integer;
-  beforeStandardDate, afterDaylightDate: Boolean;
-  llTime: Int64;
-  SysTime: TSystemTime;
-  ftTemp: TFileTime;
-begin
-  llTime := 0;
-
-  if (pTZinfo^.DaylightDate.wMonth <> 0) then
-  begin
-    (* if year is 0 then date is in day-of-week format, otherwise
-     * it's absolute date.
-     *)
-    if ((pTZinfo^.StandardDate.wMonth = 0) or
-        ((pTZinfo^.StandardDate.wYear = 0) and
-        ((pTZinfo^.StandardDate.wDay < 1) or
-        (pTZinfo^.StandardDate.wDay > 5) or
-        (pTZinfo^.DaylightDate.wDay < 1) or
-        (pTZinfo^.DaylightDate.wDay > 5)))) then
-    begin
-      SetLastError(ERROR_INVALID_PARAMETER);
-      Result := TIME_ZONE_ID_INVALID;
-      Exit;
-    end;
-
-    if (not islocal) then
-    begin
-      llTime := PInt64(lpFileTime)^;
-      dec(llTime, Int64(pTZinfo^.Bias + pTZinfo^.DaylightBias) * 600000000);
-      PInt64(@ftTemp)^ := llTime;
-      lpFileTime := @ftTemp;
-    end;
-
-    FileTimeToSystemTime(lpFileTime^, SysTime);
-
-    (* check for daylight savings *)
-    ret := DayLightCompareDate(@SysTime, @pTZinfo^.StandardDate);
-    if (ret = -2) then
-    begin
-      Result := TIME_ZONE_ID_INVALID;
-      Exit;
-    end;
-
-    beforeStandardDate := ret < 0;
-
-    if (not islocal) then
-    begin
-      dec(llTime, Int64(pTZinfo^.StandardBias - pTZinfo^.DaylightBias) * 600000000);
-      PInt64(@ftTemp)^ := llTime;
-      FileTimeToSystemTime(lpFileTime^, SysTime);
-    end;
-
-    ret := DayLightCompareDate(@SysTime, @pTZinfo^.DaylightDate);
-    if (ret = -2) then
-    begin
-      Result := TIME_ZONE_ID_INVALID;
-      Exit;
-    end;
-
-    afterDaylightDate := ret >= 0;
-
-    Result := TIME_ZONE_ID_STANDARD;
-    if( pTZinfo^.DaylightDate.wMonth < pTZinfo^.StandardDate.wMonth ) then
-    begin
-      (* Northern hemisphere *)
-      if( beforeStandardDate and afterDaylightDate) then
-        Result := TIME_ZONE_ID_DAYLIGHT;
-    end else    (* Down south *)
-      if( beforeStandardDate or afterDaylightDate) then
-        Result := TIME_ZONE_ID_DAYLIGHT;
-  end else
-    (* No transition date *)
-    Result := TIME_ZONE_ID_UNKNOWN;
-end;
-
-function GetTimezoneBias(const pTZinfo: PTimeZoneInformation;
-  lpFileTime: PFileTime; islocal: Boolean; pBias: PLongint): Boolean;
-var
-  bias: LongInt;
-  tzid: LongWord;
-begin
-  bias := pTZinfo^.Bias;
-  tzid := CompTimeZoneID(pTZinfo, lpFileTime, islocal);
-
-  if( tzid = TIME_ZONE_ID_INVALID) then
-  begin
     Result := False;
-    Exit;
   end;
-  if (tzid = TIME_ZONE_ID_DAYLIGHT) then
-    inc(bias, pTZinfo^.DaylightBias)
-  else if (tzid = TIME_ZONE_ID_STANDARD) then
-    inc(bias, pTZinfo^.StandardBias);
-  pBias^ := bias;
-  Result := True;
 end;
-
-function SystemTimeToTzSpecificLocalTime(
-  lpTimeZoneInformation: PTimeZoneInformation;
-  lpUniversalTime, lpLocalTime: PSystemTime): BOOL;
-var
-  ft: TFileTime;
-  lBias: LongInt;
-  llTime: Int64;
-  tzinfo: TTimeZoneInformation;
-begin
-  if (lpTimeZoneInformation <> nil) then
-    tzinfo := lpTimeZoneInformation^ else
-    if (GetTimeZoneInformation(tzinfo) = TIME_ZONE_ID_INVALID) then
-    begin
-      Result := False;
-      Exit;
-    end;
-
-  if (not SystemTimeToFileTime(lpUniversalTime^, ft)) then
-  begin
-    Result := False;
-    Exit;
-  end;
-  llTime := PInt64(@ft)^;
-  if (not GetTimezoneBias(@tzinfo, @ft, False, @lBias)) then
-  begin
-    Result := False;
-    Exit;
-  end;
-  (* convert minutes to 100-nanoseconds-ticks *)
-  dec(llTime, Int64(lBias) * 600000000);
-  PInt64(@ft)^ := llTime;
-  Result := FileTimeToSystemTime(ft, lpLocalTime^);
-end;
-
-function TzSpecificLocalTimeToSystemTime(
-    const lpTimeZoneInformation: PTimeZoneInformation;
-    const lpLocalTime: PSystemTime; lpUniversalTime: PSystemTime): BOOL;
-var
-  ft: TFileTime;
-  lBias: LongInt;
-  t: Int64;
-  tzinfo: TTimeZoneInformation;
-begin
-  if (lpTimeZoneInformation <> nil) then
-    tzinfo := lpTimeZoneInformation^
-  else
-    if (GetTimeZoneInformation(tzinfo) = TIME_ZONE_ID_INVALID) then
-    begin
-      Result := False;
-      Exit;
-    end;
-
-  if (not SystemTimeToFileTime(lpLocalTime^, ft)) then
-  begin
-    Result := False;
-    Exit;
-  end;
-  t := PInt64(@ft)^;
-  if (not GetTimezoneBias(@tzinfo, @ft, True, @lBias)) then
-  begin
-    Result := False;
-    Exit;
-  end;
-  (* convert minutes to 100-nanoseconds-ticks *)
-  inc(t, Int64(lBias) * 600000000);
-  PInt64(@ft)^ := t;
-  Result := FileTimeToSystemTime(ft, lpUniversalTime^);
-end;
-{$ELSE}
-function TzSpecificLocalTimeToSystemTime(
-  lpTimeZoneInformation: PTimeZoneInformation;
-  lpLocalTime, lpUniversalTime: PSystemTime): BOOL; stdcall; external 'kernel32.dll';
-
-function SystemTimeToTzSpecificLocalTime(
-  lpTimeZoneInformation: PTimeZoneInformation;
-  lpUniversalTime, lpLocalTime: PSystemTime): BOOL; stdcall; external 'kernel32.dll';
-{$ENDIF}
-
-function JavaToDelphiDateTime(const dt: int64): TDateTime;
-var
-  t: TSystemTime;
-begin
-  DateTimeToSystemTime(25569 + (dt / 86400000), t);
-  SystemTimeToTzSpecificLocalTime(nil, @t, @t);
-  Result := SystemTimeToDateTime(t);
-end;
-
-function DelphiToJavaDateTime(const dt: TDateTime): int64;
-var
-  t: TSystemTime;
-begin
-  DateTimeToSystemTime(dt, t);
-  TzSpecificLocalTimeToSystemTime(nil, @t, @t);
-  Result := Round((SystemTimeToDateTime(t) - 25569) * 86400000)
-end;
-{$ENDIF}
-
 
 function SO(const s: SOString): ISuperObject; overload;
 begin
@@ -1359,7 +1101,11 @@ begin
     varInt64:    Result := TSuperObject.Create(VInt64);
     varString:   Result := TSuperObject.Create(SOString(AnsiString(VString)));
 {$if declared(varUString)}
+  {$IFDEF FPC}
+    varUString:  Result := TSuperObject.Create(SOString(UnicodeString(VString)));
+  {$ELSE}
     varUString:  Result := TSuperObject.Create(SOString(string(VUString)));
+  {$ENDIF}
 {$ifend}
   else
     raise Exception.CreateFmt('Unsuported variant data type: %d', [VType]);
@@ -1385,6 +1131,11 @@ begin
     Result := stNull;
 end;
 
+function ObjectIsNull(const obj: ISuperObject): Boolean;
+begin
+  Result := ObjectIsType(obj, stNull);
+end;
+
 function ObjectFindFirst(const obj: ISuperObject; var F: TSuperObjectIter): boolean;
 var
   i: TSuperAvlEntry;
@@ -1396,11 +1147,14 @@ begin
     i := F.Ite.GetIter;
     if i <> nil then
     begin
-      f.key := i.Name;
-      f.val := i.Value;
-      Result := true;
+      F.key := i.Name;
+      F.val := i.Value;
+      Result := True;
     end else
+    begin
+      FreeAndNil(F.Ite);
       Result := False;
+    end;
   end else
     Result := False;
 end;
@@ -1409,24 +1163,282 @@ function ObjectFindNext(var F: TSuperObjectIter): boolean;
 var
   i: TSuperAvlEntry;
 begin
-  F.Ite.Next;
-  i := F.Ite.GetIter;
-  if i <> nil then
+  if Assigned(F.Ite) then
   begin
-    f.key := i.FName;
-    f.val := i.Value;
-    Result := true;
-  end else
+    F.Ite.Next;
+    i := F.Ite.GetIter;
+    if i <> nil then
+    begin
+      F.key := i.FName;
+      F.val := i.Value;
+      Result := True;
+    end else
+      Result := False;
+  end
+  else
     Result := False;
 end;
 
 procedure ObjectFindClose(var F: TSuperObjectIter);
 begin
-  F.Ite.Free;
+  if Assigned(F.Ite) then
+    FreeAndNil(F.Ite);
   F.val := nil;
 end;
 
-{$IFDEF VER210}
+function UuidFromString(p: PSOChar; Uuid: PGUID): Boolean;
+const
+  hex2bin: array[48..102] of Byte = (
+     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 0, 0, 0, 0, 0,
+     0,10,11,12,13,14,15, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+     0,10,11,12,13,14,15);
+type
+  TState = (stEatSpaces, stStart, stHEX, stBracket, stEnd);
+  TUUID = record
+    case byte of
+      0: (guid: TGUID);
+      1: (bytes: array[0..15] of Byte);
+      2: (words: array[0..7] of Word);
+      3: (ints: array[0..3] of Cardinal);
+      4: (i64s: array[0..1] of UInt64);
+  end;
+
+  function ishex(const c: SOChar): Boolean; {$IFDEF HAVE_INLINE} inline;{$ENDIF}
+  begin
+    result := (c < #256) and (AnsiChar(c) in ['0'..'9', 'a'..'z', 'A'..'Z'])
+  end;
+var
+  pos: Byte;
+  state, saved: TState;
+  bracket, separator: Boolean;
+label
+  redo;
+begin
+  FillChar(Uuid^, SizeOf(TGUID), 0);
+  saved := stStart;
+  state := stEatSpaces;
+  bracket := false;
+  separator := false;
+  pos := 0;
+  while true do
+redo:
+  case state of
+    stEatSpaces:
+      begin
+        while true do
+          case p^ of
+            ' ', #13, #10, #9: inc(p);
+          else
+            state := saved;
+            goto redo;
+          end;
+      end;
+    stStart:
+      case p^ of
+        '{':
+          begin
+            bracket := true;
+            inc(p);
+            state := stEatSpaces;
+            saved := stHEX;
+            pos := 0;
+          end;
+      else
+        state := stHEX;
+      end;
+    stHEX:
+      case pos of
+        0..7:
+          if ishex(p^) then
+          begin
+            Uuid^.D1 := (Uuid^.D1 * 16) + hex2bin[Ord(p^)];
+            inc(p);
+            inc(pos);
+          end else
+          begin
+            Result := False;
+            Exit;
+          end;
+        8:
+          if (p^ = '-') then
+          begin
+            separator := true;
+            inc(p);
+            inc(pos)
+          end else
+            inc(pos);
+        13,18,23:
+           if separator then
+           begin
+             if p^ <> '-' then
+             begin
+               Result := False;
+               Exit;
+             end;
+             inc(p);
+             inc(pos);
+           end else
+             inc(pos);
+        9..12:
+          if ishex(p^) then
+          begin
+            TUUID(Uuid^).words[2] := (TUUID(Uuid^).words[2] * 16) + hex2bin[Ord(p^)];
+            inc(p);
+            inc(pos);
+          end else
+          begin
+            Result := False;
+            Exit;
+          end;
+        14..17:
+          if ishex(p^) then
+          begin
+            TUUID(Uuid^).words[3] := (TUUID(Uuid^).words[3] * 16) + hex2bin[Ord(p^)];
+            inc(p);
+            inc(pos);
+          end else
+          begin
+            Result := False;
+            Exit;
+          end;
+        19..20:
+          if ishex(p^) then
+          begin
+            TUUID(Uuid^).bytes[8] := (TUUID(Uuid^).bytes[8] * 16) + hex2bin[Ord(p^)];
+            inc(p);
+            inc(pos);
+          end else
+          begin
+            Result := False;
+            Exit;
+          end;
+        21..22:
+          if ishex(p^) then
+          begin
+            TUUID(Uuid^).bytes[9] := (TUUID(Uuid^).bytes[9] * 16) + hex2bin[Ord(p^)];
+            inc(p);
+            inc(pos);
+          end else
+          begin
+            Result := False;
+            Exit;
+          end;
+        24..25:
+          if ishex(p^) then
+          begin
+            TUUID(Uuid^).bytes[10] := (TUUID(Uuid^).bytes[10] * 16) + hex2bin[Ord(p^)];
+            inc(p);
+            inc(pos);
+          end else
+          begin
+            Result := False;
+            Exit;
+          end;
+        26..27:
+          if ishex(p^) then
+          begin
+            TUUID(Uuid^).bytes[11] := (TUUID(Uuid^).bytes[11] * 16) + hex2bin[Ord(p^)];
+            inc(p);
+            inc(pos);
+          end else
+          begin
+            Result := False;
+            Exit;
+          end;
+        28..29:
+          if ishex(p^) then
+          begin
+            TUUID(Uuid^).bytes[12] := (TUUID(Uuid^).bytes[12] * 16) + hex2bin[Ord(p^)];
+            inc(p);
+            inc(pos);
+          end else
+          begin
+            Result := False;
+            Exit;
+          end;
+        30..31:
+          if ishex(p^) then
+          begin
+            TUUID(Uuid^).bytes[13] := (TUUID(Uuid^).bytes[13] * 16) + hex2bin[Ord(p^)];
+            inc(p);
+            inc(pos);
+          end else
+          begin
+            Result := False;
+            Exit;
+          end;
+        32..33:
+          if ishex(p^) then
+          begin
+            TUUID(Uuid^).bytes[14] := (TUUID(Uuid^).bytes[14] * 16) + hex2bin[Ord(p^)];
+            inc(p);
+            inc(pos);
+          end else
+          begin
+            Result := False;
+            Exit;
+          end;
+        34..35:
+          if ishex(p^) then
+          begin
+            TUUID(Uuid^).bytes[15] := (TUUID(Uuid^).bytes[15] * 16) + hex2bin[Ord(p^)];
+            inc(p);
+            inc(pos);
+          end else
+          begin
+            Result := False;
+            Exit;
+          end;
+        36: if bracket then
+            begin
+              state := stEatSpaces;
+              saved := stBracket;
+            end else
+            begin
+              state := stEatSpaces;
+              saved := stEnd;
+            end;
+      end;
+    stBracket:
+      begin
+        if p^ <> '}' then
+        begin
+          Result := False;
+          Exit;
+        end;
+        inc(p);
+        state := stEatSpaces;
+        saved := stEnd;
+      end;
+    stEnd:
+      begin
+        if p^ <> #0 then
+        begin
+          Result := False;
+          Exit;
+        end;
+        Break;
+      end;
+  end;
+  Result := True;
+end;
+
+function UUIDToString(const g: TGUID): SOString;
+begin
+  Result := format('%.8x%.4x%.4x%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x',
+    [g.D1, g.D2, g.D3,
+     g.D4[0], g.D4[1], g.D4[2],
+     g.D4[3], g.D4[4], g.D4[5],
+     g.D4[6], g.D4[7]]);
+end;
+
+function StringToUUID(const str: SOString; var g: TGUID): Boolean;
+begin
+  Result := UuidFromString(PSOChar(str), @g);
+end;
+
+{$IFDEF HAVE_RTTI}
 
 function serialtoboolean(ctx: TSuperRttiContext; var value: TValue; const index: ISuperObject): ISuperObject;
 begin
@@ -1482,6 +1494,7 @@ end;
 function serialfromdatetime(ctx: TSuperRttiContext; const obj: ISuperObject; var Value: TValue): Boolean;
 var
   dt: TDateTime;
+  i: Int64;
 begin
   case ObjectGetType(obj) of
   stInt:
@@ -1491,6 +1504,11 @@ begin
     end;
   stString:
     begin
+      if ISO8601DateToJavaDateTime(obj.AsString, i) then
+      begin
+        TValueData(Value).FAsDouble := JavaToDelphiDateTime(i);
+        Result := True;
+      end else
       if TryStrToDateTime(obj.AsString, dt) then
       begin
         TValueData(Value).FAsDouble := dt;
@@ -1501,47 +1519,6 @@ begin
   else
     Result := False;
   end;
-end;
-
-function UuidFromString(const s: PSOChar; Uuid: PGUID): Boolean;
-const
-  hex2bin: array[#0..#102] of short = (
-    -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,        (* 0x00 *)
-    -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,        (* 0x10 *)
-    -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,        (* 0x20 *)
-     0, 1, 2, 3, 4, 5, 6, 7, 8, 9,-1,-1,-1,-1,-1,-1,        (* 0x30 *)
-    -1,10,11,12,13,14,15,-1,-1,-1,-1,-1,-1,-1,-1,-1,        (* 0x40 *)
-    -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,        (* 0x50 *)
-    -1,10,11,12,13,14,15);                                  (* 0x60 *)
-var
-  i: Integer;
-begin
-  if (strlen(s) <> 36) then Exit(False);
-
-  if ((s[8] <> '-') or (s[13] <> '-') or (s[18] <> '-') or (s[23] <> '-')) then
-     Exit(False);
-
-  for i := 0 to 35 do
-  begin
-    if not i in [8,13,18,23] then
-      if ((s[i] > 'f') or ((hex2bin[s[i]] = -1) and (s[i] <> ''))) then
-        Exit(False);
-  end;
-
-  uuid.D1 := ((hex2bin[s[0]] shl 28) or (hex2bin[s[1]] shl 24) or (hex2bin[s[2]] shl 20) or (hex2bin[s[3]] shl 16) or
-                (hex2bin[s[4]] shl 12) or (hex2bin[s[5]] shl 8) or (hex2bin[s[6]]  shl 4) or hex2bin[s[7]]);
-  uuid.D2 := (hex2bin[s[9]] shl 12) or (hex2bin[s[10]] shl 8) or (hex2bin[s[11]] shl 4) or hex2bin[s[12]];
-  uuid.D3 := (hex2bin[s[14]] shl 12) or (hex2bin[s[15]] shl 8) or (hex2bin[s[16]] shl 4) or hex2bin[s[17]];
-
-  uuid.D4[0] := (hex2bin[s[19]] shl 4) or hex2bin[s[20]];
-  uuid.D4[1] := (hex2bin[s[21]] shl 4) or hex2bin[s[22]];
-  uuid.D4[2] := (hex2bin[s[24]] shl 4) or hex2bin[s[25]];
-  uuid.D4[3] := (hex2bin[s[26]] shl 4) or hex2bin[s[27]];
-  uuid.D4[4] := (hex2bin[s[28]] shl 4) or hex2bin[s[29]];
-  uuid.D4[5] := (hex2bin[s[30]] shl 4) or hex2bin[s[31]];
-  uuid.D4[6] := (hex2bin[s[32]] shl 4) or hex2bin[s[33]];
-  uuid.D4[7] := (hex2bin[s[34]] shl 4) or hex2bin[s[35]];
-  Result := True;
 end;
 
 function serialfromguid(ctx: TSuperRttiContext; const obj: ISuperObject; var Value: TValue): Boolean;
@@ -1904,14 +1881,6 @@ type
             inc(pos);
             start_offset := pos;
           end;
-        '/':
-          begin
-            if(pos - start_offset > 0) then
-              Append(str + start_offset, pos - start_offset);
-            Append(ESC_SR, 2);
-            inc(pos);
-            start_offset := pos;
-          end;
       else
         inc(pos);
       end;
@@ -1942,7 +1911,6 @@ var
   iter: TSuperObjectIter;
   st: AnsiString;
   val: ISuperObject;
-  fbuffer: array[0..31] of AnsiChar;
 const
   ENDSTR_A: PSOChar = '": ';
   ENDSTR_B: PSOChar = '":';
@@ -2008,10 +1976,10 @@ begin
           Result := Append(PSOChar(SOString(st)));
         end;
       stDouble:
-        Result := Append(PSOChar(SOString(gcvt(FO.c_double, 15, fbuffer))));
+        Result := Append(PSOChar(FloatToJson(FO.c_double)));
       stCurrency:
         begin
-          Result := Append(PSOChar(CurrToStr(FO.c_currency)));
+          Result := Append(PSOChar(CurrToJson(FO.c_currency)));
         end;
       stString:
         begin
@@ -2152,9 +2120,12 @@ end;
 
 function TSuperObject.AsString: SOString;
 begin
-  if FDataType = stString then
-    Result := FOString else
+  case FDataType of
+    stString: Result := FOString;
+    stNull: Result := '';
+  else
     Result := AsJSon(false, false);
+  end;
 end;
 
 function TSuperObject.GetEnumerator: TSuperEnumerator;
@@ -2292,13 +2263,14 @@ const
   reserved = delimiters + spaces;
   path = ['a'..'z', 'A'..'Z', '.', '_'];
 
-  function hexdigit(x: SOChar): byte;
+  function hexdigit(x: SOChar): byte; {$IFDEF HAVE_INLINE} inline;{$ENDIF}
   begin
     if x <= '9' then
       Result := byte(x) - byte('0') else
       Result := (byte(x) and 7) + 9;
   end;
-  function min(v1, v2: integer): integer; begin if v1 < v2 then result := v1 else result := v2 end;
+  function min(v1, v2: integer): integer;{$IFDEF HAVE_INLINE} inline;{$ENDIF}
+  begin if v1 < v2 then result := v1 else result := v2 end;
 
 var
   obj: ISuperObject;
@@ -2746,7 +2718,8 @@ redo_char:
                      TokRec^.current := TSuperObject.Create(dt);
                      TokRec^.parent.AsObject.PutO(tok.pb.Fbuf, TokRec^.current);
                    end;
-                   TokRec^.current := TokRec^.parent.AsObject.GetO(tok.pb.Fbuf);
+                   if not (foDelete in options) then
+                     TokRec^.current := TokRec^.parent.AsObject.GetO(tok.pb.Fbuf);
                    TokRec^.state := tsFinish;
                    goto redo_char;
                  end;
@@ -3295,7 +3268,12 @@ begin
   ParseString(PSOChar(path), true, False, self, [foCreatePath, foPutValue], TSuperObject.Create(Value));
 end;
 
+
+{$IFDEF FPC}
+function TSuperObject.QueryInterface({$IFDEF FPC_HAS_CONSTREF}constref{$ELSE}const{$ENDIF} iid: tguid; out obj): longint;{$IFNDEF WINDOWS}cdecl{$ELSE}stdcall{$ENDIF};
+{$ELSE}
 function TSuperObject.QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
+{$ENDIF}
 begin
   if GetInterface(IID, Obj) then
     Result := 0
@@ -3446,6 +3424,8 @@ begin
         for j := 0 to arr.Length - 1 do
           Add(arr.GetO(j).Clone);
       end;
+    stNull:
+      Result := TSuperObject.Create(stNull);
   else
     Result := nil;
   end;
@@ -3478,7 +3458,10 @@ begin
             prop1.Merge(ite.val) else
             if reference then
               PutO(ite.key, ite.val) else
-              PutO(ite.key, ite.val.Clone);
+              if ite.val <> nil then
+                PutO(ite.key, ite.val.Clone) else
+                PutO(ite.key, nil)
+
         until not ObjectFindNext(ite);
         ObjectFindClose(ite);
       end;
@@ -3494,7 +3477,9 @@ begin
             prop1.Merge(prop2) else
             if reference then
               PutO(j, prop2) else
-              PutO(j, prop2.Clone);
+              if prop2 <> nil then
+                PutO(j, prop2.Clone) else
+                PutO(j, nil);
         end;
       end;
   end;
@@ -4412,6 +4397,31 @@ begin
   PutO(Result, data);
 end;
 
+function TSuperArray.Add(Data: SuperInt): Integer;
+begin
+  Result := Add(TSuperObject.Create(Data));
+end;
+
+function TSuperArray.Add(const Data: SOString): Integer;
+begin
+  Result := Add(TSuperObject.Create(Data));
+end;
+
+function TSuperArray.Add(Data: Boolean): Integer;
+begin
+  Result := Add(TSuperObject.Create(Data));
+end;
+
+function TSuperArray.Add(Data: Double): Integer;
+begin
+  Result := Add(TSuperObject.Create(Data));
+end;
+
+function TSuperArray.AddC(const Data: Currency): Integer;
+begin
+  Result := Add(TSuperObject.CreateCurrency(Data));
+end;
+
 function TSuperArray.Delete(index: Integer): ISuperObject;
 begin
   if (Index >= 0) and (Index < FLength) then
@@ -4434,7 +4444,7 @@ begin
   if (index < FLength) then
   begin
     if FLength = FSize then
-      Expand(index);
+      Expand(FLength);
     if Index < FLength then
       Move(FArray^[index], FArray^[index + 1],
         (FLength - index) * SizeOf(Pointer));
@@ -5632,10 +5642,8 @@ var
   i: Integer;
 begin
   h := 0;
-{$Q-}
   for i := 1 to Length(k) do
     h := h*129 + ord(k[i]) + $9e370001;
-{$Q+}
   Result := h;
 end;
 
@@ -5696,6 +5704,24 @@ begin
     Entry.Value := nil;
   end;
   inherited;
+end;
+
+function TSuperTableString.Find(const k: SOString; var value: ISuperObject): Boolean;
+var
+  e: TSuperAvlEntry;
+begin
+  e := Search(k);
+  if e <> nil then
+  begin
+    value := e.Value;
+    Result := True;
+  end else
+    Result := False;
+end;
+
+function TSuperTableString.Exists(const k: SOString): Boolean;
+begin
+  Result := Search(k) <> nil;
 end;
 
 function TSuperTableString.GetO(const k: SOString): ISuperObject;
@@ -5829,7 +5855,7 @@ begin
 end;
 
 
-{$IFDEF VER210}
+{$IFDEF HAVE_RTTI}
 
 { TSuperAttribute }
 
@@ -5895,7 +5921,7 @@ function TSuperRttiContext.AsJson<T>(const obj: T; const index: ISuperObject = n
 var
   v: TValue;
 begin
-  TValue.MakeWithoutCopy(@obj, TypeInfo(T), v);
+  TValue.Make(@obj, TypeInfo(T), v);
   if index <> nil then
     Result := ToJson(v, index) else
     Result := ToJson(v, so);
@@ -5961,7 +5987,9 @@ function TSuperRttiContext.FromJson(TypeInfo: PTypeInfo; const obj: ISuperObject
       begin
         i := obj.AsInteger;
         TypeData := GetTypeData(TypeInfo);
-        Result := (i >= TypeData.MinValue) and (i <= TypeData.MaxValue);
+        if TypeData.MaxValue > TypeData.MinValue then
+          Result := (i >= TypeData.MinValue) and (i <= TypeData.MaxValue) else
+          Result := (i >= TypeData.MinValue) and (i <= Int64(PCardinal(@TypeData.MaxValue)^));
         if Result then
           TValue.Make(@i, TypeInfo, Value);
       end;
@@ -5978,14 +6006,29 @@ function TSuperRttiContext.FromJson(TypeInfo: PTypeInfo; const obj: ISuperObject
   end;
 
   procedure fromSet;
+  var
+    i: Integer;
   begin
-    if ObjectIsType(obj, stInt) then
-    begin
-      TValue.Make(nil, TypeInfo, Value);
-      TValueData(Value).FAsSLong := obj.AsInteger;
-      Result := True;
-    end else
+    case ObjectGetType(obj) of
+    stInt:
+      begin
+        TValue.Make(nil, TypeInfo, Value);
+        TValueData(Value).FAsSLong := obj.AsInteger;
+        Result := True;
+      end;
+    stString:
+      begin
+        if TryStrToInt(obj.AsString, i) then
+        begin
+          TValue.Make(nil, TypeInfo, Value);
+          TValueData(Value).FAsSLong := i;
+          Result := True;
+        end else
+          Result := False;
+      end;
+    else
       Result := False;
+    end;
   end;
 
   procedure FromFloat(const obj: ISuperObject);
@@ -6047,6 +6090,7 @@ function TSuperRttiContext.FromJson(TypeInfo: PTypeInfo; const obj: ISuperObject
           for f in Context.GetType(Value.AsObject.ClassType).GetFields do
             if f.FieldType <> nil then
             begin
+              v := TValue.Empty;
               Result := FromJson(f.FieldType.Handle, GetFieldDefault(f, obj.AsObject[GetFieldName(f)]), v);
               if Result then
                 f.SetValue(Value.AsObject, v) else
@@ -6077,11 +6121,18 @@ function TSuperRttiContext.FromJson(TypeInfo: PTypeInfo; const obj: ISuperObject
     begin
       if ObjectIsType(obj, stObject) and (f.FieldType <> nil) then
       begin
+{$IFDEF VER210}
         p := IValueData(TValueData(Value).FHeapData).GetReferenceToRawData;
+{$ELSE}
+        p := TValueData(Value).FValueData.GetReferenceToRawData;
+{$ENDIF}
         Result := FromJson(f.FieldType.Handle, GetFieldDefault(f, obj.AsObject[GetFieldName(f)]), v);
         if Result then
           f.SetValue(p, v) else
-          Exit;
+          begin
+            //Writeln(f.Name);
+            Exit;
+          end;
       end else
       begin
         Result := False;
@@ -6286,6 +6337,7 @@ function TSuperRttiContext.FromJson(TypeInfo: PTypeInfo; const obj: ISuperObject
 var
   Serial: TSerialFromJson;
 begin
+
   if TypeInfo <> nil then
   begin
     if not SerialFromJson.TryGetValue(TypeInfo, Serial) then
@@ -6356,11 +6408,11 @@ function TSuperRttiContext.ToJson(var value: TValue; const index: ISuperObject):
   begin
     if TValueData(Value).FAsObject <> nil then
     begin
-      o := index[IntToStr(Integer(Value.AsObject))];
+      o := index[IntToStr(NativeInt(Value.AsObject))];
       if o = nil then
       begin
         Result := TSuperObject.Create(stObject);
-        index[IntToStr(Integer(Value.AsObject))] := Result;
+        index[IntToStr(NativeInt(Value.AsObject))] := Result;
         for f in Context.GetType(Value.AsObject.ClassType).GetFields do
           if f.FieldType <> nil then
           begin
@@ -6391,7 +6443,11 @@ function TSuperRttiContext.ToJson(var value: TValue; const index: ISuperObject):
     Result := TSuperObject.Create(stObject);
     for f in Context.GetType(Value.TypeInfo).GetFields do
     begin
+{$IFDEF VER210}
       v := f.GetValue(IValueData(TValueData(Value).FHeapData).GetReferenceToRawData);
+{$ELSE}
+      v := f.GetValue(TValueData(Value).FValueData.GetReferenceToRawData);
+{$ENDIF}
       Result.AsObject[GetFieldName(f)] := ToJson(v, index);
     end;
   end;
@@ -6465,10 +6521,25 @@ function TSuperRttiContext.ToJson(var value: TValue; const index: ISuperObject):
   end;
 
   procedure ToInterface;
+{$IFNDEF VER210}
+  var
+    intf: IInterface;
+{$ENDIF}
   begin
+{$IFDEF VER210}
     if TValueData(Value).FHeapData <> nil then
       TValueData(Value).FHeapData.QueryInterface(ISuperObject, Result) else
       Result := nil;
+{$ELSE}
+    if TValueData(Value).FValueData <> nil then
+    begin
+      intf := IInterface(PPointer(TValueData(Value).FValueData.GetReferenceToRawData)^);
+      if intf <> nil then
+        intf.QueryInterface(ISuperObject, Result) else
+        Result := nil;
+    end else
+      Result := nil;
+{$ENDIF}
   end;
 
 var
@@ -6552,4 +6623,3 @@ finalization
   Assert(debugcount = 0, 'Memory leak');
 {$ENDIF}
 end.
-
