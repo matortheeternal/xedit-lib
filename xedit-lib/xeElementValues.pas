@@ -3,6 +3,7 @@ unit xeElementValues;
 interface
 
   function Name(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
+  function Path(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
   function EditorID(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
   function Signature(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
   function ShortName(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
@@ -43,6 +44,22 @@ begin
   try
     if Supports(Resolve(_id), IwbElement, element) then begin
       StrLCopy(str, PWideChar(WideString(element.Name)), len);
+      Result := true;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+// TODO: Fix these paths to be valid and correct
+function Path(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
+var
+  element: IwbElement;
+begin
+  Result := false;
+  try
+    if Supports(Resolve(_id), IwbElement, element) then begin
+      StrLCopy(str, PWideChar(WideString(element.Path)), len);
       Result := true;
     end;
   except
