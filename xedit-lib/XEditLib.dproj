@@ -65,6 +65,9 @@
 			<DCCReference Include="xeFileValues.pas"/>
 			<DCCReference Include="xeElements.pas"/>
 			<DCCReference Include="xeElementValues.pas"/>
+			<DCCReference Include="xeRecords.pas"/>
+			<DCCReference Include="xeRecordValues.pas"/>
+			<DCCReference Include="xeGroups.pas"/>
 			<DCCReference Include="xeSerialization.pas"/>
 			<DCCReference Include="..\lib\mte\mteHelpers.pas"/>
 			<DCCReference Include="..\lib\mte\CRC32.pas"/>
@@ -109,7 +112,7 @@
 						<VersionInfo Name="MajorVer">0</VersionInfo>
 						<VersionInfo Name="MinorVer">0</VersionInfo>
 						<VersionInfo Name="Release">0</VersionInfo>
-						<VersionInfo Name="Build">157</VersionInfo>
+						<VersionInfo Name="Build">172</VersionInfo>
 						<VersionInfo Name="Debug">False</VersionInfo>
 						<VersionInfo Name="PreRelease">False</VersionInfo>
 						<VersionInfo Name="Special">False</VersionInfo>
@@ -121,7 +124,7 @@
 					<VersionInfoKeys>
 						<VersionInfoKeys Name="CompanyName"/>
 						<VersionInfoKeys Name="FileDescription"/>
-						<VersionInfoKeys Name="FileVersion">0.0.0.157</VersionInfoKeys>
+						<VersionInfoKeys Name="FileVersion">0.0.0.172</VersionInfoKeys>
 						<VersionInfoKeys Name="InternalName"/>
 						<VersionInfoKeys Name="LegalCopyright"/>
 						<VersionInfoKeys Name="LegalTrademarks"/>
