@@ -24,6 +24,9 @@ interface
   function ToggleFlag(_id: Integer; path, name: PWideChar): WordBool; cdecl;
   function GetEnabledFlags(_id: Integer; path: PWideChar; out flags: PWideChar): WordBool; cdecl;
 
+  // native functions
+  function NativeName(e: IInterface): String;
+
 implementation
 
 uses
@@ -33,18 +36,39 @@ uses
   // xedit modules
   wbInterface, wbImplementation,
   // xelib modules
-  xeMessages, xeMeta;
+  xeElements, xeMessages, xeGroups, xeMeta;
 
+function NativeName(e: IInterface): String;
+var
+  _file: IwbFile;
+  group: IwbGroupRecord;
+  rec: IwbMainRecord;
+  element: IwbElement;
+begin
+  if Supports(e, IwbFile, _file) then
+    Result := _file.FileName
+  else if Supports(e, IwbGroupRecord, group) then
+    Result := group.ShortName
+  else if Supports(e, IwbMainRecord, rec) then begin
+    if rec.ElementExists['FULL'] then
+      Result := rec.FullName
+    else if rec.ElementExists['NAME'] then
+      Result := rec.ElementEditValues['NAME'];
+  end
+  else if Supports(e, IwbElement, element) then
+    Result := element.Name;
+end;
 
 function Name(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
 var
-  element: IwbElement;
+  sName: String;
 begin
   Result := false;
   try
-    if Supports(Resolve(_id), IwbElement, element) then begin
-      StrLCopy(str, PWideChar(WideString(element.Name)), len);
-      Result := true;
+    sName := NativeName(Resolve(_id));
+    if sName <> '' then begin
+      StrLCopy(str, PWideChar(WideString(sName)), len);
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
