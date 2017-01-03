@@ -20,14 +20,14 @@ uses
   function SetIsESM(_id: Cardinal; isESM: WordBool): WordBool; cdecl; external 'XEditLib.dll';
 
   // PUBLIC TESTING INTERFACE
-  procedure BuildFileValuesTests;
+  procedure BuildFileValueTests;
 
 implementation
 
 uses
   maMain;
 
-procedure BuildFileValuesTests;
+procedure BuildFileValueTests;
 var
   h: Cardinal;
   str: PWideChar;

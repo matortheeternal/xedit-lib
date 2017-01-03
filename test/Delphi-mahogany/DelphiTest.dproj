@@ -50,12 +50,17 @@
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
 			<DCCReference Include="lib\maMain.pas"/>
-			<DCCReference Include="txElements.pas"/>
+			<DCCReference Include="txMeta.pas"/>
+			<DCCReference Include="txSetup.pas"/>
 			<DCCReference Include="txFiles.pas"/>
 			<DCCReference Include="txFileValues.pas"/>
+			<DCCReference Include="txMasters.pas"/>
+			<DCCReference Include="txElements.pas"/>
 			<DCCReference Include="txElementValues.pas"/>
-			<DCCReference Include="txSetup.pas"/>
-			<DCCReference Include="txMeta.pas"/>
+			<DCCReference Include="txSerialization.pas"/>
+			<DCCReference Include="txGroups.pas"/>
+			<DCCReference Include="txRecords.pas"/>
+			<DCCReference Include="txRecordValues.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>

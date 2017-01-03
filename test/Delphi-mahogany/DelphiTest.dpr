@@ -6,19 +6,30 @@ uses
   ShareMem,
   SysUtils,
   maMain in 'lib\maMain.pas',
-  txElements in 'txElements.pas',
+  txMeta in 'txMeta.pas',
+  txSetup in 'txSetup.pas',
   txFiles in 'txFiles.pas',
   txFileValues in 'txFileValues.pas',
+  txMasters in 'txMasters.pas',
+  txElements in 'txElements.pas',
   txElementValues in 'txElementValues.pas',
-  txSetup in 'txSetup.pas',
-  txMeta in 'txMeta.pas';
+  txSerialization in 'txSerialization.pas',
+  txGroups in 'txGroups.pas',
+  txRecords in 'txRecords.pas',
+  txRecordValues in 'txRecordValues.pas';
 
 procedure BuildXETests;
 begin
   BuildMetaTests;
   BuildFileHandlingTests;
-  BuildFileValuesTests;
+  BuildFileValueTests;
+  BuildMasterHandlingTests;
   BuildElementHandlingTests;
+  BuildElementValueTests;
+  BuildSerializationTests;
+  BuildGroupHandlingTests;
+  BuildRecordHandlingTests;
+  BuildRecordValueTests;
 end;
 
 procedure RunXETests;
@@ -27,9 +38,9 @@ var
 begin
   // log messages to the console
   LogToConsole := procedure(msg: String)
-    begin
-      WriteLn(msg);
-    end;
+  begin
+    WriteLn(msg);
+  end;
 
   // run the tests
   Initialize;
