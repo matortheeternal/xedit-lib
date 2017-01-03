@@ -117,6 +117,7 @@ end;
 
 function Resolve(_id: Cardinal): IInterface;
 begin
+  if _id = 0 then raise Exception.Create('ERROR: Cannot resolve NULL reference.');
   Result := _store[_id];
 end;
 
