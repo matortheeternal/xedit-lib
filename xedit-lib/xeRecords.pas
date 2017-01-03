@@ -264,7 +264,7 @@ begin
   Result := false;
   try
     if Supports(Resolve(_id), IwbMainRecord, rec) then begin
-      _res^ := rec.Overrides[index];
+      _res^ := Store(rec.Overrides[index]);
       Result := true;
     end;
   except
