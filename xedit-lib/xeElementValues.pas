@@ -80,31 +80,43 @@ begin
   Result := IntToHex(rec.LoadOrderFormID, 8);
 end;
 
-function GetPath(curPath: String; element: IwbElement): String;
+function GetPathName(element: IwbElement): String;
 var
   _file: IwbFile;
   group: IwbGroupRecord;
   rec: IwbMainRecord;
-  container: IwbContainer;
   parent: IwbElement;
-  index: Integer;
 begin
   if Supports(element, IwbFile, _file) then
-    Result := Format('%s\%s', [_file.Name, curPath])
+    Result := _file.FileName
   else begin
-    container := element.Container;
-    parent := container as IwbElement;
-    if Supports(element, IwbGroupRecord, group) then
-      Result := GetPath(Format('%s\%s', [group.ShortName, curPath]), parent)
-    else if Supports(element, IwbMainRecord, rec) then
-      Result := GetPath(Format('%s\%s', [HexFormID(rec), curPath]) , parent)
-    else if IsArray(parent) then begin
-      index := container.IndexOf(element);
-      Result := GetPath(Format('[%d]\%s', [index, curPath]), parent);
+    parent := element.Container as IwbElement;
+    if Supports(element, IwbGroupRecord, group) then begin
+      if group.GroupType = 0 then
+        Result := String(TwbSignature(group.GroupLabel))
+      else if IsChildGroup(group) then
+        Result := 'Child Group'
+      else
+        Result := group.ShortName;
     end
+    else if Supports(element, IwbMainRecord, rec) then
+      Result := HexFormID(rec)
+    else if IsArray(parent) then
+      Result := Format('[%d]', [element.Container.IndexOf(element)])
     else
-      Result := GetPath(Format('%s\%s', [element.Name, curPath]), parent);
+      Result := element.Name;
   end;
+end;
+
+function GetPath(curPath: String; element: IwbElement): String;
+begin
+  Result := GetPathName(element);
+  if curPath <> '' then
+    Result := Format('%s\%s', [Result, curPath]);
+  if Supports(element, IwbMainRecord) then
+    Result := GetPath(Result, element._File as IwbElement)
+  else if not Supports(element, IwbFile) then
+    Result := GetPath(Result, NativeContainer(element) as IwbElement);
 end;
 
 function Path(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
