@@ -69,7 +69,7 @@ var
 begin
   Result := false;
   for i := 1 to Length(key) do
-    if not (key[i] in ['A'..'F','0'..'9']) then exit;
+    if not CharInSet(key[i], ['A'..'F','0'..'9']) then exit;
   Result := true;
 end;
 
