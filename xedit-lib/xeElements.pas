@@ -67,6 +67,23 @@ begin
     index := StrToInt(Copy(key, 2, Length(key) - 2));
 end;
 
+function IsHexStr(key: String): Boolean;
+var
+  i: Integer;
+begin
+  Result := false;
+  for i := 1 to Length(key) do
+    if not (key[i] in ['A'..'F','0'..'9']) then exit;
+  Result := true;
+end;
+
+function ParseFormID(key: String; var formID: Cardinal): Boolean;
+begin
+  Result := (Length(key) = 8) and IsHexStr(key);
+  if Result then
+    formID := StrToInt('$' + key);
+end;
+
 procedure SplitPath(path: String; var key, nextPath: String);
 var
   i: Integer;
