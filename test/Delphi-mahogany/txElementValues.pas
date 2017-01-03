@@ -71,10 +71,35 @@ begin
               ExpectSuccess(Name(testFile, str, 256));
               ExpectEqual(String(str), 'xtest-2.esp', '');
             end);
-          It('Should resolve group names', procedure
+          Describe('Group names', procedure
             begin
-              ExpectSuccess(Name(armo, str, 256));
-              ExpectEqual(String(str), 'Armor', '');
+              It('Should resolve top level group names', procedure
+                begin
+                  ExpectSuccess(Name(armo, str, 256));
+                  ExpectEqual(String(str), 'Armor', '');
+                end);
+              It('Should resolve block names', procedure
+                begin
+                  ExpectSuccess(Name(block, str, 256));
+                  ExpectEqual(String(str), 'Block 0', '');
+                end);
+              It('Should resolve sub-block names', procedure
+                begin
+                  ExpectSuccess(Name(subBlock, str, 256));
+                  ExpectEqual(String(str), 'Sub-Block 0', '');
+                end);
+              It('Should resolve child group names', procedure
+                begin
+                  ExpectSuccess(Name(childGroup, str, 256));
+                  expectedName := 'Children of 00027D1C';
+                  ExpectEqual(String(str), expectedName, '');
+                end);
+              It('Should resolve persistent/temporary group names', procedure
+                begin
+                  ExpectSuccess(Name(persistentGroup, str, 256));
+                  expectedName := 'Persistent';
+                  ExpectEqual(String(str), expectedName, '');
+                end);
             end);
           Describe('Record names', procedure
             begin
