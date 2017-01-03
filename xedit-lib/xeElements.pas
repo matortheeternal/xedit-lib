@@ -30,9 +30,10 @@ type
   function IsOverride(_id: Cardinal): WordBool; cdecl;
   function IsWinningOverride(_id: Cardinal): WordBool; cdecl;
 
-  // local functions
+  // native functions
   function ResolveFromGroup(group: IwbGroupRecord; path: String; _res: PCardinal): WordBool;
   function ResolveElement(e: IInterface; path: String; _res: PCardinal): WordBool;
+  function NativeContainer(element: IwbElement): IwbContainer;
   function IsArray(element: IwbElement): Boolean;
   function GetDefType(element: IwbElement): TwbDefType;
   function GetSmashType(element: IwbElement): TSmashType;
@@ -46,7 +47,7 @@ uses
   // xedit units
   wbImplementation,
   // xelib units
-  xeMessages, xeFiles, xeSetup;
+  xeMessages, xeFiles, xeGroups, xeSetup;
 
 
 {******************************************************************************}
@@ -335,6 +336,18 @@ begin
   end;
 end;
 
+function NativeContainer(element: IwbElement): IwbContainer;
+var
+  group: IwbGroupRecord;
+begin
+  if Supports(element, IwbGroupRecord, group) and IsChildGroup(group) then
+    Result := group.ChildrenOf as IwbContainer
+  else
+    Result := element.Container;
+  if not Assigned(Result) then
+    raise Exception.Create('Could not find container for ' + element.Name);
+end;
+
 function GetContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 var
   e: IInterface;
@@ -343,9 +356,8 @@ begin
   Result := False;
   try
     e := Resolve(_id);
-    if Supports(e, IwbFile) then exit;
-    if Supports(e, IwbElement, element) and Assigned(element.Container) then begin
-      _res^ := Store(element.Container);
+    if not Supports(e, IwbFile) and Supports(e, IwbElement, element) then begin
+      _res^ := Store(NativeContainer(element));
       Result := True;
     end;
   except
