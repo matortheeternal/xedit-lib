@@ -75,15 +75,48 @@ begin
   end;
 end;
 
-// TODO: Fix these paths to be valid and correct
+function HexFormID(rec: IwbMainRecord): String;
+begin
+  Result := IntToHex(rec.LoadOrderFormID, 8);
+end;
+
+function GetPath(curPath: String; element: IwbElement): String;
+var
+  _file: IwbFile;
+  group: IwbGroupRecord;
+  rec: IwbMainRecord;
+  container: IwbContainer;
+  parent: IwbElement;
+  index: Integer;
+begin
+  if Supports(element, IwbFile, _file) then
+    Result := Format('%s\%s', [_file.Name, curPath])
+  else begin
+    container := element.Container;
+    parent := container as IwbElement;
+    if Supports(element, IwbGroupRecord, group) then
+      Result := GetPath(Format('%s\%s', [group.ShortName, curPath]), parent)
+    else if Supports(element, IwbMainRecord, rec) then
+      Result := GetPath(Format('%s\%s', [HexFormID(rec), curPath]) , parent)
+    else if IsArray(parent) then begin
+      index := container.IndexOf(element);
+      Result := GetPath(Format('[%d]\%s', [index, curPath]), parent);
+    end
+    else
+      Result := GetPath(Format('%s\%s', [element.Name, curPath]), parent);
+  end;
+end;
+
 function Path(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
 var
+  sPath: String;
   element: IwbElement;
 begin
   Result := false;
   try
     if Supports(Resolve(_id), IwbElement, element) then begin
-      StrLCopy(str, PWideChar(WideString(element.Path)), len);
+      sPath := GetPath('', element);
+      StrLCopy(str, PWideChar(WideString(sPath)), len);
       Result := true;
     end;
   except
