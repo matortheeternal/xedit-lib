@@ -38,6 +38,8 @@ type
 
   // local functions
   function ResolveElement(e: IInterface; path: String; _res: PCardinal): WordBool;
+  function IsArray(element: IwbElement): Boolean;
+  function GetDefType(element: IwbElement): TwbDefType;
   function GetSmashType(element: IwbElement): TSmashType;
 
 implementation
@@ -507,6 +509,21 @@ begin
   if Supports(e, IwbContainerElementRef, Container)
   and (Container.ElementCount > 0) then
     Result := GetSmashType(Container.Elements[0]) = stStruct;
+end;
+
+function IsArray(element: IwbElement): Boolean;
+begin
+  Result := GetDefType(element) in [dtSubRecordArray, dtArray];
+end;
+
+function GetDefType(element: IwbElement): TwbDefType;
+var
+  subDef: IwbSubRecordDef;
+begin
+  if Supports(element.Def, IwbSubRecordDef, subDef) then
+    Result := subDef.Value.DefType
+  else
+    Result := element.Def.DefType;
 end;
 
 function GetSmashType(element: IwbElement): TSmashType;
