@@ -36,7 +36,8 @@ uses
 
 procedure BuildElementValueTests;
 var
-  testFile, armo, rec, refr, element: Cardinal;
+  testFile, block, subBlock, childGroup, persistentGroup, refr, armo, rec, 
+  element, keyword: Cardinal;
   success: WordBool;
   expectedName: String;
   str: PWideChar;
@@ -49,6 +50,11 @@ begin
           GetElement(testFile, 'ARMO', @armo);
           GetElement(armo, '00012E46', @rec);
           GetElement(rec, 'DNAM', @element);
+          GetElement(rec, 'KWDA\[1]', @keyword);
+          GetElement(testFile, '00027D1C\Child Group', @childGroup);
+          GetElement(testFile, 'CELL\[0]', @block);
+          GetElement(block, '[0]', @subBlock);
+          GetElement(childGroup, '[0]', @persistentGroup);
           GetElement(testFile, '000170F0', @refr);
           GetMem(str, 4096);
         end);
