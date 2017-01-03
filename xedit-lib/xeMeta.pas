@@ -71,7 +71,10 @@ end;
 
 procedure ExceptionHandler(x: Exception);
 begin
-  exceptionMessage := Format('%s: %s', [x.StackTrace, x.Message]);
+  if x.StackTrace <> '' then
+    exceptionMessage := Format('%s: %s', [x.StackTrace, x.Message])
+  else
+    exceptionMessage := x.Message;
   AddMessage(exceptionMessage);
 end;
 
