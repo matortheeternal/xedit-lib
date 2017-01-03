@@ -36,7 +36,6 @@ var
   success, b: WordBool;
   h, skyrim, testFile, armo, rec, element: Cardinal;
   a: CardinalArray;
-  str: PWideChar;
 begin
   Describe('Element Handling', procedure
     begin
@@ -386,16 +385,14 @@ begin
 
           It('Should remove the element at the given path', procedure
             begin
-              success := RemoveElement(rec, 'Female world model');
-              Expect(success, 'Result should be true');
+              ExpectSuccess(RemoveElement(rec, 'Female world model'));
               b := not ElementExists(rec, 'Female world model');
               Expect(b, 'The element should no longer be present');
             end);
 
           It('Should remove the element at the given indexed path', procedure
             begin
-              success := RemoveElement(rec, 'KWDA\[4]');
-              Expect(success, 'Result should be true');
+              ExpectSuccess(RemoveElement(rec, 'KWDA\[4]'));
               b := not ElementExists(rec, 'KWDA\[4]');
               Expect(b, 'The element should no longer be present');
             end);
@@ -403,22 +400,19 @@ begin
           It('Should remove the element passed if no path is given', procedure
             begin
               GetElement(rec, 'ZNAM', @element);
-              success := RemoveElement(element, '');
-              Expect(success, 'Result should be true');
+              ExpectSuccess(RemoveElement(element, ''));
               b := not ElementExists(rec, 'ZNAM');
               Expect(b, 'The element should no longer be present');
             end);
 
           It('Should fail if a null handle is passed', procedure
             begin
-              success := RemoveElement(0, '');
-              Expect(not success, 'Result should be false');
+              ExpectFailure(RemoveElement(0, ''));
             end);
 
           It('Should fail if no element exists at the given path', procedure
             begin
-              success := RemoveElement(rec, 'YNAM');
-              Expect(not success, 'Result should be false');
+              ExpectFailure(RemoveElement(rec, 'YNAM'));
             end);
         end);
     end);
