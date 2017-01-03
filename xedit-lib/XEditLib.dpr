@@ -61,9 +61,10 @@ exports
   // SERIALIZATION METHODS
   ElementToJson,
   // ELEMENT VALUE METHODS
-  Name, EditorID, Signature, ShortName, SortKey, ElementType, DefType, GetValue,
-  SetValue, GetIntValue, SetIntValue, GetUIntValue, SetUIntValue, GetFloatValue,
-  SetFloatValue, GetLinksTo, SetFlag, GetFlag, ToggleFlag, GetEnabledFlags,
+  Name, Path, EditorID, Signature, ShortName, SortKey, ElementType, DefType,
+  GetValue, SetValue, GetIntValue, SetIntValue, GetUIntValue, SetUIntValue,
+  GetFloatValue, SetFloatValue, GetLinksTo, SetFlag, GetFlag, ToggleFlag,
+  GetEnabledFlags,
   // GROUP HANDLING METHODS
   HasGroup, AddGroup, GetGroupSignatures, GetChildGroup, GroupSignatureFromName,
   GroupNameFromSignature, GetGroupSignatureNameMap,
