@@ -14,6 +14,7 @@ uses
   function GetGroupSignatureNameMap(str: PWideChar; len: Integer): WordBool; cdecl;
 
   // native functions
+  function IsChildGroup(group: IwbGroupRecord): Boolean;
   function AddGroupIfMissing(_file: IwbFile; sig: string): IwbGroupRecord;
   procedure BuildGroupNameMap;
 
@@ -38,6 +39,11 @@ var
   Methods for handling groups.
 }
 {******************************************************************************}
+
+function IsChildGroup(group: IwbGroupRecord): Boolean;
+begin
+  Result := group.GroupType in [1,6,7];
+end;
 
 function HasGroup(_id: Cardinal; sig: string; _res: PWordBool): WordBool; cdecl;
 var
