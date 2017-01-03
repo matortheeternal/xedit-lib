@@ -30,9 +30,67 @@ interface
 
 implementation
 
-procedure BuildElementValueTests;
-begin
+uses
+  maMain,
+  txMeta, txElements;
 
+procedure BuildElementValueTests;
+var
+  testFile, armo, rec, refr, element: Cardinal;
+  success: WordBool;
+  expectedName: String;
+  str: PWideChar;
+begin
+  Describe('Element Values', procedure
+    begin
+      BeforeAll(procedure
+        begin
+          GetElement(0, 'xtest-2.esp', @testFile);
+          GetElement(testFile, 'ARMO', @armo);
+          GetElement(armo, '00012E46', @rec);
+          GetElement(rec, 'DNAM', @element);
+          GetElement(testFile, '000170F0', @refr);
+          GetMem(str, 4096);
+        end);
+        
+      AfterAll(procedure
+        begin
+          FreeMem(str, 4096);
+        end);
+        
+      Describe('Name', procedure
+        begin
+          It('Should resolve file names', procedure
+            begin
+              ExpectSuccess(Name(testFile, str, 256));
+              ExpectEqual(String(str), 'xtest-2.esp', '');
+            end);
+          It('Should resolve group names', procedure
+            begin
+              ExpectSuccess(Name(armo, str, 256));
+              ExpectEqual(String(str), 'Armor', '');
+            end);
+          Describe('Record names', procedure
+            begin
+              It('Should resolve FULL name, if present', procedure
+                begin
+                  ExpectSuccess(Name(rec, str, 256));
+                  ExpectEqual(String(str), 'Iron Gauntlets', '');
+                end);
+              It('Should resolve BASE name, if present', procedure
+                begin
+                  ExpectSuccess(Name(refr, str, 256));
+                  expectedName := 'DA09PedestalEmpty "Pedestal" [ACTI:0007F82A]';
+                  ExpectEqual(String(str), expectedName, '');
+                end);
+            end);
+          It('Should resolve element names', procedure
+            begin
+              ExpectSuccess(Name(element, str, 256));
+              ExpectEqual(String(str), 'DNAM - Armor Rating', '');
+            end);
+        end);
+    end);
 end;
 
 end.
