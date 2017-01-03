@@ -22,6 +22,9 @@ type
   // PUBLIC TESTING INTERFACE
   procedure WriteBuffer;
   procedure WriteArray(a: CardinalArray);
+  procedure WriteExceptions;
+  procedure ExpectSuccess(b: WordBool);
+  procedure ExpectFailure(b: WordBool);
   procedure BuildMetaTests;
 
 implementation
@@ -55,6 +58,27 @@ begin
   end;
   s := s + ' ]';
   WriteLn(s);
+end;
+
+procedure WriteExceptions;
+var
+  str: PWideChar;
+begin
+  GetMem(str, 4096);
+  GetExceptionMessage(str, 4096);
+  if Length(string(str)) > 0 then
+    WriteLn(str);
+end;
+
+procedure ExpectSuccess(b: WordBool);
+begin
+  if not b then WriteExceptions;
+  Expect(b, 'Function should return true');
+end;
+
+procedure ExpectFailure(b: WordBool);
+begin
+  Expect(not b, 'Function should return false');
 end;
 
 procedure BuildMetaTests;
