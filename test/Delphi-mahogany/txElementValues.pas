@@ -170,6 +170,34 @@ begin
               ExpectEqual(String(str), 'xtest-2.esp\00012E46\KWDA - Keywords\[1]', '');
             end);
         end);
+        
+      Describe('EditorID', procedure
+        begin
+          It('Should fail if a file is passed', procedure
+            begin
+              ExpectFailure(EditorID(testFile, str, 256));
+            end);
+          It('Should fail if a group is passed', procedure
+            begin
+              ExpectFailure(EditorID(block, str, 256));
+              ExpectFailure(EditorID(subBlock, str, 256));
+              ExpectFailure(EditorID(childGroup, str, 256));
+              ExpectFailure(EditorID(persistentGroup, str, 256));
+              ExpectFailure(EditorID(armo, str, 256));
+            end);
+          It('Should fail if an element is passed', procedure
+            begin
+              ExpectFailure(EditorID(element, str, 256));
+              ExpectFailure(EditorID(keyword, str, 256));
+            end);
+          It('Should return EditorID if a record is passed', procedure
+            begin
+              ExpectSuccess(EditorID(rec, str, 256));
+              ExpectEqual(String(str), 'ArmorIronGauntlets', '');
+              ExpectSuccess(EditorID(refr, str, 256));
+              ExpectEqual(String(str), 'DA09PedestalEmptyRef', '');
+            end);
+        end);
     end);
 end;
 
