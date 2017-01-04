@@ -34,7 +34,7 @@ uses
 procedure BuildElementHandlingTests;
 var
   success, b: WordBool;
-  h, skyrim, testFile, armo, rec, element: Cardinal;
+  h, skyrim, testFile, armo, rec, element, armoTest, recTest: Cardinal;
   a: CardinalArray;
 begin
   Describe('Element Handling', procedure
@@ -44,6 +44,9 @@ begin
           GetElement(0, 'Skyrim.esm', @skyrim);
           GetElement(skyrim, 'ARMO', @armo);
           GetElement(armo, '00012E46', @rec);
+          GetElement(0, 'xtest-3.esp', @testFile);
+          GetElement(testFile, 'ARMO', @armoTest);
+          GetElement(armoTest, '00012E46', @recTest);
         end);
 
       Describe('GetElement', procedure
@@ -320,13 +323,6 @@ begin
 
       Describe('NewElement', procedure
         begin
-          BeforeAll(procedure
-            begin
-              GetElement(0, 'xtest-2.esp', @testFile);
-              GetElement(testFile, 'ARMO', @armo);
-              GetElement(armo, '00012E46', @rec);
-            end);
-
           It('Should create a new file if no handle given', procedure
             begin
               success := NewElement(0, 'NewFile-1.esp', @h);
@@ -341,34 +337,34 @@ begin
 
           It('Should be able to add records to groups', procedure
             begin
-              success := NewElement(armo, 'ARMO', @h);
+              success := NewElement(armoTest, 'ARMO', @h);
               Expect(success and (h > 0), 'Handle should be greater than 0');
             end);
 
 
           It('Should be able to create a new element on a record', procedure
             begin
-              success := NewElement(rec, 'Destructable', @h);
+              success := NewElement(recTest, 'Destructable', @h);
               Expect(success and (h > 0), 'Handle should be greater than 0');
             end);
 
           It('Should be able to push a new element onto an array', procedure
             begin
-              GetElement(rec, 'KWDA', @element);
+              GetElement(recTest, 'KWDA', @element);
               success := NewElement(element, '', @h);
               Expect(success and (h > 0), 'Handle should be greater than 0');
             end);
 
           It('Should be able to assign an element at an index in an array', procedure
             begin
-              GetElement(rec, 'KWDA', @element);
+              GetElement(recTest, 'KWDA', @element);
               success := NewElement(element, '[1]', @h);
               Expect(success and (h > 0), 'Handle should be greater than 0');
             end);
 
           It('Should fail if parent element is not a container', procedure
             begin
-              GetElement(rec, 'FULL', @element);
+              GetElement(recTest, 'FULL', @element);
               success := NewElement(element, '', @h);
               Expect(not success, 'Result should be false');
             end);
@@ -376,32 +372,25 @@ begin
 
       Describe('RemoveElement', procedure
         begin
-          BeforeAll(procedure
-            begin
-              GetElement(0, 'xtest-2.esp', @testFile);
-              GetElement(testFile, 'ARMO', @armo);
-              GetElement(armo, '00012E46', @rec);
-            end);
-
           It('Should remove the element at the given path', procedure
             begin
-              ExpectSuccess(RemoveElement(rec, 'Female world model'));
-              b := not ElementExists(rec, 'Female world model');
+              ExpectSuccess(RemoveElement(recTest, 'Female world model'));
+              b := not ElementExists(recTest, 'Female world model');
               Expect(b, 'The element should no longer be present');
             end);
 
           It('Should remove the element at the given indexed path', procedure
             begin
-              ExpectSuccess(RemoveElement(rec, 'KWDA\[4]'));
-              b := not ElementExists(rec, 'KWDA\[4]');
+              ExpectSuccess(RemoveElement(recTest, 'KWDA\[4]'));
+              b := not ElementExists(recTest, 'KWDA\[4]');
               Expect(b, 'The element should no longer be present');
             end);
 
           It('Should remove the element passed if no path is given', procedure
             begin
-              GetElement(rec, 'ZNAM', @element);
+              GetElement(recTest, 'ZNAM', @element);
               ExpectSuccess(RemoveElement(element, ''));
-              b := not ElementExists(rec, 'ZNAM');
+              b := not ElementExists(recTest, 'ZNAM');
               Expect(b, 'The element should no longer be present');
             end);
 
@@ -412,7 +401,7 @@ begin
 
           It('Should fail if no element exists at the given path', procedure
             begin
-              ExpectFailure(RemoveElement(rec, 'YNAM'));
+              ExpectFailure(RemoveElement(recTest, 'YNAM'));
             end);
         end);
     end);
