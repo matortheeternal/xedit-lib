@@ -61,7 +61,7 @@ exports
   // SERIALIZATION METHODS
   ElementToJson,
   // ELEMENT VALUE METHODS
-  Name, Path, EditorID, Signature, ShortName, SortKey, ElementType, DefType,
+  Name, Path, EditorID, Signature, FullName, SortKey, ElementType, DefType,
   GetValue, SetValue, GetIntValue, SetIntValue, GetUIntValue, SetUIntValue,
   GetFloatValue, SetFloatValue, GetLinksTo, SetFlag, GetFlag, ToggleFlag,
   GetEnabledFlags,

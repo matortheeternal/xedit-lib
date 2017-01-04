@@ -6,7 +6,7 @@ interface
   function Path(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
   function EditorID(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
   function Signature(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
-  function ShortName(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
+  function FullName(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
   function SortKey(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
   function ElementType(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
   function DefType(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
@@ -166,14 +166,14 @@ begin
   end;
 end;
 
-function ShortName(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
+function FullName(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
 var
-  element: IwbElement;
+  rec: IwbMainRecord;
 begin
   Result := false;
   try
-    if Supports(Resolve(_id), IwbElement, element) then begin
-      StrLCopy(str, PWideChar(WideString(element.ShortName)), len);
+    if Supports(Resolve(_id), IwbMainRecord, rec) and rec.ElementExists['FULL'] then begin
+      StrLCopy(str, PWideChar(WideString(rec.FullName)), len);
       Result := true;
     end;
   except
