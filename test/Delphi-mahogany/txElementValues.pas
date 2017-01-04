@@ -235,6 +235,36 @@ begin
               ExpectEqual(String(str), 'DNAM', '');
             end);
         end);
+        
+      Describe('FullName', procedure
+        begin
+          It('Should fail if a file is passed', procedure
+            begin
+              ExpectFailure(FullName(testFile, str, 256));
+            end);
+          It('Should fail if a group is passed', procedure
+            begin
+              ExpectFailure(FullName(block, str, 256));
+              ExpectFailure(FullName(subBlock, str, 256));
+              ExpectFailure(FullName(childGroup, str, 256));
+              ExpectFailure(FullName(persistentGroup, str, 256));
+              ExpectFailure(FullName(armo, str, 256));
+            end);
+          It('Should fail if an element is passed', procedure
+            begin
+              ExpectFailure(FullName(element, str, 256));
+              ExpectFailure(FullName(keyword, str, 256));
+            end);
+          It('Should fail if a record with no full name is passed', procedure
+            begin
+              ExpectFailure(FullName(refr, str, 256));
+            end);
+          It('Should return Full Name if a record is passed', procedure
+            begin
+              ExpectSuccess(FullName(rec, str, 256));
+              ExpectEqual(String(str), 'Iron Gauntlets', '');
+            end);
+        end);
     end);
 end;
 
