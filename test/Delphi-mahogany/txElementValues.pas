@@ -265,6 +265,26 @@ begin
               ExpectEqual(String(str), 'Iron Gauntlets', '');
             end);
         end);
+        
+      Describe('GetValue', procedure
+        begin
+          It('Should resolve element values', procedure
+            begin
+              ExpectSuccess(GetValue(element, '', str, 256));
+              ExpectEqual(String(str), '10.000000', '');
+              ExpectSuccess(GetValue(keyword, '', str, 256));
+              ExpectEqual(String(str), 'ArmorHeavy [KYWD:0006BBD2]', '');
+            end);
+          It('Should resolve element value at path', procedure
+            begin
+              ExpectSuccess(GetValue(rec, 'OBND\X1', str, 256));
+              ExpectEqual(String(str), '-11', '');
+              ExpectSuccess(GetValue(rec, 'KWDA\[1]', str, 256));
+              ExpectEqual(String(str), 'ArmorHeavy [KYWD:0006BBD2]', '');
+              ExpectSuccess(GetValue(rec, 'Female world model\MOD4', str, 256));
+              ExpectEqual(String(str), 'Test', '');
+            end);
+        end);
     end);
 end;
 
