@@ -151,14 +151,33 @@ begin
   end;
 end;
 
+function NativeSignature(element: IwbElement): String;
+var
+  group: IwbGroupRecord;
+  e: IwbHasSignature;
+begin
+  if Supports(element, IwbGroupRecord, group) then begin
+    if group.GroupType = 0 then
+      Result := String(TwbSignature(group.GroupLabel))
+    else
+      Result := String(group.Signature);
+  end
+  else if Supports(element, IwbHasSignature, e) then
+    Result := String(e.Signature)
+  else
+    raise Exception.Create('Error: Element does not have a signature.');
+end;
+
 function Signature(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
 var
-  rec: IwbRecord;
+  element: IwbElement;
+  sig: String;
 begin
   Result := false;
   try
-    if Supports(Resolve(_id), IwbRecord, rec) then begin
-      StrLCopy(str, PWideChar(WideString(rec.Signature)), len);
+    if Supports(Resolve(_id), IwbElement, element) then begin
+      sig := NativeSignature(element);
+      StrLCopy(str, PWideChar(WideString(sig)), len);
       Result := true;
     end;
   except

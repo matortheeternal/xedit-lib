@@ -209,7 +209,7 @@ begin
             begin
               ExpectFailure(Signature(keyword, str, 256));
             end);
-          It('Should return GRUP for groups', procedure
+          It('Should resolve group signatures', procedure
             begin
               ExpectSuccess(Signature(block, str, 256));
               ExpectEqual(String(str), 'GRUP', '');
@@ -220,7 +220,7 @@ begin
               ExpectSuccess(Signature(persistentGroup, str, 256));
               ExpectEqual(String(str), 'GRUP', '');
               ExpectSuccess(Signature(armo, str, 256));
-              ExpectEqual(String(str), 'GRUP', '');
+              ExpectEqual(String(str), 'ARMO', '');
             end);
           It('Should resolve record signatures', procedure
             begin
