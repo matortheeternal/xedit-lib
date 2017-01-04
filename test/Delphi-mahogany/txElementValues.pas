@@ -198,6 +198,43 @@ begin
               ExpectEqual(String(str), 'DA09PedestalEmptyRef', '');
             end);
         end);
+        
+      Describe('Signature', procedure
+        begin
+          It('Should fail if a file is passed', procedure
+            begin
+              ExpectFailure(Signature(testFile, str, 256));
+            end);
+          It('Should fail if an element with no signature is passed', procedure
+            begin
+              ExpectFailure(Signature(keyword, str, 256));
+            end);
+          It('Should return GRUP for groups', procedure
+            begin
+              ExpectSuccess(Signature(block, str, 256));
+              ExpectEqual(String(str), 'GRUP', '');
+              ExpectSuccess(Signature(subBlock, str, 256));
+              ExpectEqual(String(str), 'GRUP', '');
+              ExpectSuccess(Signature(childGroup, str, 256));
+              ExpectEqual(String(str), 'GRUP', '');
+              ExpectSuccess(Signature(persistentGroup, str, 256));
+              ExpectEqual(String(str), 'GRUP', '');
+              ExpectSuccess(Signature(armo, str, 256));
+              ExpectEqual(String(str), 'GRUP', '');
+            end);
+          It('Should resolve record signatures', procedure
+            begin
+              ExpectSuccess(Signature(rec, str, 256));
+              ExpectEqual(String(str), 'ARMO', '');
+              ExpectSuccess(Signature(refr, str, 256));
+              ExpectEqual(String(str), 'REFR', '');
+            end);
+          It('Should resolve element signatures', procedure
+            begin
+              ExpectSuccess(Signature(element, str, 256));
+              ExpectEqual(String(str), 'DNAM', '');
+            end);
+        end);
     end);
 end;
 
