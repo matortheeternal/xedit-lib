@@ -147,12 +147,12 @@ begin
           It('Should resolve child groups', procedure
             begin
               ExpectSuccess(Path(childGroup, str, 1024));
-              ExpectEqual(String(str), 'xtest-2.esp\00027D1C\Children', '');
+              ExpectEqual(String(str), 'xtest-2.esp\00027D1C\Child Group', '');
             end);
           It('Should resolve temporary/persistent groups', procedure
             begin
               ExpectSuccess(Path(persistentGroup, str, 1024));
-              ExpectEqual(String(str), 'xtest-2.esp\00027D1C\Children\Persistent', '');
+              ExpectEqual(String(str), 'xtest-2.esp\00027D1C\Child Group\Persistent', '');
             end);
           It('Should resolve record FormIDs', procedure
             begin
