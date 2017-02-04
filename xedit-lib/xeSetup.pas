@@ -17,6 +17,7 @@ type
   function GetLoadOrder(str: PWideChar; len: Integer): WordBool; cdecl;
   function LoadPlugins(loadOrder: PWideChar): WordBool; cdecl;
   function GetLoaderDone: WordBool; cdecl;
+  function GetGamePath(mode: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
 
   // LOAD ORDER HELPERS
   procedure RemoveCommentsAndEmpty(var sl: TStringList);
@@ -100,6 +101,11 @@ procedure SetGameMode(mode: Integer); cdecl;
 begin
   try
     SetGame(mode);
+    // log message
+    AddMessage(Format('Game: %s, DataPath: %s', [
+      ProgramStatus.GameMode.gameName,
+      settings.gameDataPath
+    ]));
     // set global values
     Globals.Values['GameName'] := ProgramStatus.GameMode.gameName;
     Globals.Values['AppName'] := ProgramStatus.GameMode.appName;
@@ -207,6 +213,22 @@ end;
 function GetLoaderDone: WordBool; cdecl;
 begin
   Result := ProgramStatus.bLoaderDone;
+end;
+
+function GetGamePath(mode: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
+var
+  path: String;
+begin
+  Result := false;
+  try
+    path := NativeGetGamePath(GameArray[mode]);
+    if path <> '' then begin
+      StrLCopy(str, PWideChar(WideString(path)), len);
+      Result := True;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
 end;
 
 

@@ -44,7 +44,7 @@ exports
   Initialize, Finalize, GetBuffer, FlushBuffer, GetExceptionMessage, GetGlobal,
   Release, ResetStore,
   // LOADING AND SET UP METHODS
-  SetGameMode, GetLoadOrder, LoadPlugins, GetLoaderDone,
+  SetGameMode, GetLoadOrder, LoadPlugins, GetLoaderDone, GetGamePath,
   // FILE HANDLING METHODS
   NewFile, FileByIndex, FileByLoadOrder, FileByName, FileByAuthor,
   SaveFile, GetFileNames,
