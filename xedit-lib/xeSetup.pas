@@ -23,6 +23,7 @@ type
   procedure RemoveMissingFiles(var sl: TStringList);
   procedure AddMissingFiles(var sl: TStringList);
   procedure GetPluginDates(var sl: TStringList);
+  procedure FixLoadOrder(var sl: TStringList; filename: String; index: Integer);
   function PluginListCompare(List: TStringList; Index1, Index2: Integer): Integer;
 
 var
@@ -145,19 +146,28 @@ begin
       RemoveMissingFiles(slLoadOrder);
       AddMissingFiles(slLoadOrder);
 
-      // if GameMode is not Skyrim sort by date modified else add
-      // Update.esm and Skyrim.esm to load order if they're missing
-      if wbGameMode <> gmTES5 then begin
+      // if GameMode is not Skyrim, SkyrimSE or Fallout 4 and user
+      // isn't using MO, sort by date modified else add base masters
+      // to load order if missing
+      if (wbGameMode = gmTES5) then begin
+        FixLoadOrder(slLoadOrder, 'Skyrim.esm', 0);
+        FixLoadOrder(slLoadOrder, 'Update.esm', 1);
+      end
+      else if (wbGameMode = gmSSE) then begin
+        FixLoadOrder(slLoadOrder, 'Skyrim.esm', 0);
+        FixLoadOrder(slLoadOrder, 'Update.esm', 1);
+        FixLoadOrder(slLoadOrder, 'Dawnguard.esm', 2);
+        FixLoadOrder(slLoadOrder, 'Hearthfires.esm', 3);
+        FixLoadOrder(slLoadOrder, 'Dragonborn.esm', 4);
+      end
+      else if (wbGameMode = gmFO4) then begin
+        FixLoadOrder(slLoadOrder, 'Fallout4.esm', 0);
+      end
+      else begin
         GetPluginDates(slPlugins);
         GetPluginDates(slLoadOrder);
         slPlugins.CustomSort(PluginListCompare);
         slLoadOrder.CustomSort(PluginListCompare);
-      end
-      else begin
-        if slLoadOrder.IndexOf('Skyrim.esm') = -1 then
-          slLoadOrder.Insert(0, 'Skyrim.esm');
-        if slLoadOrder.IndexOf('Update.esm') = -1 then
-          slLoadOrder.Insert(1, 'Update.esm');
       end;
 
       // RETURN RESULT
@@ -208,16 +218,19 @@ end;
 { Remove comments and empty lines from a stringlist }
 procedure RemoveCommentsAndEmpty(var sl: TStringList);
 var
-  i, j: integer;
+  i, j, k: integer;
   s: string;
 begin
   for i := Pred(sl.Count) downto 0 do begin
     s := Trim(sl.Strings[i]);
     j := Pos('#', s);
+    k := Pos('*', s);
     if j > 0 then
       System.Delete(s, j, High(Integer));
-    if Trim(s) = '' then
+    if s = '' then
       sl.Delete(i);
+    if k = 1 then
+      sl[i] := Copy(s, 2, Length(s));
   end;
 end;
 
@@ -286,6 +299,18 @@ var
 begin
   for i := 0 to Pred(sl.Count) do
     sl.Objects[i] := TObject(FileAge(wbDataPath + sl[i]));
+end;
+
+{ Forces a plugin to load at a specific position }
+procedure FixLoadOrder(var sl: TStringList; filename: String; index: Integer);
+var
+  oldIndex: Integer;
+begin
+  oldIndex := sl.IndexOf(filename);
+  if oldIndex <> index then begin
+    sl.Delete(oldIndex);
+    sl.Insert(index, filename);
+  end;
 end;
 
 { Compare function for sorting load order by date modified/esms }
