@@ -15,6 +15,7 @@ type
     longName: string;
     gameName: string;
     gameMode: TwbGameMode;
+    regName: string;
     appName: string;
     exeName: string;
     appIDs: string;
@@ -25,6 +26,7 @@ type
     [IniSection('General')]
     language: string;
     [IniSection('Games')]
+    skyrimSEPath: string;
     skyrimPath: string;
     oblivionPath: string;
     fallout4Path: string;
@@ -32,6 +34,8 @@ type
     falloutNVPath: string;
     constructor Create; virtual;
     function GameDataPath: String;
+    procedure UpdateGamePaths;
+    procedure SetGamePath(key: String; gameMode: Integer);
   end;
   TProgramStatus = class(TObject)
   public
@@ -42,7 +46,7 @@ type
   end;
 
   procedure SetGame(id: integer);
-  function GetGamePath(mode: TGameMode): string;
+  function NativeGetGamePath(mode: TGameMode): string;
   function SetGameAbbr(abbrName: string): boolean;
   function SetGameParam(param: string): boolean;
   procedure LoadSettings;
@@ -56,38 +60,38 @@ var
 
 const
   // GAME MODES
-  GameArray: array[0..4] of TGameMode = (
+  GameArray: array[0..5] of TGameMode = (
     ( longName: 'Fallout New Vegas'; gameName: 'FalloutNV'; gameMode: gmFNV;
-      appName: 'FNV'; exeName: 'FalloutNV.exe'; appIDs: '22380,2028016';
-      abbrName: 'fnv'; ),
+      regName: 'FalloutNV'; appName: 'FNV'; exeName: 'FalloutNV.exe';
+      appIDs: '22380,2028016'; ),
     ( longName: 'Fallout 3'; gameName: 'Fallout3'; gameMode: gmFO3;
-      appName: 'FO3'; exeName: 'Fallout3.exe'; appIDs: '22300,22370';
-      abbrName: 'fo3'; ),
+      regName: 'Fallout3'; appName: 'FO3'; exeName: 'Fallout3.exe';
+      appIDs: '22300,22370'; ),
     ( longName: 'Oblivion'; gameName: 'Oblivion'; gameMode: gmTES4;
-      appName: 'TES4'; exeName: 'Oblivion.exe'; appIDs: '22330,900883';
-      abbrName: 'ob'; ),
+      regName: 'Oblivion'; appName: 'TES4'; exeName: 'Oblivion.exe';
+      appIDs: '22330,900883'; ),
     ( longName: 'Skyrim'; gameName: 'Skyrim'; gameMode: gmTES5;
-      appName: 'TES5'; exeName: 'TESV.exe'; appIDs: '72850';
-      abbrName: 'sk'; ),
+      regName: 'Skyrim'; appName: 'TES5'; exeName: 'TESV.exe';
+      appIDs: '72850'; ),
+    ( longName: 'Skyrim Special Edition'; gameName: 'Skyrim'; gameMode: gmSSE;
+      regName: 'Skyrim Special Edition'; appName: 'SSE';
+      exeName: 'SkyrimSE.exe'; appIDs: '489830'; ),
     ( longName: 'Fallout 4'; gameName: 'Fallout4'; gameMode: gmFO4;
-      appName: 'FO4'; exeName: 'Fallout4.exe'; appIDs: '377160';
-      abbrName: 'fo4'; )
+      regName: 'Fallout4'; appName: 'FO4'; exeName: 'Fallout4.exe';
+      appIDs: '377160'; )
   );
 
 implementation
+
+uses
+  StrUtils, Rtti, TypInfo;
 
 
 { TSettings }
 constructor TSettings.Create;
 begin
   language := 'English';
-
-  // game paths
-  falloutNVPath := GetGamePath(GameArray[0]) + 'data\';
-  fallout3Path := GetGamePath(GameArray[1]) + 'data\';
-  oblivionPath := GetGamePath(GameArray[2]) + 'data\';
-  skyrimPath := GetGamePath(GameArray[3]) + 'data\';
-  fallout4Path := GetGamePath(GameArray[4]) + 'data\';
+  UpdateGamePaths;
 end;
 
 function TSettings.GameDataPath: string;
@@ -98,7 +102,37 @@ begin
     gmFNV: Result := falloutNVPath;
     gmFO3: Result := fallout3Path;
     gmFO4: Result := fallout4Path;
+    gmSSE: Result := skyrimSEPath;
   end;
+end;
+
+procedure TSettings.SetGamePath(key: String; gameMode: Integer);
+var
+  ctx: TRttiContext;
+  objType: TRttiType;
+  field: TRttiField;
+  path: String;
+begin
+  ctx := TRttiContext.Create;
+  try
+    objType := ctx.GetType(self.ClassInfo);
+    field := objType.GetField(key);
+    path := field.GetValue(self).AsString;
+    if (path = '') or (path = 'data\') then
+      field.SetValue(self, NativeGetGamePath(GameArray[gameMode]) + 'data\');
+  finally
+    ctx.Free;
+  end;
+end;
+
+procedure TSettings.UpdateGamePaths;
+begin
+  SetGamePath('falloutNVPath', 0);
+  SetGamePath('fallout3Path', 1);
+  SetGamePath('oblivionPath', 2);
+  SetGamePath('skyrimPath', 3);
+  SetGamePath('skyrimSEPath', 4);
+  SetGamePath('fallout4Path', 5);
 end;
 
 { TProgramStatus }
@@ -120,10 +154,14 @@ begin
 
   // update xEdit vars
   wbGameName := ProgramStatus.GameMode.gameName;
+  wbGameName2 := ProgramStatus.GameMode.regName;
   wbGameMode := ProgramStatus.GameMode.gameMode;
   wbAppName := ProgramStatus.GameMode.appName;
   wbDataPath := settings.GameDataPath;
-  wbVWDInTemporary := wbGameMode in [gmTES5, gmFO3, gmFNV];
+  wbVWDInTemporary := wbGameMode in [gmSSE, gmTES5, gmFO3, gmFNV];
+  wbVWDAsQuestChildren := wbGameMode = gmFO4;
+  wbArchiveExtension := IfThen(wbGameMode = gmFO4, '.ba2', '.bsa');
+  wbLoadBSAs := wbGameMode in [gmFO4, gmSSE, gmTES5, gmTES4];
   wbDisplayLoadOrderFormID := True;
   wbSortSubRecords := True;
   wbDisplayShorterNames := True;
@@ -149,6 +187,7 @@ begin
 
   // load definitions
   case wbGameMode of
+    gmSSE: DefineTES5;
     gmFO4: DefineFO4;
     gmTES5: DefineTES5;
     gmFNV: DefineFNV;
@@ -158,7 +197,7 @@ begin
 end;
 
 { Gets the path of a game from registry key or app path }
-function GetGamePath(mode: TGameMode): string;
+function NativeGetGamePath(mode: TGameMode): string;
 const
   sBethRegKey     = '\SOFTWARE\Bethesda Softworks\';
   sBethRegKey64   = '\SOFTWARE\Wow6432Node\Bethesda Softworks\';
@@ -174,14 +213,13 @@ begin
   Result := '';
 
   // initialize variables
-  gameName := mode.gameName;
   keys := TStringList.Create;
   appIDs := TStringList.Create;
   appIDs.CommaText := mode.appIDs;
 
   // add keys to check
-  keys.Add(sBethRegKey + gameName + '\Installed Path');
-  keys.Add(sBethRegKey64 + gameName + '\Installed Path');
+  keys.Add(sBethRegKey + mode.regName + '\Installed Path');
+  keys.Add(sBethRegKey64 + mode.regName + '\Installed Path');
   for i := 0 to Pred(appIDs.Count) do begin
     keys.Add(sSteamRegKey + appIDs[i] + '\InstallLocation');
     keys.Add(sSteamRegKey64 + appIDs[i] + '\InstallLocation');
@@ -224,6 +262,7 @@ procedure LoadSettings;
 begin
   settings := TSettings.Create;
   TRttiIni.Load(Globals.Values['ProgramPath'] + 'settings.ini', settings);
+  settings.UpdateGamePaths;
 end;
 
 procedure SaveSettings;
