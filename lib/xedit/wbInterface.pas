@@ -24,7 +24,7 @@ uses
   Graphics;
 
 const
-  VersionString  = '3.1.3 EXPERIMENTAL';
+  VersionString  = '3.2';
   clOrange       = $004080FF;
   wbFloatDigits  = 6;
   wbHardcodedDat = '.Hardcoded.keep.this.with.the.exe.and.otherwise.ignore.it.I.really.mean.it.dat';
@@ -69,11 +69,12 @@ var
   wbRequireLoadOrder       : Boolean  = False;
   wbCreateContainedIn      : Boolean  = True;
   wbVWDInTemporary         : Boolean  = False;
-  wbVWDAsQuestChildren     : Boolean   = False;
+  wbVWDAsQuestChildren     : Boolean  = False;
   wbResolveAlias           : Boolean  = True;
   wbActorTemplateHide      : Boolean  = True;
   wbClampFormID            : Boolean  = True;
   wbDoNotBuildRefsFor      : TStringList;
+  wbCopyIsRunning          : Integer  = 0;
 
   wbUDRSetXESP       : Boolean = True;
   wbUDRSetScale      : Boolean = False;
@@ -107,6 +108,7 @@ var
   wbMoreInfoForRequired              : Boolean = False;
   wbMoreInfoForDecider               : Boolean = False;
   wbTrackAllEditorID                 : Boolean = False;
+  wbShowTip                          : Boolean = True;
 
   wbCheckExpectedBytes : Boolean = True;
 
@@ -983,6 +985,8 @@ type
     procedure SetIsVisibleWhenDistant(aValue: Boolean);
     function GetHasVisibleWhenDistantMesh: Boolean;
     function GetHasMesh: Boolean;
+    function GetHasPrecombinedMesh: Boolean;
+    function GetPrecombinedMesh: string;
     function GetIsInitiallyDisabled: Boolean;
     procedure SetIsInitiallyDisabled(aValue: Boolean);
 
@@ -1084,6 +1088,10 @@ type
       read GetHasVisibleWhenDistantMesh;
     property HasMesh: Boolean
       read GetHasMesh;
+    property HasPrecombinedMesh: Boolean
+      read GetHasPrecombinedMesh;
+    property PrecombinedMesh: string
+      read GetPrecombinedMesh;
     property IsInitiallyDisabled: Boolean
       read GetIsInitiallyDisabled
       write SetIsInitiallyDisabled;
@@ -1118,7 +1126,12 @@ type
   end;
 
   TDynElements = array of IwbElement;
+  {$IFDEF WIN32}
   TDynCardinalArray = array of Cardinal;
+  {$ENDIF WIN32}
+  {$IFDEF WIN64}
+  TDynCardinalArray = array of UInt64;
+  {$ENDIF WIN32}
 
   IwbSubRecord = interface(IwbRecord)
     ['{CDE36A3D-64F6-4B8E-980E-FBAB8D9FCAF7}']
@@ -1508,8 +1521,18 @@ type
     function GetChapterName(aBasePtr: Pointer; aEndPtr: Pointer; const aElement: IwbElement): String;
   end;
 
+  TwbStructCompression = (
+    scNone,
+    scZComp,
+    scLZComp
+  );
+
   IwbStructZDef = interface(IwbStructCDef) // Compressible structure !!! NOT SAFE FOR EDIT AT THE MOMEMNT !!!
     ['{8ED8E461-E4BB-494E-8A3B-B352A245B9A0}']
+  end;
+
+  IwbStructLZDef = interface(IwbStructZDef) // Compressible structure using LZ4 !!! NOT SAFE FOR EDIT AT THE MOMEMNT !!!
+    ['{A5AB100F-83CA-4B53-B3CD-2BF926210900}']
   end;
 
   IwbIntegerDefFormater = interface(IwbDef)
@@ -1725,6 +1748,7 @@ type
     procedure AddBA2(const aFileName: string);
 
     function OpenResource(const aFileName: string): TDynResources;
+    function OpenResourceData(const aContainerName, aFileName: string): TBytes;
     function ResolveHash(const aHash: Int64): TDynStrings;
     function ContainerExists(aContainerName: string): Boolean;
     procedure ContainerList(const aList: TStrings);
@@ -2597,7 +2621,12 @@ function wbStructSK(const aSortKey             : array of Integer;
 function wbStructSK(const aSortKey             : array of Integer;
                     const aName                : string;
                     const aMembers             : array of IwbValueDef;
+                    {$IFDEF WIN32}
                     const aElementMap          : array of Cardinal;
+                    {$ENDIF WIN32}
+                    {$IFDEF WIN64}
+                    const aElementMap          : array of UInt64;
+                    {$ENDIF WIN64}
                           aPriority            : TwbConflictPriority = cpNormal;
                           aRequired            : Boolean = False;
                           aDontShow            : TwbDontShowCallback = nil;
@@ -2712,6 +2741,21 @@ function wbStructZ(const aName                : string;
                          aAfterSet            : TwbAfterSetCallback = nil;
                          aGetCP               : TwbGetConflictPriority = nil)
                                               : IwbStructDef; overload;
+
+function wbStructLZ(const aName                : string;
+                          aSizing              : TwbSizeCallback;
+                          aGetChapterType      : TwbGetChapterTypeCallback;
+                          aGetChapterTypeName  : TwbGetChapterTypeNameCallback;
+                          aGetChapterName      : TwbGetChapterNameCallback;
+                    const aMembers             : array of IwbValueDef;
+                          aPriority            : TwbConflictPriority = cpNormal;
+                          aRequired            : Boolean = False;
+                          aDontShow            : TwbDontShowCallback = nil;
+                          aOptionalFromElement : Integer = -1;
+                          aAfterLoad           : TwbAfterLoadCallback = nil;
+                          aAfterSet            : TwbAfterSetCallback = nil;
+                          aGetCP               : TwbGetConflictPriority = nil)
+                                               : IwbStructDef; overload;
 
 function wbRStruct(const aName           : string;
                    const aMembers        : array of IwbRecordMemberDef;
@@ -3068,7 +3112,7 @@ var
   wbSizeOfMainRecordStruct : Integer;
 
 type
-  TwbGameMode   = (gmFNV, gmFO3, gmTES3, gmTES4, gmTES5, gmFO4);
+  TwbGameMode   = (gmFNV, gmFO3, gmTES3, gmTES4, gmTES5, gmSSE, gmFO4);
   TwbToolMode   = (tmView, tmEdit, tmDump, tmExport, tmMasterUpdate, tmMasterRestore, tmLODgen, tmScript,
                     tmTranslate, tmESMify, tmESPify, tmSortAndCleanMasters,
                     tmCheckForErrors, tmCheckForITM, tmCheckForDR);
@@ -3081,6 +3125,7 @@ var
   wbToolSource  : TwbToolSource;
   wbAppName     : string;
   wbGameName    : string;
+  wbGameName2   : string; // game title name
   wbToolName    : string;
   wbSourceName  : String;
   wbLanguage    : string;
@@ -3189,9 +3234,15 @@ var
   wbTerminator        : Byte = Ord('|');
   wbPlayerRefID       : Cardinal = $14;
   wbChangedFormOffset : Integer = 10000;
+  wbOfficialDLC       : array of string;
 
 type
+  {$IFDEF WIN32}
   TwbRefIDArray = array of Cardinal;
+  {$ENDIF WIN32}
+  {$IFDEF WIN64}
+  TwbRefIDArray = array of UInt64;
+  {$ENDIF WIN64}
 
 function wbReadInteger24(aBasePtr: pointer): Int64;
 procedure InitializeRefIDArray(anArray: TwbRefIDArray);
@@ -4478,7 +4529,12 @@ type
                  const aMembers             : array of IwbValueDef;
                  const aSortKey             : array of Integer;
                  const aExSortKey           : array of Integer;
+                 {$IFDEF WIN32}
                  const aElementMap          : array of Cardinal;
+                 {$ENDIF WIN32}
+                 {$IFDEF WIN64}
+                 const aElementMap          : array of UInt64;
+                 {$ENDIF WIN64}
                        aOptionalFromElement : Integer;
                        aDontShow            : TwbDontShowCallback;
                        aAfterLoad           : TwbAfterLoadCallback;
@@ -4540,6 +4596,9 @@ type
   end;
 
   TwbStructZDef = class(TwbStructCDef, IwbStructZDef)
+  end;
+
+  TwbStructLZDef = class(TwbStructCDef, IwbStructLZDef)
   end;
 
   TwbIntegerDefFormater = class(TwbDef, IwbIntegerDefFormater)
@@ -6139,7 +6198,12 @@ end;
 function wbStructSK(const aSortKey             : array of Integer;
                     const aName                : string;
                     const aMembers             : array of IwbValueDef;
+                    {$IFDEF WIN32}
                     const aElementMap          : array of Cardinal;
+                    {$ENDIF WIN32}
+                    {$IFDEF WIN64}
+                    const aElementMap          : array of UInt64;
+                    {$ENDIF WIN64}
                           aPriority            : TwbConflictPriority = cpNormal;
                           aRequired            : Boolean = False;
                           aDontShow            : TwbDontShowCallback = nil;
@@ -6249,6 +6313,24 @@ function wbStructZ(const aName                : string;
                                               : IwbStructDef; overload;
 begin
   Result := TwbStructZDef.Create(aPriority, aRequired, aName, aMembers, [], [], aOptionalFromElement, aDontShow, aAfterLoad, aAfterSet, aSizing, aGetChapterType, aGetChapterTypeName, agetChapterName, aGetCP);
+end;
+
+function wbStructLZ(const aName                : string;
+                          aSizing              : TwbSizeCallback;
+                          aGetChapterType      : TwbGetChapterTypeCallback;
+                          aGetChapterTypeName  : TwbGetChapterTypeNameCallback;
+                          aGetChapterName      : TwbGetChapterNameCallback;
+                    const aMembers             : array of IwbValueDef;
+                          aPriority            : TwbConflictPriority = cpNormal;
+                          aRequired            : Boolean = False;
+                          aDontShow            : TwbDontShowCallback = nil;
+                          aOptionalFromElement : Integer = -1;
+                          aAfterLoad           : TwbAfterLoadCallback = nil;
+                          aAfterSet            : TwbAfterSetCallback = nil;
+                          aGetCP               : TwbGetConflictPriority = nil)
+                                               : IwbStructDef; overload;
+begin
+  Result := TwbStructLZDef.Create(aPriority, aRequired, aName, aMembers, [], [], aOptionalFromElement, aDontShow, aAfterLoad, aAfterSet, aSizing, aGetChapterType, aGetChapterTypeName, agetChapterName, aGetCP);
 end;
 
 function wbRStruct(const aName           : string;
@@ -7111,7 +7193,7 @@ end;
 
 function TwbRecordDef.AdditionalInfoFor(const aMainRecord: IwbMainRecord): string;
 begin
-  if Assigned(recAddInfoCallback) then
+  if (wbCopyIsRunning = 0) and Assigned(recAddInfoCallback) then
     Result := recAddInfoCallback(aMainRecord)
   else
     Result := '';
@@ -7670,14 +7752,17 @@ constructor TwbSubRecordStructDef.Create(aPriority       : TwbConflictPriority;
                                          aGetCP          : TwbGetConflictPriority);
 var
   i,j: Integer;
+  FoundRequired : Boolean;
 begin
   srsAllowUnordered := aAllowUnordered;
   srsSignatures := TwbFastStringListCS.CreateSorted(dupIgnore);
 
+  FoundRequired := False;
   SetLength(srsMembers, Length(aMembers));
   for i := Low(srsMembers) to High(srsMembers) do begin
     srsMembers[i] := (aMembers[i] as IwbDefInternal).SetParent(Self, False) as IwbRecordMemberDef;
     srsCanContainFormIDs := srsCanContainFormIDs or aMembers[i].CanContainFormIDs;
+    FoundRequired := FoundRequired or srsMembers[i].Required;
     for j := 0 to Pred(aMembers[i].SignatureCount) do
       srsSignatures.AddObject(aMembers[i].Signatures[j], Pointer(i) );
   end;
@@ -7689,6 +7774,9 @@ begin
   end;
 
   inherited Create(aPriority, aRequired, aName, aAfterLoad, aAfterSet, aDontShow, aGetCP, False);
+
+  if srsAllowUnordered and not FoundRequired then
+   raise Exception.Create(GetPath + ' must contain at least one required element');
 end;
 
 destructor TwbSubRecordStructDef.Destroy;
@@ -8160,7 +8248,7 @@ begin
         itU24: Value := wbReadInteger24(aBasePtr);
         itU32: Value := PCardinal(aBasePtr)^;
         itS32: Value := PLongInt(aBasePtr)^;
-        itU64: Value := PInt64(aBasePtr)^; //no U64 in delphi...
+        itU64: Value := PUInt64(aBasePtr)^; //no U64 in delphi...
         itS64: Value := PInt64(aBasePtr)^;
         itU6to30: Value := ReadIntegerCounter(aBasePtr);
       else
@@ -8209,7 +8297,7 @@ begin
       itU24: Value := wbReadInteger24(aBasePtr);
       itU32: Value := PCardinal(aBasePtr)^;
       itS32: Value := PLongInt(aBasePtr)^;
-      itU64: Value := PInt64(aBasePtr)^; //no U64 in delphi...
+      itU64: Value := PUInt64(aBasePtr)^; //no U64 in delphi...
       itS64: Value := PInt64(aBasePtr)^;
       itU6to30: Value := ReadIntegerCounter(aBasePtr);
     else
@@ -8291,7 +8379,7 @@ begin
     itU24: WriteInteger24(aBasePtr, aValue);
     itU32: PCardinal(aBasePtr)^ := aValue;
     itS32: PLongInt(aBasePtr)^ := aValue;
-    itU64: PInt64(aBasePtr)^ := aValue;
+    itU64: PUInt64(aBasePtr)^ := aValue;
     itS64: PInt64(aBasePtr)^ := aValue;
     itU6to30: WriteIntegerCounter(aBasePtr, aValue);
   else
@@ -8309,7 +8397,7 @@ begin
     itU24: WriteInteger24(aBasePtr, aValue);
     itU32: PCardinal(aBasePtr)^ := aValue;
     itS32: PLongInt(aBasePtr)^ := aValue;
-    itU64: PInt64(aBasePtr)^ := aValue;
+    itU64: PUInt64(aBasePtr)^ := aValue;
     itS64: PInt64(aBasePtr)^ := aValue;
     itU6to30: WriteIntegerCounter(aBasePtr, aValue);
   else
@@ -8415,7 +8503,7 @@ begin
         itU24: Value := wbReadInteger24(aBasePtr);
         itU32: Value := PCardinal(aBasePtr)^;
         itS32: Value := PLongInt(aBasePtr)^;
-        itU64: Value := PInt64(aBasePtr)^; //no U64 in delphi...
+        itU64: Value := PUInt64(aBasePtr)^; //no U64 in delphi...
         itS64: Value := PInt64(aBasePtr)^;
         itU6to30: Value := ReadIntegerCounter(aBasePtr);
       else
@@ -8443,7 +8531,7 @@ begin
       itU24: Result := 3*SizeOf(Byte)+Ord(noTerminator);
       itU32: Result := SizeOf(Cardinal)+Ord(noTerminator);
       itS32: Result := SizeOf(LongInt)+Ord(noTerminator);
-      itU64: Result := SizeOf(Int64)+Ord(noTerminator);
+      itU64: Result := SizeOf(UInt64)+Ord(noTerminator);
       itS64: Result := SizeOf(Int64)+Ord(noTerminator);
       itU6to30: Result := ReadIntegerCounterSize(aBasePtr)+Ord(noTerminator);
     else
@@ -8463,7 +8551,7 @@ begin
     itU24: Result := 3*SizeOf(Byte)+Ord(noTerminator);
     itU32: Result := SizeOf(Cardinal)+Ord(noTerminator);
     itS32: Result := SizeOf(LongInt)+Ord(noTerminator);
-    itU64: Result := SizeOf(Int64)+Ord(noTerminator);
+    itU64: Result := SizeOf(UInt64)+Ord(noTerminator);
     itS64: Result := SizeOf(Int64)+Ord(noTerminator);
     itU6to30: Result := 1+Ord(noTerminator);
   else
@@ -8560,7 +8648,7 @@ begin
       itU24: Value := wbReadInteger24(aBasePtr);
       itU32: Value := PCardinal(aBasePtr)^;
       itS32: Value := PLongInt(aBasePtr)^;
-      itU64: Value := PInt64(aBasePtr)^; //no U64 in delphi...
+      itU64: Value := PUInt64(aBasePtr)^; //no U64 in delphi...
       itS64: Value := PInt64(aBasePtr)^;
       itU6to30: Value := ReadIntegerCounter(aBasePtr);
     else
@@ -8592,7 +8680,7 @@ begin
       itU24: Result := wbReadInteger24(aBasePtr);
       itU32: Result := PCardinal(aBasePtr)^;
       itS32: Result := PLongInt(aBasePtr)^;
-      itU64: Result := PInt64(aBasePtr)^; //no U64 in delphi...
+      itU64: Result := PUInt64(aBasePtr)^; //no U64 in delphi...
       itS64: Result := PInt64(aBasePtr)^;
       itU6to30: Result := ReadIntegerCounter(aBasePtr);
     else
@@ -8613,7 +8701,7 @@ begin
       itU24: Result := wbReadInteger24(aBasePtr);
       itU32: Result := PCardinal(aBasePtr)^;
       itS32: Result := PLongInt(aBasePtr)^;
-      itU64: Result := PInt64(aBasePtr)^; //no U64 in delphi...
+      itU64: Result := PUInt64(aBasePtr)^; //no U64 in delphi...
       itS64: Result := PInt64(aBasePtr)^;
       itU6to30: Result := ReadIntegerCounter(aBasePtr);
     else
@@ -8643,7 +8731,7 @@ begin
       itU24: Value := wbReadInteger24(aBasePtr);
       itU32: Value := PCardinal(aBasePtr)^;
       itS32: Value := PLongInt(aBasePtr)^;
-      itU64: Value := PInt64(aBasePtr)^; //no U64 in delphi...
+      itU64: Value := PUInt64(aBasePtr)^; //no U64 in delphi...
       itS64: Value := PInt64(aBasePtr)^;
       itU6to30: Value := ReadIntegerCounter(aBasePtr);
     else
@@ -8689,7 +8777,7 @@ begin
       itU24: Value := wbReadInteger24(aBasePtr);
       itU32: Value := PCardinal(aBasePtr)^;
       itS32: Value := PLongInt(aBasePtr)^;
-      itU64: Value := PInt64(aBasePtr)^; //no U64 in delphi...
+      itU64: Value := PUInt64(aBasePtr)^; //no U64 in delphi...
       itS64: Value := PInt64(aBasePtr)^;
       itU6to30: Value := ReadIntegerCounter(aBasePtr);
     else
@@ -8866,12 +8954,22 @@ begin
 end;
 
 function TwbArrayDef.GetPrefixCount(aBasePtr: Pointer): Cardinal;
+var
+  Count : int64;
 begin
   Result := 0;
   if arCount = -255 then
     Result := 0
   else if arCount = -254 then
     Result := ReadIntegerCounter(aBasePtr)
+  else if arCount = -253 then begin  // Matrix of count * count
+    Count := ReadIntegerCounter(aBasePtr);
+    Result := Count * Count;
+  end
+  else if arCount = -241 then begin  // Matrix of cardinal * cardinal
+    Count := PCardinal(aBasePtr)^;
+    Result := Count * Count;
+  end
   else if Assigned(aBasePtr) then
     case GetPrefixlength(aBasePtr) of
       1: Result := PByte(aBasePtr)^;
@@ -8890,6 +8988,10 @@ begin
       Result := 2
     else if arCount = -4 then
       Result := 1
+    else if arCount = -241 then
+      Result := 4
+    else if arCount = -253 then
+      Result := ReadIntegerCounterSize(aBasePtr)
     else if arCount = -254 then
       Result := ReadIntegerCounterSize(aBasePtr);
 end;
@@ -9013,7 +9115,7 @@ begin
             Exit;
           end;
           if Assigned(BasePtr) then
-            Inc(Cardinal(BasePtr), Size);
+            Inc(PByte(BasePtr), Size);
           Inc(Index);
         end;
 
@@ -9050,7 +9152,10 @@ end;
 
 function TwbArrayDef.GetSorted: Boolean;
 begin
-  Result := arSorted;
+  if wbCopyIsRunning = 0 then
+    Result := arSorted
+  else
+    Result := False;
 end;
 
 procedure TwbArrayDef.Report(const aParents: TwbDefPath);
@@ -9127,7 +9232,12 @@ constructor TwbStructDef.Create(aPriority            : TwbConflictPriority;
                           const aMembers             : array of IwbValueDef;
                           const aSortKey             : array of Integer;
                           const aExSortKey           : array of Integer;
+                          {$IFDEF WIN32}
                           const aElementMap          : array of Cardinal;
+                          {$ENDIF WIN32}
+                          {$IFDEF WIN64}
+                          const aElementMap          : array of UInt64;
+                          {$ENDIF WIN64}
                                 aOptionalFromElement : Integer;
                                 aDontShow            : TwbDontShowCallback;
                                 aAfterLoad           : TwbAfterLoadCallback;
@@ -9241,7 +9351,7 @@ begin
           Break;
         end;
         if Assigned(BasePtr) then
-          Inc(Cardinal(BasePtr), Size);
+          Inc(PByte(BasePtr), Size);
       end;
     end else
       for i := Low(stMembers) to High(stMembers) do begin
@@ -9259,7 +9369,7 @@ begin
           Break;
         end;
         if Assigned(BasePtr) then
-          Inc(Cardinal(BasePtr), Size);
+          Inc(PByte(BasePtr), Size);
       end;
   end;
 end;
@@ -9277,7 +9387,7 @@ begin
       Break;
     end;
     if Assigned(aBasePtr) then
-      Inc(Cardinal(aBasePtr), Size);
+      Inc(PByte(aBasePtr), Size);
     Inc(Result, Size);
   end;
 end;
@@ -9329,7 +9439,7 @@ begin
       if SortMember <= High(stMembers) then begin
         BasePtr := aBasePtr;
         for j := Low(stMembers) to Pred(SortMember) do begin
-          Inc(Cardinal(BasePtr), stMembers[j].Size[BasePtr, aEndPtr, aElement]);
+          Inc(PByte(BasePtr), stMembers[j].Size[BasePtr, aEndPtr, aElement]);
           if Cardinal(BasePtr) > Cardinal(aEndPtr) then
             BasePtr := aEndPtr;
         end;
@@ -9356,7 +9466,7 @@ begin
         if SortMember <= High(stMembers) then begin
           BasePtr := aBasePtr;
           for j := Low(stMembers) to Pred(SortMember) do begin
-            Inc(Cardinal(BasePtr), stMembers[j].Size[BasePtr, aEndPtr, aElement]);
+            Inc(PByte(BasePtr), stMembers[j].Size[BasePtr, aEndPtr, aElement]);
             if Cardinal(BasePtr) > Cardinal(aEndPtr) then
               BasePtr := aEndPtr;
           end;
@@ -9877,6 +9987,7 @@ end;
 
 function CmpB8(a, b: Byte): Integer;
 asm
+{$IFDEF WIN32}
   xor ecx, ecx
   cmp al, dl
   ja @@GT
@@ -9888,10 +9999,24 @@ asm
   inc ecx
 @@EQ:
   mov eax, ecx
+{$ENDIF WIN32}
+{$IFDEF WIN64}
+  xor eax, eax
+  cmp ecx, edx
+  ja @@GT
+  je @@EQ
+@@LT:
+  dec eax
+  dec eax
+@@GT:
+  inc eax
+@@EQ:
+{$ENDIF WIN64}
 end;
 
 function CmpI32(a, b : Integer) : Integer;
 asm
+{$IFDEF WIN32}
   xor ecx, ecx
   cmp eax, edx
   jg @@GT
@@ -9903,10 +10028,24 @@ asm
   inc ecx
 @@EQ:
   mov eax, ecx
+{$ENDIF WIN32}
+{$IFDEF WIN64}
+  xor eax, eax
+  cmp ecx, edx
+  jg @@GT
+  je @@EQ
+@@LT:
+  dec eax
+  dec eax
+@@GT:
+  inc eax
+@@EQ:
+{$ENDIF WIN64}
 end;
 
 function CmpW32(a, b: Cardinal): Integer;
 asm
+{$IFDEF WIN32}
   xor ecx, ecx
   cmp eax, edx
   ja @@GT
@@ -9918,6 +10057,19 @@ asm
   inc ecx
 @@EQ:
   mov eax, ecx
+{$ENDIF WIN32}
+{$IFDEF WIN64}
+  xor eax, eax
+  cmp ecx, edx
+  ja @@GT
+  je @@EQ
+@@LT:
+  dec eax
+  dec eax
+@@GT:
+  inc eax
+@@EQ:
+{$ENDIF WIN64}
 end;
 
 function CmpI64(const a, b : Int64) : Integer;
@@ -9930,6 +10082,7 @@ function CmpI64(const a, b : Int64) : Integer;
 //    Result := nxGreaterThan;
 //end;
 asm
+{$IFDEF WIN32}
   xor eax, eax
   mov edx, [ebp+20]
   cmp edx, [ebp+12]
@@ -9945,6 +10098,19 @@ asm
 @@GT:
   inc eax
 @@EQ:
+{$ENDIF WIN32}
+{$IFDEF WIN64}
+  xor rax, rax
+  cmp rcx, rdx
+  jg @@GT
+  je @@EQ
+@@LT:
+  dec rax
+  dec rax
+@@GT:
+  inc rax
+@@EQ:
+{$ENDIF WIN64}
 end;
 
 function TwbEnumDef.FindSparseName(aSearchIndex: Int64; var Index: Integer): Boolean;
@@ -10257,7 +10423,7 @@ begin
         if PAnsiChar(aBasePtr)^ = #0 then
           Exit;
 
-        Inc(Cardinal(aBasePtr));
+        Inc(PByte(aBasePtr));
       end;
     end;
   end;
@@ -10490,15 +10656,16 @@ function TwbFloatDef.GetSize(aBasePtr, aEndPtr: Pointer; const aElement: IwbElem
 begin
   if Assigned(aBasePtr) and Assigned(aEndPtr) and (Cardinal(aBasePtr) >= Cardinal(aEndPtr)) then
     Result := Ord(noTerminator)
-  else if fdDouble then
-    Result := SizeOf(Double) + Ord(noTerminator)
   else
-    Result := SizeOf(Single) + Ord(noTerminator);
+    Result := GetDefaultSize(aBasePtr, aEndPtr, aElement)
 end;
 
 function TwbFloatDef.GetDefaultSize(aBasePtr, aEndPtr: Pointer; const aElement: IwbElement): Integer;
 begin
-  Result := GetSize(aBasePtr, aEndPtr, aElement);
+  if fdDouble then
+    Result := SizeOf(Double) + Ord(noTerminator)
+  else
+    Result := SizeOf(Single) + Ord(noTerminator);
 end;
 
 function TwbFloatDef.SetToDefault(aBasePtr, aEndPtr: Pointer; const aElement: IwbElement): Boolean;
@@ -11062,6 +11229,9 @@ begin
     Exit;
 
   if Result < $800 then
+    Exit;
+
+  if Result = $FFFFFFFF then
     Exit;
 
   if Assigned(aElement) then begin

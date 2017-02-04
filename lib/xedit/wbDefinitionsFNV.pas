@@ -23,7 +23,7 @@ uses
 
 var
 	wbAggroRadiusFlags: IwbFlagsDef;
-  wbPKDTFlags: IwbFlagsDef;
+	wbPKDTFlags: IwbFlagsDef;
 	wbRecordFlagsFlags: IwbFlagsDef;
 	wbServiceFlags: IwbFlagsDef;
 	wbTemplateFlags: IwbFlagsDef;
@@ -1254,6 +1254,57 @@ begin
     Result := '';
 end;
 
+function wbREFRNavmeshTriangleToStr(aInt: Int64; const aElement: IwbElement; aType: TwbCallbackType): string;
+var
+  Container  : IwbContainerElementRef;
+  Navmesh    : IwbElement;
+  MainRecord : IwbMainRecord;
+  Triangles  : IwbContainerElementRef;
+begin
+  case aType of
+    ctToStr: Result := IntToStr(aInt);
+    ctToEditValue: Result := IntToStr(aInt);
+    ctToSortKey: begin
+      Result := IntToHex64(aInt, 8);
+      Exit;
+    end;
+    ctCheck: Result := '';
+    ctEditType: Result := '';
+    ctEditInfo: Result := '';
+  end;
+
+  if not Assigned(aElement) then Exit;
+  Container := GetContainerRefFromUnionOrValue(aElement);
+  if not Assigned(Container) then Exit;
+
+  Navmesh := Container.Elements[0];
+
+  if not Assigned(Navmesh) then
+    Exit;
+
+  if not Supports(Navmesh.LinksTo, IwbMainRecord, MainRecord) then
+    Exit;
+
+  MainRecord := MainRecord.WinningOverride;
+
+  if MainRecord.Signature <> NAVM then begin
+    case aType of
+      ctToStr: Result := IntToStr(aInt) + ' <Warning: "'+MainRecord.ShortName+'" is not a Navmesh record>';
+      ctCheck: Result := '<Warning: "'+MainRecord.ShortName+'" is not a Navmesh record>';
+    end;
+    Exit;
+  end;
+
+  if not wbSimpleRecords and (aType = ctCheck) and Supports(MainRecord.ElementByPath['NVTR'], IwbContainerElementRef, Triangles) then
+    if aInt >= Triangles.ElementCount then
+      Result := '<Warning: Navmesh triangle not found in "' + MainRecord.Name + '">';
+end;
+
+function wbStringToInt(const aString: string; const aElement: IwbElement): Int64;
+begin
+  Result := StrToIntDef(aString, 0);
+end;
+
 
 var
   wbCtdaTypeFlags : IwbFlagsDef;
@@ -2141,7 +2192,8 @@ type
     ptReputation,         //REPU
     ptRegion,             //REGN
     ptChallenge,          //CHAL
-    ptCasino              //CSNO
+    ptCasino,             //CSNO
+    ptAnyForm             // Any form
   );
 
   PCTDAFunction = ^TCTDAFunction;
@@ -2153,7 +2205,7 @@ type
   end;
 
 const
-  wbCTDAFunctions : array[0..277] of TCTDAFunction = (
+  wbCTDAFunctions : array[0..288] of TCTDAFunction = (
     (Index:   1; Name: 'GetDistance'; ParamType1: ptObjectReference),
     (Index:   5; Name: 'GetLocked'),
     (Index:   6; Name: 'GetPos'; ParamType1: ptAxis),
@@ -2429,6 +2481,9 @@ const
     (Index: 1301; Name: 'GetPackageCount'; ParamType1: ptObjectReference; ),
     (Index: 1440; Name: 'IsPlayerSwimming'; ),
     (Index: 1441; Name: 'GetTFC'; ),
+    (Index: 1475; Name: 'GetPerkRank'; ParamType1: ptPerk; ParamType2: ptActor;),
+    (Index: 1476; Name: 'GetAltPerkRank'; ParamType1: ptPerk; ParamType2: ptActor;),
+    (Index: 1541; Name: 'GetActorFIKstatus'; ),
 
     // Added by nvse_plugin_ExtendedActorVariable
     (Index: 4352; Name: 'GetExtendedActorVariable'; ParamType1: ptInventoryObject; ),
@@ -2437,26 +2492,23 @@ const
 
     // Added by nvse_extender
     (Index: 4420; Name: 'NX_GetEVFl'; ParamType1: ptNone; ),  // Actually ptString, but it cannot be used in GECK
-    (Index: 4426; Name: 'NX_GetQVEVFl'; ParamType1: ptQuest; ParamType2: ptInteger;)
+    (Index: 4426; Name: 'NX_GetQVEVFl'; ParamType1: ptQuest; ParamType2: ptInteger;),
+
+    // Added by lutana_nvse
+    (Index: 4708; Name: 'GetArmorClass'; ParamType1: ptAnyForm; ),
+    (Index: 4709; Name: 'IsRaceInList'; ParamType1: ptFormList; ),
+    (Index: 4822; Name: 'GetReferenceFlag'; ParamType1: ptInteger; ),
+
+    // Added by JIP NVSE Plugin
+    (Index: 5637; Name: 'GetIsPoisoned'; ),
+    (Index: 5708; Name: 'IsEquippedWeaponSilenced'; ),
+    (Index: 5709; Name: 'IsEquippedWeaponScoped'; ),
+    (Index: 5953; Name: 'GetPCInRegion'; ParamType1: ptRegion; ),
+    (Index: 5962; Name: 'GetPCDetectionState'; )
   );
 
 var
   wbCTDAFunctionEditInfo: string;
-
-function CmpU32(a, b : Cardinal) : Integer;
-asm
-  xor ecx, ecx
-  cmp eax, edx
-  ja @@GT
-  je @@EQ
-@@LT:
-  dec ecx
-  dec ecx
-@@GT:
-  inc ecx
-@@EQ:
-  mov eax, ecx
-end;
 
 function wbCTDAParamDescFromIndex(aIndex: Integer): PCTDAFunction;
 var
@@ -2468,7 +2520,7 @@ begin
   H := High(wbCTDAFunctions);
   while L <= H do begin
     I := (L + H) shr 1;
-    C := CmpU32(wbCTDAFunctions[I].Index, aIndex);
+    C := CmpW32(wbCTDAFunctions[I].Index, aIndex);
     if C < 0 then
       L := I + 1
     else begin
@@ -4305,7 +4357,7 @@ begin
     {0x10000000}'Non-Pipboy / Reflected by Auto Water',
     {0x20000000}'Child Can Use / Refracted by Auto Water',
     {0x40000000}'NavMesh Generation - Ground',
-    {0x80000000}'Unknown 32'
+    {0x80000000}'Multibound'
   ]));
 
 (*   wbInteger('Record Flags 2', itU32, wbFlags([
@@ -4445,7 +4497,7 @@ begin
     {04} wbUnion('Global Variable / Required Rank', wbCOEDOwnerDecider, [
            wbByteArray('Unused', 4, cpIgnore),
            wbFormIDCk('Global Variable', [GLOB, NULL]),
-           wbInteger('Required Rank', itU32)
+           wbInteger('Required Rank', itS32)
          ]),
     {08} wbFloat('Item Condition')
   ]);
@@ -4531,7 +4583,7 @@ begin
 
   wbMODL :=
     wbRStructSK([0], 'Model', [
-      wbString(MODL, 'Model Filename'),
+      wbString(MODL, 'Model Filename', 0, cpNormal, True),
       wbByteArray(MODB, 'Unknown', 4, cpIgnore),
       wbByteArray(MODT, 'Texture Files Hashes', 0, cpIgnore),
 //      wbArray(MODT, 'Texture Files Hashes',
@@ -4544,7 +4596,7 @@ begin
 
   wbMODLActor :=
     wbRStructSK([0], 'Model', [
-      wbString(MODL, 'Model Filename'),
+      wbString(MODL, 'Model Filename', 0, cpNormal, True),
       wbByteArray(MODB, 'Unknown', 4, cpIgnore),
       wbByteArray(MODT, 'Texture Files Hashes', 0, cpIgnore),
 //      wbArray(MODT, 'Texture Files Hashes',
@@ -4557,7 +4609,7 @@ begin
 
   wbMODLReq :=
     wbRStructSK([0], 'Model', [
-      wbString(MODL, 'Model Filename'),
+      wbString(MODL, 'Model Filename', 0, cpNormal, True),
       wbByteArray(MODB, 'Unknown', 4, cpIgnore),
       wbByteArray(MODT, 'Texture Files Hashes', 0, cpIgnore),
 //      wbArray(MODT, 'Texture Files',
@@ -4928,12 +4980,12 @@ begin
   ]);
 
   wbICON := wbRStruct('Icon', [
-    wbString(ICON, 'Large Icon filename'),
+    wbString(ICON, 'Large Icon filename', 0, cpNormal, True),
     wbString(MICO, 'Small Icon filename')
   ], [], cpNormal, False, nil, True);
 
   wbICONReq := wbRStruct('Icon', [
-    wbString(ICON, 'Large Icon filename'),
+    wbString(ICON, 'Large Icon filename', 0, cpNormal, True),
     wbString(MICO, 'Small Icon filename')
   ], [], cpNormal, True, nil, True);
 
@@ -5463,7 +5515,8 @@ begin
         {47} wbFormIDCkNoReach('Reputation', [REPU]),
         {48} wbFormIDCkNoReach('Region', [REGN]),
         {49} wbFormIDCkNoReach('Challenge', [CHAL]),
-        {50} wbFormIDCkNoReach('Casino', [CSNO])
+        {50} wbFormIDCkNoReach('Casino', [CSNO]),
+        {51} wbFormID('Form')
       ]),
       wbUnion('Parameter #2', wbCTDAParam2Decider, [
         {00} wbByteArray('Unknown', 4),
@@ -5556,7 +5609,8 @@ begin
         {47} wbFormIDCkNoReach('Reputation', [REPU]),
         {48} wbFormIDCkNoReach('Region', [REGN]),
         {49} wbFormIDCkNoReach('Challenge', [CHAL]),
-        {50} wbFormIDCkNoReach('Casino', [CSNO])
+        {50} wbFormIDCkNoReach('Casino', [CSNO]),
+        {51} wbFormID('Form')
       ]),
       wbInteger('Run On', itU32, wbEnum([
         'Subject',
@@ -5699,7 +5753,7 @@ begin
     wbEITM,
     wbBMDT,
     wbRStruct('Male biped model', [
-      wbString(MODL, 'Model Filename'),
+      wbString(MODL, 'Model Filename', 0, cpNormal, True),
       wbByteArray(MODT, 'Texture Files Hashes', 0, cpIgnore),
       wbMODS,
       wbMODD
@@ -5712,7 +5766,7 @@ begin
     wbString(ICON, 'Male icon filename'),
     wbString(MICO, 'Male mico filename'),
     wbRStruct('Female biped model', [
-      wbString(MOD3, 'Model Filename'),
+      wbString(MOD3, 'Model Filename', 0, cpNormal, True),
       wbByteArray(MO3T, 'Texture Files Hashes', 0, cpIgnore),
       wbMO3S,
       wbMOSD
@@ -5768,7 +5822,7 @@ begin
     wbFULL,
     wbBMDT,
     wbRStruct('Male biped model', [
-      wbString(MODL, 'Model Filename'),
+      wbString(MODL, 'Model Filename', 0, cpNormal, True),
       wbByteArray(MODT, 'Texture Files Hashes', 0, cpIgnore),
       wbMODS,
       wbMODD
@@ -5781,7 +5835,7 @@ begin
     wbString(ICON, 'Male icon filename'),
     wbString(MICO, 'Male mico filename'),
     wbRStruct('Female biped model', [
-      wbString(MOD3, 'Model Filename'),
+      wbString(MOD3, 'Model Filename', 0, cpNormal, True),
       wbByteArray(MO3T, 'Texture Files Hashes', 0, cpIgnore),
       wbMO3S,
       wbMOSD
@@ -6107,7 +6161,7 @@ begin
      {02} wbInteger('Energy Level', itU8),
      {03} wbInteger('Responsibility', itU8),
      {04} wbInteger('Mood', itU8, wbMoodEnum),
-          wbByteArray('Unused', 3),   // Mood is stored as a DWord as shown by endianSwapping but is truncated to byte during load :)
+     {05} wbByteArray('Unused', 3),   // Mood is stored as a DWord as shown by endianSwapping but is truncated to byte during load :)
      {08} wbInteger('Buys/Sells and Services', itU32, wbServiceFlags),
      {0C} wbInteger('Teaches', itS8, wbSkillEnum),
      {0D} wbInteger('Maximum training level', itU8),
@@ -6528,7 +6582,7 @@ begin
     ], []), cpIgnore, False, nil, nil, wbNeverShow),
     wbFULL,
     wbFloat(PNAM, 'Priority', cpNormal, True, 1, -1, nil, nil, 50.0),
-    wbString(TDUM),
+    wbString(TDUM, 'Dumb Response'),
     wbStruct(DATA, '', [
       wbInteger('Type', itU8, wbEnum([
         {0} 'Topic',
@@ -7265,7 +7319,7 @@ begin
       wbByteArray(NVCA, 'Unknown'),
       wbArray(NVDP, 'Doors', wbStruct('Door', [
         wbFormIDCk('Reference', [REFR]),
-        wbInteger('Unknown', itU16),
+        wbInteger('Triangle', itU16),
         wbByteArray('Unused', 2)
       ])),
       wbByteArray(NVGD, 'Unknown'),
@@ -7668,7 +7722,7 @@ begin
              {0x00000001}'Unknown 1',
              {0x00000002}'Always Uses World Orientation',
              {0x00000004}'Knock Down - Always',
-             {0x00000008}'Knock Down - By Formular',
+             {0x00000008}'Knock Down - By Formula',
              {0x00000010}'Ignore LOS Check',
              {0x00000020}'Push Explosion Source Ref Only',
              {0x00000040}'Ignore Image Space Swap'
@@ -9055,7 +9109,8 @@ begin
     ], cpNormal, True)
   ]);
 
-  if wbSimpleRecords then begin
+  // floats are reported to change faces after copying
+  if True {wbSimpleRecords} then begin
     wbFaceGen := wbRStruct('FaceGen Data', [
       wbByteArray(FGGS, 'FaceGen Geometry-Symmetric', 0, cpNormal, True),
       wbByteArray(FGGA, 'FaceGen Geometry-Asymmetric', 0, cpNormal, True),
@@ -9186,6 +9241,7 @@ begin
     wbRArrayS('Items', wbCNTO, cpNormal, False, nil, nil, wbActorTemplateUseInventory),
     wbAIDT,
     wbRArray('Packages', wbFormIDCk(PKID, 'Package', [PACK]), cpNormal, False, nil, nil, wbActorTemplateUseAIPackages),
+    wbArrayS(KFFZ, 'Animations', wbStringLC('Animation'), 0, cpNormal, False, nil, nil, wbActorTemplateUseModelAnimation),
     wbFormIDCk(CNAM, 'Class', [CLAS], False, cpNormal, True, wbActorTemplateUseTraits),
     wbStruct(DATA, '', [
       {00} wbInteger('Base Health', itS32),
@@ -9499,7 +9555,7 @@ begin
           wbByteArray('Unused', 4, cpIgnore)
         ]),
         wbInteger('Radius', itS32)
-      ]),
+      ], cpNormal, True),
       wbStruct(PLD2, 'Location 2', [
         wbInteger('Type', itS32, wbEnum([
           {0} 'Near reference',
@@ -10028,13 +10084,17 @@ begin
       wbEmpty(MMRK, 'Audio Marker'),
       wbUnknown(FULL),
       wbFormIDCk(CNAM, 'Audio Location', [ALOC]),
-      wbUnknown(BNAM),
-      wbFloat(MNAM),
-      wbFloat(NNAM)
+      wbInteger(BNAM, 'Flags', itU32, wbFlags(['Use Controller Values'])),
+      wbFloat(MNAM, 'Layer 2 Trigger %', cpNormal, True, 100),
+      wbFloat(NNAM, 'Layer 3 Trigger %', cpNormal, True, 100)
     ], []),
 
-    wbUnknown(XSRF),
-    wbUnknown(XSRD),
+    wbInteger(XSRF, 'Special Rendering Flags', itU32, wbFlags([
+      'Unknown 0',
+      'Imposter',
+      'Use Full Shader in LOD'
+    ])),
+    wbByteArray(XSRD, 'Special Rendering Data', 4),
 
     {--- X Target Data ---}
     wbFormIDCk(XTRG, 'Target', [REFR, ACRE, ACHR, PGRE, PMIS, PBEA], True),
@@ -10170,7 +10230,7 @@ begin
     {--- Generated Data ---}
     wbStruct(XNDP, 'Navigation Door Link', [
       wbFormIDCk('Navigation Mesh', [NAVM]),
-      wbInteger('Unknown', itU16),
+      wbInteger('Teleport Marker Triangle', itS16, wbREFRNavmeshTriangleToStr, wbStringToInt),
       wbByteArray('Unused', 2)
     ]),
 
@@ -10802,7 +10862,7 @@ begin
         233, 'HandGrip4',
         234, 'HandGrip5',
         235, 'HandGrip6',
-        255, ' DEFAULT'
+        255, 'DEFAULT'
       ])),
       {14} wbInteger('Ammo Use', itU8),
       {15} wbInteger('Reload Animation', itU8, wbReloadAnimEnum),
@@ -10837,7 +10897,7 @@ begin
             162, 'AttackThrow8',
             102, 'PlaceMine',
             108, 'PlaceMine2',
-            255, ' DEFAULT'
+            255, 'DEFAULT'
            ])),
       {42} wbInteger('Projectile Count', itU8),
       {43} wbInteger('Embedded Weapon - Actor Value', itU8, wbEnum([
@@ -10912,7 +10972,7 @@ begin
        99, 'AttackCustom3Power',
       100, 'AttackCustom4Power',
       101, 'AttackCustom5Power',
-      255, ' DEFAULT'
+      255, 'DEFAULT'
      ])),
      wbInteger('Strength Req', itU32),
      wbByteArray('Unknown', 1),
