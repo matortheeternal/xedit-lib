@@ -123,12 +123,12 @@ end;
 
 class procedure TRttiIni.Save(filename: string; obj: TObject);
 var
- ctx: TRttiContext;
- objType: TRttiType;
- field: TRttiField;
- IniSection: IniSectionAttribute;
- ini: TMemIniFile;
- CurrentSection: string;
+  ctx: TRttiContext;
+  objType: TRttiType;
+  field: TRttiField;
+  IniSection: IniSectionAttribute;
+  ini: TMemIniFile;
+  CurrentSection: string;
 begin
   ctx := TRttiContext.Create;
   try
