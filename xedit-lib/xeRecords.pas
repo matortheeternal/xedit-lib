@@ -17,6 +17,7 @@ uses
   function GetFormID(_id: Cardinal; formID: PCardinal): WordBool; cdecl;
   function SetFormID(_id: Cardinal; formID: Cardinal): WordBool; cdecl;
   function ExchangeReferences(_id, oldFormID, newFormID: Cardinal): WordBool; cdecl;
+  function GetReferences(_id: Cardinal; _res: PCardinalArray): WordBool; cdecl;
 
 implementation
 
@@ -312,6 +313,25 @@ begin
   try
     if Supports(Resolve(_id), IwbMainRecord, rec) then begin
       rec.CompareExchangeFormID(oldFormID, newFormID);
+      Result := true;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetReferences(_id: Cardinal; _res: PCardinalArray): WordBool; cdecl;
+var
+  rec, ref: IwbMainRecord;
+  i: Integer;
+begin
+  Result := false;
+  try
+    if Supports(Resolve(_id), IwbMainRecord, rec) then begin
+      GetMem(_res, 4 * rec.ReferencedByCount);
+      for i := 0 to Pred(rec.ReferencedByCount) do
+        if Supports(rec.ReferencedBy[i], IwbMainRecord, ref) then
+          _res^[i] := Store(ref);
       Result := true;
     end;
   except
