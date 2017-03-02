@@ -6,12 +6,12 @@ uses
   SysUtils;
 
   // FILE HANDLING METHODS
-  function NewFile(filename: PAnsiChar): Cardinal; cdecl; external 'XEditLib.dll';
-  function FileByIndex(index: Integer): Cardinal; cdecl; external 'XEditLib.dll';
-  function FileByLoadOrder(load_order: Integer): Cardinal; cdecl; external 'XEditLib.dll';
-  function FileByName(name: PAnsiChar): Cardinal; cdecl; external 'XEditLib.dll';
-  function FileByAuthor(author: PAnsiChar): Cardinal; cdecl; external 'XEditLib.dll';
-  function GetElementFile(_id: Cardinal): Cardinal; cdecl; external 'XEditLib.dll';
+  function NewFile(filename: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
+  function FileByIndex(index: Integer; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
+  function FileByLoadOrder(load_order: Integer; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
+  function FileByName(name: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
+  function FileByAuthor(author: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
+  function GetElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function SaveFile(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
   function GetFileNames(fileNames: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
 
@@ -25,6 +25,7 @@ uses
 
 procedure BuildFileHandlingTests;
 var
+  success: WordBool;
   h: Cardinal;
 begin
   Describe('File Handling Functions', procedure
@@ -33,14 +34,14 @@ begin
         begin
           It('Should return a handle if a matching file is loaded', procedure
             begin
-              h := FileByName('Skyrim.esm');
-              Expect(h > 0, 'Handle should be greater than 0');
+              success := FileByName('Skyrim.esm', @h);
+              Expect(success and (h > 0), 'Handle should be greater than 0');
             end);
 
           It('Should return return 0 if a matching file is not loaded', procedure
             begin
-              h := FileByName('NonExistingFile.esp');
-              Expect(h = 0, 'Handle should be 0');
+              success := FileByName('NonExistingFile.esp', @h);
+              Expect(success and (h = 0), 'Handle should be 0');
             end);
         end);
 
@@ -48,14 +49,14 @@ begin
         begin
           It('Should return a handle if the index is in bounds', procedure
             begin
-              h := FileByIndex(1);
-              Expect(h > 0, 'Handle should be greater than 0');
+              success := FileByIndex(1, @h);
+              Expect(success and (h > 0), 'Handle should be greater than 0');
             end);
 
           It('Should return return 0 if index is out of bounds', procedure
             begin
-              h := FileByIndex(999);
-              Expect(h = 0, 'Handle should be 0');
+              success := FileByIndex(999, @h);
+              Expect(success and (h = 0), 'Handle should be 0');
             end);
         end);
 
@@ -63,14 +64,14 @@ begin
         begin
           It('Should return a handle if the index is in bounds', procedure
             begin
-              h := FileByLoadOrder(1);
-              Expect(h > 0, 'Handle should be greater than 0');
+              success := FileByLoadOrder(1, @h);
+              Expect(success and (h > 0), 'Handle should be greater than 0');
             end);
 
           It('Should return return 0 if index is out of bounds', procedure
             begin
-              h := FileByLoadOrder(999);
-              Expect(h = 0, 'Handle should be 0');
+              success := FileByLoadOrder(999, @h);
+              Expect(success and (h = 0), 'Handle should be 0');
             end);
         end);
 
@@ -78,14 +79,14 @@ begin
         begin
           It('Should return a handle if a matching file is loaded', procedure
             begin
-              h := FileByAuthor('mcarofano');
-              Expect(h > 0, 'Handle should be greater than 0');
+              success := FileByAuthor('mcarofano', @h);
+              Expect(success and (h > 0), 'Handle should be greater than 0');
             end);
 
           It('Should return return 0 if a matching file is not loaded', procedure
             begin
-              h := FileByAuthor('U. N. Owen');
-              Expect(h = 0, 'Handle should be 0');
+              success := FileByAuthor('U. N. Owen', @h);
+              Expect(success and (h = 0), 'Handle should be 0');
             end);
         end);
     end);
