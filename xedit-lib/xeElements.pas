@@ -22,7 +22,7 @@ type
   function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; cdecl;
   function LinksTo(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function ElementExists(_id: Cardinal; key: PWideChar): WordBool; cdecl;
-  function ElementCount(_id: Cardinal): Integer; cdecl;
+  function ElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
   function ElementAssigned(_id: Cardinal): WordBool; cdecl;
   function Equals(_id, _id2: Cardinal): WordBool; cdecl;
   function IsMaster(_id: Cardinal): WordBool; cdecl;
@@ -426,12 +426,12 @@ begin
     e := Resolve(_id);
     if not Supports(e, IwbElement, element) then
       exit;
-    if (not Assigned(key)) or (Length(key) = 0) then
+    if (not Assigned(key)) or (Length(string(key)) = 0) then
       element.Remove
     else begin
       if not Supports(e, IwbContainerElementRef, container) then
         exit;
-      container.ElementByPath[key].Remove;
+      container.ElementByPath[string(key)].Remove;
     end;
     Result := true;
   except
@@ -469,7 +469,7 @@ begin
     element := Resolve(_id);
     if Supports(element, IwbFile, _file) then
       // TODO: perhaps also by group name?
-      Result := _file.HasGroup(StrToSignature(key))
+      Result := _file.HasGroup(StrToSignature(string(key)))
     else if Supports(element, IwbContainerElementRef, container) then
       // TODO: adjust logic here so we can check paths
       Result := container.ElementExists[string(key)];
@@ -478,14 +478,16 @@ begin
   end;
 end;
 
-function ElementCount(_id: Cardinal): Integer; cdecl;
+function ElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
 var
   container: IwbContainerElementRef;
 begin
-  Result := -1;
+  Result := False;
   try
-    if Supports(Resolve(_id), IwbContainerElementRef, container) then
-      Result := container.ElementCount;
+    if Supports(Resolve(_id), IwbContainerElementRef, container) then begin
+      count^ := container.ElementCount;
+      Result := True;
+    end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
