@@ -16,6 +16,7 @@ uses
   function OverrideByIndex(_id: Cardinal; index: Integer; _res: PCardinal): WordBool; cdecl;
   function GetFormID(_id: Cardinal; formID: PCardinal): WordBool; cdecl;
   function SetFormID(_id: Cardinal; formID: Cardinal): WordBool; cdecl;
+  function ExchangeReferences(_id, oldFormID, newFormID: Cardinal): WordBool; cdecl;
 
 implementation
 
@@ -296,6 +297,21 @@ begin
   try
     if Supports(Resolve(_id), IwbMainRecord, rec) then begin
       rec.LoadOrderFormID := formID;
+      Result := true;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function ExchangeReferences(_id, oldFormID, newFormID: Cardinal): WordBool; cdecl;
+var
+  rec: IwbMainRecord;
+begin
+  Result := false;
+  try
+    if Supports(Resolve(_id), IwbMainRecord, rec) then begin
+      rec.CompareExchangeFormID(oldFormID, newFormID);
       Result := true;
     end;
   except
