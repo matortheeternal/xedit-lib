@@ -5,13 +5,13 @@ interface
 uses
   xeMeta;
 
-  function AddRecord(_id: Cardinal; sig: string; _res: PCardinal): WordBool; cdecl;
+  function AddRecord(_id: Cardinal; sig: PWideChar; _res: PCardinal): WordBool; cdecl;
   function GetRecords(_id: Cardinal; _res: PCardinalArray): WordBool; cdecl;
-  function RecordsBySignature(_id: Cardinal; sig: string; _res: PCardinalArray): WordBool; cdecl;
+  function RecordsBySignature(_id: Cardinal; sig: PWideChar; _res: PCardinalArray): WordBool; cdecl;
   function RecordByIndex(_id: Cardinal; index: Integer; _res: PCardinal): WordBool; cdecl;
   function RecordByFormID(_id, formID: Cardinal; _res: PCardinal): WordBool; cdecl;
-  function RecordByEditorID(_id: Cardinal; edid: string; _res: PCardinal): WordBool; cdecl;
-  function RecordByName(_id: Cardinal; full: string; _res: PCardinal): WordBool; cdecl;
+  function RecordByEditorID(_id: Cardinal; edid: PWideChar; _res: PCardinal): WordBool; cdecl;
+  function RecordByName(_id: Cardinal; full: PWideChar; _res: PCardinal): WordBool; cdecl;
   function OverrideCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
   function OverrideByIndex(_id: Cardinal; index: Integer; _res: PCardinal): WordBool; cdecl;
   function GetFormID(_id: Cardinal; formID: PCardinal): WordBool; cdecl;
@@ -26,7 +26,7 @@ uses
   // xelib units
   xeGroups;
 
-function AddRecord(_id: Cardinal; sig: string; _res: PCardinal): WordBool; cdecl;
+function AddRecord(_id: Cardinal; sig: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
   _file: IwbFile;
   group: IwbGroupRecord;
@@ -35,8 +35,8 @@ begin
   Result := false;
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
-      group := AddGroupIfMissing(_file, sig);
-      element := group.Add(sig);
+      group := AddGroupIfMissing(_file, string(sig));
+      element := group.Add(string(sig));
       StoreIfAssigned(IInterface(element), _res, Result);
     end;
   except
@@ -86,7 +86,7 @@ begin
   end;
 end;
 
-function RecordsBySignature(_id: Cardinal; sig: string; _res: PCardinalArray): WordBool; cdecl;
+function RecordsBySignature(_id: Cardinal; sig: PWideChar; _res: PCardinalArray): WordBool; cdecl;
 var
   _sig: TwbSignature;
   _file: IwbFile;
@@ -96,7 +96,7 @@ var
 begin
   Result := false;
   try
-    _sig := TwbSignature(sig);
+    _sig := TwbSignature(AnsiString(sig));
     if Supports(Resolve(_id), IwbFile, _file) then
       if _file.HasGroup(_sig) then begin
         group := _file.GroupBySignature[_sig];
@@ -166,7 +166,7 @@ begin
       end;
 end;
 
-function RecordByEditorID(_id: Cardinal; edid: string; _res: PCardinal): WordBool; cdecl;
+function RecordByEditorID(_id: Cardinal; edid: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
   e: IInterface;
   _file: IwbFile;
@@ -177,9 +177,9 @@ begin
   try
     e := Resolve(_id);
     if Supports(e, IwbFile, _file) then
-      rec := _file.RecordByEditorID[edid]
+      rec := _file.RecordByEditorID[string(edid)]
     else if Supports(e, IwbGroupRecord, _group) then
-      rec := FindRecordByEditorID(_group, edid);
+      rec := FindRecordByEditorID(_group, string(edid));
     StoreIfAssigned(IInterface(rec), _res, Result);
   except
     on x: Exception do ExceptionHandler(x);
@@ -229,13 +229,13 @@ begin
     FindRecordByName(group, full);
 end;
 
-function RecordByName(_id: Cardinal; full: string; _res: PCardinal): WordBool; cdecl;
+function RecordByName(_id: Cardinal; full: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
   rec: IwbMainRecord;
 begin
   Result := false;
   try
-    rec := FindRecordByName(Resolve(_id), full);
+    rec := FindRecordByName(Resolve(_id), string(full));
     StoreIfAssigned(IInterface(rec), _res, Result);
   except
     on x: Exception do ExceptionHandler(x);
