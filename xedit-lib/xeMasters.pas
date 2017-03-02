@@ -5,7 +5,7 @@ interface
   function CleanMasters(_id: Cardinal): WordBool; cdecl;
   function SortMasters(_id: Cardinal): WordBool; cdecl;
   function AddMaster(_id: Cardinal; masterName: PWideChar): WordBool; cdecl;
-  function GetMaster(_id: Cardinal; index: Integer): Cardinal; cdecl;
+  function GetMaster(_id: Cardinal; index: Integer; _res: PCardinal): WordBool; cdecl;
 
 implementation
 
@@ -68,14 +68,16 @@ begin
   end;
 end;
 
-function GetMaster(_id: Cardinal; index: Integer): Cardinal; cdecl;
+function GetMaster(_id: Cardinal; index: Integer; _res: PCardinal): WordBool; cdecl;
 var
   _file: IwbFile;
 begin
-  Result := 0;
+  Result := False;
   try
-    if Supports(Resolve(_id), IwbFile, _file) then
-      Result := Store(_file.Masters[index]);
+    if Supports(Resolve(_id), IwbFile, _file) then begin
+      _res^ := Store(_file.Masters[index]);
+      Result := True;
+    end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
