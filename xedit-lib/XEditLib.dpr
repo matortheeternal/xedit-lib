@@ -57,7 +57,8 @@ exports
   // ELEMENT HANDLING METHODS
   GetElement, GetElements, GetElementFile, GetContainer, NewElement,
   RemoveElement, ElementExists, ElementCount, LinksTo, ElementAssigned, Equals,
-  CopyElement, IsMaster, IsInjected, IsOverride, IsWinningOverride,
+  GetErrors, GetErrorString, CopyElement, IsMaster, IsInjected, IsOverride,
+  IsWinningOverride,
   // SERIALIZATION METHODS
   ElementToJson,
   // ELEMENT VALUE METHODS
