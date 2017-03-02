@@ -5,12 +5,12 @@ interface
 uses
   wbInterface;
 
-  function HasGroup(_id: Cardinal; sig: string; _res: PWordBool): WordBool; cdecl;
-  function AddGroup(_id: Cardinal; sig: string; _res: PCardinal): WordBool; cdecl;
+  function HasGroup(_id: Cardinal; sig: PWideChar; _res: PWordBool): WordBool; cdecl;
+  function AddGroup(_id: Cardinal; sig: PWideChar; _res: PCardinal): WordBool; cdecl;
   function GetGroupSignatures(_id: Cardinal; groups: PWideChar; len: Integer): WordBool; cdecl;
   function GetChildGroup(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
-  function GroupSignatureFromName(name, str: PWideChar): WordBool; cdecl;
-  function GroupNameFromSignature(sig, str: PWideChar; len: Integer): WordBool; cdecl;
+  function GroupSignatureFromName(name, sig: PWideChar): WordBool; cdecl;
+  function GroupNameFromSignature(sig, name: PWideChar; len: Integer): WordBool; cdecl;
   function GetGroupSignatureNameMap(str: PWideChar; len: Integer): WordBool; cdecl;
 
   // native functions
@@ -45,14 +45,14 @@ begin
   Result := group.GroupType in [1,6,7];
 end;
 
-function HasGroup(_id: Cardinal; sig: string; _res: PWordBool): WordBool; cdecl;
+function HasGroup(_id: Cardinal; sig: PWideChar; _res: PWordBool): WordBool; cdecl;
 var
   _file: IwbFile;
 begin
   Result := false;
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
-      _res^ := _file.HasGroup(TwbSignature(sig));
+      _res^ := _file.HasGroup(TwbSignature(AnsiString(sig)));
       Result := true;
     end;
   except
@@ -60,7 +60,7 @@ begin
   end;
 end;
 
-function AddGroupIfMissing(_file: IwbFile; sig: string): IwbGroupRecord;
+function AddGroupIfMissing(_file: IwbFile; sig: String): IwbGroupRecord;
 var
   _sig: TwbSignature;
 begin
@@ -71,14 +71,14 @@ begin
     Supports(_file.Add(sig), IwbGroupRecord, Result);
 end;
 
-function AddGroup(_id: Cardinal; sig: string; _res: PCardinal): WordBool; cdecl;
+function AddGroup(_id: Cardinal; sig: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
   _file: IwbFile;
 begin
   Result := false;
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
-      _res^ := Store(AddGroupIfMissing(_file, sig));
+      _res^ := Store(AddGroupIfMissing(_file, string(sig)));
       Result := true;
     end;
   except
@@ -125,16 +125,16 @@ begin
   end;
 end;
 
-function GroupSignatureFromName(name, str: PWideChar): WordBool; cdecl;
+function GroupSignatureFromName(name, sig: PWideChar): WordBool; cdecl;
 var
-  sig: String;
+  str: String;
 begin
   Result := false;
   try
     BuildGroupNameMap;
-    if slGroupNameMap.IndexOfName(name) > -1 then begin
-      sig := slGroupNameMap.Values[name];
-      StrLCopy(str, PWideChar(sig), 4);
+    if slGroupNameMap.IndexOfName(string(name)) > -1 then begin
+      str := slGroupNameMap.Values[string(name)];
+      StrLCopy(sig, PWideChar(str), 4);
       Result := true;
     end;
   except
@@ -142,16 +142,16 @@ begin
   end;
 end;
 
-function GroupNameFromSignature(sig, str: PWideChar; len: Integer): WordBool; cdecl;
+function GroupNameFromSignature(sig, name: PWideChar; len: Integer): WordBool; cdecl;
 var
-  name: String;
+  str: String;
   RecordDef: PwbRecordDef;
 begin
   Result := false;
   try
     if wbFindRecordDef(AnsiString(sig), RecordDef) then begin
-      name := RecordDef.Name;
-      StrLCopy(str, PWideChar(name), len);
+      str := RecordDef.Name;
+      StrLCopy(name, PWideChar(WideString(str)), len);
       Result := true;
     end;
   except
