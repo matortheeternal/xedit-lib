@@ -71,7 +71,7 @@ exports
   // RECORD HANDLING METHODS
   AddRecord, GetRecords, RecordsBySignature, RecordByIndex, RecordByFormID,
   RecordByEditorID, RecordByName, OverrideCount, OverrideByIndex, GetFormID,
-  SetFormID;
+  SetFormID, ExchangeReferences;
   // RECORD VALUE METHODS
 
 begin

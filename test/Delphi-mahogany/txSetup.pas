@@ -7,10 +7,11 @@ uses
   txMeta;
 
   // LOADING AND SET UP METHODS
-  procedure SetGameMode(mode: Integer); cdecl; external 'XEditLib.dll';
+  function SetGameMode(mode: Integer): Boolean; cdecl; external 'XEditLib.dll';
   function GetLoadOrder(str: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
   function LoadPlugins(loadOrder: PWideChar): WordBool; cdecl; cdecl; external 'XEditLib.dll';
   function GetLoaderDone: WordBool; cdecl; external 'XEditLib.dll';
+  function GetGamePath(gameMode: Integer; str: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
 
   // PUBLIC TESTING API
   procedure LoadXEdit;

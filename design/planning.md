@@ -66,12 +66,12 @@
 - IsWinningOverride
 - IsValue
 - RemoveElement: replaces Remove, RemoveByIndex, RemoveElement, and RemoveNode
+- GetContainer
 
 **TODO:**
 - ElementMatches
 - StructMatches
 - MoveElementToIndex
-- GetContainer
 - CopyRecord: replaces wbCopyElementToFile
 - CopyElement: replaces wbCopyElementToRecord
 
@@ -142,6 +142,7 @@
 - OverrideByIndex
 - GetFormID
 - SetFormID
+- ExchangeReferences
 
 ### RECORD ELEMENTS
 

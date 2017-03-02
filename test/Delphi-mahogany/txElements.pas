@@ -15,7 +15,7 @@ uses
   function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
   function LinksTo(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function ElementExists(_id: Cardinal; key: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
-  function ElementCount(_id: Cardinal): Integer; cdecl; external 'XEditLib.dll';
+  function ElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function ElementAssigned(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
   function Equals(_id, _id2: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
   function IsMaster(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
