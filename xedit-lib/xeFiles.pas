@@ -5,11 +5,11 @@ interface
 uses
   wbInterface;
 
-  function NewFile(filename: PAnsiChar): Cardinal; cdecl;
-  function FileByIndex(index: Integer): Cardinal; cdecl;
-  function FileByLoadOrder(load_order: Integer): Cardinal; cdecl;
-  function FileByName(name: PAnsiChar): Cardinal; cdecl;
-  function FileByAuthor(author: PAnsiChar): Cardinal; cdecl;
+  function NewFile(filename: PWideChar; _res: PCardinal): WordBool; cdecl;
+  function FileByIndex(index: Integer; _res: PCardinal): WordBool; cdecl;
+  function FileByLoadOrder(load_order: Integer; _res: PCardinal): WordBool; cdecl;
+  function FileByName(name: PWideChar; _res: PCardinal): WordBool; cdecl;
+  function FileByAuthor(author: PWideChar; _res: PCardinal): WordBool; cdecl;
   function SaveFile(_id: Cardinal): WordBool; cdecl;
   function GetFileNames(fileNames: PWideChar; len: Integer): WordBool; cdecl;
 
@@ -72,16 +72,18 @@ begin
   Result := _file as IwbElement;
 end;
 
-function NewFile(filename: PAnsiChar): Cardinal; cdecl;
+function NewFile(filename: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
   element: IwbElement;
 begin
-  Result := 0;
+  Result := False;
   try
     // store the file and return the result
     element := NewFileElement(string(filename));
-    if Assigned(element) then
-      Result := Store(element);
+    if Assigned(element) then begin
+      _res^ := Store(element);
+      Result := True;
+    end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -92,15 +94,17 @@ begin
   Result := Files[index];
 end;
 
-function FileByIndex(index: Integer): Cardinal; cdecl;
+function FileByIndex(index: Integer; _res: PCardinal): WordBool; cdecl;
 var
   _file: IwbFile;
 begin
-  Result := 0;
+  Result := False;
   try
     _file := NativeFileByIndex(index);
-    if Assigned(_file) then
-      Result := Store(_file);
+    if Assigned(_file) then begin
+      _res^ := Store(_file);
+      Result := True;
+    end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -117,15 +121,17 @@ begin
     end;
 end;
 
-function FileByLoadOrder(load_order: Integer): Cardinal; cdecl;
+function FileByLoadOrder(load_order: Integer; _res: PCardinal): WordBool; cdecl;
 var
   _file: IwbFile;
 begin
-  Result := 0;
+  Result := False;
   try
     _file := NativeFileByLoadOrder(load_order);
-    if Assigned(_file) then
-      Result := Store(_file);
+    if Assigned(_file) then begin
+      _res^ := Store(_file);
+      Result := True;
+    end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -142,15 +148,17 @@ begin
     end;
 end;
 
-function FileByName(name: PAnsiChar): Cardinal; cdecl;
+function FileByName(name: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
   _file: IwbFile;
 begin
-  Result := 0;
+  Result := False;
   try
     _file := NativeFileByName(string(name));
-    if Assigned(_file) then
-      Result := Store(_file);
+    if Assigned(_file) then begin
+      _res^ := Store(_file);
+      Result := True;
+    end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -170,15 +178,17 @@ begin
   end;
 end;
 
-function FileByAuthor(author: PAnsiChar): Cardinal; cdecl;
+function FileByAuthor(author: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
   _file: IwbFile;
 begin
-  Result := 0;
+  Result := False;
   try
     _file := NativeFileByAuthor(string(author));
-    if Assigned(_file) then
-      Result := Store(_file);
+    if Assigned(_file) then begin
+      _res^ := Store(_file);
+      Result := True;
+    end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
