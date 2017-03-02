@@ -25,6 +25,7 @@ type
   function ElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
   function ElementAssigned(_id: Cardinal): WordBool; cdecl;
   function Equals(_id, _id2: Cardinal): WordBool; cdecl;
+  function CopyElement(_id, _id2: Cardinal; aAsNew, aDeepCopy: WordBool; _res: PCardinal): WordBool; cdecl;
   function IsMaster(_id: Cardinal): WordBool; cdecl;
   function IsInjected(_id: Cardinal): WordBool; cdecl;
   function IsOverride(_id: Cardinal): WordBool; cdecl;
@@ -515,6 +516,28 @@ begin
     if Supports(Resolve(_id), IwbElement, element) then
       if Supports(Resolve(_id2), IwbElement, element2) then
         Result := element.Equals(element2);
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function CopyElement(_id, _id2: Cardinal; aAsNew, aDeepCopy: WordBool; _res: PCardinal): WordBool; cdecl;
+var
+  _file: IwbFile;
+  rec: IwbMainRecord;
+  element: IwbElement;
+begin
+  Result := false;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then exit;
+    if Supports(Resolve(_id2), IwbFile, _file) then begin
+      _res^ := Store(wbCopyElementToFile(element, _file, aAsNew, aDeepCopy, '', '', ''));
+      Result := true;
+    end
+    else if Supports(Resolve(_id2), IwbMainRecord, rec) then begin
+      _res^ := Store(wbCopyElementToRecord(element, rec, aAsNew, aDeepCopy));
+      Result := true;
+    end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
