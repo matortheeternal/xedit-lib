@@ -13,7 +13,7 @@ type
     procedure Execute; override;
   end;
 
-  procedure SetGameMode(mode: Integer); cdecl;
+  function SetGameMode(mode: Integer): Boolean; cdecl;
   function GetLoadOrder(str: PWideChar; len: Integer): WordBool; cdecl;
   function LoadPlugins(loadOrder: PWideChar): WordBool; cdecl;
   function GetLoaderDone: WordBool; cdecl;
@@ -97,8 +97,9 @@ begin
   end;
 end;
 
-procedure SetGameMode(mode: Integer); cdecl;
+function SetGameMode(mode: Integer): Boolean; cdecl;
 begin
+  Result := False;
   try
     SetGame(mode);
     // log message
@@ -111,6 +112,7 @@ begin
     Globals.Values['AppName'] := ProgramStatus.GameMode.appName;
     Globals.Values['LongGameName'] := ProgramStatus.GameMode.longName;
     Globals.Values['DataPath'] := settings.gameDataPath;
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
