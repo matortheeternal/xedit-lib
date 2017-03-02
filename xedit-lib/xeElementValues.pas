@@ -2,27 +2,27 @@ unit xeElementValues;
 
 interface
 
-  function Name(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
-  function Path(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
-  function EditorID(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
-  function Signature(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
-  function FullName(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
-  function SortKey(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
-  function ElementType(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
-  function DefType(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
-  function GetValue(_id: Integer; path: PAnsiChar; str: PWideChar; len: Integer): WordBool; cdecl;
-  function SetValue(_id: Integer; path: PAnsiChar; value: PWideChar): WordBool; cdecl;
-  function GetIntValue(_id: Integer; path: PAnsiChar; value: PInteger): WordBool; cdecl;
-  function SetIntValue(_id: Integer; path: PAnsiChar; value: Integer): WordBool; cdecl;
-  function GetUIntValue(_id: Integer; path: PAnsiChar; value: PCardinal): WordBool; cdecl;
-  function SetUIntValue(_id: Integer; path: PAnsiChar; value: Cardinal): WordBool; cdecl;
-  function GetFloatValue(_id: Integer; path: PAnsiChar; value: PDouble): WordBool; cdecl;
-  function SetFloatValue(_id: Integer; path: PAnsiChar; value: Double): WordBool; cdecl;
-  function GetLinksTo(_id: Integer; path: PAnsiChar; _res: PCardinal): WordBool; cdecl;
-  function SetFlag(_id: Integer; path, name: PAnsiChar; enabled: WordBool): WordBool; cdecl;
-  function GetFlag(_id: Integer; path: PAnsiChar; name: PWideChar): WordBool; cdecl;
-  function ToggleFlag(_id: Integer; path: PAnsiChar; name: PWideChar): WordBool; cdecl;
-  function GetEnabledFlags(_id: Integer; path: PAnsiChar; flags: PWideChar; len: Integer): WordBool; cdecl;
+  function Name(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
+  function Path(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
+  function EditorID(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
+  function Signature(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
+  function FullName(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
+  function SortKey(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
+  function ElementType(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
+  function DefType(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
+  function GetValue(_id: Cardinal; path, str: PWideChar; len: Integer): WordBool; cdecl;
+  function SetValue(_id: Cardinal; path, value: PWideChar): WordBool; cdecl;
+  function GetIntValue(_id: Cardinal; path: PWideChar; value: PInteger): WordBool; cdecl;
+  function SetIntValue(_id: Cardinal; path: PWideChar; value: Integer): WordBool; cdecl;
+  function GetUIntValue(_id: Cardinal; path: PWideChar; value: PCardinal): WordBool; cdecl;
+  function SetUIntValue(_id: Cardinal; path: PWideChar; value: Cardinal): WordBool; cdecl;
+  function GetFloatValue(_id: Cardinal; path: PWideChar; value: PDouble): WordBool; cdecl;
+  function SetFloatValue(_id: Cardinal; path: PWideChar; value: Double): WordBool; cdecl;
+  function GetLinksTo(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
+  function SetFlag(_id: Cardinal; path, name: PWideChar; enabled: WordBool): WordBool; cdecl;
+  function GetFlag(_id: Cardinal; path, name: PWideChar; enabled: PWordBool): WordBool; cdecl;
+  function ToggleFlag(_id: Cardinal; path, name: PWideChar): WordBool; cdecl;
+  function GetEnabledFlags(_id: Cardinal; path, flags: PWideChar; len: Integer): WordBool; cdecl;
 
   // native functions
   function NativeName(e: IInterface): String;
@@ -59,7 +59,7 @@ begin
     Result := element.Name;
 end;
 
-function Name(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
+function Name(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
 var
   sName: String;
 begin
@@ -119,7 +119,7 @@ begin
     Result := GetPath(Result, NativeContainer(element) as IwbElement);
 end;
 
-function Path(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
+function Path(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
 var
   sPath: String;
   element: IwbElement;
@@ -136,7 +136,7 @@ begin
   end;
 end;
 
-function EditorID(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
+function EditorID(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
 var
   rec: IwbMainRecord;
 begin
@@ -168,7 +168,7 @@ begin
     raise Exception.Create('Error: Element does not have a signature.');
 end;
 
-function Signature(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
+function Signature(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
 var
   element: IwbElement;
   sig: String;
@@ -185,7 +185,7 @@ begin
   end;
 end;
 
-function FullName(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
+function FullName(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
 var
   rec: IwbMainRecord;
 begin
@@ -200,7 +200,7 @@ begin
   end;
 end;
 
-function SortKey(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
+function SortKey(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
 var
   element: IwbElement;
 begin
@@ -235,7 +235,7 @@ begin
   end;
 end;
 
-function ElementType(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
+function ElementType(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
 var
   element: IwbElement;
   s: String;
@@ -277,7 +277,7 @@ begin
   end;
 end;
 
-function DefType(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
+function DefType(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
 var
   element: IwbElement;
   s: String;
@@ -294,7 +294,7 @@ begin
   end;
 end;
 
-function GetValue(_id: Integer; path: PAnsiChar; str: PWideChar; len: Integer): WordBool; cdecl;
+function GetValue(_id: Cardinal; path, str: PWideChar; len: Integer): WordBool; cdecl;
 var
   e: IInterface;
   container: IwbContainerElementRef;
@@ -304,7 +304,7 @@ begin
   Result := false;
   try
     e := Resolve(_id);
-    if (path <> '') and Supports(e, IwbContainerElementRef, container) then begin
+    if (string(path) <> '') and Supports(e, IwbContainerElementRef, container) then begin
       sValue := container.ElementEditValues[string(path)];
       StrLCopy(str, PWideChar(WideString(sValue)), len);
       Result := true;
@@ -319,7 +319,7 @@ begin
   end;
 end;
 
-function SetValue(_id: Integer; path: PAnsiChar; value: PWideChar): WordBool; cdecl;
+function SetValue(_id: Cardinal; path, value: PWideChar): WordBool; cdecl;
 var
   e: IInterface;
   container: IwbContainerElementRef;
@@ -333,7 +333,7 @@ begin
       Result := true;
     end
     else if Supports(e, IwbElement, element) then begin
-      element.EditValue := value;
+      element.EditValue := string(value);
       Result := true;
     end;
   except
@@ -341,7 +341,7 @@ begin
   end;
 end;
 
-function GetNativeValue(_id: Integer; path: PAnsiChar): Variant;
+function GetNativeValue(_id: Cardinal; path: String): Variant;
 var
   e: IInterface;
   container: IwbContainerElementRef;
@@ -355,7 +355,7 @@ begin
     Result := element.NativeValue;
 end;
 
-procedure SetNativeValue(_id: Integer; path: PAnsiChar; value: Variant);
+procedure SetNativeValue(_id: Cardinal; path: String; value: Variant);
 var
   e: IInterface;
   container: IwbContainerElementRef;
@@ -368,73 +368,73 @@ begin
     element.NativeValue := value;
 end;
 
-function GetIntValue(_id: Integer; path: PAnsiChar; value: PInteger): WordBool; cdecl;
+function GetIntValue(_id: Cardinal; path: PWideChar; value: PInteger): WordBool; cdecl;
 begin
   Result := false;
   try
-    value^ := Integer(GetNativeValue(_id, path));
+    value^ := Integer(GetNativeValue(_id, string(path)));
     Result := true;
   except
     on x: Exception do ExceptionHandler(x);
   end;
 end;
 
-function SetIntValue(_id: Integer; path: PAnsiChar; value: Integer): WordBool; cdecl;
+function SetIntValue(_id: Cardinal; path: PWideChar; value: Integer): WordBool; cdecl;
 begin
   Result := false;
   try
-    SetNativeValue(_id, path, value);
+    SetNativeValue(_id, string(path), value);
     Result := true;
   except
     on x: Exception do ExceptionHandler(x);
   end;
 end;
 
-function GetUIntValue(_id: Integer; path: PAnsiChar; value: PCardinal): WordBool; cdecl;
+function GetUIntValue(_id: Cardinal; path: PWideChar; value: PCardinal): WordBool; cdecl;
 begin
   Result := false;
   try
-    value^ := Cardinal(GetNativeValue(_id, path));
+    value^ := Cardinal(GetNativeValue(_id, string(path)));
     Result := true;
   except
     on x: Exception do ExceptionHandler(x);
   end;
 end;
 
-function SetUIntValue(_id: Integer; path: PAnsiChar; value: Cardinal): WordBool; cdecl;
+function SetUIntValue(_id: Cardinal; path: PWideChar; value: Cardinal): WordBool; cdecl;
 begin
   Result := false;
   try
-    SetNativeValue(_id, path, value);
+    SetNativeValue(_id, string(path), value);
     Result := true;
   except
     on x: Exception do ExceptionHandler(x);
   end;
 end;
 
-function GetFloatValue(_id: Integer; path: PAnsiChar; value: PDouble): WordBool; cdecl;
+function GetFloatValue(_id: Cardinal; path: PWideChar; value: PDouble): WordBool; cdecl;
 begin
   Result := false;
   try
-    value^ := Double(GetNativeValue(_id, path));
+    value^ := Double(GetNativeValue(_id, string(path)));
     Result := true;
   except
     on x: Exception do ExceptionHandler(x);
   end;
 end;
 
-function SetFloatValue(_id: Integer; path: PAnsiChar; value: Double): WordBool; cdecl;
+function SetFloatValue(_id: Cardinal; path: PWideChar; value: Double): WordBool; cdecl;
 begin
   Result := false;
   try
-    SetNativeValue(_id, path, value);
+    SetNativeValue(_id, string(path), value);
     Result := true;
   except
     on x: Exception do ExceptionHandler(x);
   end;
 end;
 
-function GetLinksTo(_id: Integer; path: PAnsiChar; _res: PCardinal): WordBool; cdecl;
+function GetLinksTo(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
   e: IInterface;
   container: IwbContainerElementRef;
@@ -459,7 +459,7 @@ begin
   end;
 end;
 
-function SetFlag(_id: Integer; path, name: PAnsiChar; enabled: WordBool): WordBool; cdecl;
+function SetFlag(_id: Cardinal; path, name: PWideChar; enabled: WordBool): WordBool; cdecl;
 var
   container: IwbContainerElementRef;
   element: IwbElement;
@@ -486,28 +486,32 @@ begin
   end;
 end;
 
-function GetFlag(_id: Integer; path: PAnsiChar; name: PWideChar): WordBool; cdecl;
+function GetFlag(_id: Cardinal; path, name: PWideChar; enabled: PWordBool): WordBool; cdecl;
 var
   container: IwbContainerElementRef;
   element: IwbElement;
   enumDef: IwbEnumDef;
   i: Integer;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbContainerElementRef, container) then begin
       element := container.ElementByPath[string(path)];
-      if Supports(element.Def, IwbEnumDef, enumDef) then
+      if Supports(element.Def, IwbEnumDef, enumDef) then begin
         for i := 0 to Pred(enumDef.NameCount) do
-          if SameText(enumDef.Names[i], name) then
-            Result := element.NativeValue and (1 shl i);
+          if SameText(enumDef.Names[i], name) then begin
+            enabled^ := element.NativeValue and (1 shl i);
+            exit;
+          end;
+        Result := True;
+      end;
     end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
 end;
 
-function ToggleFlag(_id: Integer; path: PAnsiChar; name: PWideChar): WordBool; cdecl;
+function ToggleFlag(_id: Cardinal; path, name: PWideChar): WordBool; cdecl;
 var
   container: IwbContainerElementRef;
   element: IwbElement;
@@ -534,7 +538,7 @@ begin
   end;
 end;
 
-function GetEnabledFlags(_id: Integer; path: PAnsiChar; flags: PWideChar; len: Integer): WordBool; cdecl;
+function GetEnabledFlags(_id: Cardinal; path, flags: PWideChar; len: Integer): WordBool; cdecl;
 var
   slFlags: TStringList;
   container: IwbContainerElementRef;
