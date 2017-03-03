@@ -15,7 +15,7 @@ type
   TSmashTypes = set of TSmashType;
 
   function GetElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
-  function GetElements(_id: Cardinal; _res: PCardinalArray): WordBool; cdecl;
+  function GetElements(_id: Cardinal; _res: PWideChar; len: Integer): WordBool; cdecl;
   function GetElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function GetContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function NewElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
@@ -286,39 +286,59 @@ begin
   end;
 end;
 
-function GetFiles(_res: PCardinalArray): WordBool;
+function GetFiles(_res: PWideChar; len: Integer): WordBool;
 var
   i: Integer;
+  n: Cardinal;
+  sl: TStringList;
 begin
-  SetLength(_res^, Length(Files));
-  for i := Low(Files) to High(Files) do
-    _res^[i] := Store(Files[i]);
-  Result := True;
+  sl := TStringList.Create;
+  try
+    sl.Delimiter := ',';
+    for i := 0 to High(Files) do begin
+      if i >= len then break;
+      n := Store(Files[i]);
+      AddMessage(Format('File[%d] = %d', [i, n]));
+      sl.Add(IntToStr(n));
+    end;
+    StrLCopy(_res, PWideChar(WideString(sl.DelimitedText)), len);
+    Result := True;
+  finally
+    sl.Free;
+  end;
 end;
 
-function GetChildrenElements(_id: Cardinal; _res: PCardinalArray): WordBool;
+function GetChildrenElements(_id: Cardinal; _res: PWideChar; len: Integer): WordBool;
 var
   i: Integer;
   container: IwbContainerElementRef;
+  sl: TStringList;
 begin
   Result := False;
+  sl := TStringList.Create;
+  try
   if Supports(Resolve(_id), IwbContainerElementRef, container) then begin
-    SetLength(_res^, container.ElementCount);
-    for i := 0 to Pred(container.ElementCount) do
-      _res^[i] := Store(container.Elements[i]);
+    for i := 0 to Pred(container.ElementCount) do begin
+      if i >= len then break;
+      sl.Add(IntToStr(Store(container.Elements[i])));
+    end;
+    StrLCopy(_res, PWideChar(WideString(sl.DelimitedText)), len);
     Result := True;
+  end;
+  finally
+    sl.Free;
   end;
 end;
 
 // returns an array of handles for the elements in a container
-function GetElements(_id: Cardinal; _res: PCardinalArray): WordBool; cdecl;
+function GetElements(_id: Cardinal; _res: PWideChar; len: Integer): WordBool; cdecl;
 begin
   Result := False;
   try
     if _id = 0 then
-      Result := GetFiles(_res)
+      Result := GetFiles(_res, len)
     else
-      Result := GetChildrenElements(_id, _res);
+      Result := GetChildrenElements(_id, _res, len);
   except
     on x: Exception do ExceptionHandler(x);
   end;
