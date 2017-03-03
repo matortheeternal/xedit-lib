@@ -13,7 +13,7 @@ type
     procedure Execute; override;
   end;
 
-  function SetGameMode(mode: Integer): Boolean; cdecl;
+  function SetGameMode(mode: Integer): WordBool; cdecl;
   function GetLoadOrder(str: PWideChar; len: Integer): WordBool; cdecl;
   function LoadPlugins(loadOrder: PWideChar): WordBool; cdecl;
   function GetLoaderDone: WordBool; cdecl;
@@ -97,7 +97,7 @@ begin
   end;
 end;
 
-function SetGameMode(mode: Integer): Boolean; cdecl;
+function SetGameMode(mode: Integer): WordBool; cdecl;
 begin
   Result := False;
   try
@@ -129,7 +129,7 @@ begin
     slLoadOrder := TStringList.Create;
 
     try                                           
-      sLoadPath := GetCSIDLShellFolder(CSIDL_LOCAL_APPDATA) + wbGameName+'\';  
+      sLoadPath := GetCSIDLShellFolder(CSIDL_LOCAL_APPDATA) + wbGameName2 + '\';
       // LOAD LIST OF ACTIVE PLUGINS (plugins.txt)      
       slPlugins := TStringList.Create;
       sPath := sLoadPath + 'plugins.txt';
@@ -183,6 +183,7 @@ begin
       Result := true;
     finally
       slPlugins.Free;
+      slLoadOrder.Free;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -207,6 +208,7 @@ begin
 
     // start loader thread
     TLoaderThread.Create;
+    Result := true;
   except
     on x: Exception do ExceptionHandler(x);
   end;
