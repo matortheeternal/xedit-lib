@@ -73,8 +73,10 @@ procedure ExceptionHandler(x: Exception);
 begin
   if x.StackTrace <> '' then
     exceptionMessage := Format('%s: %s', [x.StackTrace, x.Message])
+  else if x.Message <> '' then   
+    exceptionMessage := x.Message
   else
-    exceptionMessage := x.Message;
+    exceptionMessage := 'Unknown exception.';
   AddMessage(exceptionMessage);
 end;
 
