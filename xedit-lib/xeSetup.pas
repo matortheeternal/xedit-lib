@@ -128,7 +128,9 @@ begin
     slPlugins := TStringList.Create;
     slLoadOrder := TStringList.Create;
 
-    try                                           
+    try
+      slLoadOrder.StrictDelimiter := true;
+
       sLoadPath := GetCSIDLShellFolder(CSIDL_LOCAL_APPDATA) + wbGameName2 + '\';
       // LOAD LIST OF ACTIVE PLUGINS (plugins.txt)      
       slPlugins := TStringList.Create;
