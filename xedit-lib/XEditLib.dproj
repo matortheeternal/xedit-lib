@@ -65,6 +65,7 @@
 			<DCCReference Include="xeFileValues.pas"/>
 			<DCCReference Include="xeElements.pas"/>
 			<DCCReference Include="xeElementValues.pas"/>
+			<DCCReference Include="xeErrors.pas"/>
 			<DCCReference Include="xeRecords.pas"/>
 			<DCCReference Include="xeRecordValues.pas"/>
 			<DCCReference Include="xeGroups.pas"/>
@@ -112,7 +113,7 @@
 						<VersionInfo Name="MajorVer">0</VersionInfo>
 						<VersionInfo Name="MinorVer">0</VersionInfo>
 						<VersionInfo Name="Release">0</VersionInfo>
-						<VersionInfo Name="Build">239</VersionInfo>
+						<VersionInfo Name="Build">264</VersionInfo>
 						<VersionInfo Name="Debug">False</VersionInfo>
 						<VersionInfo Name="PreRelease">False</VersionInfo>
 						<VersionInfo Name="Special">False</VersionInfo>
@@ -124,7 +125,7 @@
 					<VersionInfoKeys>
 						<VersionInfoKeys Name="CompanyName"/>
 						<VersionInfoKeys Name="FileDescription"/>
-						<VersionInfoKeys Name="FileVersion">0.0.0.239</VersionInfoKeys>
+						<VersionInfoKeys Name="FileVersion">0.0.0.264</VersionInfoKeys>
 						<VersionInfoKeys Name="InternalName"/>
 						<VersionInfoKeys Name="LegalCopyright"/>
 						<VersionInfoKeys Name="LegalTrademarks"/>

@@ -10,6 +10,7 @@ uses
   xeFileValues in 'xeFileValues.pas',
   xeElements in 'xeElements.pas',
   xeElementValues in 'xeElementValues.pas',
+  xeErrors in 'xeErrors.pas',
   xeRecords in 'xeRecords.pas',
   xeRecordValues in 'xeRecordValues.pas',
   xeGroups in 'xeGroups.pas',
@@ -57,8 +58,9 @@ exports
   // ELEMENT HANDLING METHODS
   GetElement, GetElements, GetElementFile, GetContainer, NewElement,
   RemoveElement, ElementExists, ElementCount, LinksTo, ElementAssigned, Equals,
-  GetErrors, GetErrorString, CopyElement, IsMaster, IsInjected, IsOverride,
-  IsWinningOverride,
+  CopyElement, IsMaster, IsInjected, IsOverride, IsWinningOverride,
+  // ERROR CHECKING METHODS
+  CheckForErrors, GetErrorThreadDone, GetErrors, GetErrorString,
   // SERIALIZATION METHODS
   ElementToJson,
   // ELEMENT VALUE METHODS
