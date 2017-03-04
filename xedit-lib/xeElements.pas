@@ -3,6 +3,7 @@ unit xeElements;
 interface
 
 uses
+  Classes,
   //xedit units
   wbInterface,
   // xelib units
@@ -25,8 +26,6 @@ type
   function ElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
   function ElementAssigned(_id: Cardinal): WordBool; cdecl;
   function Equals(_id, _id2: Cardinal): WordBool; cdecl;
-  function GetErrors(_id: Cardinal; _res: PCardinalArray): WordBool; cdecl;
-  function GetErrorString(_id: Cardinal; error: PWideChar; len: Integer): WordBool; cdecl;
   function CopyElement(_id, _id2: Cardinal; aAsNew, aDeepCopy: WordBool; _res: PCardinal): WordBool; cdecl;
   function IsMaster(_id: Cardinal): WordBool; cdecl;
   function IsInjected(_id: Cardinal): WordBool; cdecl;
@@ -44,14 +43,13 @@ type
 implementation
 
 uses
-  Variants, Classes, SysUtils,
+  Variants, SysUtils,
   // mte units
   mteHelpers,
   // xedit units
   wbImplementation,
   // xelib units
   xeMessages, xeFiles, xeGroups, xeSetup;
-
 
 {******************************************************************************}
 { ELEMENT HANDLING
@@ -531,61 +529,6 @@ begin
     if Supports(Resolve(_id), IwbElement, element) then
       if Supports(Resolve(_id2), IwbElement, element2) then
         Result := element.Equals(element2);
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function NativeGetErrors(element: IwbElement; lastRecord: IwbMainRecord; errors: TInterfaceList): IwbMainRecord;
-var
-  error: String;
-  container: IwbContainerElementRef;
-  i: Integer;
-begin
-  error := element.Check;
-  if error <> '' then begin
-    errors.Add(element);
-    Result := element.ContainingMainRecord;
-    if Assigned(Result) and (Result <> LastRecord) then
-      AddMessage(Format('  %s', [Result.Name]));
-    AddMessage(Format('  %s -> %s', [element.Path, error]));
-  end;
-  if Supports(element, IwbContainerElementRef, container) then
-    for i := Pred(container.ElementCount) downto 0 do
-      Result := NativeGetErrors(container.Elements[i], Result, errors);
-end;
-
-function GetErrors(_id: Cardinal; _res: PCardinalArray): WordBool; cdecl;
-var
-  errors: TInterfaceList;
-  element: IwbElement;
-  i: Integer;
-begin
-  Result := false;
-  try
-    errors := TInterfaceList.Create;
-    if Supports(Resolve(_id), IwbElement, element) then begin
-      NativeGetErrors(element, nil, errors);
-      GetMem(_res, 4 * errors.Count);
-      for i := 0 to Pred(errors.Count) do
-        _res^[i] := Store(errors[i]);
-      Result := True;
-    end;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function GetErrorString(_id: Cardinal; error: PWideChar; len: Integer): WordBool; cdecl;
-var
-  element: IwbElement;
-begin
-  Result := false;
-  try
-    if Supports(Resolve(_id), IwbElement, element) then begin
-      StrLCopy(error, PWideChar(WideString(element.Check)), len);
-      Result := true;
-    end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
