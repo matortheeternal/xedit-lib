@@ -289,18 +289,13 @@ end;
 function GetFiles(_res: PWideChar; len: Integer): WordBool;
 var
   i: Integer;
-  n: Cardinal;
   sl: TStringList;
 begin
   sl := TStringList.Create;
   try
     sl.Delimiter := ',';
-    for i := 0 to High(Files) do begin
-      if i >= len then break;
-      n := Store(Files[i]);
-      AddMessage(Format('File[%d] = %d', [i, n]));
-      sl.Add(IntToStr(n));
-    end;
+    for i := 0 to High(Files) do
+      sl.Add(IntToStr(Store(Files[i])));
     StrLCopy(_res, PWideChar(WideString(sl.DelimitedText)), len);
     Result := True;
   finally
@@ -318,10 +313,8 @@ begin
   sl := TStringList.Create;
   try
   if Supports(Resolve(_id), IwbContainerElementRef, container) then begin
-    for i := 0 to Pred(container.ElementCount) do begin
-      if i >= len then break;
+    for i := 0 to Pred(container.ElementCount) do
       sl.Add(IntToStr(Store(container.Elements[i])));
-    end;
     StrLCopy(_res, PWideChar(WideString(sl.DelimitedText)), len);
     Result := True;
   end;
