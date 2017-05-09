@@ -6,6 +6,7 @@ interface
   function SortMasters(_id: Cardinal): WordBool; cdecl;
   function AddMaster(_id: Cardinal; masterName: PWideChar): WordBool; cdecl;
   function GetMaster(_id: Cardinal; index: Integer; _res: PCardinal): WordBool; cdecl;
+  function GetMasters(_id: Cardinal; _res: PCardinal; len: Integer): WordBool; cdecl;
 
 implementation
 
@@ -83,39 +84,24 @@ begin
   end;
 end;
 
-function GetMasters(_id: Cardinal; a: Variant; len: Integer): WordBool; cdecl;
+{$POINTERMATH ON}
+function GetMasters(_id: Cardinal; _res: PCardinal; len: Integer): WordBool; cdecl;
 var
   _file: IwbFile;
-begin
-  Result := false;
-  try
-    if Supports(Resolve(_id), IwbFile, _file) then begin
-      // TODO
-      Result := true;
-    end;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function GetMasterFileNames(_id: Cardinal; masterNames: PWideChar; len: Integer): WordBool; cdecl;
-var
-  _file: IwbFile;
-  s: String;
   i: Integer;
 begin
   Result := false;
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
-      s := '';
+      if _file.MasterCount > len then exit;
       for i := 0 to Pred(_file.MasterCount) do
-        s := s + _file.Masters[i].FileName + #13;
-      StrLCopy(masterNames, PWideChar(WideString(Trim(s))), len);
+        _res[i] := Store(_file.Masters[i]);
       Result := true;
     end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
 end;
+{$POINTERMATH OFF}
 
 end.

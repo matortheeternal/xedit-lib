@@ -6,8 +6,8 @@ uses
   xeMeta;
 
   function AddRecord(_id: Cardinal; sig: PWideChar; _res: PCardinal): WordBool; cdecl;
-  function GetRecords(_id: Cardinal; _res: PCardinalArray): WordBool; cdecl;
-  function RecordsBySignature(_id: Cardinal; sig: PWideChar; _res: PCardinalArray): WordBool; cdecl;
+  function GetRecords(_id: Cardinal; _res: PCardinal; len: Integer): WordBool; cdecl;
+  function RecordsBySignature(_id: Cardinal; sig: PWideChar; _res: PCardinal; len: Integer): WordBool; cdecl;
   function RecordByIndex(_id: Cardinal; index: Integer; _res: PCardinal): WordBool; cdecl;
   function RecordByFormID(_id, formID: Cardinal; _res: PCardinal): WordBool; cdecl;
   function RecordByEditorID(_id: Cardinal; edid: PWideChar; _res: PCardinal): WordBool; cdecl;
@@ -17,7 +17,7 @@ uses
   function GetFormID(_id: Cardinal; formID: PCardinal): WordBool; cdecl;
   function SetFormID(_id: Cardinal; formID: Cardinal): WordBool; cdecl;
   function ExchangeReferences(_id, oldFormID, newFormID: Cardinal): WordBool; cdecl;
-  function GetReferences(_id: Cardinal; _res: PCardinalArray): WordBool; cdecl;
+  function GetReferences(_id: Cardinal; _res: PCardinal; len: Integer): WordBool; cdecl;
 
 implementation
 
@@ -46,27 +46,30 @@ begin
   end;
 end;
 
-procedure StoreRecords(_file: IwbFile; _res: PCardinalArray); overload;
+{$POINTERMATH ON}
+procedure StoreRecords(_file: IwbFile; _res: PCardinal); overload;
 var
   i: Integer;
 begin
-  GetMem(_res, 4 * _file.RecordCount);
   for i := 0 to Pred(_file.RecordCount) do
-    _res^[i] := Store(_file.Records[i]);
+    _res[i] := Store(_file.Records[i]);
 end;
 
-procedure StoreRecords(group: IwbGroupRecord; _res: PCardinalArray); overload;
+procedure StoreRecords(group: IwbGroupRecord; _res: PCardinal); overload;
 var
-  i: Integer;
+  i, index: Integer;
   rec: IwbMainRecord;
 begin
-  GetMem(_res, 4 * group.ElementCount);
+  index := 0;
   for i := 0 to Pred(group.ElementCount) do
-    if Supports(group.Elements[i], IwbMainRecord, rec) then
-      _res^[i] := Store(rec);
+    if Supports(group.Elements[i], IwbMainRecord, rec) then begin
+      _res[index] := Store(rec);
+      Inc(index);
+    end;
 end;
+{$POINTERMATH OFF}
 
-function GetRecords(_id: Cardinal; _res: PCardinalArray): WordBool; cdecl;
+function GetRecords(_id: Cardinal; _res: PCardinal; len: Integer): WordBool; cdecl;
 var
   e: IInterface;
   _file: IwbFile;
@@ -76,10 +79,12 @@ begin
   try
     e := Resolve(_id);
     if Supports(e, IwbFile, _file) then begin
+      if _file.RecordCount > len then exit;
       StoreRecords(_file, _res);
       Result := true;
     end
     else if Supports(e, IwbGroupRecord, group) then begin
+      if group.ElementCount > len then exit;
       StoreRecords(group, _res);
       Result := true;
     end;
@@ -88,34 +93,33 @@ begin
   end;
 end;
 
-function RecordsBySignature(_id: Cardinal; sig: PWideChar; _res: PCardinalArray): WordBool; cdecl;
+{$POINTERMATH ON}
+function RecordsBySignature(_id: Cardinal; sig: PWideChar; _res: PCardinal; len: Integer): WordBool; cdecl;
 var
   _sig: TwbSignature;
   _file: IwbFile;
-  i: Integer;
+  i, index: Integer;
   group: IwbGroupRecord;
   rec: IwbMainRecord;
 begin
   Result := false;
   try
     _sig := TwbSignature(AnsiString(sig));
-    if Supports(Resolve(_id), IwbFile, _file) then
-      if _file.HasGroup(_sig) then begin
-        group := _file.GroupBySignature[_sig];
-        GetMem(_res, 4 * group.ElementCount);
-        for i := 0 to Pred(group.ElementCount) do
-          _res^[i] := Store(group.Elements[i]);
-      end
-    else if Supports(Resolve(_id), IwbGroupRecord, group) then begin
-      GetMem(_res, 4 * group.ElementCount);
+    if Supports(Resolve(_id), IwbFile, _file) and _file.HasGroup(_sig) then begin
+      group := _file.GroupBySignature[_sig];
+      if group.ElementCount > len then exit;
+      index := 0;
       for i := 0 to Pred(group.ElementCount) do
-        if Supports(group.Elements[i], IwbMainRecord, rec) then
-          _res^[i] := Store(rec);
+        if Supports(group.Elements[i], IwbMainRecord, rec) then begin
+          _res[index] := Store(group.Elements[i]);
+          Inc(index);
+        end;
     end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
 end;
+{$POINTERMATH OFF}
 
 function RecordByIndex(_id: Cardinal; index: Integer; _res: PCardinal): WordBool; cdecl;
 var
@@ -320,7 +324,8 @@ begin
   end;
 end;
 
-function GetReferences(_id: Cardinal; _res: PCardinalArray): WordBool; cdecl;
+{$POINTERMATH ON}
+function GetReferences(_id: Cardinal; _res: PCardinal; len: Integer): WordBool; cdecl;
 var
   rec, ref: IwbMainRecord;
   i: Integer;
@@ -328,15 +333,16 @@ begin
   Result := false;
   try
     if Supports(Resolve(_id), IwbMainRecord, rec) then begin
-      GetMem(_res, 4 * rec.ReferencedByCount);
+      if rec.ReferencedByCount > len then exit;
       for i := 0 to Pred(rec.ReferencedByCount) do
         if Supports(rec.ReferencedBy[i], IwbMainRecord, ref) then
-          _res^[i] := Store(ref);
+          _res[i] := Store(ref);
       Result := true;
     end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
 end;
+{$POINTERMATH OFF}
 
 end.

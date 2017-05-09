@@ -5,10 +5,6 @@ interface
 uses
   Classes, SysUtils, Generics.Collections;
 
-type
-  CardinalArray = array of Cardinal;
-  PCardinalArray = ^CardinalArray;
-
   procedure Initialize; cdecl;
   procedure Finalize; cdecl;
   procedure ExceptionHandler(x: Exception);
