@@ -86,7 +86,6 @@
 			<DCCReference Include="..\lib\xedit\wbHelpers.pas"/>
 			<DCCReference Include="..\lib\xedit\wbLocalization.pas"/>
 			<DCCReference Include="..\lib\xedit\wbStreams.pas"/>
-			<DCCReference Include="..\lib\xedit\Zlibex.pas"/>
 			<DCCReference Include="..\lib\superobject\superobject.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
@@ -113,7 +112,7 @@
 						<VersionInfo Name="MajorVer">0</VersionInfo>
 						<VersionInfo Name="MinorVer">0</VersionInfo>
 						<VersionInfo Name="Release">0</VersionInfo>
-						<VersionInfo Name="Build">271</VersionInfo>
+						<VersionInfo Name="Build">272</VersionInfo>
 						<VersionInfo Name="Debug">False</VersionInfo>
 						<VersionInfo Name="PreRelease">False</VersionInfo>
 						<VersionInfo Name="Special">False</VersionInfo>
@@ -125,7 +124,7 @@
 					<VersionInfoKeys>
 						<VersionInfoKeys Name="CompanyName"/>
 						<VersionInfoKeys Name="FileDescription"/>
-						<VersionInfoKeys Name="FileVersion">0.0.0.271</VersionInfoKeys>
+						<VersionInfoKeys Name="FileVersion">0.0.0.272</VersionInfoKeys>
 						<VersionInfoKeys Name="InternalName"/>
 						<VersionInfoKeys Name="LegalCopyright"/>
 						<VersionInfoKeys Name="LegalTrademarks"/>

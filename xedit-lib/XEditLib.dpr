@@ -31,7 +31,6 @@ uses
   wbHelpers in '..\lib\xedit\wbHelpers.pas',
   wbLocalization in '..\lib\xedit\wbLocalization.pas',
   wbStreams in '..\lib\xedit\wbStreams.pas',
-  Zlibex in '..\lib\xedit\Zlibex.pas',
   superobject in '..\lib\superobject\superobject.pas';
 
 {$R *.RES}
