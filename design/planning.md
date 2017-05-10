@@ -40,10 +40,7 @@
 - AddMaster
 
 **TODO:**
-- GetAllMasters
 - GetRequiredBy
-- GetAllRequiredBy
-- AddMasters
 - RemoveMaster
 
 
@@ -72,8 +69,7 @@
 - ElementMatches
 - StructMatches
 - MoveElementToIndex
-- CopyRecord: replaces wbCopyElementToFile
-- CopyElement: replaces wbCopyElementToRecord
+- CopyElement: replaces wbCopyElementToRecord, and wbCopyElementToFile
 
 ### ELEMENT VALUES
 
@@ -109,12 +105,6 @@
 - GetArrayStruct
 - AddArrayStruct
 - DeleteArrayStruct
-
-**WRAPPER ONLY?**
-- GetListValues
-- SetListValues
-- GetElementListValues
-- SetElementListValues
 
 
 ## GROUPS
