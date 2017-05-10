@@ -37,7 +37,7 @@ begin
               Expect(success and (h > 0), 'Handle should be greater than 0');
             end);
 
-          It('Should return return 0 if a matching file is not loaded', procedure
+          It('Should return return false if a matching file is not loaded', procedure
             begin
               success := FileByName('NonExistingFile.esp', @h);
               Expect(not success, 'Should return false');
@@ -67,7 +67,7 @@ begin
               Expect(success and (h > 0), 'Handle should be greater than 0');
             end);
 
-          It('Should return return 0 if index is out of bounds', procedure
+          It('Should return return false if index is out of bounds', procedure
             begin
               success := FileByLoadOrder(999, @h);
               Expect(not success, 'Should return false');
@@ -82,7 +82,7 @@ begin
               Expect(success and (h > 0), 'Handle should be greater than 0');
             end);
 
-          It('Should return return 0 if a matching file is not loaded', procedure
+          It('Should return return false if a matching file is not loaded', procedure
             begin
               success := FileByAuthor('U. N. Owen', @h);
               Expect(not success, 'Should return false');
