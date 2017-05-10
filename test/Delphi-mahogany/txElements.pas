@@ -230,6 +230,7 @@ begin
           BeforeEach(procedure
             begin
               GetMem(a, 4096 * 4);
+              FillChar(a^, 4096 * 4, 0);
               lst := TList.Create;
             end);
 
