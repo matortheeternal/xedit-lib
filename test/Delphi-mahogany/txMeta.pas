@@ -160,10 +160,10 @@ begin
 
           It('Should free an allocated handle', procedure
             begin
-              h1 := FileByName('Skyrim.esm');
+              FileByName('Skyrim.esm', @h1);
               success := Release(h1);
               Expect(success, 'Result should be true');
-              h2 := FileByName('Skyrim.esm');
+              FileByName('Skyrim.esm', @h2);
               Expect(h1 = h2, 'Next allocation should use the freed handle');
             end);
         end);
@@ -174,7 +174,7 @@ begin
             begin
               success := ResetStore;
               Expect(success, 'Result should be true');
-              h1 := FileByName('Skyrim.esm');
+              FileByName('Skyrim.esm', @h1);
               Expect(h1 = 1, 'First handle allocated after resetting store should be 1');
             end);
         end);
