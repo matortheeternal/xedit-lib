@@ -29,6 +29,7 @@ uses
 implementation
 
 uses
+  classes,
   maMain;
 
 procedure BuildElementHandlingTests;
@@ -36,6 +37,7 @@ var
   success, b: WordBool;
   h, skyrim, testFile, armo, rec, element, armoTest, recTest: Cardinal;
   a: PCardinal;
+  lst: TList;
 begin
   Describe('Element Handling', procedure
     begin
@@ -228,42 +230,54 @@ begin
           BeforeEach(procedure
             begin
               GetMem(a, 4096 * 4);
+              lst := TList.Create;
             end);
 
           AfterEach(procedure
             begin
               FreeMem(a, 4096 * 4);
+              lst.Free;
             end);
 
           It('Should resolve root children (files)', procedure
             begin
               success := GetElements(0, a, 4096);
-              Expect(success and (ArrayLength(a) = 8), 'There should be 8 handles');
+              GetCardinalArray(a, 4096, lst);
+              //WriteCardinalArray(lst);
+              Expect(success and (lst.Count = 8), 'There should be 8 handles');
             end);
 
           It('Should resolve file children (file header and groups)', procedure
             begin
               success := GetElements(skyrim, a, 4096);
-              Expect(success and (ArrayLength(a) = 118), 'There should be 118 handles');
+              GetCardinalArray(a, 4096, lst);
+              //WriteCardinalArray(lst);
+              Expect(success and (lst.Count = 118), 'There should be 118 handles');
             end);
 
           It('Should resolve group children (records)', procedure
             begin
-                success := GetElements(armo, a, 4096);
-                Expect(success and (ArrayLength(a) = 2762), 'There should be 2762 handles');
+              success := GetElements(armo, a, 4096);
+              GetCardinalArray(a, 4096, lst);
+              //WriteCardinalArray(lst);
+              Expect(success and (lst.Count = 2762), 'There should be 2762 handles');
             end);
 
           It('Should resolve record children (subrecords/elements)', procedure
             begin
               success := GetElements(rec, a, 4096);
-              Expect(success and (ArrayLength(a) = 13), 'There should be 13 handles');
+              GetCardinalArray(a, 4096, lst);
+              //WriteCardinalArray(lst);
+              Expect(success and (lst.Count = 13), 'There should be 13 handles');
             end);
 
           It('Should resolve element children', procedure
             begin
               GetElement(rec, 'KWDA', @h);
               success := GetElements(h, a, 4096);
-              Expect(success and (ArrayLength(a) = 5), 'There should be 5 handles');
+              GetCardinalArray(a, 4096, lst);
+              //WriteCardinalArray(lst);
+              Expect(success and (lst.Count = 5), 'There should be 5 handles');
             end);
         end);
 

@@ -3,6 +3,7 @@ unit txMeta;
 interface
 
 uses
+  classes,
   SysUtils;
 
 type
@@ -26,6 +27,8 @@ type
   procedure ExpectSuccess(b: WordBool);
   procedure ExpectFailure(b: WordBool);
   procedure BuildMetaTests;
+  procedure GetCardinalArray(a: PCardinal; len: Integer; lst: TList);
+  procedure WriteCardinalArray(lst: TList);
 
 implementation
 
@@ -46,15 +49,27 @@ begin
 end;
 
 {$POINTERMATH ON}
-function ArrayLength(a: PCardinal): Integer;
+procedure GetCardinalArray(a: PCardinal; len: Integer; lst: TList);
+var
+  i: Integer;
 begin
-  Result := 0;
-  while a^ <> 0 do begin
-    Inc(Result, 1);
-    Inc(a, 4);
+  for i := 0 to Pred(len) do begin
+    if a[i] = 0 then break;
+    lst.Add(Pointer(a[i]));
   end;
 end;
 {$POINTERMATH OFF}
+
+procedure WriteCardinalArray(lst: TList);
+var
+  str: String;
+  i: Integer;
+begin
+  str := '';
+  for i := 0 to Pred(lst.Count) do
+    str := str + IntToStr(Cardinal(lst[i])) + ',';
+  WriteLn(str);
+end;
 
 procedure WriteArray(a: CardinalArray);
 var

@@ -290,9 +290,10 @@ var
   i: Integer;
 begin
   Result := False;
-  if High(Files) > len then exit;
+  if High(Files) + 2 > len then exit;
   for i := 0 to High(Files) do
     _res[i] := Store(Files[i]);
+  _res[High(Files) + 1] := 0;
   Result := True;
 end;
 
@@ -303,9 +304,10 @@ var
 begin
   Result := False;
   if Supports(Resolve(_id), IwbContainerElementRef, container) then begin
-    if container.ElementCount > len then exit;
+    if container.ElementCount + 1 > len then exit;
     for i := 0 to Pred(container.ElementCount) do
       _res[i] := Store(container.Elements[i]);
+    _res[container.ElementCount] := 0;
     Result := True;
   end;
 end;
