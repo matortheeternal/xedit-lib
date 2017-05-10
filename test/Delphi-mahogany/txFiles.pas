@@ -13,7 +13,6 @@ uses
   function FileByAuthor(author: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function GetElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function SaveFile(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function GetFileNames(fileNames: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
 
   // PUBLIC TESTING INTERFACE
   procedure BuildFileHandlingTests;
@@ -41,7 +40,7 @@ begin
           It('Should return return 0 if a matching file is not loaded', procedure
             begin
               success := FileByName('NonExistingFile.esp', @h);
-              Expect(success and (h = 0), 'Handle should be 0');
+              Expect(not success, 'Should return false');
             end);
         end);
 
@@ -53,10 +52,10 @@ begin
               Expect(success and (h > 0), 'Handle should be greater than 0');
             end);
 
-          It('Should return return 0 if index is out of bounds', procedure
+          It('Should return false if index is out of bounds', procedure
             begin
               success := FileByIndex(999, @h);
-              Expect(success and (h = 0), 'Handle should be 0');
+              Expect(not success, 'Should return false');
             end);
         end);
 
@@ -71,7 +70,7 @@ begin
           It('Should return return 0 if index is out of bounds', procedure
             begin
               success := FileByLoadOrder(999, @h);
-              Expect(success and (h = 0), 'Handle should be 0');
+              Expect(not success, 'Should return false');
             end);
         end);
 
@@ -86,7 +85,7 @@ begin
           It('Should return return 0 if a matching file is not loaded', procedure
             begin
               success := FileByAuthor('U. N. Owen', @h);
-              Expect(success and (h = 0), 'Handle should be 0');
+              Expect(not success, 'Should return false');
             end);
         end);
     end);
