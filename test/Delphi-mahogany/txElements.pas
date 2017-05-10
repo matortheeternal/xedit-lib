@@ -8,7 +8,7 @@ uses
 
   // ELEMENT HANDLING METHODS
   function GetElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function GetElements(_id: Cardinal; _res: PCardinalArray): WordBool; cdecl; external 'XEditLib.dll';
+  function GetElements(_id: Cardinal; _res: PCardinal; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
   function GetElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function GetContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function NewElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
@@ -35,7 +35,7 @@ procedure BuildElementHandlingTests;
 var
   success, b: WordBool;
   h, skyrim, testFile, armo, rec, element, armoTest, recTest: Cardinal;
-  a: CardinalArray;
+  a: PCardinal;
 begin
   Describe('Element Handling', procedure
     begin
@@ -221,40 +221,49 @@ begin
                   Expect(not success, 'Result should be false');
                 end);
             end);
-
         end);
 
       Describe('GetElements', procedure
         begin
+          BeforeEach(procedure
+            begin
+              GetMem(a, 4096 * 4);
+            end);
+
+          AfterEach(procedure
+            begin
+              FreeMem(a, 4096 * 4);
+            end);
+
           It('Should resolve root children (files)', procedure
             begin
-              success := GetElements(0, @a);
-              Expect(success and (Length(a) = 8), 'There should be 8 handles');
+              success := GetElements(0, a, 4096);
+              Expect(success and (ArrayLength(a) = 8), 'There should be 8 handles');
             end);
 
           It('Should resolve file children (file header and groups)', procedure
             begin
-              success := GetElements(skyrim, @a);
-              Expect(success and (Length(a) = 118), 'There should be 118 handles');
+              success := GetElements(skyrim, a, 4096);
+              Expect(success and (ArrayLength(a) = 118), 'There should be 118 handles');
             end);
 
           It('Should resolve group children (records)', procedure
             begin
-                success := GetElements(armo, @a);
-                Expect(success and (Length(a) = 2762), 'There should be 2762 handles');
+                success := GetElements(armo, a, 4096);
+                Expect(success and (ArrayLength(a) = 2762), 'There should be 2762 handles');
             end);
 
           It('Should resolve record children (subrecords/elements)', procedure
             begin
-              success := GetElements(rec, @a);
-              Expect(success and (Length(a) = 13), 'There should be 13 handles');
+              success := GetElements(rec, a, 4096);
+              Expect(success and (ArrayLength(a) = 13), 'There should be 13 handles');
             end);
 
           It('Should resolve element children', procedure
             begin
               GetElement(rec, 'KWDA', @h);
-              success := GetElements(h, @a);
-              Expect(success and (Length(a) = 5), 'There should be 5 handles');
+              success := GetElements(h, a, 4096);
+              Expect(success and (ArrayLength(a) = 5), 'There should be 5 handles');
             end);
         end);
 

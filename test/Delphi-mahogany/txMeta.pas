@@ -45,6 +45,17 @@ begin
   end;
 end;
 
+{$POINTERMATH ON}
+function ArrayLength(a: PCardinal): Integer;
+begin
+  Result := 0;
+  while a^ <> 0 do begin
+    Inc(Result, 1);
+    Inc(a, 4);
+  end;
+end;
+{$POINTERMATH OFF}
+
 procedure WriteArray(a: CardinalArray);
 var
   s: String;

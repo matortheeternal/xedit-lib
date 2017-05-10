@@ -7,7 +7,7 @@ uses
 
   // RECORD HANDLING METHODS
   function AddRecord(_id: Cardinal; sig: string; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function GetRecords(_id: Cardinal; _res: PCardinalArray): WordBool; cdecl; external 'XEditLib.dll';
+  function GetRecords(_id: Cardinal; _res: PCardinal; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
   function RecordsBySignature(_id: Cardinal; sig: string; _res: PCardinalArray): WordBool; cdecl; external 'XEditLib.dll';
   function RecordByIndex(_id: Cardinal; index: Integer; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function RecordByFormID(_id, formID: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
