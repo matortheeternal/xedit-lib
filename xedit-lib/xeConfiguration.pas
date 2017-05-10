@@ -207,7 +207,6 @@ const
     'Uninstall\Steam App ';
 var
   i: Integer;
-  gameName: string;
   keys, appIDs: TStringList;
 begin
   Result := '';
