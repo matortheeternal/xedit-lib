@@ -11,7 +11,6 @@ uses
   function FileByName(name: PWideChar; _res: PCardinal): WordBool; cdecl;
   function FileByAuthor(author: PWideChar; _res: PCardinal): WordBool; cdecl;
   function SaveFile(_id: Cardinal): WordBool; cdecl;
-  function GetFileNames(fileNames: PWideChar; len: Integer): WordBool; cdecl;
 
   // native functions
   function NewFileElement(filename: string): IwbElement;
@@ -213,23 +212,6 @@ begin
         FileStream.Free;
       end;
     end;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function GetFileNames(fileNames: PWideChar; len: Integer): WordBool; cdecl;
-var
-  s: String;
-  i: Integer;
-begin
-  Result := false;
-  try
-    s := '';
-    for i := Low(Files) to High(Files) do
-      s := s + Files[i].FileName + #13;
-    StrLCopy(fileNames, PWideChar(WideString(Trim(s))), len);
-    Result := true;
   except
     on x: Exception do ExceptionHandler(x);
   end;
