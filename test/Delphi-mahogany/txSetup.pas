@@ -20,12 +20,12 @@ implementation
 
 const
   TestLoadOrder =
-    'Skyrim.esm'#44 +
-    'Update.esm'#44 +
-    'xtest-1.esp'#44 +
-    'xtest-2.esp'#44 +
-    'xtest-3.esp'#44 +
-    'xtest-4.esp'#44 +
+    'Skyrim.esm'#13 +
+    'Update.esm'#13 +
+    'xtest-1.esp'#13 +
+    'xtest-2.esp'#13 +
+    'xtest-3.esp'#13 +
+    'xtest-4.esp'#13 +
     'xtest-5.esp';
 
 procedure LoadXEdit;
