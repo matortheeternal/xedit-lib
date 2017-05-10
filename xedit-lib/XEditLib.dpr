@@ -50,7 +50,7 @@ exports
   NewFile, FileByIndex, FileByLoadOrder, FileByName, FileByAuthor,
   SaveFile, GetFileNames,
   // MASTER HANDLING METHODS
-  CleanMasters, SortMasters, AddMaster, GetMaster,
+  CleanMasters, SortMasters, AddMaster, GetMaster, GetMasters, GetRequiredBy,
   // FILE VALUE METHODS
   GetFileHeader, GetNextObjectId, SetNextObjectID, GetFileName, GetAuthor,
   SetAuthor, GetDescription, SetDescription, OverrideRecordCount, GetIsESM,
