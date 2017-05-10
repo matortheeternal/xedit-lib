@@ -187,7 +187,8 @@ begin
       end;
 
       // RETURN RESULT
-      StrLCopy(str, PWideChar(WideString(slLoadOrder.CommaText)), len);
+      if Length(slLoadOrder.Text) > len then exit;
+      StrLCopy(str, PWideChar(WideString(slLoadOrder.Text)), len);
       Result := true;
     finally
       slPlugins.Free;
@@ -207,9 +208,7 @@ begin
     
     // store load order we're going to use in slLoadOrder
     slLoadOrder := TStringList.Create;
-    slLoadOrder.StrictDelimiter := true;
-    slLoadOrder.Delimiter := ',';
-    slLoadOrder.DelimitedText := string(loadOrder);
+    slLoadOrder.Text := loadOrder;
 
     // set filecount global
     Globals.Values['FileCount'] := IntToStr(slLoadOrder.Count);
