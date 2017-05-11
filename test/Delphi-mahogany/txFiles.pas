@@ -11,7 +11,6 @@ uses
   function FileByLoadOrder(load_order: Integer; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function FileByName(name: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function FileByAuthor(author: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function GetElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function SaveFile(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
 
   // PUBLIC TESTING INTERFACE
