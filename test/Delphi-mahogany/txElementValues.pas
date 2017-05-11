@@ -38,9 +38,9 @@ procedure BuildElementValueTests;
 var
   testFile, block, subBlock, childGroup, persistentGroup, refr, armo, rec, 
   element, keyword, h, c: Cardinal;
-  success: WordBool;
   expectedName: String;
   str: PWideChar;
+  f: Double;
   i: Integer;
 begin
   Describe('Element Values', procedure
@@ -317,7 +317,7 @@ begin
               ExpectSuccess(GetUIntValue(keyword, '', @c));
               ExpectEqual(c, $6BBD2, '');
             end);
-          It('Should resolve element integer values at paths', procedure
+          It('Should resolve element unsigned integer values at paths', procedure
             begin
               ExpectSuccess(GetUIntValue(rec, 'KWDA\[0]', @c));
               ExpectEqual(c, $424EF, '');
@@ -325,6 +325,25 @@ begin
           It('Should fail if path does not exist', procedure
             begin
               ExpectFailure(GetUIntValue(rec, 'Non\Existent\Path', @c));
+            end);
+        end);
+
+      Describe('GetFloatValue', procedure
+        begin
+          It('Should resolve element float values', procedure
+            begin
+              ExpectSuccess(GetFloatValue(element, '', @f));
+              // armor rating is stored at *100 internally, for some reason
+              ExpectEqual(f, 1000.0, '');
+            end);
+          It('Should resolve element float values at paths', procedure
+            begin
+              ExpectSuccess(GetFloatValue(rec, 'DATA\Weight', @f));
+              ExpectEqual(f, 5.0, '');
+            end);
+          It('Should fail if path does not exist', procedure
+            begin
+              ExpectFailure(GetFloatValue(rec, 'Non\Existent\Path', @f));
             end);
         end);
     end);
