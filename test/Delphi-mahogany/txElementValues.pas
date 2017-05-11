@@ -297,12 +297,12 @@ begin
             begin
               GetElement(rec, 'OBND\Y1', @h);
               ExpectSuccess(GetIntValue(h, '', @i));
-              ExpectEqual(i, -6, '');
+              ExpectEqual(i, -15, '');
             end);
           It('Should resolve element integer values at paths', procedure
             begin
               ExpectSuccess(GetIntValue(rec, 'OBND\Z1', @i));
-              ExpectEqual(i, -9, '');
+              ExpectEqual(i, -1, '');
             end);
           It('Should fail if path does not exist', procedure
             begin
@@ -320,7 +320,7 @@ begin
           It('Should resolve element integer values at paths', procedure
             begin
               ExpectSuccess(GetUIntValue(rec, 'KWDA\[0]', @c));
-              ExpectEqual(c, $0, '');
+              ExpectEqual(c, $424EF, '');
             end);
           It('Should fail if path does not exist', procedure
             begin
