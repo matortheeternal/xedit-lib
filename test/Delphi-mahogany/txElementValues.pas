@@ -375,6 +375,27 @@ begin
               ExpectFailure(SetValue(rec, 'Non\Existent\Path', 'Test'));
             end);
         end);
+
+      Describe('SetIntValue', procedure
+        begin
+          It('Should set element integer values', procedure
+            begin
+              GetElement(rec, 'OBND\Y1', @h);
+              ExpectSuccess(SetIntValue(h, '', -13));
+              ExpectSuccess(GetIntValue(h, '', @i));
+              ExpectEqual(i, -13, '');
+            end);
+          It('Should set element integer values at paths', procedure
+            begin
+              ExpectSuccess(SetIntValue(rec, 'OBND\Z1', -4));
+              ExpectSuccess(GetIntValue(rec, 'OBND\Z1', @i));
+              ExpectEqual(i, -4, '');
+            end);
+          It('Should fail if path does not exist', procedure
+            begin
+              ExpectFailure(SetIntValue(rec, 'Non\Existent\Path', 1));
+            end);
+        end);
     end);
 end;
 
