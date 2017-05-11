@@ -37,10 +37,11 @@ uses
 procedure BuildElementValueTests;
 var
   testFile, block, subBlock, childGroup, persistentGroup, refr, armo, rec, 
-  element, keyword: Cardinal;
+  element, keyword, h, c: Cardinal;
   success: WordBool;
   expectedName: String;
   str: PWideChar;
+  i: Integer;
 begin
   Describe('Element Values', procedure
     begin
@@ -287,6 +288,25 @@ begin
           It('Should fail if path does not exist', procedure
             begin
               ExpectFailure(GetValue(rec, 'Non\Existent\Path', str, 256));
+            end);
+        end);
+
+      Describe('GetIntValue', procedure
+        begin
+          It('Should resolve element integer values', procedure
+            begin
+              GetElement(rec, 'OBND\Y1', @h);
+              ExpectSuccess(GetIntValue(h, '', @i));
+              ExpectEqual(i, -6, '');
+            end);
+          It('Should resolve element integer values at paths', procedure
+            begin
+              ExpectSuccess(GetIntValue(rec, 'OBND\Z1', @i));
+              ExpectEqual(i, -9, '');
+            end);
+          It('Should fail if path does not exist', procedure
+            begin
+              ExpectFailure(GetIntValue(rec, 'Non\Existent\Path', @i));
             end);
         end);
     end);
