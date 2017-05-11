@@ -11,19 +11,19 @@ interface
   function SortKey(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
   function ElementType(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
   function DefType(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
-  function GetValue(_id: Integer; path: PAnsiChar; str: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
-  function SetValue(_id: Integer; path: PAnsiChar; value: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
-  function GetIntValue(_id: Integer; path: PAnsiChar; value: PInteger): WordBool; cdecl; external 'XEditLib.dll';
-  function SetIntValue(_id: Integer; path: PAnsiChar; value: Integer): WordBool; cdecl; external 'XEditLib.dll';
-  function GetUIntValue(_id: Integer; path: PAnsiChar; value: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function SetUIntValue(_id: Integer; path: PAnsiChar; value: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function GetFloatValue(_id: Integer; path: PAnsiChar; value: PDouble): WordBool; cdecl; external 'XEditLib.dll';
-  function SetFloatValue(_id: Integer; path: PAnsiChar; value: Double): WordBool; cdecl; external 'XEditLib.dll';
-  function GetLinksTo(_id: Integer; path: PAnsiChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function SetFlag(_id: Integer; path: PAnsiChar; name: PWideChar; enabled: WordBool): WordBool; cdecl; external 'XEditLib.dll';
-  function GetFlag(_id: Integer; path: PAnsiChar; name: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
-  function ToggleFlag(_id: Integer; path: PAnsiChar; name: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
-  function GetEnabledFlags(_id: Integer; path: PAnsiChar; flags: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
+  function GetValue(_id: Integer; path: PWideChar; str: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
+  function SetValue(_id: Integer; path: PWideChar; value: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
+  function GetIntValue(_id: Integer; path: PWideChar; value: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function SetIntValue(_id: Integer; path: PWideChar; value: Integer): WordBool; cdecl; external 'XEditLib.dll';
+  function GetUIntValue(_id: Integer; path: PWideChar; value: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
+  function SetUIntValue(_id: Integer; path: PWideChar; value: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
+  function GetFloatValue(_id: Integer; path: PWideChar; value: PDouble): WordBool; cdecl; external 'XEditLib.dll';
+  function SetFloatValue(_id: Integer; path: PWideChar; value: Double): WordBool; cdecl; external 'XEditLib.dll';
+  function GetLinksTo(_id: Integer; path: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
+  function SetFlag(_id: Integer; path: PWideChar; name: PWideChar; enabled: WordBool): WordBool; cdecl; external 'XEditLib.dll';
+  function GetFlag(_id: Integer; path: PWideChar; name: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
+  function ToggleFlag(_id: Integer; path: PWideChar; name: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
+  function GetEnabledFlags(_id: Integer; path: PWideChar; flags: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
 
   // PUBLIC TESTING INTERFACE
   procedure BuildElementValueTests;
