@@ -309,6 +309,24 @@ begin
               ExpectFailure(GetIntValue(rec, 'Non\Existent\Path', @i));
             end);
         end);
+
+      Describe('GetUIntValue', procedure
+        begin
+          It('Should resolve element unsigned integer values', procedure
+            begin
+              ExpectSuccess(GetUIntValue(keyword, '', @c));
+              ExpectEqual(c, $6BBD2, '');
+            end);
+          It('Should resolve element integer values at paths', procedure
+            begin
+              ExpectSuccess(GetUIntValue(rec, 'KWDA\[0]', @c));
+              ExpectEqual(c, $0, '');
+            end);
+          It('Should fail if path does not exist', procedure
+            begin
+              ExpectFailure(GetUIntValue(rec, 'Non\Existent\Path', @c));
+            end);
+        end);
     end);
 end;
 
