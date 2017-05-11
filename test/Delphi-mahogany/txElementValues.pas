@@ -346,6 +346,35 @@ begin
               ExpectFailure(GetFloatValue(rec, 'Non\Existent\Path', @f));
             end);
         end);
+
+      Describe('SetValue', procedure
+        begin
+          It('Should set element values', procedure
+            begin
+              ExpectSuccess(SetValue(element, '', '14.100000'));
+              ExpectSuccess(GetValue(element, '', str, 256));
+              ExpectEqual(String(str), '14.100000', '');
+              ExpectSuccess(SetValue(keyword, '', 'ArmorLight [KYWD:0006BBD3]'));
+              ExpectSuccess(GetValue(keyword, '', str, 256));
+              ExpectEqual(String(str), 'ArmorLight [KYWD:0006BBD3]', '');
+            end);
+          It('Should set element value at path', procedure
+            begin
+              ExpectSuccess(SetValue(rec, 'OBND\X1', '-8'));
+              ExpectSuccess(GetValue(rec, 'OBND\X1', str, 256));
+              ExpectEqual(String(str), '-8', '');
+              ExpectSuccess(SetValue(rec, 'KWDA\[0]', 'PerkFistsEbony [KYWD:0002C178]'));
+              ExpectSuccess(GetValue(rec, 'KWDA\[0]', str, 256));
+              ExpectEqual(String(str), 'PerkFistsEbony [KYWD:0002C178]', '');
+              ExpectSuccess(SetValue(rec, 'Female world model\MOD4', 'Armor\Iron\F\GauntletsGND.nif'));
+              ExpectSuccess(GetValue(rec, 'Female world model\MOD4', str, 256));
+              ExpectEqual(String(str), 'Armor\Iron\F\GauntletsGND.nif', '');
+            end);
+          It('Should fail if path does not exist', procedure
+            begin
+              ExpectFailure(SetValue(rec, 'Non\Existent\Path', 'Test'));
+            end);
+        end);
     end);
 end;
 
