@@ -150,6 +150,7 @@ const
   varInteger = 3;
   varDouble = 5;
   varShortInt = 16;
+  varCardinal = 19;
   varString =  256; { Pascal string }
   varUString = 258; { Unicode string }
   { SEE http://stackoverflow.com/questions/24731098/what-does-mean-vartypeavariant-273-or-111
@@ -164,8 +165,8 @@ begin
   if v1 <> v2 then begin
     vt := VarType(v1);
     case vt of
-      varInteger: raise Exception.Create(Format(IntError, [v2, v1]));
-      varShortInt: raise Exception.Create(Format(IntError, [Integer(v2), Integer(v1)]));
+      varInteger, varShortInt: raise Exception.Create(Format(IntError, [Integer(v2), Integer(v1)]));
+      varCardinal: raise Exception.Create(Format(IntError, [Cardinal(v2), Cardinal(v1)]));
       varDouble: raise Exception.Create(Format(FloatError, [v2, v1]));
       varString, varUString: raise Exception.Create(Format(StringError, [v2, v1]));
       else raise Exception.Create(Format(CustomError, [description, vt]));
