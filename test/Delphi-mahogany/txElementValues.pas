@@ -396,6 +396,26 @@ begin
               ExpectFailure(SetIntValue(rec, 'Non\Existent\Path', 1));
             end);
         end);
+
+      Describe('SetUIntValue', procedure
+        begin
+          It('Should set element unsigned integer values', procedure
+            begin
+              ExpectSuccess(SetUIntValue(keyword, '', $6BBE2));
+              ExpectSuccess(GetUIntValue(keyword, '', @c));
+              ExpectEqual(c, $6BBE2, '');
+            end);
+          It('Should set element unsigned integer values at paths', procedure
+            begin
+              ExpectSuccess(SetUIntValue(rec, 'KWDA\[0]', $2C177));
+              ExpectSuccess(GetUIntValue(rec, 'KWDA\[0]', @c));
+              ExpectEqual(c, $2C177, '');
+            end);
+          It('Should fail if path does not exist', procedure
+            begin
+              ExpectFailure(SetUIntValue(rec, 'Non\Existent\Path', $10));
+            end);
+        end);
     end);
 end;
 
