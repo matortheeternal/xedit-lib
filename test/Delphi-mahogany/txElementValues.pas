@@ -265,7 +265,7 @@ begin
               ExpectEqual(String(str), 'Iron Gauntlets', '');
             end);
         end);
-        
+
       Describe('GetValue', procedure
         begin
           It('Should resolve element values', procedure
@@ -283,6 +283,10 @@ begin
               ExpectEqual(String(str), 'ArmorHeavy [KYWD:0006BBD2]', '');
               ExpectSuccess(GetValue(rec, 'Female world model\MOD4', str, 256));
               ExpectEqual(String(str), 'Test', '');
+            end);
+          It('Should fail if path does not exist', procedure
+            begin
+              ExpectFailure(GetValue(rec, 'Non\Existent\Path', str, 256));
             end);
         end);
     end);
