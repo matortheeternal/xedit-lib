@@ -167,7 +167,7 @@ begin
     case vt of
       varInteger, varShortInt: raise Exception.Create(Format(IntError, [Integer(v2), Integer(v1)]));
       varCardinal: raise Exception.Create(Format(IntError, [Cardinal(v2), Cardinal(v1)]));
-      varDouble: raise Exception.Create(Format(FloatError, [v2, v1]));
+      varDouble: raise Exception.Create(Format(FloatError, [Double(v2), Double(v1)]));
       varString, varUString: raise Exception.Create(Format(StringError, [v2, v1]));
       else raise Exception.Create(Format(CustomError, [description, vt]));
     end;
