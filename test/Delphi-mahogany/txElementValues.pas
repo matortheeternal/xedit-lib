@@ -416,6 +416,27 @@ begin
               ExpectFailure(SetUIntValue(rec, 'Non\Existent\Path', $10));
             end);
         end);
+
+      Describe('SetFloatValue', procedure
+        begin
+          It('Should resolve element float values', procedure
+            begin
+              ExpectSuccess(SetFloatValue(element, '', 1920.0));
+              ExpectSuccess(GetFloatValue(element, '', @f));
+              // armor rating is stored at *100 internally, for some reason
+              ExpectEqual(f, 1920.0, '');
+            end);
+          It('Should resolve element float values at paths', procedure
+            begin
+              ExpectSuccess(SetFloatValue(rec, 'DATA\Weight', 7.3));
+              ExpectSuccess(GetFloatValue(rec, 'DATA\Weight', @f));
+              ExpectEqual(f, 7.3, '');
+            end);
+          It('Should fail if path does not exist', procedure
+            begin
+              ExpectFailure(SetFloatValue(rec, 'Non\Existent\Path', 1.23));
+            end);
+        end);
     end);
 end;
 
