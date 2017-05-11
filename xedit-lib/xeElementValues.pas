@@ -294,22 +294,29 @@ begin
   end;
 end;
 
+function ResolvePath(_id: Cardinal; path: PWideChar): IInterface;
+var
+  container: IwbContainerElementRef;
+  h: Cardinal;
+begin
+  Result := Resolve(_id);
+  if (string(path) <> '') and Supports(Result, IwbContainerElementRef, container) then begin
+    if not GetElement(_id, path, @h) then
+      raise Exception.Create('Error resolving element at path ' + string(path));
+    Result := Resolve(h);
+  end;
+end;
+
 function GetValue(_id: Cardinal; path, str: PWideChar; len: Integer): WordBool; cdecl;
 var
   e: IInterface;
-  container: IwbContainerElementRef;
   element: IwbElement;
   sValue: string;
 begin
   Result := false;
   try
-    e := Resolve(_id);
-    if (string(path) <> '') and Supports(e, IwbContainerElementRef, container) then begin
-      sValue := container.ElementEditValues[string(path)];
-      StrLCopy(str, PWideChar(WideString(sValue)), len);
-      Result := true;
-    end
-    else if Supports(e, IwbElement, element) then begin
+    e := ResolvePath(_id, path);
+    if Supports(e, IwbElement, element) then begin
       sValue := element.EditValue;
       StrLCopy(str, PWideChar(WideString(sValue)), len);
       Result := true;
@@ -322,17 +329,12 @@ end;
 function SetValue(_id: Cardinal; path, value: PWideChar): WordBool; cdecl;
 var
   e: IInterface;
-  container: IwbContainerElementRef;
   element: IwbElement;
 begin
   Result := false;
   try
-    e := Resolve(_id);
-    if Supports(e, IwbContainerElementRef, container) then begin
-      container.ElementEditValues[string(path)] := value;
-      Result := true;
-    end
-    else if Supports(e, IwbElement, element) then begin
+    e := ResolvePath(_id, path);
+    if Supports(e, IwbElement, element) then begin
       element.EditValue := string(value);
       Result := true;
     end;
@@ -341,30 +343,24 @@ begin
   end;
 end;
 
-function GetNativeValue(_id: Cardinal; path: String): Variant;
+function GetNativeValue(_id: Cardinal; path: PWideChar): Variant;
 var
   e: IInterface;
-  container: IwbContainerElementRef;
   element: IwbElement;
 begin
   Result := Variants.Null;
-  e := Resolve(_id);
-  if Supports(e, IwbContainerElementRef, container) then
-    Result := container.ElementNativeValues[string(path)]
-  else if Supports(e, IwbElement, element) then
+  e := ResolvePath(_id, path);
+  if Supports(e, IwbElement, element) then
     Result := element.NativeValue;
 end;
 
-procedure SetNativeValue(_id: Cardinal; path: String; value: Variant);
+procedure SetNativeValue(_id: Cardinal; path: PWideChar; value: Variant);
 var
   e: IInterface;
-  container: IwbContainerElementRef;
   element: IwbElement;
 begin
-  e := Resolve(_id);
-  if Supports(e, IwbContainerElementRef, container) then
-    container.ElementNativeValues[string(path)] := value
-  else if Supports(e, IwbElement, element) then
+  e := ResolvePath(_id, path);
+  if Supports(e, IwbElement, element) then
     element.NativeValue := value;
 end;
 
@@ -372,7 +368,7 @@ function GetIntValue(_id: Cardinal; path: PWideChar; value: PInteger): WordBool;
 begin
   Result := false;
   try
-    value^ := Integer(GetNativeValue(_id, string(path)));
+    value^ := Integer(GetNativeValue(_id, path));
     Result := true;
   except
     on x: Exception do ExceptionHandler(x);
@@ -383,7 +379,7 @@ function SetIntValue(_id: Cardinal; path: PWideChar; value: Integer): WordBool; 
 begin
   Result := false;
   try
-    SetNativeValue(_id, string(path), value);
+    SetNativeValue(_id, path, value);
     Result := true;
   except
     on x: Exception do ExceptionHandler(x);
@@ -394,7 +390,7 @@ function GetUIntValue(_id: Cardinal; path: PWideChar; value: PCardinal): WordBoo
 begin
   Result := false;
   try
-    value^ := Cardinal(GetNativeValue(_id, string(path)));
+    value^ := Cardinal(GetNativeValue(_id, path));
     Result := true;
   except
     on x: Exception do ExceptionHandler(x);
@@ -405,7 +401,7 @@ function SetUIntValue(_id: Cardinal; path: PWideChar; value: Cardinal): WordBool
 begin
   Result := false;
   try
-    SetNativeValue(_id, string(path), value);
+    SetNativeValue(_id, path, value);
     Result := true;
   except
     on x: Exception do ExceptionHandler(x);
@@ -416,7 +412,7 @@ function GetFloatValue(_id: Cardinal; path: PWideChar; value: PDouble): WordBool
 begin
   Result := false;
   try
-    value^ := Double(GetNativeValue(_id, string(path)));
+    value^ := Double(GetNativeValue(_id, path));
     Result := true;
   except
     on x: Exception do ExceptionHandler(x);
@@ -427,7 +423,7 @@ function SetFloatValue(_id: Cardinal; path: PWideChar; value: Double): WordBool;
 begin
   Result := false;
   try
-    SetNativeValue(_id, string(path), value);
+    SetNativeValue(_id, path, value);
     Result := true;
   except
     on x: Exception do ExceptionHandler(x);
@@ -437,16 +433,13 @@ end;
 function GetLinksTo(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
   e: IInterface;
-  container: IwbContainerElementRef;
   element, linkedElement: IwbElement;
 begin
   Result := false;
   try
     // resolve linked element
-    e := Resolve(_id);
-    if Supports(e, IwbContainerElementRef, container) then
-      linkedElement := container.ElementByPath[string(path)].LinksTo
-    else if Supports(e, IwbElement, element) then
+    e := ResolvePath(_id, path);
+    if Supports(e, IwbElement, element) then
       linkedElement := element.LinksTo;
 
     // return linked element if present
@@ -461,7 +454,7 @@ end;
 
 function SetFlag(_id: Cardinal; path, name: PWideChar; enabled: WordBool): WordBool; cdecl;
 var
-  container: IwbContainerElementRef;
+  e: IInterface;
   element: IwbElement;
   enumDef: IwbEnumDef;
   i: Integer;
@@ -469,17 +462,17 @@ var
 begin
   Result := false;
   try
-    if Supports(Resolve(_id), IwbContainerElementRef, container) then begin
-      element := container.ElementByPath[string(path)];
-      if Supports(element.Def, IwbEnumDef, enumDef) then
-        for i := 0 to Pred(enumDef.NameCount) do
-          if SameText(enumDef.Names[i], String(name)) then begin
-            flagVal := 1 shl i;
-            if enabled then
-              element.NativeValue := element.NativeValue or flagVal
-            else
-              element.NativeValue := element.NativeValue and not flagVal;
-          end;
+    e := ResolvePath(_id, path);
+    if Supports(e, IwbElement, element)
+    and Supports(element.Def, IwbEnumDef, enumDef) then begin
+      for i := 0 to Pred(enumDef.NameCount) do
+        if SameText(enumDef.Names[i], String(name)) then begin
+          flagVal := 1 shl i;
+          if enabled then
+            element.NativeValue := element.NativeValue or flagVal
+          else
+            element.NativeValue := element.NativeValue and not flagVal;
+        end;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -488,23 +481,22 @@ end;
 
 function GetFlag(_id: Cardinal; path, name: PWideChar; enabled: PWordBool): WordBool; cdecl;
 var
-  container: IwbContainerElementRef;
+  e: IInterface;
   element: IwbElement;
   enumDef: IwbEnumDef;
   i: Integer;
 begin
   Result := False;
   try
-    if Supports(Resolve(_id), IwbContainerElementRef, container) then begin
-      element := container.ElementByPath[string(path)];
-      if Supports(element.Def, IwbEnumDef, enumDef) then begin
-        for i := 0 to Pred(enumDef.NameCount) do
-          if SameText(enumDef.Names[i], name) then begin
-            enabled^ := element.NativeValue and (1 shl i);
-            exit;
-          end;
-        Result := True;
-      end;
+    e := ResolvePath(_id, path);
+    if Supports(e, IwbElement, element)
+    and Supports(element.Def, IwbEnumDef, enumDef) then begin
+      for i := 0 to Pred(enumDef.NameCount) do
+        if SameText(enumDef.Names[i], name) then begin
+          enabled^ := element.NativeValue and (1 shl i);
+          exit;
+        end;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -513,7 +505,7 @@ end;
 
 function ToggleFlag(_id: Cardinal; path, name: PWideChar): WordBool; cdecl;
 var
-  container: IwbContainerElementRef;
+  e: IInterface;
   element: IwbElement;
   enumDef: IwbEnumDef;
   i: Integer;
@@ -521,17 +513,17 @@ var
 begin
   Result := false;
   try
-    if Supports(Resolve(_id), IwbContainerElementRef, container) then begin
-      element := container.ElementByPath[string(path)];
-      if Supports(element.Def, IwbEnumDef, enumDef) then
-        for i := 0 to Pred(enumDef.NameCount) do
-          if SameText(enumDef.Names[i], name) then begin
-            flagVal := 1 shl i;
-            if element.NativeValue and flagVal then
-              element.NativeValue := element.NativeValue and not flagVal
-            else
-              element.NativeValue := element.NativeValue or flagVal;
-          end;
+    e := ResolvePath(_id, path);
+    if Supports(e, IwbElement, element)
+    and Supports(element.Def, IwbEnumDef, enumDef) then begin
+      for i := 0 to Pred(enumDef.NameCount) do
+        if SameText(enumDef.Names[i], name) then begin
+          flagVal := 1 shl i;
+          if element.NativeValue and flagVal then
+            element.NativeValue := element.NativeValue and not flagVal
+          else
+            element.NativeValue := element.NativeValue or flagVal;
+        end;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -541,7 +533,7 @@ end;
 function GetEnabledFlags(_id: Cardinal; path, flags: PWideChar; len: Integer): WordBool; cdecl;
 var
   slFlags: TStringList;
-  container: IwbContainerElementRef;
+  e: IInterface;
   element: IwbElement;
   enumDef: IwbEnumDef;
   i: Integer;
@@ -554,14 +546,14 @@ begin
     slFlags.Delimiter := ',';
 
     try
-      if Supports(Resolve(_id), IwbContainerElementRef, container) then begin
-        element := container.ElementByPath[string(path)];
-        if Supports(element.Def, IwbEnumDef, enumDef) then
-          for i := 0 to Pred(enumDef.NameCount) do begin
-            flagVal := 1 shl i;
-            if element.NativeValue and flagVal then
-              slFlags.Add(enumDef.Names[i]);
-          end;
+      e := ResolvePath(_id, path);
+      if Supports(e, IwbElement, element)
+      and Supports(element.Def, IwbEnumDef, enumDef) then begin
+        for i := 0 to Pred(enumDef.NameCount) do begin
+          flagVal := 1 shl i;
+          if element.NativeValue and flagVal then
+            slFlags.Add(enumDef.Names[i]);
+        end;
       end;
 
       // set output
