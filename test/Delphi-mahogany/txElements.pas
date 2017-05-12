@@ -16,7 +16,6 @@ uses
   function LinksTo(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function ElementExists(_id: Cardinal; key: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
   function ElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl; external 'XEditLib.dll';
-  function ElementAssigned(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
   function Equals(_id, _id2: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
   function IsMaster(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
   function IsInjected(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
@@ -231,6 +230,11 @@ begin
               Expect(ElementExists(rec, 'Male world model'), 'Result should be true');
             end);
 
+          It('Should return true for handles that are assigned', procedure
+            begin
+              Expect(ElementExists(rec, ''), 'Result should be true');
+            end);
+
           It('Should return false for files that do not exist', procedure
             begin
               Expect(not ElementExists(0, 'NonExistingFile.esp'), 'Result should be false');
@@ -239,6 +243,11 @@ begin
           It('Should return false for elements that do not exist', procedure
             begin
               Expect(not ElementExists(rec, 'KWDA\[5]'), 'Result should be false');
+            end);
+
+          It('Should return false for handles that are not assigned', procedure
+            begin
+              Expect(not ElementExists($FFFFFF, ''), 'Result should be false');
             end);
         end);
 

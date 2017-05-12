@@ -24,7 +24,6 @@ type
   function LinksTo(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function ElementExists(_id: Cardinal; key: PWideChar): WordBool; cdecl;
   function ElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
-  function ElementAssigned(_id: Cardinal): WordBool; cdecl;
   function Equals(_id, _id2: Cardinal): WordBool; cdecl;
   function CopyElement(_id, _id2: Cardinal; aAsNew, aDeepCopy: WordBool; _res: PCardinal): WordBool; cdecl;
   function IsMaster(_id: Cardinal): WordBool; cdecl;
@@ -474,18 +473,6 @@ begin
   end;
 end;
 
-function ElementAssigned(_id: Cardinal): WordBool; cdecl;
-var
-  e: IInterface;
-begin
-  Result := false;
-  try
-    e := Resolve(_id);
-    Result := Assigned(e);
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
 
 function Equals(_id, _id2: Cardinal): WordBool; cdecl;
 var
