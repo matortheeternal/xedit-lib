@@ -242,6 +242,45 @@ begin
             end);
         end);
 
+      Describe('ElementCount', procedure
+        begin
+          It('Should return number of files if null handle is passed', procedure
+            begin
+              ExpectSuccess(ElementCount(0, @i));
+              ExpectEqual(i, 8, '');
+            end);
+
+          It('Should return number of elements in a file', procedure
+            begin
+              ExpectSuccess(ElementCount(skyrim, @i));
+              ExpectEqual(i, 118, '');
+            end);
+
+          It('Should return the number of elements in a group', procedure
+            begin
+              ExpectSuccess(ElementCount(armo, @i));
+              ExpectEqual(i, 2762, '');
+            end);
+
+          It('Should return the number of elements in a record', procedure
+            begin
+              ExpectSuccess(ElementCount(rec, @i));
+              ExpectEqual(i, 13, '');
+            end);
+
+          It('Should return the number of elements in a subrecord', procedure
+            begin
+              ExpectSuccess(ElementCount(keywords, @i));
+              ExpectEqual(i, 5, '');
+            end);
+
+          It('Should return 0 if there are no children', procedure
+            begin
+              ExpectSuccess(ElementCount(dnam, @i));
+              ExpectEqual(i, 0, '');
+            end);
+        end);
+
       Describe('GetElements', procedure
         begin
           BeforeEach(procedure
