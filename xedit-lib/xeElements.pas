@@ -488,7 +488,11 @@ var
 begin
   Result := False;
   try
-    if Supports(Resolve(_id), IwbContainerElementRef, container) then begin
+    if _id = 0 then begin
+      count^ := High(Files) + 1;
+      Result := true;
+    end
+    else if Supports(Resolve(_id), IwbContainerElementRef, container) then begin
       count^ := container.ElementCount;
       Result := True;
     end;
