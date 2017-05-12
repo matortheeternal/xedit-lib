@@ -34,7 +34,7 @@ uses
 procedure BuildElementHandlingTests;
 var
   b: WordBool;
-  h, skyrim, testFile, armo, rec, keywords, dnam, element, testArmo,
+  h, skyrim, testFile, armo, rec, keywords, keyword, dnam, element, testArmo,
   testRec, testRec2: Cardinal;
   a: PCardinal;
   i: Integer;
@@ -48,6 +48,7 @@ begin
           GetElement(skyrim, 'ARMO', @armo);
           GetElement(armo, '00012E46', @rec);
           GetElement(rec, 'KWDA', @keywords);
+          GetElement(keywords, '[0]', @keyword);
           GetElement(rec, 'DNAM', @dnam);
           GetElement(0, 'xtest-3.esp', @testFile);
           GetElement(testFile, 'ARMO', @testArmo);
@@ -436,6 +437,35 @@ begin
           It('Should fail if called on a file', procedure
             begin
               ExpectFailure(GetContainer(skyrim, @h));
+            end);
+        end);
+
+      Describe('GetLinksTo', procedure
+        begin
+          It('Should return the referenced record', procedure
+            begin
+              ExpectSuccess(GetLinksTo(keyword, '', @h));
+              Expect(h > 0, 'Handle should be greater than 0');
+              ExpectSuccess(GetLinksTo(rec, 'RNAM', @h));
+              Expect(h > 0, 'Handle should be greater than 0');
+            end);
+
+          It('Should fail if called on a NULL reference', procedure
+            begin
+              ExpectFailure(GetLinksTo(testArmo, 'ZNAM', @h));
+            end);
+
+          It('Should fail if path is invalid', procedure
+            begin
+              ExpectFailure(GetLinksTo(keywords, '[7]', @h));
+            end);
+
+          It('Should fail if called on an element that does not store a reference', procedure
+            begin
+              ExpectFailure(GetLinksTo(0, '', @h));
+              ExpectFailure(GetLinksTo(skyrim, '', @h));
+              ExpectFailure(GetLinksTo(rec, '', @h));
+              ExpectFailure(GetLinksTo(dnam, '', @h));
             end);
         end);
 
