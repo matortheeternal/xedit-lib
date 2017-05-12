@@ -294,19 +294,6 @@ begin
   end;
 end;
 
-function ResolvePath(_id: Cardinal; path: PWideChar): IInterface;
-var
-  container: IwbContainerElementRef;
-  h: Cardinal;
-begin
-  Result := Resolve(_id);
-  if (string(path) <> '') and Supports(Result, IwbContainerElementRef, container) then begin
-    if not GetElement(_id, path, @h) then
-      raise Exception.Create('Error resolving element at path ' + string(path));
-    Result := Resolve(h);
-  end;
-end;
-
 function GetValue(_id: Cardinal; path, str: PWideChar; len: Integer): WordBool; cdecl;
 var
   e: IInterface;
@@ -315,7 +302,7 @@ var
 begin
   Result := false;
   try
-    e := ResolvePath(_id, path);
+    e := NativeGetElement(_id, path);
     if Supports(e, IwbElement, element) then begin
       sValue := element.EditValue;
       StrLCopy(str, PWideChar(WideString(sValue)), len);
@@ -333,7 +320,7 @@ var
 begin
   Result := false;
   try
-    e := ResolvePath(_id, path);
+    e := NativeGetElement(_id, path);
     if Supports(e, IwbElement, element) then begin
       element.EditValue := string(value);
       Result := true;
@@ -349,7 +336,7 @@ var
   element: IwbElement;
 begin
   Result := Variants.Null;
-  e := ResolvePath(_id, path);
+  e := NativeGetElement(_id, path);
   if Supports(e, IwbElement, element) then
     Result := element.NativeValue;
 end;
@@ -359,7 +346,7 @@ var
   e: IInterface;
   element: IwbElement;
 begin
-  e := ResolvePath(_id, path);
+  e := NativeGetElement(_id, path);
   if Supports(e, IwbElement, element) then
     element.NativeValue := value;
 end;
@@ -438,7 +425,7 @@ begin
   Result := false;
   try
     // resolve linked element
-    e := ResolvePath(_id, path);
+    e := NativeGetElement(_id, path);
     if Supports(e, IwbElement, element) then
       linkedElement := element.LinksTo;
 
@@ -462,7 +449,7 @@ var
 begin
   Result := false;
   try
-    e := ResolvePath(_id, path);
+    e := NativeGetElement(_id, path);
     if Supports(e, IwbElement, element)
     and Supports(element.Def, IwbEnumDef, enumDef) then begin
       for i := 0 to Pred(enumDef.NameCount) do
@@ -488,7 +475,7 @@ var
 begin
   Result := False;
   try
-    e := ResolvePath(_id, path);
+    e := NativeGetElement(_id, path);
     if Supports(e, IwbElement, element)
     and Supports(element.Def, IwbEnumDef, enumDef) then begin
       for i := 0 to Pred(enumDef.NameCount) do
@@ -513,7 +500,7 @@ var
 begin
   Result := false;
   try
-    e := ResolvePath(_id, path);
+    e := NativeGetElement(_id, path);
     if Supports(e, IwbElement, element)
     and Supports(element.Def, IwbEnumDef, enumDef) then begin
       for i := 0 to Pred(enumDef.NameCount) do
@@ -546,7 +533,7 @@ begin
     slFlags.Delimiter := ',';
 
     try
-      e := ResolvePath(_id, path);
+      e := NativeGetElement(_id, path);
       if Supports(e, IwbElement, element)
       and Supports(element.Def, IwbEnumDef, enumDef) then begin
         for i := 0 to Pred(enumDef.NameCount) do begin

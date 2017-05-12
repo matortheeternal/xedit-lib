@@ -33,8 +33,9 @@ type
   function IsWinningOverride(_id: Cardinal): WordBool; cdecl;
 
   // native functions
-  function ResolveFromGroup(group: IwbGroupRecord; path: String; _res: PCardinal): WordBool;
-  function ResolveElement(e: IInterface; path: String; _res: PCardinal): WordBool;
+  function ResolveFromGroup(group: IwbGroupRecord; path: String): IInterface;
+  function ResolveElement(e: IInterface; path: String): IInterface;
+  function NativeGetElement(_id: Cardinal; key: PWideChar): IInterface;
   function NativeContainer(element: IwbElement): IwbContainer;
   function IsArray(element: IwbElement): Boolean;
   function GetDefType(element: IwbElement): TwbDefType;
@@ -94,132 +95,105 @@ begin
     key := path;
 end;
 
-function ResolveByIndex(container: IwbContainerElementRef; index: Integer; nextPath: String; _res: PCardinal): WordBool;
+function ResolveByIndex(container: IwbContainerElementRef; index: Integer; nextPath: String): IInterface;
 var
   element: IwbElement;
 begin
-  Result := False;
   // resolve element from container if container present
   // else resolve file at index
-  if Assigned(container) then begin
-    if index < container.ElementCount then
-      element := container.Elements[index];
-  end
+  if Assigned(container) and (index < container.ElementCount) then
+    element := container.Elements[index]
   else
     element := NativeFileByIndex(index);
 
-  if not Assigned(element) then exit;
   // resolve next element if nextPath is present
   // else store the element and return it
-  if Length(nextPath) > 0 then
-    Result := ResolveElement(element, nextPath, _res)
-  else begin
-    _res^ := Store(element);
-    Result := True;
-  end;
+  if Assigned(element) and (Length(nextPath) > 0) then
+    Result := ResolveElement(element, nextPath)
+  else
+    Result := element;
 end;
 
-function ResolveRecord(_file: IwbFile; formID: Cardinal; path: String; _res: PCardinal): WordBool;
+function ResolveRecord(_file: IwbFile; formID: Cardinal; path: String): IInterface;
 var
   rec: IwbMainRecord;
 begin
-  Result := False;
   rec := _file.RecordByFormID[formID, true];
-  if not Assigned(rec) then exit;
-  if Length(path) > 0 then
-    Result := ResolveElement(rec, path, _res)
-  else begin
-    _res^ := Store(rec);
-    Result := True;
-  end;
+  if Assigned(rec) and (Length(path) > 0) then
+    Result := ResolveElement(rec, path)
+  else
+    Result := rec;
 end;
 
-function ResolveChildGroup(rec: IwbMainRecord; nextPath: String; _res: PCardinal): WordBool;
+function ResolveChildGroup(rec: IwbMainRecord; nextPath: String): IInterface;
 var
   group: IwbGroupRecord;
 begin
   group := rec.ChildGroup;
   if Length(nextPath) > 0 then
-    Result := ResolveFromGroup(group, nextPath, _res)
-  else begin
-    _res^ := Store(group);
-    Result := True;
-  end;
+    Result := ResolveFromGroup(group, nextPath)
+  else
+    Result := group;
 end;
 
-function ResolveGroup(_file: IwbFile; sig: TwbSignature; nextPath: String; _res: PCardinal): WordBool;
+function ResolveGroup(_file: IwbFile; sig: TwbSignature; nextPath: String): IInterface;
 var
   group: IwbGroupRecord;
 begin
   // TODO: perhaps also by group name?
-  Result := False;
   group := _file.GroupBySignature[sig];
-  if not Assigned(group) then exit;
-  if Length(nextPath) > 0 then
-    Result := ResolveElement(group, nextPath, _res)
-  else begin
-    _res^ := Store(group);
-    Result := True;
-  end;
+  if Assigned(group) and (Length(nextPath) > 0) then
+    Result := ResolveElement(group, nextPath)
+  else
+    Result := group;
 end;
 
-function ResolveFile(fileName, nextPath: String; _res: PCardinal): WordBool;
+function ResolveFile(fileName, nextPath: String): IInterface;
 var
   _file: IwbFile;
 begin
-  Result := False;
   _file := NativeFileByName(fileName);
-  if not Assigned(_file) then exit;
-  if Length(nextPath) > 0 then
-    Result := ResolveElement(_file, nextPath, _res)
-  else begin
-    _res^ := Store(_file);
-    Result := True;
-  end;
+  if Assigned(_file) and (Length(nextPath) > 0) then
+    Result := ResolveElement(_file, nextPath)
+  else
+    Result := _file;
 end;
 
-function ResolveFromContainer(container: IwbContainerElementRef; path: String; _res: PCardinal): WordBool;
-var
-  element: IwbElement;
+function ResolveFromContainer(container: IwbContainerElementRef; path: String): IInterface;
 begin
-  Result := False;
-  element := container.ElementByPath[path];
-  if Assigned(element) then begin
-    _res^ := Store(element);
-    Result := True;
-  end;
+  Result := container.ElementByPath[path];
 end;
 
-function ResolveFromRecord(rec: IwbMainRecord; path: String; _res: PCardinal): WordBool;
+function ResolveFromRecord(rec: IwbMainRecord; path: String): IInterface;
 var
   key, nextPath: String;
   container: IwbContainerElementRef;
 begin
-  Result := False;
+  Result := nil;
   SplitPath(path, key, nextPath);
   if SameText(key, 'Child Group') then
-    Result := ResolveChildGroup(rec, nextPath, _res)
+    Result := ResolveChildGroup(rec, nextPath)
   else if Supports(rec, IwbContainerElementRef, container) then
-    Result := ResolveFromContainer(container, path, _res);
+    Result := ResolveFromContainer(container, path);
 end;
 
-function ResolveFromGroup(group: IwbGroupRecord; path: String; _res: PCardinal): WordBool;
+function ResolveFromGroup(group: IwbGroupRecord; path: String): IInterface;
 var
   key, nextPath: String;
   index: Integer;
   formID: Cardinal;
 begin
-  Result := False;
+  Result := nil;
   SplitPath(path, key, nextPath);
   // resolve record by index if key is an index
   // else resolve record by formID
   if ParseIndex(key, index) then
-    Result := ResolveByIndex(group as IwbContainerElementRef, index, nextPath, _res)
+    Result := ResolveByIndex(group as IwbContainerElementRef, index, nextPath)
   else if ParseFormID(key, formID) then
-    Result := ResolveRecord(group._File, formID, nextPath, _res);
+    Result := ResolveRecord(group._File, formID, nextPath);
 end;
 
-function ResolveFromFile(_file: IwbFile; path: String; _res: PCardinal): WordBool;
+function ResolveFromFile(_file: IwbFile; path: String): IInterface;
 var
   key, nextPath: String;
   index: Integer;
@@ -230,14 +204,14 @@ begin
   // else resolve record by formID if key is a formID
   // else resolve by group signature
   if ParseIndex(key, index) then
-    Result := ResolveByIndex(_file as IwbContainerElementRef, index, nextPath, _res)
+    Result := ResolveByIndex(_file as IwbContainerElementRef, index, nextPath)
   else if ParseFormID(key, formID) then
-    Result := ResolveRecord(_file, formID, nextPath, _res)
+    Result := ResolveRecord(_file, formID, nextPath)
   else 
-    Result := ResolveGroup(_file, StrToSignature(key), nextPath, _res);
+    Result := ResolveGroup(_file, StrToSignature(key), nextPath);
 end;
 
-function ResolveFromRoot(path: String; _res: PCardinal): WordBool;
+function ResolveFromRoot(path: String): IInterface;
 var
   key, nextPath: String;
   index: Integer;
@@ -246,39 +220,52 @@ begin
   // resolve file by index if key is an index
   // else resolve by file name
   if ParseIndex(key, index) then
-    Result := ResolveByIndex(nil, index, nextPath, _res)
+    Result := ResolveByIndex(nil, index, nextPath)
   else 
-    Result := ResolveFile(key, nextPath, _res);
+    Result := ResolveFile(key, nextPath);
 end;
 
-function ResolveElement(e: IInterface; path: String; _res: PCardinal): WordBool;
+function ResolveElement(e: IInterface; path: String): IInterface;
 var
   _file: IwbFile;
   group: IwbGroupRecord;
   rec: IwbMainRecord;
   container: IwbContainerElementRef;
 begin
-  Result := False;
+  Result := nil;
   if Supports(e, IwbFile, _file) then
-    Result := ResolveFromFile(_file, path, _res)
+    Result := ResolveFromFile(_file, path)
   else if Supports(e, IwbGroupRecord, group) then
-    Result := ResolveFromGroup(group, path, _res)
+    Result := ResolveFromGroup(group, path)
   else if Supports(e, IwbMainRecord, rec) then
-    Result := ResolveFromRecord(rec, path, _res) 
+    Result := ResolveFromRecord(rec, path)
   else if Supports(e, IwbContainerElementRef, container) then
-    Result := ResolveFromContainer(container, path, _res);
+    Result := ResolveFromContainer(container, path);
+end;
+
+function NativeGetElement(_id: Cardinal; key: PWideChar): IInterface;
+begin
+  if string(key) = '' then
+    Result := Resolve(_id)
+  else if _id = 0 then
+    Result := ResolveFromRoot(string(key))
+  else
+    Result := ResolveElement(Resolve(_id), string(key));
 end;
 
 // Replaces ElementByName, ElementByPath, ElementByIndex, GroupBySignature, and
 // ElementBySignature.  Supports indexed paths.
 function GetElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
+var
+  e: IInterface;
 begin
   Result := False;
   try
-    if _id = 0 then
-      Result := ResolveFromRoot(string(key), _res)
-    else
-      Result := ResolveElement(Resolve(_id), string(key), _res);
+    e := NativeGetElement(_id, key);
+    if Assigned(e) then begin
+      _res^ := Store(e);
+      Result := True;
+    end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
