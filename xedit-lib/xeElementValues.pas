@@ -18,7 +18,6 @@ interface
   function SetUIntValue(_id: Cardinal; path: PWideChar; value: Cardinal): WordBool; cdecl;
   function GetFloatValue(_id: Cardinal; path: PWideChar; value: PDouble): WordBool; cdecl;
   function SetFloatValue(_id: Cardinal; path: PWideChar; value: Double): WordBool; cdecl;
-  function GetLinksTo(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
   function SetFlag(_id: Cardinal; path, name: PWideChar; enabled: WordBool): WordBool; cdecl;
   function GetFlag(_id: Cardinal; path, name: PWideChar; enabled: PWordBool): WordBool; cdecl;
   function ToggleFlag(_id: Cardinal; path, name: PWideChar): WordBool; cdecl;
@@ -412,28 +411,6 @@ begin
   try
     SetNativeValue(_id, path, value);
     Result := true;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function GetLinksTo(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
-var
-  e: IInterface;
-  element, linkedElement: IwbElement;
-begin
-  Result := false;
-  try
-    // resolve linked element
-    e := NativeGetElement(_id, path);
-    if Supports(e, IwbElement, element) then
-      linkedElement := element.LinksTo;
-
-    // return linked element if present
-    if Assigned(linkedElement) then begin
-      _res^ := Store(linkedElement);
-      Result := true;
-    end;
   except
     on x: Exception do ExceptionHandler(x);
   end;

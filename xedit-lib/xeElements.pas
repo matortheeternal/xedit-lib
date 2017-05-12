@@ -21,7 +21,7 @@ type
   function GetContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function NewElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
   function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; cdecl;
-  function LinksTo(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
+  function GetLinksTo(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
   function ElementExists(_id: Cardinal; key: PWideChar): WordBool; cdecl;
   function ElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
   function ElementEquals(_id, _id2: Cardinal): WordBool; cdecl;
@@ -422,13 +422,15 @@ begin
   end;
 end;
 
-function LinksTo(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
+function GetLinksTo(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
+  e: IInterface;
   element, linkedElement: IwbElement;
 begin
   Result := false;
   try
-    if Supports(Resolve(_id), IwbElement, element) then begin
+    e := NativeGetElement(_id, key);
+    if Supports(e, IwbElement, element) then begin
       linkedElement := element.LinksTo;
       if Assigned(linkedElement) then begin
         _res^ := Store(linkedElement);

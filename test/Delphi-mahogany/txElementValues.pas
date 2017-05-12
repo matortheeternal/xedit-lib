@@ -19,7 +19,6 @@ interface
   function SetUIntValue(_id: Integer; path: PWideChar; value: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
   function GetFloatValue(_id: Integer; path: PWideChar; value: PDouble): WordBool; cdecl; external 'XEditLib.dll';
   function SetFloatValue(_id: Integer; path: PWideChar; value: Double): WordBool; cdecl; external 'XEditLib.dll';
-  function GetLinksTo(_id: Integer; path: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function SetFlag(_id: Integer; path: PWideChar; name: PWideChar; enabled: WordBool): WordBool; cdecl; external 'XEditLib.dll';
   function GetFlag(_id: Integer; path: PWideChar; name: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
   function ToggleFlag(_id: Integer; path: PWideChar; name: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
