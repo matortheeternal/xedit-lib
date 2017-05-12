@@ -444,19 +444,12 @@ end;
 // Replaces HasGroup and ElementExists
 function ElementExists(_id: Cardinal; key: PWideChar): WordBool; cdecl;
 var
-  element: IInterface;
-  _file: IwbFile;
-  container: IwbContainerElementRef;
+  e: IInterface;
 begin
   Result := false;
   try
-    element := Resolve(_id);
-    if Supports(element, IwbFile, _file) then
-      // TODO: perhaps also by group name?
-      Result := _file.HasGroup(StrToSignature(string(key)))
-    else if Supports(element, IwbContainerElementRef, container) then
-      // TODO: adjust logic here so we can check paths
-      Result := container.ElementExists[string(key)];
+    e := NativeGetElement(_id, key);
+    Result := Assigned(e);
   except
     on x: Exception do ExceptionHandler(x);
   end;
