@@ -55,7 +55,7 @@ exports
   SetIsESM,
   // ELEMENT HANDLING METHODS
   GetElement, GetElements, GetElementFile, GetContainer, NewElement,
-  RemoveElement, ElementExists, ElementCount, LinksTo, ElementEquals,
+  RemoveElement, ElementExists, ElementCount, GetLinksTo, ElementEquals,
   CopyElement, IsMaster, IsInjected, IsOverride, IsWinningOverride,
   // ERROR CHECKING METHODS
   CheckForErrors, GetErrorThreadDone, GetErrors, GetErrorString,
@@ -64,8 +64,7 @@ exports
   // ELEMENT VALUE METHODS
   Name, Path, EditorID, Signature, FullName, SortKey, ElementType, DefType,
   GetValue, SetValue, GetIntValue, SetIntValue, GetUIntValue, SetUIntValue,
-  GetFloatValue, SetFloatValue, GetLinksTo, SetFlag, GetFlag, ToggleFlag,
-  GetEnabledFlags,
+  GetFloatValue, SetFloatValue, SetFlag, GetFlag, ToggleFlag, GetEnabledFlags,
   // GROUP HANDLING METHODS
   HasGroup, AddGroup, GetGroupSignatures, GetChildGroup, GroupSignatureFromName,
   GroupNameFromSignature, GetGroupSignatureNameMap,
