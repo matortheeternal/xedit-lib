@@ -219,6 +219,29 @@ begin
             end);
         end);
 
+      Describe('ElementExists', procedure
+        begin
+          It('Should return true for files that exist', procedure
+            begin
+              Expect(ElementExists(0, 'Skyrim.esm'), 'Result should be true');
+            end);
+
+          It('Should return true for elements that exist', procedure
+            begin
+              Expect(ElementExists(rec, 'Male world model'), 'Result should be true');
+            end);
+
+          It('Should return false for files that do not exist', procedure
+            begin
+              Expect(not ElementExists(0, 'NonExistingFile.esp'), 'Result should be false');
+            end);
+
+          It('Should return false for elements that do not exist', procedure
+            begin
+              Expect(not ElementExists(rec, 'KWDA\[5]'), 'Result should be false');
+            end);
+        end);
+
       Describe('GetElements', procedure
         begin
           BeforeEach(procedure
