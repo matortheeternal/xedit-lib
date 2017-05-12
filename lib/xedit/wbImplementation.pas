@@ -5025,7 +5025,7 @@ begin
   end;
   if aName = '..' then
     Result := GetContainer
-  else if (Length(aName) > 0) and (aName[1] = '[') and (aName[Length(aName)] = ']') then begin
+  else if (Length(aName) > 2) and (aName[1] = '[') and (aName[Length(aName)] = ']') then begin
     i := StrToIntDef(Copy(aName, 2, Length(aName) - 2), 0);
     Result := GetElement(i);
   end
