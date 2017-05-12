@@ -55,7 +55,7 @@ exports
   SetIsESM,
   // ELEMENT HANDLING METHODS
   GetElement, GetElements, GetElementFile, GetContainer, NewElement,
-  RemoveElement, ElementExists, ElementCount, LinksTo, ElementAssigned, Equals,
+  RemoveElement, ElementExists, ElementCount, LinksTo, ElementEquals,
   CopyElement, IsMaster, IsInjected, IsOverride, IsWinningOverride,
   // ERROR CHECKING METHODS
   CheckForErrors, GetErrorThreadDone, GetErrors, GetErrorString,
