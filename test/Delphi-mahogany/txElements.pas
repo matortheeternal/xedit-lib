@@ -290,6 +290,37 @@ begin
             end);
         end);
 
+      Describe('ElementEquals', procedure
+        begin
+          It('Should return true for same element', procedure
+            begin
+              ExpectSuccess(ElementEquals(skyrim, skyrim));
+              ExpectSuccess(ElementEquals(armo, armo));
+              ExpectSuccess(ElementEquals(rec, rec));
+              ExpectSuccess(ElementEquals(keywords, keywords));
+              ExpectSuccess(ElementEquals(dnam, dnam));
+            end);
+
+          It('Should return false for identical but different elements', procedure
+            begin
+              ExpectSuccess(GetElement(testRec, 'DNAM', @h));
+              ExpectFailure(ElementEquals(dnam, h));
+            end);
+
+          It('Should return false for different elements', procedure
+            begin
+              ExpectFailure(ElementEquals(skyrim, armo));
+              ExpectFailure(ElementEquals(armo, rec));
+              ExpectFailure(ElementEquals(rec, keywords));
+              ExpectFailure(ElementEquals(keywords, dnam));
+            end);
+
+          It('Should return false if null handle passed', procedure
+            begin
+              ExpectFailure(ElementEquals(0, 0));
+            end);
+        end);
+
       Describe('GetElements', procedure
         begin
           BeforeEach(procedure
@@ -427,7 +458,6 @@ begin
               ExpectSuccess(NewElement(testArmo, 'ARMO', @h));
               Expect(h > 0, 'Handle should be greater than 0');
             end);
-
 
           It('Should be able to create a new element on a record', procedure
             begin
