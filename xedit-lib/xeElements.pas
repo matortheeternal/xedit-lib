@@ -410,21 +410,14 @@ function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; cdecl;
 var
   e: IInterface;
   element: IwbElement;
-  container: IwbContainerElementRef;
 begin
   Result := false;
   try
-    e := Resolve(_id);
-    if not Supports(e, IwbElement, element) then
-      exit;
-    if (not Assigned(key)) or (Length(string(key)) = 0) then
-      element.Remove
-    else begin
-      if not Supports(e, IwbContainerElementRef, container) then
-        exit;
-      container.ElementByPath[string(key)].Remove;
+    e := NativeGetElement(_id, key);
+    if Supports(e, IwbElement, element) then begin
+      element.Remove;
+      Result := true;
     end;
-    Result := true;
   except
     on x: Exception do ExceptionHandler(x);
   end;
