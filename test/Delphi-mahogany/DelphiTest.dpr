@@ -5,7 +5,6 @@ program DelphiTest;
 uses
   ShareMem,
   SysUtils,
-  maMain in 'lib\maMain.pas',
   txMeta in 'txMeta.pas',
   txSetup in 'txSetup.pas',
   txFiles in 'txFiles.pas',
@@ -16,7 +15,9 @@ uses
   txSerialization in 'txSerialization.pas',
   txGroups in 'txGroups.pas',
   txRecords in 'txRecords.pas',
-  txRecordValues in 'txRecordValues.pas';
+  txRecordValues in 'txRecordValues.pas',
+  superobject in '..\..\lib\superobject\superobject.pas',
+  maMain in '..\..\lib\mahogany\maMain.pas';
 
 procedure BuildXETests;
 begin

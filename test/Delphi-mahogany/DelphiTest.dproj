@@ -24,6 +24,7 @@
 			<Base>true</Base>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Base)'!=''">
+			<DCC_UnitSearchPath>..\..\lib\superobject;..\..\lib\mahogany;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
 			<DCC_ImageBase>00400000</DCC_ImageBase>
 			<DCC_DcuOutput>.\$(Config)\$(Platform)</DCC_DcuOutput>
 			<DCC_UnitAlias>WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;$(DCC_UnitAlias)</DCC_UnitAlias>
@@ -49,7 +50,6 @@
 			<DelphiCompile Include="DelphiTest.dpr">
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
-			<DCCReference Include="lib\maMain.pas"/>
 			<DCCReference Include="txMeta.pas"/>
 			<DCCReference Include="txSetup.pas"/>
 			<DCCReference Include="txFiles.pas"/>
@@ -61,6 +61,8 @@
 			<DCCReference Include="txGroups.pas"/>
 			<DCCReference Include="txRecords.pas"/>
 			<DCCReference Include="txRecordValues.pas"/>
+			<DCCReference Include="..\..\lib\superobject\superobject.pas"/>
+			<DCCReference Include="..\..\lib\mahogany\maMain.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>

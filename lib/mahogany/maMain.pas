@@ -15,6 +15,7 @@ type
     description: String;
     depth: Integer;
     passed: Boolean;
+    failAll: Boolean;
     procedure Execute;
     procedure Fail(x: Exception); overload;
     procedure Fail(msg: String); overload;
@@ -38,7 +39,7 @@ type
   TSpec = class(TTest)
   public
     callback: TProc;
-    constructor Create(description: String; callback: TProc);
+    constructor Create(description: String; callback: TProc; failAll: Boolean);
     procedure Execute;
   end;
 
@@ -57,7 +58,7 @@ type
   procedure AfterAll(callback: TProc);
   procedure BeforeEach(callback: TProc);
   procedure AfterEach(callback: TProc);
-  procedure It(description: String; callback: TProc);
+  procedure It(description: String; callback: TProc; failAll: boolean = false);
   procedure Expect(expectation: Boolean; description: String);
   procedure ExpectEqual(v1, v2: Variant; description: String);
   procedure ExpectException(proc: TProc); overload;
@@ -126,12 +127,12 @@ begin
 end;
 
 { Spec Functions }
-procedure It(description: String; callback: TProc);
+procedure It(description: String; callback: TProc; failAll: boolean = false);
 begin
   if (ActiveSuite = nil) then
     CannotCallException('It', 'Describe');
   try
-    TSpec.Create(description, callback);
+    TSpec.Create(description, callback, failAll);
   except
     on x: Exception do
       BuildFailedException('spec', description, x);
@@ -335,21 +336,26 @@ begin
     if Assigned(BeforeAll) then BeforeAll;
 
     // execute each test in the suite
-    for i := 0 to Pred(children.Count) do begin
-      // Setup before each test if given
-      if Assigned(BeforeEach) then BeforeEach;
-      // execute the test
-      test := TTest(children[i]);
-      if test is TSuite then
-        TSuite(test).Execute
-      else if test is TSpec then
-        TSpec(test).Execute;
-      // Tear down after each test if given
-      if Assigned(AfterEach) then AfterEach;
+    try
+      for i := 0 to Pred(children.Count) do begin
+        // Setup before each test if given
+        if Assigned(BeforeEach) then BeforeEach;
+        // execute the test
+        try
+          test := TTest(children[i]);
+          if test is TSuite then
+            TSuite(test).Execute
+          else if test is TSpec then
+            TSpec(test).Execute;
+        finally
+          // Tear down after each test if given
+          if Assigned(AfterEach) then AfterEach;
+        end;
+      end;
+    finally
+      // Tear down after all tests if given
+      if Assigned(AfterAll) then AfterAll;
     end;
-
-    // Tear down after all tests if given
-    if Assigned(AfterAll) then AfterAll;
   except
     on x: Exception do
       Fail(x);
@@ -401,7 +407,7 @@ begin
 end;
 
 { TSpec }
-constructor TSpec.Create(description: String; callback: TProc);
+constructor TSpec.Create(description: String; callback: TProc; failAll: Boolean);
 begin                
   // enumerate the spec in the active suite's children
   context := ActiveSuite as TTest;
@@ -410,6 +416,7 @@ begin
   // set input properties
   self.description := description;
   self.callback := callback;
+  self.failAll := failAll;
   // the spec passes if it has no expectations
   passed := true;
 end;
@@ -420,8 +427,11 @@ begin
     inherited;
     callback();
   except
-    on x: Exception do
+    on x: Exception do begin
       fail(x);
+      if failAll then
+        raise Exception.Create('Critical Failure');
+    end;
   end;
 end;
 
