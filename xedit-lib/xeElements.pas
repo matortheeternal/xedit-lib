@@ -391,7 +391,7 @@ begin
   Result := False;
   try
     if _id = 0 then
-      element := NewFileElement(string(key))
+      element := NativeAddFile(string(key))
     else
       element := NewContainerElement(_id, string(key));
 

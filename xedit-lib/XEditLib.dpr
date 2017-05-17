@@ -46,7 +46,7 @@ exports
   // LOADING AND SET UP METHODS
   SetGameMode, GetLoadOrder, LoadPlugins, GetLoaderDone, GetGamePath,
   // FILE HANDLING METHODS
-  NewFile, FileByIndex, FileByLoadOrder, FileByName, FileByAuthor, SaveFile,
+  AddFile, FileByIndex, FileByLoadOrder, FileByName, FileByAuthor, SaveFile,
   // MASTER HANDLING METHODS
   CleanMasters, SortMasters, AddMaster, GetMaster, GetMasters, GetRequiredBy,
   // FILE VALUE METHODS

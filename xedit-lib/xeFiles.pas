@@ -5,7 +5,7 @@ interface
 uses
   wbInterface;
 
-  function NewFile(filename: PWideChar; _res: PCardinal): WordBool; cdecl;
+  function AddFile(filename: PWideChar; _res: PCardinal): WordBool; cdecl;
   function FileByIndex(index: Integer; _res: PCardinal): WordBool; cdecl;
   function FileByLoadOrder(load_order: Integer; _res: PCardinal): WordBool; cdecl;
   function FileByName(name: PWideChar; _res: PCardinal): WordBool; cdecl;
@@ -13,7 +13,7 @@ uses
   function SaveFile(_id: Cardinal): WordBool; cdecl;
 
   // native functions
-  function NewFileElement(filename: string): IwbElement;
+  function NativeAddFile(filename: string): IwbFile;
   function NativeFileByIndex(index: Integer): IwbFile;
   function NativeFileByLoadOrder(load_order: Integer): IwbFile;
   function NativeFileByName(name: String): IwbFile;
@@ -37,27 +37,26 @@ uses
 }
 {******************************************************************************}
 
+function NextLoadOrder: Integer;
+begin
+  Result := 0;
+  if Length(Files) > 0 then
+    Result := Succ(Files[High(Files)].LoadOrder);
+end;
 
-function NewFileElement(filename: string): IwbElement;
+function NativeAddFile(filename: string): IwbFile;
 var
   LoadOrder : Integer;
   _file: IwbFile;
   filePath: String;
 begin
-  if not StrEndsWith(filename, '.esp') and StrEndsWith(filename, '.esm') then
-    filename := filename + '.esp';
-
   // fail if the file already exists
   filePath := wbDataPath + string(filename);
   if FileExists(filePath) then
     raise Exception.Create(Format('File with name %s already exists.', [filename]));
 
-  // get load order for new file
-  LoadOrder := 0;
-  if Length(Files) > 0 then
-    LoadOrder := Files[High(Files)].LoadOrder + 1;
-
   // fail if maximum load order reached
+  LoadOrder := NextLoadOrder;
   if LoadOrder > 254 then
     raise Exception.Create('Maximum plugin count of 254 reached.');
 
@@ -66,23 +65,17 @@ begin
   SetLength(Files, Succ(Length(Files)));
   Files[High(Files)] := _file;
   _file._AddRef;
-
-  // return file as IwbElement
-  Result := _file as IwbElement;
+  Result := _file;
 end;
 
-function NewFile(filename: PWideChar; _res: PCardinal): WordBool; cdecl;
+function AddFile(filename: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
   element: IwbElement;
 begin
   Result := False;
   try
-    // store the file and return the result
-    element := NewFileElement(string(filename));
-    if Assigned(element) then begin
-      _res^ := Store(element);
-      Result := True;
-    end;
+    _res^ := Store(NativeAddFile(string(filename)));
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
