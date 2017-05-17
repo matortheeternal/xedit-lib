@@ -11,7 +11,7 @@ uses
   function GetElements(_id: Cardinal; _res: PCardinal; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
   function GetElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function GetContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function NewElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
+  function AddElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
   function GetLinksTo(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function ElementExists(_id: Cardinal; key: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
@@ -473,44 +473,44 @@ begin
         begin
           It('Should create a new file if no handle given', procedure
             begin
-              ExpectSuccess(NewElement(0, 'NewFile-1.esp', @h));
+              ExpectSuccess(AddElement(0, 'NewFile-1.esp', @h));
               Expect(h > 0, 'Handle should be greater than 0');
             end);
 
           It('Should be able to add groups to files', procedure
             begin
-              ExpectSuccess(NewElement(testFile, 'ARMO', @h));
+              ExpectSuccess(AddElement(testFile, 'ARMO', @h));
               Expect(h > 0, 'Handle should be greater than 0');
             end);
 
           It('Should be able to add records to groups', procedure
             begin
-              ExpectSuccess(NewElement(testArmo, 'ARMO', @h));
+              ExpectSuccess(AddElement(testArmo, 'ARMO', @h));
               Expect(h > 0, 'Handle should be greater than 0');
             end);
 
           It('Should be able to create a new element on a record', procedure
             begin
-              ExpectSuccess(NewElement(testRec, 'Destructable', @h));
+              ExpectSuccess(AddElement(testRec, 'Destructable', @h));
               Expect(h > 0, 'Handle should be greater than 0');
             end);
 
           It('Should be able to push a new element onto an array', procedure
             begin
-              ExpectSuccess(NewElement(keywords, '', @h));
+              ExpectSuccess(AddElement(keywords, '', @h));
               Expect(h > 0, 'Handle should be greater than 0');
             end);
 
           It('Should be able to assign an element at an index in an array', procedure
             begin
-              ExpectSuccess(NewElement(keywords, '[1]', @h));
+              ExpectSuccess(AddElement(keywords, '[1]', @h));
               Expect(h > 0, 'Handle should be greater than 0');
             end);
 
           It('Should fail if parent element is not a container', procedure
             begin
               GetElement(testRec, 'FULL', @element);
-              ExpectFailure(NewElement(element, '', @h));
+              ExpectFailure(AddElement(element, '', @h));
             end);
         end);
 

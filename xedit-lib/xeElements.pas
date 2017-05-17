@@ -19,7 +19,7 @@ type
   function GetElements(_id: Cardinal; _res: PCardinal; len: Integer): WordBool; cdecl;
   function GetElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function GetContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
-  function NewElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
+  function AddElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
   function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; cdecl;
   function GetLinksTo(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
   function ElementExists(_id: Cardinal; key: PWideChar): WordBool; cdecl;
@@ -384,7 +384,7 @@ begin
 end;
 
 // replaces ElementAssign, Add, AddElement, and InsertElement
-function NewElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
+function AddElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
   element: IwbElement;
 begin
