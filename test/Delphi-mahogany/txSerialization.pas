@@ -23,7 +23,7 @@ end;
 
 procedure BuildSerializationTests;
 var
-  testFile, armo, rec, cell, keywords, keyword, dnam: Cardinal;
+  testFile, armo, rec, cell, keywords, keyword, dnam, h: Cardinal;
   json: PWideChar;
   obj, obj2, obj3: ISuperObject;
   ary: TSuperArray;
@@ -220,7 +220,66 @@ begin
 
           Describe('Element serialization', procedure
             begin
-              // TODO
+              It('Should serialize strings', procedure
+                begin
+                  ExpectSuccess(GetElement(rec, 'EDID', @h));
+                  ExpectSuccess(ElementToJson(h, json, 16384));
+                  obj := SO(json);
+                  ExpectEqual(obj.S['EDID - Editor ID'], 'ArmorIronGauntlets', '');
+                end);
+
+              It('Should serialize integer numbers', procedure
+                begin
+                  ExpectSuccess(GetElement(rec, 'DATA\Value', @h));
+                  ExpectSuccess(ElementToJson(h, json, 16384));
+                  obj := SO(json);
+                  ExpectEqual(obj.I['Value'], 25, '');
+                end);
+
+              It('Should serialize real numbers', procedure
+                begin
+                  ExpectSuccess(GetElement(rec, 'DATA\Weight', @h));
+                  ExpectSuccess(ElementToJson(h, json, 16384));
+                  obj := SO(json);
+                  ExpectEqual(obj.D['Weight'], 7.3, '');
+                end);
+
+              It('Should serialize FormIDs as integers', procedure
+                begin
+                  ExpectSuccess(ElementToJson(keyword, json, 16384));
+                  obj := SO(json);
+                  ExpectEqual(obj.I['Keyword'], 180599, '');
+                end);
+
+              It('Should serialize byte arrays as strings', procedure
+                begin
+                  ExpectSuccess(GetElement(rec, 'BODT\Unused', @h));
+                  ExpectSuccess(ElementToJson(h, json, 16384));
+                  obj := SO(json);
+                  ExpectEqual(obj.S['Unused'], '64 73 00', '');
+                end);
+
+              It('Should serialize flags as booleans', procedure
+                begin
+                  ExpectSuccess(GetElement(rec, 'BODT\First Person Flags', @h));
+                  ExpectSuccess(ElementToJson(h, json, 16384));
+                  obj := SO(json);
+                  Expect(obj.O['First Person Flags'].B['33 - Hands'], '');
+                end);
+
+              It('Should serialize empty flags as an empty object', procedure
+                begin
+                  ExpectSuccess(GetElement(rec, 'BODT\General Flags', @h));
+                  ExpectSuccess(ElementToJson(h, json, 16384));
+                  ExpectEqual(string(json), '{"General Flags":{}}', '');
+                end);
+
+              It('Should serialize arrays properly', procedure
+                begin
+                  ExpectSuccess(ElementToJson(keywords, json, 16384));
+                  obj := SO(json);
+                  ExpectEqual(obj.A['KWDA - Keywords'].I[0], 180599, '');
+                end);
             end);
         end);
 
