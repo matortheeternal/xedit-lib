@@ -24,6 +24,7 @@ type
   procedure WriteBuffer;
   procedure WriteArray(a: CardinalArray);
   procedure WriteExceptions;
+  procedure WriteStringToFile(str, filename: string);
   procedure ExpectSuccess(b: WordBool);
   procedure ExpectFailure(b: WordBool);
   procedure BuildMetaTests;
@@ -94,6 +95,19 @@ begin
   GetExceptionMessage(str, 4096);
   if Length(string(str)) > 0 then
     WriteLn(str);
+end;
+
+procedure WriteStringToFile(str, filename: string);
+var
+  sl: TStringList;
+begin
+  sl := TStringList.Create;
+  try
+    sl.Text := str;
+    sl.SaveToFile(filename);
+  finally
+    sl.Free;
+  end;
 end;
 
 procedure ExpectSuccess(b: WordBool);

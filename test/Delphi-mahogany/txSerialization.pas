@@ -66,6 +66,7 @@ begin
               It('Should succeed', procedure
                 begin
                   ExpectSuccess(ElementToJson(testFile, json, 16384));
+                  WriteStringToFile(json, 'xtest-2.esp.json');
                   obj := SO(json);
                 end, true);
 
