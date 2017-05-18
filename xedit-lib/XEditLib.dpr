@@ -60,7 +60,7 @@ exports
   // ERROR CHECKING METHODS
   CheckForErrors, GetErrorThreadDone, GetErrors, GetErrorString,
   // SERIALIZATION METHODS
-  ElementToJson,
+  ElementToJson, ElementFromJson,
   // ELEMENT VALUE METHODS
   Name, Path, EditorID, Signature, FullName, SortKey, ElementType, DefType,
   GetValue, SetValue, GetIntValue, SetIntValue, GetUIntValue, SetUIntValue,

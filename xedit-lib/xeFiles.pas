@@ -69,8 +69,6 @@ begin
 end;
 
 function AddFile(filename: PWideChar; _res: PCardinal): WordBool; cdecl;
-var
-  element: IwbElement;
 begin
   Result := False;
   try
