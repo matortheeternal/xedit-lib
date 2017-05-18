@@ -16,7 +16,7 @@ implementation
 
 uses
   Variants, SysUtils, StrUtils,
-  xeMeta, xeFiles, xeGroups, xeElements, xeMessages;
+  xeMeta, xeFiles, xeGroups, xeElements, xeElementValues, xeMessages;
 
 function ElementToSO(element: IwbElement; obj: ISuperObject): ISuperObject;
 const
@@ -92,16 +92,32 @@ end;
 
 function GroupToSO(group: IwbGroupRecord; obj: ISuperObject): ISuperObject;
 var
-  sig: String;
+  name: String;
   i: Integer;
-  mainRecord: IwbMainRecord;
+  rec: IwbMainRecord;
+  innerGroup: IwbGroupRecord;
+  records, groups: ISuperObject;
 begin
-  sig := String(TwbSignature(group.GroupLabel));
-  obj.O[sig] := SA([]);
+  records := SA([]);
+  groups := SO;
+  // iterate through children
   for i := 0 to Pred(group.ElementCount) do begin
-    if Supports(group.Elements[i], IwbMainRecord, mainRecord) then
-      obj.A[sig].Add(RecordToSO(mainRecord, SO));
+    if Supports(group.Elements[i], IwbMainRecord, rec) then
+      records.AsArray.Add(RecordToSO(rec, SO))
+    else if Supports(group.Elements[i], IwbGroupRecord, innerGroup)
+    and not (innerGroup.GroupType in [1, 6..10]) then
+      GroupToSO(innerGroup, groups);
   end;
+  // assign objects
+  name := GetPathName(group as IwbElement);
+  if groups.AsObject.GetNames.AsArray.Length = 0 then
+    obj.O[name] := records
+  else begin
+    obj.O[name] := groups;
+    if records.AsArray.Length > 1 then
+      obj.O[name].O['Records'] := records;
+  end;
+  // return result
   Result := obj;
 end;
 
