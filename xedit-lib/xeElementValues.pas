@@ -347,7 +347,9 @@ var
 begin
   e := NativeGetElement(_id, path);
   if Supports(e, IwbElement, element) then
-    element.NativeValue := value;
+    element.NativeValue := value
+  else
+    raise Exception.Create('Element not found at path ' + string(path));
 end;
 
 function GetIntValue(_id: Cardinal; path: PWideChar; value: PInteger): WordBool; cdecl;
