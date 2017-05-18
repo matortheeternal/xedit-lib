@@ -35,6 +35,7 @@ type
   function ResolveFromGroup(group: IwbGroupRecord; path: String): IInterface;
   function ResolveElement(e: IInterface; path: String): IInterface;
   function NativeGetElement(_id: Cardinal; key: PWideChar): IInterface;
+  procedure NativeMoveToIndex(element: IwbElement; index: Integer);
   function NativeContainer(element: IwbElement): IwbContainer;
   function IsArray(element: IwbElement): Boolean;
   function GetDefType(element: IwbElement): TwbDefType;
@@ -324,6 +325,17 @@ begin
   except
     on x: Exception do ExceptionHandler(x);
   end;
+end;
+
+procedure NativeMoveToIndex(element: IwbElement; index: Integer);
+var
+  container: IwbContainerElementRef;
+begin
+  container := element.Container as IwbContainerElementRef;
+  if index > container.IndexOf(element) then
+    Dec(index);
+  element.Remove;
+  container.InsertElement(index, element);
 end;
 
 function NativeContainer(element: IwbElement): IwbContainer;
