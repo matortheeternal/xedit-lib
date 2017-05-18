@@ -7,7 +7,7 @@ uses
   wbInterface;
 
   function ElementToJson(_id: Cardinal; json: PWideChar; len: Integer): WordBool; cdecl;
-  function ElementFromJson(_id: Cardinal; json: PWideChar; _res: PCardinal): WordBool; cdecl;
+  function ElementFromJson(_id: Cardinal; path: PWideChar; json: PWideChar; _res: PCardinal): WordBool; cdecl;
 
   // native functions
   function ChildGroupToSO(group: IwbGroupRecord; obj: ISuperObject): ISuperObject;
@@ -336,9 +336,6 @@ var
   signature: string;
   i: Integer;
 begin
-  // create file if no file passed
-  if not Assigned(_file) then
-    _file := NativeAddFile(obj.S['Filename']);
   Result := _file;
   // deserialize header
   SOToFileHeader(_file.Header, obj.O['File Header']);
@@ -352,35 +349,41 @@ begin
   end;
 end;
 
-function ElementFromJson(_id: Cardinal; json: PWideChar; _res: PCardinal): WordBool; cdecl;
+function WriteElementFromSO(e: IInterface; obj: ISuperObject): IInterface;
 var
-  e, output: IInterface;
   _file: IwbFile;
   group: IwbGroupRecord;
   rec: IwbMainRecord;
   element: IwbElement;
-  obj: ISuperObject;
+begin
+  if Supports(e, IwbFile, _file) then
+    Result := SOToFile(_file, obj)
+  else if Supports(e, IwbGroupRecord, group) then
+    Result := SOToGroup(group, obj)
+  else if Supports(e, IwbMainRecord, rec) then
+    Result := SOToRecord(rec, obj)
+  else if Supports(e, IwbElement, element) then
+    Result := SOToElement(element, obj);
+end;
+
+function ResolveOrAddElement(_id: Cardinal; path: PWideChar): IInterface;
+begin
+  if string(path) <> '' then
+    Result := NativeAddElement(_id, string(path))
+  else
+    Result := Resolve(_id);
+end;
+
+function ElementFromJson(_id: Cardinal; path: PWideChar; json: PWideChar; _res: PCardinal): WordBool; cdecl;
+var
+  e: IInterface;
 begin
   Result := false;
   try
-    obj := SO(json);
-    if _id = 0 then
-      output := SOToFile(nil, obj)
-    else begin
-      e := Resolve(_id);
-      if Supports(e, IwbFile, _file) then
-        output := SOToFile(_file, obj)
-      else if Supports(e, IwbGroupRecord, group) then
-        output := SOToGroup(group, obj)
-      else if Supports(e, IwbMainRecord, rec) then
-        output := SOToRecord(rec, obj)
-      else if Supports(e, IwbElement, element) then
-        output := SOToElement(element, obj);
-    end;
-    if Assigned(output) then begin
-      _res^ := Store(output);
-      Result := true;
-    end;
+    e := ResolveOrAddElement(_id, path);
+    WriteElementFromSO(e, SO(json));
+    _res^ := Store(e);
+    Result := true;
   except
     on x: Exception do ExceptionHandler(x);
   end;
