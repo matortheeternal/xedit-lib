@@ -54,7 +54,7 @@ exports
   SetAuthor, GetDescription, SetDescription, OverrideRecordCount, GetIsESM,
   SetIsESM,
   // ELEMENT HANDLING METHODS
-  GetElement, GetElements, GetElementFile, GetContainer, NewElement,
+  GetElement, GetElements, GetElementFile, GetContainer, AddElement,
   RemoveElement, ElementExists, ElementCount, GetLinksTo, ElementEquals,
   CopyElement, IsMaster, IsInjected, IsOverride, IsWinningOverride,
   // ERROR CHECKING METHODS

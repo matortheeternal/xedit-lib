@@ -37,6 +37,7 @@ type
   function NativeGetElement(_id: Cardinal; key: PWideChar): IInterface;
   procedure NativeMoveToIndex(element: IwbElement; index: Integer);
   function NativeContainer(element: IwbElement): IwbContainer;
+  function NativeAddElement(_id: Cardinal; key: string): IInterface;
   function IsArray(element: IwbElement): Boolean;
   function GetDefType(element: IwbElement): TwbDefType;
   function GetSmashType(element: IwbElement): TSmashType;
@@ -367,30 +368,39 @@ begin
   end;
 end;
 
-function NewContainerElement(_id: Cardinal; key: string): IwbElement;
+function NativeAddElement(_id: Cardinal; key: string): IInterface;
 var
   e: IInterface;
+  _file: IwbFile;
+  group: IwbGroupRecord;
   container: IwbContainerElementRef;
   keyIndex: Integer;
 begin
-  e := Resolve(_id);
-  if not Supports(e, IwbContainerElementRef, container) then exit;
-  // Use Add for files and groups
-  if Supports(e, IwbFile) or Supports(e, IwbGroupRecord) then
-    Result := container.Add(key, true)
+  if _id = 0 then begin
+    Result := NativeFileByName(key);
+    if not Assigned(Result) then
+      Result := NativeAddFile(key);
+  end
   else begin
-    // no key means we're assigning an element at the end of the array
-    if Length(key) = 0 then
-      Result := container.Assign(High(integer), nil, false)
+    e := Resolve(_id);
+    if not Supports(e, IwbContainerElementRef, container) then exit;
+    if Supports(e, IwbFile, _file) then
+      Result := AddGroupIfMissing(_file, key)
+    else if Supports(e, IwbGroupRecord, group) then
+      Result := group.Add(key) // TODO: Handle Temporary/Persistent groups?
     else begin
-      // assign element at given index if index given, else add
-      if ParseIndex(key, keyIndex) then begin
-        Result := container.Assign(High(integer), nil, false);
-        Result.Remove;
-        container.InsertElement(keyIndex, Result);
-      end
-      else
-        Result := container.Add(key, true);
+      // no key means we're assigning an element at the end of the array
+      if Length(key) = 0 then
+        Result := container.Assign(High(integer), nil, false)
+      else begin
+        // assign element at given index if index given, else add
+        if ParseIndex(key, keyIndex) then begin
+          Result := container.Assign(High(integer), nil, false);
+          NativeMoveToIndex(Result as IwbElement, keyIndex);
+        end
+        else
+          Result := container.Add(key, true);
+      end;
     end;
   end;
 end;
@@ -398,16 +408,11 @@ end;
 // replaces ElementAssign, Add, AddElement, and InsertElement
 function AddElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
-  element: IwbElement;
+  element: IInterface;
 begin
   Result := False;
   try
-    if _id = 0 then
-      element := NativeAddFile(string(key))
-    else
-      element := NewContainerElement(_id, string(key));
-
-    // store and return element if assigned
+    element := NativeAddElement(_id, string(key));
     if Assigned(element) then begin
       _res^ := Store(element);
       Result := True;
