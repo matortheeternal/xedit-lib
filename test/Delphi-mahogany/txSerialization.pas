@@ -158,7 +158,7 @@ begin
             const
               ExpectedFields: array[0..13] of string = (
                 'Record Header',
-                'EDID - EditorID',
+                'EDID - Editor ID',
                 'FULL - Name',
                 'Male world model',
                 'Female world model',
