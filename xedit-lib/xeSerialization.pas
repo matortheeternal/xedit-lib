@@ -26,6 +26,14 @@ begin
     ary.Add(obj);
 end;
 
+function IsFlags(element: IwbElement): Boolean;
+var
+  intDef: IwbIntegerDef;
+begin
+  Result := Supports(element.Def, IwbIntegerDef, intDef)
+    and Supports(intDef.Formater[element], IwbFlagsDef);
+end;
+
 function ElementToSO(element: IwbElement; obj: ISuperObject): ISuperObject;
 const
   ArrayTypes: TSmashTypes = [stUnsortedArray, stUnsortedStructArray, stSortedArray,
@@ -39,7 +47,8 @@ var
   childObject: ISuperObject;
 begin
   path := Element.Name;
-  if Supports(element, IwbContainerElementRef, container) and (container.ElementCount > 0) then begin
+  if Supports(element, IwbContainerElementRef, container)
+  and ((container.ElementCount > 0) or IsFlags(element)) then begin
     if GetSmashType(element) in ArrayTypes then begin
       obj.O[path] := SA([]);
       for i := 0 to Pred(container.ElementCount) do begin
