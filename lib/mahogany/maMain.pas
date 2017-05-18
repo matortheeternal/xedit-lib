@@ -61,8 +61,7 @@ type
   procedure It(description: String; callback: TProc; failAll: boolean = false);
   procedure Expect(expectation: Boolean; description: String);
   procedure ExpectEqual(v1, v2: Variant; description: String);
-  procedure ExpectException(proc: TProc); overload;
-  procedure ExpectException(proc: TProc; msg: String); overload;
+  procedure ExpectException(proc: TProc; msg: String = '');
   procedure RunTests(messageProc: TMessageProc);
   procedure ReportResults(messageProc: TMessageProc);
 
@@ -148,55 +147,16 @@ end;
 
 procedure ExpectEqual(v1, v2: Variant; description: String);
 const
-  varInteger = 3;
-  varDouble = 5;
-  varShortInt = 16;
-  varCardinal = 19;
-  varString =  256; { Pascal string }
-  varUString = 258; { Unicode string }
-  { SEE http://stackoverflow.com/questions/24731098/what-does-mean-vartypeavariant-273-or-111
-    for more }
-  IntError = 'Expected "%d", found "%d"';
-  FloatError = 'Expected "%0.4f", found "%0.4f"';
-  StringError = 'Expected "%s", found "%s"';
-  CustomError = '%s, type %d';  
-var
-  vt: Integer;
+  ErrorFormat = 'Expected "%s", found "%s"';
 begin
-  if v1 <> v2 then begin
-    vt := VarType(v1);
-    case vt of
-      varInteger, varShortInt: raise Exception.Create(Format(IntError, [Integer(v2), Integer(v1)]));
-      varCardinal: raise Exception.Create(Format(IntError, [Cardinal(v2), Cardinal(v1)]));
-      varDouble: raise Exception.Create(Format(FloatError, [Double(v2), Double(v1)]));
-      varString, varUString: raise Exception.Create(Format(StringError, [v2, v1]));
-      else raise Exception.Create(Format(CustomError, [description, vt]));
-    end;
-  end;
+  if v1 <> v2 then
+    raise Exception.Create(Format(ErrorFormat, [VarToStr(v2), VarToStr(v1)]));
 end;
 
-procedure ExpectException(proc: TProc); overload;
-const
-  NoExceptionError = 'Expected an exception but no exception was rasied';
-var
-  exceptionRaised: Boolean;
-begin
-  exceptionRaised := false;
-  try
-    proc();
-  except
-    on x: Exception do begin
-      exceptionRaised := true;
-    end;
-  end;
-  // fail if the proc didn't raise an exception
-  if not exceptionRaised then
-    raise Exception.Create(NoExceptionError);
-end;
-
-procedure ExpectException(proc: TProc; msg: String);
+procedure ExpectException(proc: TProc; msg: String = '');
 const
   NoExceptionError = 'Expected exception "%s", but no exception was rasied';
+  AnyExceptionError = 'Expected an exception, but no exception was raised';
   WrongExceptionError = 'Expected exception "%s", but "%s" was raised';
 var
   exceptionRaised: Boolean;
@@ -208,13 +168,17 @@ begin
     on x: Exception do begin
       exceptionRaised := true;
       // fail if the proc raised the wrong exception
-      if msg <> x.Message then
+      if (msg <> '') and (msg <> x.Message) then
         raise Exception.Create(Format(WrongExceptionError, [msg, x.Message]));
     end;
   end;
   // fail if the proc didn't raise an exception
-  if not exceptionRaised then
-    raise Exception.Create(Format(NoExceptionError, [msg]));
+  if not exceptionRaised then begin
+    if msg <> '' then
+      raise Exception.Create(Format(NoExceptionError, [msg]))
+    else
+      raise Exception.Create(AnyExceptionError);
+  end;
 end;
 
 { Test Runner }
@@ -296,15 +260,15 @@ constructor TSuite.Create(description: String; callback: TProc);
 begin
   // default to a to-level suite
   context := nil;
-  depth := 0;  
+  depth := 0;
 
   // suites can be nested inside of each other
   if Assigned(ActiveSuite) then begin
     context := TTest(ActiveSuite);
     depth := ActiveSuite.depth + 1;
     ActiveSuite.AddChild(TTest(self));
-  end; 
-  
+  end;
+
   // set input properties
   self.description := description;
   children := TList.Create;
@@ -408,10 +372,10 @@ end;
 
 { TSpec }
 constructor TSpec.Create(description: String; callback: TProc; failAll: Boolean);
-begin                
+begin
   // enumerate the spec in the active suite's children
   context := ActiveSuite as TTest;
-  depth := ActiveSuite.depth + 1;  
+  depth := ActiveSuite.depth + 1;
   ActiveSuite.AddChild(self as TTest);
   // set input properties
   self.description := description;
@@ -445,7 +409,7 @@ begin
     LogMessage(spacing + 'FAILED: ' + exception.message);
   end;
   self.context := context;
-  self.exception := exception; 
+  self.exception := exception;
   MarkContextFailed;
   Failures.Add(self);
 end;
@@ -458,17 +422,17 @@ var
   currentContext: TTest;
   i: Integer;
 begin
-  // prepare to loop 
+  // prepare to loop
   currentContext := self.context;
   i := 1;
 
   // loop from the failure's context up the stack
   while Assigned(currentContext) do begin
     currentContext.passed := false;
-    // recurse until we've gone up the maximum test depth 
+    // recurse until we've gone up the maximum test depth
     // this saves us from an infinite loop if there is a recursive context
-    currentContext := currentContext.context;  
-    if (i = maxTestDepth) then 
+    currentContext := currentContext.context;
+    if (i = maxTestDepth) then
       raise Exception.Create(MaxTestDepthError);
     Inc(i);
   end;
