@@ -10,7 +10,7 @@ uses
   function ElementFromJson(_id: Cardinal; path: PWideChar; json: PWideChar; _res: PCardinal): WordBool; cdecl;
 
   // native functions
-  function ChildGroupToSO(group: IwbGroupRecord; obj: ISuperObject): ISuperObject;
+  function GroupToSO(group: IwbGroupRecord; obj: ISuperObject): ISuperObject;
 
 implementation
 
@@ -73,20 +73,7 @@ begin
   for i := Pred(rec.ElementCount) downto 0 do
     ElementToSO(rec.Elements[i], obj);
   if Assigned(rec.ChildGroup) then
-    ChildGroupToSO(rec.ChildGroup, obj);
-  Result := obj;
-end;
-
-function ChildGroupToSO(group: IwbGroupRecord; obj: ISuperObject): ISuperObject;
-var
-  i: Integer;
-  mainRecord: IwbMainRecord;
-begin
-  obj.O['Child Group'] := SA([]);
-  for i := 0 to Pred(group.ElementCount) do begin
-    if Supports(group.Elements[i], IwbMainRecord, mainRecord) then
-      obj.A['Child Group'].Add(RecordToSO(mainRecord, SO));
-  end;
+    GroupToSO(rec.ChildGroup, obj);
   Result := obj;
 end;
 
@@ -105,7 +92,7 @@ begin
     if Supports(group.Elements[i], IwbMainRecord, rec) then
       records.AsArray.Add(RecordToSO(rec, SO))
     else if Supports(group.Elements[i], IwbGroupRecord, innerGroup)
-    and not (innerGroup.GroupType in [1, 6..10]) then
+    and not (innerGroup.GroupType in [1, 6..7]) then
       GroupToSO(innerGroup, groups);
   end;
   // assign objects
