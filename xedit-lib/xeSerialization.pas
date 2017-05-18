@@ -107,19 +107,19 @@ end;
 
 function FileToSO(_file: IwbFile): ISuperObject;
 var
-  obj, groupsObj: ISuperObject;
+  obj: ISuperObject;
   group: IwbGroupRecord;
   i: Integer;
 begin
   obj := SO;
   obj.S['Filename'] := _file.FileName;
-  RecordToSO(_file.Header, obj);
-  groupsObj := SO;
+  obj.O['File Header'] := SO;
+  RecordToSO(_file.Header, obj.O['File Header']);
+  obj.O['Groups'] := SO;
   for i := 1 to Pred(_file.ElementCount)  do begin
     if Supports(_file.Elements[i], IwbGroupRecord, group) then
-      GroupToSO(group, groupsObj);
+      GroupToSO(group, obj.O['Groups']);
   end;
-  obj['Groups'] := groupsObj;
   Result := obj;
 end;
 
