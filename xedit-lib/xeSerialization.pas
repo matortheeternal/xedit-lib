@@ -18,6 +18,14 @@ uses
   Variants, SysUtils, StrUtils,
   xeMeta, xeFiles, xeGroups, xeElements, xeElementValues, xeMessages;
 
+procedure SOArrayAdd(ary: TSuperArray; obj: ISuperObject);
+begin
+  if obj.AsObject.GetValues.AsArray.Length = 1 then
+    ary.Add(obj.AsObject.GetValues.AsArray.O[0])
+  else
+    ary.Add(obj);
+end;
+
 function ElementToSO(element: IwbElement; obj: ISuperObject): ISuperObject;
 const
   ArrayTypes: TSmashTypes = [stUnsortedArray, stUnsortedStructArray, stSortedArray,
@@ -36,7 +44,7 @@ begin
       obj.O[path] := SA([]);
       for i := 0 to Pred(container.ElementCount) do begin
         childElement := container.Elements[i];
-        obj.A[path].Add(ElementToSO(childElement, SO));
+        SOArrayAdd(obj.A[path], ElementToSO(childElement, SO));
       end;
     end
     else begin

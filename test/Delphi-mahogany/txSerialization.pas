@@ -113,8 +113,8 @@ begin
                       ExpectExists(obj2, 'Master Files');
                       ary := obj2.A['Master Files'];
                       ExpectEqual(ary.Length, 2, 'There should be 2 master files');
-                      ExpectEqual(ary.O[0].O['Master File'].S['MAST - Filename'], 'Skyrim.esm', '');
-                      ExpectEqual(ary.O[1].O['Master File'].S['MAST - Filename'], 'Update.esm', '');
+                      ExpectEqual(ary.O[0].S['MAST - Filename'], 'Skyrim.esm', '');
+                      ExpectEqual(ary.O[1].S['MAST - Filename'], 'Update.esm', '');
                     end);
                 end);
 
