@@ -23,7 +23,7 @@ end;
 
 procedure BuildSerializationTests;
 var
-  testFile, armo, rec, keywords, keyword, dnam: Cardinal;
+  testFile, armo, rec, cell, keywords, keyword, dnam: Cardinal;
   json: PWideChar;
   obj, obj2, obj3: ISuperObject;
   ary: TSuperArray;
@@ -35,6 +35,7 @@ begin
           GetElement(0, 'xtest-2.esp', @testFile);
           GetElement(testFile, 'ARMO', @armo);
           GetElement(armo, '00012E46', @rec);
+          GetElement(testFile, 'CELL', @cell);
           GetElement(rec, 'KWDA', @keywords);
           GetElement(keywords, '[0]', @keyword);
           GetElement(rec, 'DNAM', @dnam);
@@ -138,20 +139,48 @@ begin
             begin
               It('Should succeed', procedure
                 begin
-                  ExpectSuccess(ElementToJson(armo, json, 16384));
+                  ExpectSuccess(ElementToJson(cell, json, 16384));
                   obj := SO(json);
-                end);
+                  ExpectSuccess(ElementToJson(armo, json, 16384));
+                  obj2 := SO(json);
+                end, true);
 
-              It('Should put the group under a key for its signature', procedure
+              It('Should put the group under a key', procedure
                 begin
-                  ExpectExists(obj, 'ARMO');
-                  ary := obj.A['ARMO'];
-                end);
+                  ExpectExists(obj, 'CELL');
+                  ExpectExists(obj2, 'ARMO');
+                  obj := obj.O['CELL'];
+                  ary := obj2.A['ARMO'];
+                end, true);
 
               It('Should include the records in the group', procedure
                 begin
                   ExpectEqual(ary.Length, 1, 'There should be 1 record');
                 end);
+
+              It('Should serialize blocks', procedure
+                begin
+                  ExpectExists(obj, 'Block 0');
+                  obj := obj.O['Block 0'];
+                end, true);
+
+              It('Should serialize sub-blocks', procedure
+                begin
+                  ExpectExists(obj, 'Sub-Block 0');
+                  ary := obj.A['Sub-Block 0'];
+                end, true);
+
+              It('Should serialize sub-block records', procedure
+                begin
+                  ExpectEqual(ary.Length, 1, 'There should be 1 record');
+                  obj := ary.O[0];
+                end, true);
+
+              It('Should serialize child groups', procedure
+                begin
+                  ExpectExists(obj, 'Child Group');
+                  obj := ary.O[0];
+                end, true);
             end);
 
           Describe('Record serialization', procedure
@@ -186,11 +215,6 @@ begin
                   for i := Low(ExpectedFields) to High(ExpectedFields) do
                     ExpectExists(obj, ExpectedFields[i]);
                 end);
-            end);
-
-          Describe('Child group serialization', procedure
-            begin
-              // TODO
             end);
 
           Describe('Element serialization', procedure
