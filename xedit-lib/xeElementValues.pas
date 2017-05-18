@@ -2,6 +2,9 @@ unit xeElementValues;
 
 interface
 
+uses
+  wbInterface;
+
   function Name(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
   function Path(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
   function EditorID(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
@@ -24,6 +27,7 @@ interface
   function GetEnabledFlags(_id: Cardinal; path, flags: PWideChar; len: Integer): WordBool; cdecl;
 
   // native functions
+  function GetPathName(element: IwbElement): String;
   function NativeName(e: IInterface): String;
 
 implementation
@@ -33,7 +37,7 @@ uses
   // mte modules
   mteHelpers,
   // xedit modules
-  wbInterface, wbImplementation,
+  wbImplementation,
   // xelib modules
   xeElements, xeMessages, xeGroups, xeMeta;
 
