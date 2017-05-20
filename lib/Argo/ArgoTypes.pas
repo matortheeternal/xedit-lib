@@ -190,7 +190,7 @@ begin
   end;
   if Assigned(node.Left) then
     Result := GetNodeByValue(node.Left, value);
-  if (not Assigned(Result)) and Assigned(node.Left) then
+  if (not Assigned(Result)) and Assigned(node.Right) then
     Result := GetNodeByValue(node.Right, value);
 end;
 

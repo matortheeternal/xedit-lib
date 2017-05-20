@@ -88,8 +88,8 @@ type
     function Add(value: Boolean): Integer; overload;
     function Add(value: Int64): Integer; overload;
     function Add(value: Double): Integer; overload;
-    function Add(value: TJSONObject): Integer; overload;
     function Add(value: TJSONArray): Integer; overload;
+    function Add(value: TJSONObject): Integer; overload;
     function Add(value: TJSONValue): Integer; overload;
   end;
 
