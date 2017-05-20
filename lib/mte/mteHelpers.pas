@@ -1072,19 +1072,24 @@ var
 begin
   m := TMemoryStream.Create;
   try
-    rs := TResourceStream.CreateFromID(HInstance, 1, RT_VERSION);
     try
-      m.CopyFrom(rs, rs.Size);
-    finally
-      rs.Free;
-    end;
-    m.Position := 0;
-    if VerQueryValue(m.Memory, '\', Pointer(verblock), verlen) then begin
-      VersionMS := verblock.dwFileVersionMS;
-      VersionLS := verblock.dwFileVersionLS;
-      Result := Format('%s.%s.%s.%s', [IntToStr(versionMS shr 16),
-        IntToStr(versionMS and $FFFF), IntToStr(VersionLS shr 16),
-        IntToStr(VersionLS and $FFFF)]);
+      rs := TResourceStream.CreateFromID(HInstance, 1, RT_VERSION);
+      try
+        m.CopyFrom(rs, rs.Size);
+      finally
+        rs.Free;
+      end;
+      m.Position := 0;
+      if VerQueryValue(m.Memory, '\', Pointer(verblock), verlen) then begin
+        VersionMS := verblock.dwFileVersionMS;
+        VersionLS := verblock.dwFileVersionLS;
+        Result := Format('%s.%s.%s.%s', [IntToStr(versionMS shr 16),
+          IntToStr(versionMS and $FFFF), IntToStr(VersionLS shr 16),
+          IntToStr(VersionLS and $FFFF)]);
+      end;
+    except
+      on x: Exception do
+        Result := '0.0.0.0';
     end;
   finally
     m.Free;
