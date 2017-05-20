@@ -35,7 +35,7 @@ implementation
 
 uses
   txFiles,
-  maMain;
+  Mahogany;
 
 procedure WriteBuffer;
 var

@@ -3,14 +3,14 @@ unit xeSerialization;
 interface
 
 uses
-  superobject,
+  Argo, ArgoTypes,
   wbInterface;
 
   function ElementToJson(_id: Cardinal; json: PWideChar; len: Integer): WordBool; cdecl;
   function ElementFromJson(_id: Cardinal; path: PWideChar; json: PWideChar; _res: PCardinal): WordBool; cdecl;
 
   // native functions
-  function GroupToSO(group: IwbGroupRecord; obj: ISuperObject): ISuperObject;
+  function GroupToSO(group: IwbGroupRecord; obj: TJSONObject): TJSONObject;
 
 implementation
 
@@ -18,10 +18,10 @@ uses
   Variants, SysUtils, StrUtils,
   xeMeta, xeFiles, xeGroups, xeElements, xeElementValues, xeMessages;
 
-procedure SOArrayAdd(ary: TSuperArray; obj: ISuperObject);
+procedure SOArrayAdd(ary: TJSONArray; obj: TJSONObject);
 begin
-  if obj.AsObject.GetValues.AsArray.Length = 1 then
-    ary.Add(obj.AsObject.GetValues.AsArray.O[0])
+  if obj.Count = 1 then
+    ary.Add(obj.ValueFromIndex[0])
   else
     ary.Add(obj);
 end;
@@ -34,7 +34,7 @@ begin
     and Supports(intDef.Formater[element], IwbFlagsDef);
 end;
 
-function ElementToSO(element: IwbElement; obj: ISuperObject): ISuperObject;
+function ElementToSO(element: IwbElement; obj: TJSONObject): TJSONObject;
 const
   ArrayTypes: TSmashTypes = [stUnsortedArray, stUnsortedStructArray, stSortedArray,
     stSortedStructArray];
@@ -44,20 +44,20 @@ var
   childElement: IwbElement;
   v: Variant;
   i: Integer;
-  childObject: ISuperObject;
+  childObject: TJSONObject;
 begin
   path := Element.Name;
   if Supports(element, IwbContainerElementRef, container)
   and ((container.ElementCount > 0) or IsFlags(element)) then begin
     if GetSmashType(element) in ArrayTypes then begin
-      obj.O[path] := SA([]);
+      obj.A[path] := TJSONArray.Create;
       for i := 0 to Pred(container.ElementCount) do begin
         childElement := container.Elements[i];
-        SOArrayAdd(obj.A[path], ElementToSO(childElement, SO));
+        SOArrayAdd(obj.A[path], ElementToSO(childElement, TJSONObject.Create));
       end;
     end
     else begin
-      childObject := SO;
+      childObject := TJSONObject.Create;
       for i := 0 to Pred(container.ElementCount) do begin
         childElement := container.Elements[i];
         ElementToSO(childElement, childObject);
@@ -83,7 +83,7 @@ begin
   Result := obj;
 end;
 
-function RecordToSO(rec: IwbMainRecord; obj: ISuperObject): ISuperObject;
+function RecordToSO(rec: IwbMainRecord; obj: TJSONObject): TJSONObject;
 var
   i: Integer;
 begin
@@ -94,48 +94,49 @@ begin
   Result := obj;
 end;
 
-function GroupToSO(group: IwbGroupRecord; obj: ISuperObject): ISuperObject;
+function GroupToSO(group: IwbGroupRecord; obj: TJSONObject): TJSONObject;
 var
   name: String;
   i: Integer;
   rec: IwbMainRecord;
   innerGroup: IwbGroupRecord;
-  records, groups: ISuperObject;
+  records: TJSONArray;
+  groups: TJSONObject;
 begin
-  records := SA([]);
-  groups := SO;
+  records := TJSONArray.Create;
+  groups := TJSONObject.Create;
   // iterate through children
   for i := 0 to Pred(group.ElementCount) do begin
     if Supports(group.Elements[i], IwbMainRecord, rec) then
-      records.AsArray.Add(RecordToSO(rec, SO))
+      records.Add(RecordToSO(rec, TJSONObject.Create))
     else if Supports(group.Elements[i], IwbGroupRecord, innerGroup)
     and not (innerGroup.GroupType in [1, 6..7]) then
       GroupToSO(innerGroup, groups);
   end;
   // assign objects
   name := GetPathName(group as IwbElement);
-  if groups.AsObject.GetNames.AsArray.Length = 0 then
-    obj.O[name] := records
+  if groups.Count = 0 then
+    obj.A[name] := records
   else begin
     obj.O[name] := groups;
-    if records.AsArray.Length > 1 then
-      obj.O[name].O['Records'] := records;
+    if records.Count > 1 then
+      obj.O[name].A['Records'] := records;
   end;
   // return result
   Result := obj;
 end;
 
-function FileToSO(_file: IwbFile): ISuperObject;
+function FileToSO(_file: IwbFile): TJSONObject;
 var
-  obj: ISuperObject;
+  obj: TJSONObject;
   group: IwbGroupRecord;
   i: Integer;
 begin
-  obj := SO;
+  obj := TJSONObject.Create;
   obj.S['Filename'] := _file.FileName;
-  obj.O['File Header'] := SO;
+  obj.O['File Header'] := TJSONObject.Create;
   RecordToSO(_file.Header, obj.O['File Header']);
-  obj.O['Groups'] := SO;
+  obj.O['Groups'] := TJSONObject.Create;
   for i := 1 to Pred(_file.ElementCount)  do begin
     if Supports(_file.Elements[i], IwbGroupRecord, group) then
       GroupToSO(group, obj.O['Groups']);
@@ -150,7 +151,7 @@ var
   group: IwbGroupRecord;
   rec: IwbMainRecord;
   element: IwbElement;
-  obj: ISuperObject;
+  obj: TJSONObject;
 begin
   Result := false;
   try
@@ -158,13 +159,13 @@ begin
     if Supports(e, IwbFile, _file) then
       obj := FileToSO(_file)
     else if Supports(e, IwbGroupRecord, group) then
-      obj := GroupToSO(group, SO)
+      obj := GroupToSO(group, TJSONObject.Create)
     else if Supports(e, IwbMainRecord, rec) then
-      obj := RecordToSO(rec, SO)
+      obj := RecordToSO(rec, TJSONObject.Create)
     else if Supports(e, IwbElement, element) then
-      obj := ElementToSO(element, SO);
+      obj := ElementToSO(element, TJSONObject.Create);
     if Assigned(obj) then begin
-      StrLCopy(json, PWideChar(obj.AsJSon), len);
+      StrLCopy(json, PWideChar(obj.ToString), len);
       Result := true;
     end;
   except
@@ -187,32 +188,33 @@ begin
     Result := container.Assign(High(integer), nil, false);
 end;
 
-function SOToElement(element: IwbElement; obj: ISuperObject): IInterface;
+function SOToElement(element: IwbElement; obj: TJSONObject): IInterface;
 const
   ArrayTypes: TSmashTypes = [stUnsortedArray, stUnsortedStructArray, stSortedArray,
     stSortedStructArray];
 var
   container: IwbContainerElementRef;
   childElement: IwbElement;
-  ary, paths: TSuperArray;
-  path: string;
+  path: String;
+  ary: TJSONArray;
   i: Integer;
   v: Variant;
 begin
   if not Assigned(element) or not Assigned(obj) then
     exit;
+  path := GetPathName(element);
   if Supports(element, IwbContainerElementRef, container) then begin
     if GetSmashType(element) in ArrayTypes then begin
-      ary := obj.AsArray;
-      for i := 0 to Pred(ary.Length) do begin
+      ary := obj.A[path];
+      for i := 0 to Pred(ary.Count) do begin
         childElement := AssignElementIfMissing(container, i);
         SOToElement(childElement, ary.O[i]);
       end;
     end
     else begin
-      paths := obj.AsObject.GetNames.AsArray;
-      for i := 0 to Pred(paths.Length) do begin
-        path := paths[i].AsString;
+      ary := obj.A[path];
+      for i := 0 to Pred(obj.Count) do begin
+        path := obj.Keys[i];
         childElement := AddElementIfMissing(container, path);
         SOToElement(childElement, obj.O[path]);
       end;
@@ -234,29 +236,27 @@ begin
   Result := element;
 end;
 
-procedure ApplySO(container: IwbContainerElementRef; obj: ISuperObject; path: string);
+procedure ApplySO(container: IwbContainerElementRef; obj: TJSONObject; path: string);
 begin
   SOToElement(container.ElementByPath[path], obj.O[path]);
 end;
 
-procedure SOToElements(container: IwbContainerElementRef; obj: ISuperObject;
+procedure SOToElements(container: IwbContainerElementRef; var obj: TJSONObject;
   const excludedPaths: array of string);
 var
   element: IwbElement;
-  paths: TSuperArray;
   path: string;
   i: Integer;
 begin
-  paths := obj.AsObject.GetNames.AsArray;
-  for i := 0 to Pred(paths.Length) do begin
-    path := paths[i].AsString;
+  for i := 0 to Pred(obj.Count) do begin
+    path := obj.Keys[i];
     if MatchStr(path, excludedPaths) then continue;
     element := AddElementIfMissing(container, path);
-    SOToElement(element, obj.O[path]);
+    SOToElement(element, obj);
   end;
 end;
 
-procedure SOToRecordHeader(header: IwbElement; obj: ISuperObject);
+procedure SOToRecordHeader(header: IwbElement; obj: TJSONObject);
 const
   ExcludedPaths: array[0..1] of string = (
     'Signature',
@@ -280,7 +280,7 @@ begin
   SOToElements(container, obj, ExcludedPaths);
 end;
 
-function SOToRecord(rec: IwbMainRecord; obj: ISuperObject): IInterface;
+function SOToRecord(rec: IwbMainRecord; obj: TJSONObject): IInterface;
 const
   ExcludedPaths: array[0..0] of string = (
     'Record Header'
@@ -296,19 +296,17 @@ begin
     SOToElements(container, obj, ExcludedPaths);
 end;
 
-function SOToGroup(group: IwbGroupRecord; obj: ISuperObject): IInterface;
+function SOToGroup(group: IwbGroupRecord; ary: TJSONArray): IInterface;
 var
-  records: TSuperArray;
-  recObj, recHeader: ISuperObject;
+  recObj, recHeader: TJSONObject;
   e: IInterface;
   rec: IwbMainRecord;
   i: Integer;
 begin
   Result := group;
-  records := obj.AsArray;
   // loop through array of records
-  for i := 0 to Pred(records.Length) do begin
-    recObj := records.O[i];
+  for i := 0 to Pred(ary.Count) do begin
+    recObj := ary.O[i];
     recHeader := recObj.O['Record Header'];
     // attempt to resolve existing record
     e := ResolveFromGroup(group, recHeader.S['FormID']);
@@ -321,7 +319,7 @@ begin
   end;
 end;
 
-procedure SOToFileHeader(header: IwbMainRecord; obj: ISuperObject);
+procedure SOToFileHeader(header: IwbMainRecord; obj: TJSONObject);
 const
   ExcludedPaths: array[0..3] of string = (
     'Record Header',
@@ -332,7 +330,7 @@ const
 var
   container: IwbContainerElementRef;
   _file: IwbFile;
-  ary: TSuperArray;
+  ary: TJSONArray;
   i: Integer;
 begin
   if not Supports(header, IwbContainerElementRef, container)
@@ -341,18 +339,17 @@ begin
   // add masters
   _file := header._File;
   ary := obj.A['Master Files'];
-  for i := 0 to Pred(ary.Length) do
+  for i := 0 to Pred(ary.Count) do
     _file.AddMasterIfMissing(ary.O[i].S['MAST - Filename']);
   // set record header and element values
   SOToRecordHeader(header.ElementByPath['Record Header'], obj.O['Record Header']);
   SOToElements(container, obj, ExcludedPaths);
 end;
 
-function SOToFile(_file: IwbFile; obj: ISuperObject): IInterface;
+function SOToFile(_file: IwbFile; obj: TJSONObject): IInterface;
 var
-  groups: ISuperObject;
+  groups: TJSONObject;
   group: IwbGroupRecord;
-  signatures: TSuperArray;
   signature: string;
   i: Integer;
 begin
@@ -361,15 +358,14 @@ begin
   SOToFileHeader(_file.Header, obj.O['File Header']);
   // deserialize groups
   groups := obj.O['Groups'];
-  signatures := groups.AsObject.GetNames.AsArray;
-  for i := 0 to Pred(signatures.Length) do begin
-    signature := signatures[i].AsString;
+  for i := 0 to Pred(groups.Count) do begin
+    signature := groups.Keys[i];
     group := AddGroupIfMissing(_file, signature);
-    SOToGroup(group, groups.O[signature]);
+    SOToGroup(group, groups.A[signature]);
   end;
 end;
 
-function WriteElementFromSO(e: IInterface; obj: ISuperObject): IInterface;
+function WriteElementFromSO(e: IInterface; obj: TJSONObject): IInterface;
 var
   _file: IwbFile;
   group: IwbGroupRecord;
@@ -378,8 +374,8 @@ var
 begin
   if Supports(e, IwbFile, _file) then
     Result := SOToFile(_file, obj)
-  else if Supports(e, IwbGroupRecord, group) then
-    Result := SOToGroup(group, obj)
+  //else if Supports(e, IwbGroupRecord, group) then
+    //Result := SOToGroup(group, obj)
   else if Supports(e, IwbMainRecord, rec) then
     Result := SOToRecord(rec, obj)
   else if Supports(e, IwbElement, element) then
@@ -401,7 +397,7 @@ begin
   Result := false;
   try
     e := ResolveOrAddElement(_id, path);
-    WriteElementFromSO(e, SO(json));
+    WriteElementFromSO(e, TJSONObject.Create(json));
     _res^ := Store(e);
     Result := true;
   except

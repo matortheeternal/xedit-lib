@@ -31,7 +31,7 @@ uses
   wbHelpers in '..\lib\xedit\wbHelpers.pas',
   wbLocalization in '..\lib\xedit\wbLocalization.pas',
   wbStreams in '..\lib\xedit\wbStreams.pas',
-  superobject in '..\lib\superobject\superobject.pas';
+  Argo in '..\lib\Argo\Argo.pas';
 
 {$R *.RES}
 {$MAXSTACKSIZE 2097152}

@@ -25,7 +25,7 @@ uses
 implementation
 
 uses
-  maMain;
+  Mahogany;
 
 procedure BuildFileValueTests;
 var

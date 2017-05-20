@@ -29,7 +29,7 @@ implementation
 
 uses
   classes,
-  maMain;
+  Mahogany;
 
 procedure BuildElementHandlingTests;
 var

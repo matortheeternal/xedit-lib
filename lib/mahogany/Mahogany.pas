@@ -1,4 +1,4 @@
-unit maMain;
+unit Mahogany;
 
 interface
 
@@ -53,14 +53,15 @@ type
   end;
 
   // PUBLIC API
+  procedure TestComment(comment: String);
   procedure Describe(description: String; callback: TProc);
   procedure BeforeAll(callback: TProc);
   procedure AfterAll(callback: TProc);
   procedure BeforeEach(callback: TProc);
   procedure AfterEach(callback: TProc);
   procedure It(description: String; callback: TProc; failAll: boolean = false);
-  procedure Expect(expectation: Boolean; description: String);
-  procedure ExpectEqual(v1, v2: Variant; description: String);
+  procedure Expect(expectation: Boolean; description: String = '');
+  procedure ExpectEqual(v1, v2: Variant; description: String = '');
   procedure ExpectException(proc: TProc; msg: String = '');
   procedure RunTests(messageProc: TMessageProc);
   procedure ReportResults(messageProc: TMessageProc);
@@ -81,9 +82,18 @@ implementation
 
 {******************************************************************************}
 { Public API
-  These functions provide the public API for Vermilion.
+  These functions provide the public API for Mahogany.
 }
 {******************************************************************************}
+
+{ Utility Functions }
+procedure TestComment(comment: String);
+var
+  spacing: string;
+begin
+  spacing := StringOfChar(' ', (ActiveSuite.depth + 2) * 2);
+  LogMessage(spacing + comment);
+end;
 
 { Suite Functions }
 procedure Describe(description: String; callback: TProc);
@@ -139,13 +149,13 @@ begin
 end;
 
 { Expectations }
-procedure Expect(expectation: Boolean; description: String);
+procedure Expect(expectation: Boolean; description: String = '');
 begin
   if not expectation then
     raise Exception.Create(description);
 end;
 
-procedure ExpectEqual(v1, v2: Variant; description: String);
+procedure ExpectEqual(v1, v2: Variant; description: String = '');
 const
   ErrorFormat = 'Expected "%s", found "%s"';
 begin
@@ -204,7 +214,7 @@ end;
 
 {******************************************************************************}
 { Private
-  These functions are private to Vermilion.  You should not call them from
+  These functions are private to Mahogany.  You should not call them from
   your code.
 }
 {******************************************************************************}
@@ -260,15 +270,15 @@ constructor TSuite.Create(description: String; callback: TProc);
 begin
   // default to a to-level suite
   context := nil;
-  depth := 0;
+  depth := 0;  
 
   // suites can be nested inside of each other
   if Assigned(ActiveSuite) then begin
     context := TTest(ActiveSuite);
     depth := ActiveSuite.depth + 1;
     ActiveSuite.AddChild(TTest(self));
-  end;
-
+  end; 
+  
   // set input properties
   self.description := description;
   children := TList.Create;
@@ -296,6 +306,7 @@ var
 begin
   try
     inherited;
+    ActiveSuite := self;
     // Setup before all tests if given
     if Assigned(BeforeAll) then BeforeAll;
 
@@ -372,10 +383,10 @@ end;
 
 { TSpec }
 constructor TSpec.Create(description: String; callback: TProc; failAll: Boolean);
-begin
+begin                
   // enumerate the spec in the active suite's children
   context := ActiveSuite as TTest;
-  depth := ActiveSuite.depth + 1;
+  depth := ActiveSuite.depth + 1;  
   ActiveSuite.AddChild(self as TTest);
   // set input properties
   self.description := description;
@@ -409,7 +420,7 @@ begin
     LogMessage(spacing + 'FAILED: ' + exception.message);
   end;
   self.context := context;
-  self.exception := exception;
+  self.exception := exception; 
   MarkContextFailed;
   Failures.Add(self);
 end;
@@ -422,17 +433,17 @@ var
   currentContext: TTest;
   i: Integer;
 begin
-  // prepare to loop
+  // prepare to loop 
   currentContext := self.context;
   i := 1;
 
   // loop from the failure's context up the stack
   while Assigned(currentContext) do begin
     currentContext.passed := false;
-    // recurse until we've gone up the maximum test depth
+    // recurse until we've gone up the maximum test depth 
     // this saves us from an infinite loop if there is a recursive context
-    currentContext := currentContext.context;
-    if (i = maxTestDepth) then
+    currentContext := currentContext.context;  
+    if (i = maxTestDepth) then 
       raise Exception.Create(MaxTestDepthError);
     Inc(i);
   end;

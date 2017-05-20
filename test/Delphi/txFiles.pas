@@ -19,7 +19,7 @@ uses
 implementation
 
 uses
-  maMain;
+  Mahogany;
 
 procedure BuildFileHandlingTests;
 var

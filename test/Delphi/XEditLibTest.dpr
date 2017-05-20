@@ -1,4 +1,4 @@
-program DelphiTest;
+program XEditLibTest;
 
 {$APPTYPE CONSOLE}
 
@@ -16,8 +16,8 @@ uses
   txGroups in 'txGroups.pas',
   txRecords in 'txRecords.pas',
   txRecordValues in 'txRecordValues.pas',
-  superobject in '..\..\lib\superobject\superobject.pas',
-  maMain in '..\..\lib\mahogany\maMain.pas';
+  Argo in '..\..\lib\Argo\Argo.pas',
+  Mahogany in '..\..\lib\mahogany\Mahogany.pas';
 
 procedure BuildXETests;
 begin

@@ -30,7 +30,7 @@ interface
 implementation
 
 uses
-  maMain,
+  Mahogany,
   txMeta, txElements;
 
 procedure BuildElementValueTests;

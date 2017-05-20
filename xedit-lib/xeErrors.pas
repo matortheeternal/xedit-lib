@@ -66,7 +66,7 @@ uses
   // xelib units
   xeMessages,
   // library units
-  SuperObject;
+  Argo;
 
 var
   errors: TList;
@@ -176,16 +176,16 @@ end;
 function GetErrors(str: PWideChar; len: Integer): WordBool; cdecl;
 var
   i: Integer;      
-  obj, childObj: ISuperObject;
+  obj, childObj: TJSONObject;
   error: TRecordError;
 begin
   Result := false;
   try
-    obj := SO;
-    obj.O['errors'] := SA([]);
+    obj := TJSONObject.Create;
+    obj.A['errors'] := TJSONArray.Create;
     for i := 0 to Pred(errors.Count) do begin
       error := TRecordError(errors[i]);
-      childObj := SO;
+      childObj := TJSONObject.Create;
       childObj.I['group'] := Ord(error.&type.id);
       childObj.S['signature'] := string(error.signature);
       childObj.I['form_id'] := error.formID;
@@ -196,7 +196,7 @@ begin
         childObj.S['data'] := error.data;
       obj.A['errors'].Add(childObj);
     end;
-    StrLCopy(str, PWideChar(WideString(obj.AsJSon)), len);
+    StrLCopy(str, PWideChar(WideString(obj.ToString)), len);
     errors.Free;
     Result := true;
   except
