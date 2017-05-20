@@ -3,21 +3,7 @@ unit txFileValues;
 interface
 
 uses
-  SysUtils,
-  txFiles;
-
-  // FILE VALUE METHODS
-  function GetFileHeader(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function GetNextObjectId(_id: Cardinal; nextObjectID: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function SetNextObjectID(_id, nextObjectID: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function GetFileName(_id: Cardinal; fileName: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
-  function GetAuthor(_id: Cardinal; author: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
-  function SetAuthor(_id: Cardinal; author: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
-  function GetDescription(_id: Cardinal; desc: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
-  function SetDescription(_id: Cardinal; desc: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
-  function OverrideRecordCount(_id: Cardinal; count: PInteger): WordBool; cdecl; external 'XEditLib.dll';
-  function GetIsESM(_id: Cardinal; isESM: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
-  function SetIsESM(_id: Cardinal; isESM: WordBool): WordBool; cdecl; external 'XEditLib.dll';
+  SysUtils;
 
   // PUBLIC TESTING INTERFACE
   procedure BuildFileValueTests;
@@ -25,7 +11,14 @@ uses
 implementation
 
 uses
-  Mahogany;
+  Mahogany,
+{$IFDEF USE_DLL}
+  txImports;
+{$ENDIF}
+{$IFNDEF USE_DLL}
+  xeFiles, xeFileValues;
+{$ENDIF}
+  
 
 procedure BuildFileValueTests;
 var

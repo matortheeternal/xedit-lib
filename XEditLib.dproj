@@ -4,7 +4,7 @@
 			<MainSource>XEditLib.dpr</MainSource>
 			<ProjectVersion>12.3</ProjectVersion>
 			<Base>True</Base>
-			<Config Condition="'$(Config)'==''">Release</Config>
+			<Config Condition="'$(Config)'==''">Debug</Config>
 			<Platform>Win32</Platform>
 			<AppType>Library</AppType>
 			<FrameworkType>None</FrameworkType>
@@ -25,7 +25,7 @@
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Base)'!=''">
 			<DCC_UsePackage>rtl;vcl;xmlrtl;vclactnband;vclx;VclSmp;vclimg;svnui;svn;bdertl;TeeUI;TeeDB;Tee;vcldb;dbrtl;vcldbx;vcltouch;dsnap;dsnapcon;vclib;ibxpress;adortl;IndyCore;IndySystem;IndyProtocols;inet;intrawebdb_110_150;Intraweb_110_150;vclie;websnap;webdsnap;inetdb;inetdbbde;inetdbxpress;soaprtl;vclribbon;dbexpress;DbxCommonDriver;DataSnapIndy10ServerTransport;DataSnapProviderClient;DbxClientDriver;DataSnapClient;dbxcds;DataSnapServer;AzureCloud;DBXInterBaseDriver;DBXMySQLDriver;DBXFirebirdDriver;DBXSybaseASEDriver;DBXSybaseASADriver;DBXOracleDriver;DBXMSSQLDriver;DBXInformixDriver;DBXDb2Driver;VirtualTreesD17;madBasic_;madDisAsm_;madExcept_;JclDeveloperTools;Jcl;JclVcl;JclContainers;JvCore;JvSystem;JvStdCtrls;JvAppFrm;JvBands;JvDB;JvDlgs;JvBDE;JvControls;JvCmp;JvCrypt;JvCustom;JvDocking;JvDotNetCtrls;JvGlobus;JvHMI;JvJans;JvManagedThreads;JvMM;JvNet;JvPageComps;JvPascalInterpreter;JvPluginSystem;JvPrintPreview;JvRuntimeDesign;JvTimeFramework;JvWizards;JvXPCtrls</DCC_UsePackage>
-			<DCC_UnitSearchPath>..\lib\mte;..\lib\Imaging;..\lib\xedit;..\lib\Imaging\zlib;..\lib\xedit\zlib;..\lib\xedit\lz4;..\lib\Argo;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+			<DCC_UnitSearchPath>lib\mte;lib\Imaging;lib\xedit;lib\Imaging\zlib;lib\xedit\zlib;lib\xedit\lz4;lib\Argo;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
 			<DCC_DcuOutput>.\$(Config)\$(Platform)</DCC_DcuOutput>
 			<DCC_E>false</DCC_E>
 			<DCC_ImageBase>00400000</DCC_ImageBase>
@@ -56,39 +56,39 @@
 			<DelphiCompile Include="XEditLib.dpr">
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
-			<DCCReference Include="xeMessages.pas"/>
-			<DCCReference Include="xeConfiguration.pas"/>
-			<DCCReference Include="xeMeta.pas"/>
-			<DCCReference Include="xeSetup.pas"/>
-			<DCCReference Include="xeFiles.pas"/>
-			<DCCReference Include="xeMasters.pas"/>
-			<DCCReference Include="xeFileValues.pas"/>
-			<DCCReference Include="xeElements.pas"/>
-			<DCCReference Include="xeElementValues.pas"/>
-			<DCCReference Include="xeErrors.pas"/>
-			<DCCReference Include="xeRecords.pas"/>
-			<DCCReference Include="xeRecordValues.pas"/>
-			<DCCReference Include="xeGroups.pas"/>
-			<DCCReference Include="xeSerialization.pas"/>
-			<DCCReference Include="..\lib\mte\mteHelpers.pas"/>
-			<DCCReference Include="..\lib\mte\CRC32.pas"/>
-			<DCCReference Include="..\lib\mte\RttiIni.pas"/>
-			<DCCReference Include="..\lib\xedit\wbImplementation.pas"/>
-			<DCCReference Include="..\lib\xedit\wbInterface.pas"/>
-			<DCCReference Include="..\lib\xedit\wbBSA.pas"/>
-			<DCCReference Include="..\lib\xedit\wbSort.pas"/>
-			<DCCReference Include="..\lib\xedit\wbDefinitionsFNV.pas"/>
-			<DCCReference Include="..\lib\xedit\wbDefinitionsFO3.pas"/>
-			<DCCReference Include="..\lib\xedit\wbDefinitionsFO4.pas"/>
-			<DCCReference Include="..\lib\xedit\wbDefinitionsTES3.pas"/>
-			<DCCReference Include="..\lib\xedit\wbDefinitionsTES4.pas"/>
-			<DCCReference Include="..\lib\xedit\wbDefinitionsTES5.pas"/>
-			<DCCReference Include="..\lib\xedit\wbHelpers.pas"/>
-			<DCCReference Include="..\lib\xedit\wbLocalization.pas"/>
-			<DCCReference Include="..\lib\xedit\wbStreams.pas">
+			<DCCReference Include="src\xeMessages.pas"/>
+			<DCCReference Include="src\xeConfiguration.pas"/>
+			<DCCReference Include="src\xeMeta.pas"/>
+			<DCCReference Include="src\xeSetup.pas"/>
+			<DCCReference Include="src\xeFiles.pas"/>
+			<DCCReference Include="src\xeMasters.pas"/>
+			<DCCReference Include="src\xeFileValues.pas"/>
+			<DCCReference Include="src\xeElements.pas"/>
+			<DCCReference Include="src\xeElementValues.pas"/>
+			<DCCReference Include="src\xeErrors.pas"/>
+			<DCCReference Include="src\xeRecords.pas"/>
+			<DCCReference Include="src\xeRecordValues.pas"/>
+			<DCCReference Include="src\xeGroups.pas"/>
+			<DCCReference Include="src\xeSerialization.pas"/>
+			<DCCReference Include="lib\mte\mteHelpers.pas"/>
+			<DCCReference Include="lib\mte\CRC32.pas"/>
+			<DCCReference Include="lib\mte\RttiIni.pas"/>
+			<DCCReference Include="lib\xedit\wbImplementation.pas"/>
+			<DCCReference Include="lib\xedit\wbInterface.pas"/>
+			<DCCReference Include="lib\xedit\wbBSA.pas"/>
+			<DCCReference Include="lib\xedit\wbSort.pas"/>
+			<DCCReference Include="lib\xedit\wbDefinitionsFNV.pas"/>
+			<DCCReference Include="lib\xedit\wbDefinitionsFO3.pas"/>
+			<DCCReference Include="lib\xedit\wbDefinitionsFO4.pas"/>
+			<DCCReference Include="lib\xedit\wbDefinitionsTES3.pas"/>
+			<DCCReference Include="lib\xedit\wbDefinitionsTES4.pas"/>
+			<DCCReference Include="lib\xedit\wbDefinitionsTES5.pas"/>
+			<DCCReference Include="lib\xedit\wbHelpers.pas"/>
+			<DCCReference Include="lib\xedit\wbLocalization.pas"/>
+			<DCCReference Include="lib\xedit\wbStreams.pas">
 				<Form>$R *.RES</Form>
 			</DCCReference>
-			<DCCReference Include="..\lib\Argo\Argo.pas"/>
+			<DCCReference Include="lib\Argo\Argo.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>
@@ -114,7 +114,7 @@
 						<VersionInfo Name="MajorVer">0</VersionInfo>
 						<VersionInfo Name="MinorVer">0</VersionInfo>
 						<VersionInfo Name="Release">0</VersionInfo>
-						<VersionInfo Name="Build">322</VersionInfo>
+						<VersionInfo Name="Build">326</VersionInfo>
 						<VersionInfo Name="Debug">False</VersionInfo>
 						<VersionInfo Name="PreRelease">False</VersionInfo>
 						<VersionInfo Name="Special">False</VersionInfo>
@@ -126,7 +126,7 @@
 					<VersionInfoKeys>
 						<VersionInfoKeys Name="CompanyName"/>
 						<VersionInfoKeys Name="FileDescription"/>
-						<VersionInfoKeys Name="FileVersion">0.0.0.322</VersionInfoKeys>
+						<VersionInfoKeys Name="FileVersion">0.0.0.326</VersionInfoKeys>
 						<VersionInfoKeys Name="InternalName"/>
 						<VersionInfoKeys Name="LegalCopyright"/>
 						<VersionInfoKeys Name="LegalTrademarks"/>

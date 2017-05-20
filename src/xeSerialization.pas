@@ -7,7 +7,7 @@ uses
   wbInterface;
 
   function ElementToJson(_id: Cardinal; json: PWideChar; len: Integer): WordBool; cdecl;
-  function ElementFromJson(_id: Cardinal; path: PWideChar; json: PWideChar; _res: PCardinal): WordBool; cdecl;
+  //function ElementFromJson(_id: Cardinal; path: PWideChar; json: PWideChar; _res: PCardinal): WordBool; cdecl;
 
   // native functions
   function GroupToSO(group: IwbGroupRecord; obj: TJSONObject): TJSONObject;
@@ -156,6 +156,7 @@ begin
   Result := false;
   try
     e := Resolve(_id);
+    obj := nil;
     if Supports(e, IwbFile, _file) then
       obj := FileToSO(_file)
     else if Supports(e, IwbGroupRecord, group) then
@@ -188,7 +189,7 @@ begin
     Result := container.Assign(High(integer), nil, false);
 end;
 
-function SOToElement(element: IwbElement; obj: TJSONObject): IInterface;
+{function SOToElement(element: IwbElement; obj: TJSONObject): IInterface;
 const
   ArrayTypes: TSmashTypes = [stUnsortedArray, stUnsortedStructArray, stSortedArray,
     stSortedStructArray];
@@ -403,6 +404,6 @@ begin
   except
     on x: Exception do ExceptionHandler(x);
   end;
-end;
+end;}
 
 end.

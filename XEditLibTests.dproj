@@ -1,7 +1,7 @@
 ﻿	<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 		<PropertyGroup>
 			<ProjectGuid>{C5C10C2F-4A4C-4863-B4D3-8F24CB78A70F}</ProjectGuid>
-			<MainSource>XEditLibTest.dpr</MainSource>
+			<MainSource>XEditLibTests.dpr</MainSource>
 			<ProjectVersion>12.3</ProjectVersion>
 			<Base>True</Base>
 			<Config Condition="'$(Config)'==''">Debug</Config>
@@ -24,9 +24,9 @@
 			<Base>true</Base>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Base)'!=''">
-			<DCC_UnitSearchPath>..\..\lib\mahogany;..\..\lib\Argo;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+			<DCC_UnitSearchPath>src;lib\mahogany;lib\Argo;lib\xedit;lib\xedit\lz4;lib\xedit\zlib;lib\imaging;lib\mte;lib\imaging\zlib;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
 			<DCC_ImageBase>00400000</DCC_ImageBase>
-			<DCC_DcuOutput>.\$(Config)\$(Platform)</DCC_DcuOutput>
+			<DCC_DcuOutput>.\$(Config)\$(Platform)\units</DCC_DcuOutput>
 			<DCC_UnitAlias>WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;$(DCC_UnitAlias)</DCC_UnitAlias>
 			<DCC_ExeOutput>.\$(Config)\$(Platform)</DCC_ExeOutput>
 			<DCC_E>false</DCC_E>
@@ -47,22 +47,23 @@
 			<DCC_DebugInformation>false</DCC_DebugInformation>
 		</PropertyGroup>
 		<ItemGroup>
-			<DelphiCompile Include="XEditLibTest.dpr">
+			<DelphiCompile Include="XEditLibTests.dpr">
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
-			<DCCReference Include="txMeta.pas"/>
-			<DCCReference Include="txSetup.pas"/>
-			<DCCReference Include="txFiles.pas"/>
-			<DCCReference Include="txFileValues.pas"/>
-			<DCCReference Include="txMasters.pas"/>
-			<DCCReference Include="txElements.pas"/>
-			<DCCReference Include="txElementValues.pas"/>
-			<DCCReference Include="txSerialization.pas"/>
-			<DCCReference Include="txGroups.pas"/>
-			<DCCReference Include="txRecords.pas"/>
-			<DCCReference Include="txRecordValues.pas"/>
-			<DCCReference Include="..\..\lib\Argo\Argo.pas"/>
-			<DCCReference Include="..\..\lib\mahogany\Mahogany.pas"/>
+			<DCCReference Include="src\xeMeta.pas"/>
+			<DCCReference Include="tests\txMeta.pas"/>
+			<DCCReference Include="tests\txSetup.pas"/>
+			<DCCReference Include="tests\txFiles.pas"/>
+			<DCCReference Include="tests\txFileValues.pas"/>
+			<DCCReference Include="tests\txMasters.pas"/>
+			<DCCReference Include="tests\txElements.pas"/>
+			<DCCReference Include="tests\txElementValues.pas"/>
+			<DCCReference Include="tests\txSerialization.pas"/>
+			<DCCReference Include="tests\txGroups.pas"/>
+			<DCCReference Include="tests\txRecords.pas"/>
+			<DCCReference Include="tests\txRecordValues.pas"/>
+			<DCCReference Include="lib\Argo\Argo.pas"/>
+			<DCCReference Include="lib\mahogany\Mahogany.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>
@@ -110,7 +111,7 @@
 						<VersionInfoKeys Name="Comments"/>
 					</VersionInfoKeys>
 					<Source>
-						<Source Name="MainSource">XEditLibTest.dpr</Source>
+						<Source Name="MainSource">XEditLibTests.dpr</Source>
 					</Source>
 				</Delphi.Personality>
 				<Platforms>

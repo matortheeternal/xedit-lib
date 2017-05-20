@@ -3,20 +3,21 @@ unit txSetup;
 interface
 
 uses
-  SysUtils,
-  txMeta;
-
-  // LOADING AND SET UP METHODS
-  function SetGameMode(mode: Integer): Boolean; cdecl; external 'XEditLib.dll';
-  function GetLoadOrder(str: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
-  function LoadPlugins(loadOrder: PWideChar): WordBool; cdecl; cdecl; external 'XEditLib.dll';
-  function GetLoaderDone: WordBool; cdecl; external 'XEditLib.dll';
-  function GetGamePath(gameMode: Integer; str: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
+  SysUtils;
 
   // PUBLIC TESTING API
   procedure LoadXEdit;
 
 implementation
+
+uses
+{$IFDEF USE_DLL}
+  txImports,
+{$ENDIF}
+{$IFNDEF USE_DLL}
+  xeSetup, xeMeta,
+{$ENDIF}
+  txMeta;
 
 const
   TestLoadOrder =

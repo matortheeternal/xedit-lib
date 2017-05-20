@@ -5,21 +5,19 @@ interface
 uses
   SysUtils;
 
-  // FILE HANDLING METHODS
-  function NewFile(filename: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function FileByIndex(index: Integer; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function FileByLoadOrder(load_order: Integer; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function FileByName(name: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function FileByAuthor(author: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function SaveFile(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
-
   // PUBLIC TESTING INTERFACE
   procedure BuildFileHandlingTests;
 
 implementation
 
 uses
-  Mahogany;
+  Mahogany,
+{$IFDEF USE_DLL}
+  txImports;
+{$ENDIF}
+{$IFNDEF USE_DLL}
+  xeFiles;
+{$ENDIF}
 
 procedure BuildFileHandlingTests;
 var

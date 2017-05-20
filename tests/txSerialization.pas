@@ -2,10 +2,6 @@ unit txSerialization;
 
 interface
 
-  // SERIALIZATION METHODS
-  function ElementToJson(_id: Cardinal; json: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
-  function ElementFromJson(_id: Cardinal; path: PWideChar; json: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-
   // PUBLIC TESTING INTERFACE
   procedure BuildSerializationTests;
 
@@ -13,8 +9,13 @@ implementation
 
 uses
   SysUtils,
-  Argo,
-  Mahogany,
+  Argo, Mahogany,
+{$IFDEF USE_DLL}
+  txImports,
+{$ENDIF}
+{$IFNDEF USE_DLL}
+  xeSerialization, xeElements,
+{$ENDIF}
   txMeta, txElements;
 
 procedure ExpectExists(obj: TJSONObject; key: string);
@@ -61,14 +62,9 @@ begin
 
       Describe('ElementToJSON', procedure
         begin
-          BeforeEach(procedure
+          BeforeAll(procedure
             begin
               GetMem(json, 16384);
-            end);
-
-          AfterEach(procedure
-            begin
-              FreeMem(json, 16384);
             end);
 
           Describe('Root serialization', procedure

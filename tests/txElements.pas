@@ -3,24 +3,7 @@ unit txElements;
 interface
 
 uses
-  SysUtils,
-  txMeta, txFiles;
-
-  // ELEMENT HANDLING METHODS
-  function GetElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function GetElements(_id: Cardinal; _res: PCardinal; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
-  function GetElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function GetContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function AddElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
-  function GetLinksTo(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function ElementExists(_id: Cardinal; key: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
-  function ElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl; external 'XEditLib.dll';
-  function ElementEquals(_id, _id2: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function IsMaster(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function IsInjected(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function IsOverride(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function IsWinningOverride(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
+  SysUtils;
 
   // PUBLIC TESTING INTERFACE
   procedure BuildElementHandlingTests;
@@ -29,7 +12,14 @@ implementation
 
 uses
   classes,
-  Mahogany;
+  Mahogany,
+{$IFDEF USE_DLL}
+  txImports,
+{$ENDIF}
+{$IFNDEF USE_DLL}
+  xeFiles, xeElements,
+{$ENDIF}
+  txMeta;
 
 procedure BuildElementHandlingTests;
 var

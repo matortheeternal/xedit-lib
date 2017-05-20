@@ -10,16 +10,6 @@ type
   CardinalArray = array of Cardinal;
   PCardinalArray = ^CardinalArray;
 
-  // META METHODS
-  procedure Initialize; cdecl; external 'XEditLib.dll';
-  procedure Finalize; cdecl; external 'XEditLib.dll';
-  procedure GetBuffer(str: PWideChar; len: Integer); cdecl; external 'XEditLib.dll';
-  procedure FlushBuffer; cdecl; external 'XEditLib.dll';
-  function GetExceptionMessage(str: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
-  function GetGlobal(key, value: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
-  function Release(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function ResetStore: WordBool; cdecl; external 'XEditLib.dll';
-
   // PUBLIC TESTING INTERFACE
   procedure WriteBuffer;
   procedure WriteArray(a: CardinalArray);
@@ -34,8 +24,13 @@ type
 implementation
 
 uses
-  txFiles,
-  Mahogany;
+  Mahogany,
+{$IFDEF USE_DLL}
+  txImports;
+{$ENDIF}
+{$IFNDEF USE_DLL}
+  xeMeta, xeFiles;
+{$ENDIF}
 
 procedure WriteBuffer;
 var

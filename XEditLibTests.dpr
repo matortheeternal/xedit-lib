@@ -1,23 +1,29 @@
-program XEditLibTest;
+program XEditLibTests;
 
 {$APPTYPE CONSOLE}
 
 uses
   ShareMem,
   SysUtils,
-  txMeta in 'txMeta.pas',
-  txSetup in 'txSetup.pas',
-  txFiles in 'txFiles.pas',
-  txFileValues in 'txFileValues.pas',
-  txMasters in 'txMasters.pas',
-  txElements in 'txElements.pas',
-  txElementValues in 'txElementValues.pas',
-  txSerialization in 'txSerialization.pas',
-  txGroups in 'txGroups.pas',
-  txRecords in 'txRecords.pas',
-  txRecordValues in 'txRecordValues.pas',
-  Argo in '..\..\lib\Argo\Argo.pas',
-  Mahogany in '..\..\lib\mahogany\Mahogany.pas';
+  {$IFDEF USE_DLL}
+  txImports in 'tests\txImports.pas',
+  {$ENDIF}
+  {$IFNDEF USE_DLL}
+  xeMeta in 'src\xeMeta.pas',
+  {$ENDIF}
+  txMeta in 'tests\txMeta.pas',
+  txSetup in 'tests\txSetup.pas',
+  txFiles in 'tests\txFiles.pas',
+  txFileValues in 'tests\txFileValues.pas',
+  txMasters in 'tests\txMasters.pas',
+  txElements in 'tests\txElements.pas',
+  txElementValues in 'tests\txElementValues.pas',
+  txSerialization in 'tests\txSerialization.pas',
+  txGroups in 'tests\txGroups.pas',
+  txRecords in 'tests\txRecords.pas',
+  txRecordValues in 'tests\txRecordValues.pas',
+  Argo in 'lib\Argo\Argo.pas',
+  Mahogany in 'lib\mahogany\Mahogany.pas';
 
 procedure BuildXETests;
 begin
