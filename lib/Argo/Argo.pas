@@ -31,6 +31,7 @@ type
         jtObject:  (o: TJSONObject);
         jtArray:   (a: TJSONArray);
     end;
+    constructor Create(var P: PWideChar); overload;
     procedure ParseObject(var P: PWideChar);
     procedure ParseArray(var P: PWideChar);
     procedure ParseString(var P: PWideChar);
@@ -39,7 +40,6 @@ type
     function GetJSONValueType: TJSONValueType;
   public
     constructor Create(json: String); overload;
-    constructor Create(var P: PWideChar); overload;
     destructor Destroy; override;
     procedure Put(value: String); overload;
     procedure Put(value: Boolean); overload;
@@ -54,6 +54,7 @@ type
   TJSONArray = class(TObject)
   private
     _Values: TList;
+    constructor Create(var P: PWideChar); overload;
     function GetCount: Integer;
     function GetValue(index: Integer): TJSONValue;
     function MakeValue(index: Integer): TJSONValue;
@@ -72,7 +73,6 @@ type
   public
     constructor Create; overload;
     constructor Create(json: string); overload;
-    constructor Create(var P: PWideChar); overload;
     destructor Destroy; override;
     procedure Delete(index: Integer);
     function ToString: string; override;
@@ -97,6 +97,7 @@ type
   private
     _Values: TList;
     _Keys: TArgoTree;
+    constructor Create(var P: PWideChar) overload;
     procedure ParsePair(var P: PWideChar);
     procedure AddPair(key: string; value: TJSONValue);
     function GetKey(index: Integer): String;
@@ -121,7 +122,6 @@ type
   public
     constructor Create; overload;
     constructor Create(json: string); overload;
-    constructor Create(var P: PWideChar) overload;
     destructor Destroy; override;
     function HasKey(key: string): Boolean;
     procedure Delete(key: string);
