@@ -3,9 +3,9 @@ program XEditLibTests;
 {$APPTYPE CONSOLE}
 
 uses
-  ShareMem,
   SysUtils,
   {$IFDEF USE_DLL}
+  ShareMem,
   txImports in 'tests\txImports.pas',
   {$ENDIF}
   {$IFNDEF USE_DLL}
