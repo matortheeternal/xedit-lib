@@ -341,7 +341,6 @@ begin
             begin
               ExpectSuccess(GetElements(0, a, 4096));
               GetCardinalArray(a, 4096, lst);
-              //WriteCardinalArray(lst);
               Expect(lst.Count = 8, 'There should be 8 handles');
             end);
 
@@ -349,7 +348,6 @@ begin
             begin
               ExpectSuccess(GetElements(skyrim, a, 4096));
               GetCardinalArray(a, 4096, lst);
-              //WriteCardinalArray(lst);
               Expect(lst.Count = 118, 'There should be 118 handles');
             end);
 
@@ -357,7 +355,6 @@ begin
             begin
               ExpectSuccess(GetElements(armo, a, 4096));
               GetCardinalArray(a, 4096, lst);
-              //WriteCardinalArray(lst);
               Expect(lst.Count = 2762, 'There should be 2762 handles');
             end);
 
@@ -365,7 +362,6 @@ begin
             begin
               ExpectSuccess(GetElements(rec, a, 4096));
               GetCardinalArray(a, 4096, lst);
-              //WriteCardinalArray(lst);
               Expect(lst.Count = 13, 'There should be 13 handles');
             end);
 
@@ -373,7 +369,6 @@ begin
             begin
               ExpectSuccess(GetElements(keywords, a, 4096));
               GetCardinalArray(a, 4096, lst);
-              //WriteCardinalArray(lst);
               Expect(lst.Count = 5, 'There should be 5 handles');
             end);
         end);

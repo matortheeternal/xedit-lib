@@ -18,6 +18,7 @@ type
   procedure ExpectSuccess(b: WordBool);
   procedure ExpectFailure(b: WordBool);
   procedure BuildMetaTests;
+  function GetResultString(len: Integer): String;
   procedure GetCardinalArray(a: PCardinal; len: Integer; lst: TList);
   procedure WriteCardinalArray(lst: TList);
 
@@ -34,14 +35,24 @@ uses
 
 procedure WriteBuffer;
 var
+  len: Integer;
   str: PWideChar;
 begin
-  GetMem(str, 4096);
-  GetBuffer(str, 4096);
-  if Length(string(str)) > 0 then begin
-    FlushBuffer();
+  GetMessagesLength(@len);
+  if len > 0 then begin
+    GetMem(str, len);
+    GetMessages(str, len);
     WriteLn(str);
   end;
+end;
+
+function GetResultString(len: Integer): String;
+var
+  str: PWideChar;
+begin
+  GetMem(str, len);
+  GetResult(str, len);
+  Result := String(str);
 end;
 
 {$POINTERMATH ON}
@@ -84,12 +95,15 @@ end;
 
 procedure WriteExceptions;
 var
+  len: Integer;
   str: PWideChar;
 begin
-  GetMem(str, 4096);
-  GetExceptionMessage(str, 4096);
-  if Length(string(str)) > 0 then
+  GetExceptionMessageLength(@len);
+  if len > 0 then begin
+    GetMem(str, len);
+    GetExceptionMessage(str, len);
     WriteLn(str);
+  end;
 end;
 
 procedure WriteStringToFile(str, filename: string);

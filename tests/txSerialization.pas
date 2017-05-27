@@ -26,25 +26,21 @@ end;
 procedure ExportFileToJSON(filename: PWideChar; mb: Integer);
 var
   h: Cardinal;
-  size: Integer;
-  jso: PWideChar;
+  len: Integer;
+  json: string;
 begin
-  size := mb * 1024 * 1024;
-  GetMem(jso, size);
-  try
-    Expect(GetElement(0, filename, @h), 'GetElement');
-    Expect(ElementToJson(h, jso, size), 'ElementToJSON');
-    WriteStringToFile(jso, filename + '.json');
-  finally
-    FreeMem(jso, size);
-  end;
+  Expect(GetElement(0, filename, @h), 'GetElement');
+  Expect(ElementToJson(h, @len), 'ElementToJSON');
+  json := GetResultString(len);
+  WriteStringToFile(json, filename + '.json');
 end;
 
 procedure BuildSerializationTests;
 var
   testFile, armo, rec, cell, keywords, keyword, dnam, h: Cardinal;
-  json: PWideChar;
+  json: string;
   obj, obj2, obj3: TJSONObject;
+  len: Integer;
   ary: TJSONArray;
 begin
   Describe('Serialization', procedure
@@ -62,21 +58,11 @@ begin
 
       Describe('ElementToJSON', procedure
         begin
-          BeforeAll(procedure
-            begin
-              GetMem(json, 16384);
-            end);
-
-          AfterAll(procedure
-            begin
-              FreeMem(json, 16384);
-            end);
-
           Describe('Root serialization', procedure
             begin
               It('Should fail', procedure
                 begin
-                  ExpectFailure(ElementToJson(0, json, 16384));
+                  ExpectFailure(ElementToJson(0, @len));
                 end);
             end);
 
@@ -89,8 +75,8 @@ begin
 
               It('Should succeed', procedure
                 begin
-                  ExpectSuccess(ElementToJson(testFile, json, 16384));
-                  WriteStringToFile(json, 'xtest-2.esp.json');
+                  ExpectSuccess(ElementToJson(testFile, @len));
+                  json := GetResultString(len);
                   obj := TJSONObject.Create(json);
                 end, True);
 
@@ -171,10 +157,10 @@ begin
 
               It('Should succeed', procedure
                 begin
-                  ExpectSuccess(ElementToJson(cell, json, 16384));
-                  obj := TJSONObject.Create(json);
-                  ExpectSuccess(ElementToJson(armo, json, 16384));
-                  obj2 := TJSONObject.Create(json);
+                  ExpectSuccess(ElementToJson(cell, @len));
+                  obj := TJSONObject.Create(GetResultString(len));
+                  ExpectSuccess(ElementToJson(armo, @len));
+                  obj2 := TJSONObject.Create(GetResultString(len));
                 end, True);
 
               It('Should put the group under a key', procedure
@@ -240,8 +226,8 @@ begin
 
               It('Should succeed', procedure
                 begin
-                  ExpectSuccess(ElementToJson(rec, json, 16384));
-                  obj := TJSONObject.Create(json);
+                  ExpectSuccess(ElementToJson(rec, @len));
+                  obj := TJSONObject.Create(GetResultString(len));
                 end);
 
               It('Should have expected fields', procedure
@@ -258,8 +244,8 @@ begin
               It('Should serialize strings', procedure
                 begin
                   ExpectSuccess(GetElement(rec, 'EDID', @h));
-                  ExpectSuccess(ElementToJson(h, json, 16384));
-                  obj := TJSONObject.Create(json);
+                  ExpectSuccess(ElementToJson(h, @len));
+                  obj := TJSONObject.Create(GetResultString(len));
                   try
                     ExpectEqual(obj.S['EDID - Editor ID'], 'ArmorIronGauntlets', '');
                   finally
@@ -270,8 +256,8 @@ begin
               It('Should serialize integer numbers', procedure
                 begin
                   ExpectSuccess(GetElement(rec, 'DATA\Value', @h));
-                  ExpectSuccess(ElementToJson(h, json, 16384));
-                  obj := TJSONObject.Create(json);
+                  ExpectSuccess(ElementToJson(h, @len));
+                  obj := TJSONObject.Create(GetResultString(len));
                   try
                     ExpectEqual(obj.I['Value'], 25, '');
                   finally
@@ -282,8 +268,8 @@ begin
               It('Should serialize real numbers', procedure
                 begin
                   ExpectSuccess(GetElement(rec, 'DATA\Weight', @h));
-                  ExpectSuccess(ElementToJson(h, json, 16384));
-                  obj := TJSONObject.Create(json);
+                  ExpectSuccess(ElementToJson(h, @len));
+                  obj := TJSONObject.Create(GetResultString(len));
                   try
                     ExpectEqual(obj.D['Weight'], 7.3, '');
                   finally
@@ -293,8 +279,8 @@ begin
 
               It('Should serialize FormIDs as integers', procedure
                 begin
-                  ExpectSuccess(ElementToJson(keyword, json, 16384));
-                  obj := TJSONObject.Create(json);
+                  ExpectSuccess(ElementToJson(keyword, @len));
+                  obj := TJSONObject.Create(GetResultString(len));
                   try
                     ExpectEqual(obj.I['Keyword'], 180599, '');
                   finally
@@ -305,8 +291,8 @@ begin
               It('Should serialize byte arrays as strings', procedure
                 begin
                   ExpectSuccess(GetElement(rec, 'BODT\Unused', @h));
-                  ExpectSuccess(ElementToJson(h, json, 16384));
-                  obj := TJSONObject.Create(json);
+                  ExpectSuccess(ElementToJson(h, @len));
+                  obj := TJSONObject.Create(GetResultString(len));
                   try
                     ExpectEqual(obj.S['Unused'], '64 73 00', '');
                   finally
@@ -317,8 +303,8 @@ begin
               It('Should serialize flags as booleans', procedure
                 begin
                   ExpectSuccess(GetElement(rec, 'BODT\First Person Flags', @h));
-                  ExpectSuccess(ElementToJson(h, json, 16384));
-                  obj := TJSONObject.Create(json);
+                  ExpectSuccess(ElementToJson(h, @len));
+                  obj := TJSONObject.Create(GetResultString(len));
                   try
                     Expect(obj.O['First Person Flags'].B['33 - Hands'], '');
                   finally
@@ -329,14 +315,14 @@ begin
               It('Should serialize empty flags as an empty object', procedure
                 begin
                   ExpectSuccess(GetElement(rec, 'BODT\General Flags', @h));
-                  ExpectSuccess(ElementToJson(h, json, 16384));
-                  ExpectEqual(string(json), '{"General Flags":{}}', '');
+                  ExpectSuccess(ElementToJson(h, @len));
+                  ExpectEqual(GetResultString(len), '{"General Flags":{}}', '');
                 end);
 
               It('Should serialize arrays properly', procedure
                 begin
-                  ExpectSuccess(ElementToJson(keywords, json, 16384));
-                  obj := TJSONObject.Create(json);
+                  ExpectSuccess(ElementToJson(keywords, @len));
+                  obj := TJSONObject.Create(GetResultString(len));
                   try
                     ExpectEqual(obj.A['KWDA - Keywords'].I[0], 180599, '');
                   finally

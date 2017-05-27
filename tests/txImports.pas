@@ -2,11 +2,18 @@ unit txImports;
 
 interface
 
+type
+  CardinalArray = array of Cardinal;
+  PCardinalArray = ^CardinalArray;
+
   // META METHODS
   procedure Initialize; cdecl; external 'XEditLib.dll';
   procedure Finalize; cdecl; external 'XEditLib.dll';
-  procedure GetBuffer(str: PWideChar; len: Integer); cdecl; external 'XEditLib.dll';
-  procedure FlushBuffer; cdecl; external 'XEditLib.dll';
+  procedure GetMessagesLength(len: PInteger); cdecl; external 'XEditLib.dll';
+  procedure GetMessages(str: PWideChar; len: Integer); cdecl; external 'XEditLib.dll';
+  procedure ClearMessages; cdecl; external 'XEditLib.dll';
+  procedure GetResult(str: PWideChar; len: Integer); cdecl; external 'XEditLib.dll';
+  procedure GetExceptionMessageLength(len: PInteger); cdecl; external 'XEditLib.dll';
   function GetExceptionMessage(str: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
   function GetGlobal(key, value: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
   function Release(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
@@ -85,8 +92,8 @@ interface
   function GetEnabledFlags(_id: Integer; path: PWideChar; flags: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
 
   // SERIALIZATION METHODS
-  function ElementToJson(_id: Cardinal; json: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
-  function ElementFromJson(_id: Cardinal; path: PWideChar; json: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
+  function ElementToJson(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  //function ElementFromJson(_id: Cardinal; path: PWideChar; json: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
 
   // GROUP HANDLING METHODS
   function HasGroup(_id: Cardinal; sig: PWideChar; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
@@ -110,4 +117,5 @@ interface
   function GetFormID(_id: Cardinal; formID: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function SetFormID(_id: Cardinal; formID: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
 
+implementation
 end.
