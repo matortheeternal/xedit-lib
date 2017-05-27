@@ -7,7 +7,7 @@ uses
   ArgoTypes;
 
 type
-  TJSONValueType = (jtString, jtBoolean, jtInt, jtDouble, jtArray, jtObject);
+  TJSONValueType = (jtNull, jtString, jtBoolean, jtInt, jtDouble, jtArray, jtObject);
   JSONExceptionType = (jxTerminated, jxUnexpectedChar, jxStartBracket,
     jxColonExpected, jxCommaExpected);
 
@@ -21,32 +21,36 @@ type
 
   TJSONValue = class(TObject)
   private
-    _t: TJSONValueType;
     _v: record
-      case _valueType: TJSONValueType of
-        jtString:  (s: PWideChar);
+      case t: TJSONValueType of
         jtBoolean: (b: Boolean);
         jtInt:     (i: Int64);
         jtDouble:  (d: Double);
         jtObject:  (o: TJSONObject);
         jtArray:   (a: TJSONArray);
     end;
+    _s: string;
     constructor Create(var P: PWideChar); overload;
-    procedure ParseObject(var P: PWideChar);
-    procedure ParseArray(var P: PWideChar);
+    procedure FreeValue;
+    procedure ParseNull(var P: PWideChar);
     procedure ParseString(var P: PWideChar);
     procedure ParseBoolean(var P: PWideChar);
     procedure ParseNumeric(var P: PWideChar);
+    procedure ParseArray(var P: PWideChar);
+    procedure ParseObject(var P: PWideChar);
     function GetJSONValueType: TJSONValueType;
   public
+    constructor Create; overload;
     constructor Create(json: String); overload;
     destructor Destroy; override;
+    procedure Nullify;
     procedure Put(value: String); overload;
     procedure Put(value: Boolean); overload;
     procedure Put(value: Int64); overload;
     procedure Put(value: Double); overload;
     procedure Put(value: TJSONArray); overload;
     procedure Put(value: TJSONObject); overload;
+    function IsNull: Boolean;
     function ToString: string; override;
     property JSONValueType: TJSONValueType read GetJSONValueType;
   end;
@@ -57,7 +61,7 @@ type
     constructor Create(var P: PWideChar); overload;
     function GetCount: Integer;
     function GetValue(index: Integer): TJSONValue;
-    function MakeValue(index: Integer): TJSONValue;
+    procedure SetValue(index: Integer; value: TJSONValue);
     function GetS(index: Integer): String;
     function GetB(index: Integer): Boolean;
     function GetI(index: Integer): Int64;
@@ -77,26 +81,31 @@ type
     procedure Delete(index: Integer);
     function ToString: string; override;
     property Count: Integer read GetCount;
-    property Values[index: Integer]: TJSONValue read GetValue; default;
+    property Values[index: Integer]: TJSONValue read GetValue write SetValue; default;
     property S[index: Integer]: String read GetS write SetS;
     property B[index: Integer]: Boolean read GetB write SetB;
     property I[index: Integer]: Int64 read GetI write SetI;
     property D[index: Integer]: Double read GetD write SetD;
     property O[index: Integer]: TJSONObject read GetO write SetO;
     property A[index: Integer]: TJSONArray read GetA write SetA;
+    function AddValue(value: TJSONValue): Integer; overload;
     function Add(value: String): Integer; overload;
     function Add(value: Boolean): Integer; overload;
     function Add(value: Int64): Integer; overload;
     function Add(value: Double): Integer; overload;
     function Add(value: TJSONArray): Integer; overload;
     function Add(value: TJSONObject): Integer; overload;
-    function Add(value: TJSONValue): Integer; overload;
   end;
 
   TJSONObject = class(TObject)
   private
     _Values: TList;
+    {$IFDEF FAST_KEY_ACCESS}
     _Keys: TArgoTree;
+    {$ENDIF}
+    {$IFNDEF FAST_KEY_ACCESS}
+    _Keys: TFastStringList;
+    {$ENDIF}
     constructor Create(var P: PWideChar) overload;
     procedure ParsePair(var P: PWideChar);
     procedure AddPair(key: string; value: TJSONValue);
@@ -141,30 +150,102 @@ type
 
 implementation
 
-{ === HELPERS === }
-
-function StringSize(str: string): Integer;
-begin
-  Result := ByteLength(str);
-  if Result > 0 then
-    Inc(Result, 2 * (SizeOf(word) + SizeOf(Longint)) + SizeOf(Char));
-end;
-
-function AllocString(str: string): PWideChar;
-var
-  size: Integer;
-begin
-  Result := PWideChar('');
-  size := StringSize(str);
-  if size = 0 then exit;
-  GetMem(Result, size);
-  StrLCopy(Result, PWideChar(str), size);
-end;
-
 { === DESERIALIZATION === }
 
 var
   LastToken: Boolean;
+
+function HexDigit(c: WideChar): Byte;
+begin
+  if c <= '9' then  // parse 0-9
+    Result := Byte(c) - Byte('0')
+  else              // parse A-F, a-f
+    Result := (Byte(c) and 7) + 9;
+end;
+
+function ParseUnicode(var P: PWideChar): WideChar;
+var
+  n: Integer;
+  i: Integer;
+begin
+  n := 0;
+  for i := 0 to 3 do begin
+    Inc(P);
+    Inc(n, Word(HexDigit(P^)) shl (4 * (3 - i)));
+  end;
+  Result := WideChar(n);
+end;
+
+function ParseHex(var P: PWideChar): WideChar;
+var
+  n: Integer;
+  i: Integer;
+begin
+  n := 0;
+  for i := 0 to 1 do begin
+    Inc(P);
+    Inc(n, Word(HexDigit(P^)) shl (4 * (1 - i)));
+  end;
+  Result := WideChar(n);
+end;
+
+function Unescape(c: WideChar; var P: PWideChar): string;
+begin
+  case c of
+    #39,                            // single quote
+    '/': Result := c;               // forward slash
+    'b': Result := #8;              // backspace
+    't': Result := #9;              // tab
+    'n': Result := #10;             // line feed
+    'f': Result := #12;             // form feed
+    'r': Result := #13;             // carriage return
+    'u': Result := ParseUnicode(P); // unicode escape sequence
+    'x': Result := ParseHex(P);     // hexadecimal escape sequence
+    else
+      raise JSONException.Create(jxUnexpectedChar, P);
+  end;
+end;
+
+function AsciiEscape(var c: WideChar): string;
+begin
+  case c of
+    '"': Result := '\"';
+    '\': Result := '\\';
+    #8:  Result := '\b';
+    #9:  Result := '\t';
+    #10: Result := '\n';
+    #12: Result := '\f';
+    #13: Result := '\r';
+    else
+      Result := '\x' + IntToHex(Ord(c), 2);
+  end;
+end;
+
+function UnicodeEscape(var c: WideChar): string;
+begin
+  Result := '\u' + IntToHex(Ord(c), 4);
+end;
+
+function Escape(s: String): String;
+var
+  P: PWideChar;
+  c: WideChar;
+begin
+  P := PWideChar(s);
+  Result := '';
+  while true do begin
+    c := P^;
+    Inc(P);
+    if c = #0 then
+      break
+    else if CharInSet(c, [#1..#31, '"', '\', #127]) then
+      Result := Result + AsciiEscape(c)
+    else if c > #255 then
+      Result := Result + UnicodeEscape(c)
+    else
+      Result := Result + c;
+  end;
+end;
 
 // function should be entered on the opening double quote for a JSON string.
 function ParseJSONString(var P: PWideChar): String;
@@ -178,19 +259,27 @@ begin
     Inc(P);
     c := P^;
     case c of
-      '\': // backslash
+      '\': begin // backslash
         escaped := not escaped;
+        if not escaped then
+          Result := Result + '\';
+      end;
       '"': // quote
         if not escaped then
           break
-        else
+        else begin
           escaped := false;
+          Result := Result + '"';
+        end;
       #0:
         raise JSONException.Create(jxTerminated, P);
       else begin
-        if escaped then escaped := false;
-        if ord(c) < 32 then
+        if (c < #32) or (c = #127) then
           raise JSONException.Create(jxUnexpectedChar, P)
+        else if escaped then begin
+          escaped := false;
+          Result := Result + Unescape(c, P);
+        end
         else
           Result := Result + c;
       end;
@@ -247,7 +336,12 @@ var
   c: WideChar;
 begin
   _Values := TList.Create;
+  {$IFDEF FAST_KEY_ACCESS}
   _Keys := TArgoTree.Create;
+  {$ENDIF}
+  {$IFNDEF FAST_KEY_ACCESS}
+  _Keys := TFastStringList.Create;
+  {$ENDIF}
   LastToken := False;
   if P^ <> '{' then
     raise JSONException.Create(jxStartBracket, P + 8);
@@ -339,19 +433,29 @@ begin
     '[': ParseArray(P);
     '"': ParseString(P);
     'f','t','F','T': ParseBoolean(P);
+    'n', 'N': ParseNull(P);
     else ParseNumeric(P);
   end;
 end;
 
+procedure TJSONValue.ParseNull(var P: PWideChar);
+begin
+  _v.t := jtNull;
+  if StrLIComp(P, 'null', 4) = 0 then
+    Inc(P, 4)
+  else
+    raise JSONException.Create(jxUnexpectedChar, P);
+end;
+
 procedure TJSONValue.ParseString(var P: PWidechar);
 begin
-  _t := jtString;
-  _v.s := AllocString(ParseJSONString(P));
+  _v.t := jtString;
+  _s := ParseJSONString(P);
 end;
 
 procedure TJSONValue.ParseBoolean(var P: PWidechar);
 begin
-  _t := jtBoolean;
+  _v.t := jtBoolean;
   if StrLIComp(P, 'true', 4) = 0 then begin
     _v.b := true;
     Inc(P, 4);
@@ -369,14 +473,14 @@ var
   str: String;
   c: WideChar;
 begin
-  _t := jtInt;
+  _v.t := jtInt;
   str := '';
   while true do begin
     c := P^;
     case c of
       #10, #13, ' ', ',','}',']': break;
       '.','e','E': begin
-        _t := jtDouble;
+        _v.t := jtDouble;
         str := str + c;
       end;
       else begin
@@ -388,7 +492,7 @@ begin
     end;
     Inc(P);
   end;
-  if _t = jtDouble then
+  if _v.t = jtDouble then
     _v.d := StrToFloat(str)
   else
     _v.i := StrToInt64(str);
@@ -396,56 +500,74 @@ end;
 
 procedure TJSONValue.ParseArray(var P: PWidechar);
 begin
-  _t := jtArray;
+  _v.t := jtArray;
   _v.a := TJSONArray.Create(P);
 end;
 
 procedure TJSONValue.ParseObject(var P: PWidechar);
 begin
-  _t := jtObject;
+  _v.t := jtObject;
   _v.o := TJSONObject.Create(P);
+end;
+
+procedure TJSONValue.Nullify;
+begin
+  FreeValue;
+  _v.t := jtNull;
 end;
 
 procedure TJSONValue.Put(value: String);
 begin
-  _t := jtString;
-  _v.s := AllocString(value);
+  FreeValue;
+  _v.t := jtString;
+  _s := value;
 end;
 
 procedure TJSONValue.Put(value: Boolean);
 begin
-  _t := jtBoolean;
+  FreeValue;
+  _v.t := jtBoolean;
   _v.b := value;
 end;
 
 procedure TJSONValue.Put(value: Int64);
 begin
-  _t := jtInt;
+  FreeValue;
+  _v.t := jtInt;
   _v.i := value;
 end;
 
 procedure TJSONValue.Put(value: Double);
 begin
-  _t := jtDouble;
+  FreeValue;
+  _v.t := jtDouble;
   _v.d := value;
 end;
 
 procedure TJSONValue.Put(value: TJSONArray);
 begin
-  _t := jtArray;
+  FreeValue;
+  _v.t := jtArray;
   _v.a := value;
 end;
 
 procedure TJSONValue.Put(value: TJSONObject);
 begin
-  _t := jtObject;
+  FreeValue;
+  _v.t := jtObject;
   _v.o := value;
+end;
+
+function TJSONValue.IsNull: Boolean;
+begin
+  Result := _v.t = jtNull;
 end;
 
 function TJSONValue.ToString: String;
 begin
-  case _t of
-    jtString: Result := '"' + _v.s + '"';
+  case _v.t of
+    jtNull: Result := 'null';
+    jtString: Result := '"' + Escape(_s) + '"';
     jtBoolean: Result := BoolToStr(_v.b, true);
     jtInt: Result := IntToStr(_v.i);
     jtDouble: Result := FloatToStr(_v.d);
@@ -456,17 +578,29 @@ end;
 
 function TJSONValue.GetJSONValueType: TJSONValueType;
 begin
-  Result := _t;
+  Result := _v.t;
 end;
 
 { === GENERAL === }
 
 { TJSONValue }
+constructor TJSONValue.Create;
+begin
+  _v.t := jtNull;
+end;
+
 destructor TJSONValue.Destroy;
 begin
-  if _t = jtArray then _v.a.Free;
-  if _t = jtObject then _v.o.Free;
+  FreeValue;
   inherited;
+end;
+
+procedure TJSONValue.FreeValue;
+begin
+  case _v.t of
+    jtArray: _v.a.Free;
+    jtObject: _v.o.Free;
+  end;
 end;
 
 { TJSONArray }
@@ -492,18 +626,14 @@ end;
 
 function TJSONArray.GetValue(index: Integer): TJSONValue;
 begin
-  Result := nil;
-  if index < _Values.Count then
-    Result := TJSONValue(_Values[index]);
+  Result := TJSONValue(_Values[index])
 end;
 
-function TJSONArray.MakeValue(index: Integer): TJSONValue;
+procedure TJSONArray.SetValue(index: Integer; value: TJSONValue);
 begin
-  Result := GetValue(index);
-  if not Assigned(Result) then begin
-    Result := TJSONValue.Create;
-    _Values.Add(Result);
-  end;
+  if not Assigned(value) then
+    value := TJSONValue.Create;
+  _Values[index] := value;
 end;
 
 function TJSONArray.GetS(index: Integer): String;
@@ -512,8 +642,8 @@ var
 begin
   Result := '';
   value := GetValue(index);
-  if Assigned(value) and (value._t = jtString) then
-    Result := value._v.s;
+  if Assigned(value) and (value._v.t = jtString) then
+    Result := value._s;
 end;
 
 function TJSONArray.GetB(index: Integer): Boolean;
@@ -522,7 +652,7 @@ var
 begin
   Result := false;
   value := GetValue(index);
-  if Assigned(value) and (value._t = jtBoolean) then
+  if Assigned(value) and (value._v.t = jtBoolean) then
     Result := value._v.b;
 end;
 
@@ -532,7 +662,7 @@ var
 begin
   Result := 0;
   value := GetValue(index);
-  if Assigned(value) and (value._t = jtInt) then
+  if Assigned(value) and (value._v.t = jtInt) then
     Result := value._v.i;
 end;
 
@@ -542,7 +672,7 @@ var
 begin
   Result := 0.0;
   value := GetValue(index);
-  if Assigned(value) and (value._t = jtDouble) then
+  if Assigned(value) and (value._v.t = jtDouble) then
     Result := value._v.d;
 end;
 
@@ -552,7 +682,7 @@ var
 begin
   Result := nil;
   value := GetValue(index);
-  if Assigned(value) and (value._t = jtArray) then
+  if Assigned(value) and (value._v.t = jtArray) then
     Result := value._v.a;
 end;
 
@@ -562,38 +692,45 @@ var
 begin
   Result := nil;
   value := GetValue(index);
-  if Assigned(value) and (value._t = jtObject) then
+  if Assigned(value) and (value._v.t = jtObject) then
     Result := value._v.o;
 end;
 
 procedure TJSONArray.SetS(index: Integer; value: String);
 begin
-  MakeValue(index).Put(value);
+  GetValue(index).Put(value);
 end;
 
 procedure TJSONArray.SetB(index: Integer; value: Boolean);
 begin
-  MakeValue(index).Put(value);
+  GetValue(index).Put(value);
 end;
 
 procedure TJSONArray.SetI(index: Integer; value: Int64);
 begin
-  MakeValue(index).Put(value);
+  GetValue(index).Put(value);
 end;
 
 procedure TJSONArray.SetD(index: Integer; value: Double);
 begin
-  MakeValue(index).Put(value);
+  GetValue(index).Put(value);
 end;
 
 procedure TJSONArray.SetA(index: Integer; value: TJSONArray);
 begin
-  MakeValue(index).Put(value);
+  GetValue(index).Put(value);
 end;
 
 procedure TJSONArray.SetO(index: Integer; value: TJSONObject);
 begin
-  MakeValue(index).Put(value);
+  GetValue(index).Put(value);
+end;
+
+function TJSONArray.AddValue(value: TJSONValue): Integer;
+begin
+  if not Assigned(value) then
+    value := TJSONValue.Create;
+  Result := _Values.Add(value)
 end;
 
 function TJSONArray.Add(value: String): Integer;
@@ -632,11 +769,6 @@ begin
   TJSONValue(_Values[Result]).Put(value);
 end;
 
-function TJSONArray.Add(value: TJSONValue): Integer;
-begin
-  Result := _Values.Add(value);
-end;
-
 procedure TJSONArray.Delete(index: Integer);
 begin
   if index < _Values.Count then
@@ -659,7 +791,12 @@ end;
 constructor TJSONObject.Create;
 begin
   _Values := TList.Create;
+  {$IFDEF FAST_KEY_ACCESS}
   _Keys := TArgoTree.Create;
+  {$ENDIF}
+  {$IFNDEF FAST_KEY_ACCESS}
+  _Keys := TFastStringList.Create;
+  {$ENDIF}
 end;
 
 destructor TJSONObject.Destroy;
@@ -683,7 +820,7 @@ var
   i: Integer;
 begin
   Result := nil;
-  i := _Keys[key];
+  i := _Keys.IndexOf(key);
   if i > -1 then
     Result := TJSONValue(_Values[i]);
 end;
@@ -697,7 +834,9 @@ procedure TJSONObject.SetValue(key: String; value: TJSONValue);
 var
   i: Integer;
 begin
-  i := _Keys[key];
+  i := _Keys.IndexOf(key);
+  if not Assigned(value) then
+    value := TJSONValue.Create;
   if i > -1 then
     _Values[i] := value
   else
@@ -715,8 +854,8 @@ var
 begin
   Result := '';
   value := GetValue(key);
-  if Assigned(value) and (value._t = jtString) then
-    Result := WideString(value._v.s);
+  if Assigned(value) and (value._v.t = jtString) then
+    Result := WideString(value._s);
 end;
 
 function TJSONObject.GetB(key: string): boolean;
@@ -725,7 +864,7 @@ var
 begin
   Result := false;
   value := GetValue(key);
-  if Assigned(value) and (value._t = jtBoolean) then
+  if Assigned(value) and (value._v.t = jtBoolean) then
     Result := value._v.b;
 end;
 
@@ -735,7 +874,7 @@ var
 begin
   Result := 0;
   value := GetValue(key);
-  if Assigned(value) and (value._t = jtInt) then
+  if Assigned(value) and (value._v.t = jtInt) then
     Result := value._v.i;
 end;
 
@@ -745,7 +884,7 @@ var
 begin
   Result := 0.0;
   value := GetValue(key);
-  if Assigned(value) and (value._t = jtDouble) then
+  if Assigned(value) and (value._v.t = jtDouble) then
     Result := value._v.d;
 end;
 
@@ -755,7 +894,7 @@ var
 begin
   Result := nil;
   value := GetValue(key);
-  if Assigned(value) and (value._t = jtArray) then
+  if Assigned(value) and (value._v.t = jtArray) then
     Result := value._v.a;
 end;
 
@@ -765,7 +904,7 @@ var
 begin
   Result := nil;
   value := GetValue(key);
-  if Assigned(value) and (value._t = jtObject) then
+  if Assigned(value) and (value._v.t = jtObject) then
     Result := value._v.o;
 end;
 
@@ -786,7 +925,7 @@ end;
 
 function TJSONObject.GetCount: Integer;
 begin
-  Result := _Keys.Size;
+  Result := _Keys.Count;
 end;
 
 procedure TJSONObject.SetS(key: string; value: string);
@@ -821,14 +960,20 @@ end;
 
 function TJSONObject.HasKey(key: string): Boolean;
 begin
-  Result := _Keys[key] > -1;
+  Result := _Keys.IndexOf(key) > -1;
 end;
 
 procedure TJSONObject.Delete(key: string);
 var
   i: Integer;
 begin
+  {$IFDEF FAST_KEY_ACCESS}
   i := _Keys.Delete(key);
+  {$ENDIF}
+  {$IFNDEF FAST_KEY_ACCESS}
+  i := _Keys.IndexOf(key);
+  _Keys.Delete(i);
+  {$ENDIF}
   if i > -1 then
     _Values.Delete(i);
 end;
@@ -838,9 +983,10 @@ var
   i: Integer;
 begin
   Result := '{';
-  for i := 0 to Pred(_Keys.Size) do
-    Result := Result + '"' + _Keys.Names[i] + '":' + TJSONValue(_Values[i]).ToString + ',';
-  if _Keys.Size > 0 then
+  for i := 0 to Pred(_Keys.Count) do
+    Result := Result + '"' + Escape(_Keys.Strings[i]) + '":' +
+      TJSONValue(_Values[i]).ToString + ',';
+  if _Keys.Count > 0 then
     SetLength(Result, Length(Result) - 1);
   Result := Result + '}';
 end;

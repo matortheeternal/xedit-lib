@@ -22,7 +22,6 @@ type
   TArgoTree = class(TObject)
   private
     Root: PArgoTreeNode;
-    procedure Balance;
     function GetSize(node: PArgoTreeNode): Integer;
     function GetDepth(node: PArgoTreeNode): Integer;
     procedure DecrementNodes(node: PArgoTreeNode; value: Integer);
@@ -33,15 +32,15 @@ type
     function GetNode(name: String): PArgoTreeNode;
     function GetNodeByValue(node: PArgoTreeNode; var value: Integer): PArgoTreeNode;
     procedure GetNodeContext(name: String; var cur, parent: PArgoTreeNode; var diff: Integer);
-    function GetValue(name: String): Integer;
     function GetName(index: Integer): String;
   public
-    Size: Integer;
+    Count: Integer;
     constructor Create;
     function Delete(name: String): Integer;
+    function IndexOf(name: String): Integer;
     procedure Add(name: String);
-    property Values[index: string]: Integer read GetValue; default;
-    property Names[index: Integer]: String read GetName;
+    property Values[index: string]: Integer read IndexOf; default;
+    property Strings[index: Integer]: String read GetName;
   end;
 
 implementation
@@ -58,7 +57,7 @@ end;
 { TBinaryTree }
 constructor TArgoTree.Create;
 begin
-  Size := 0;
+  Count := 0;
 end;
 
 procedure TArgoTree.DecrementNodes(node: PArgoTreeNode; value: Integer);
@@ -129,7 +128,7 @@ begin
     Result := currentNode.Value;
     DecrementNodes(Root, currentNode.Value);
     DeleteNode(currentNode, previousNode);
-    Dec(Size);
+    Dec(Count);
   end;
 end;
 
@@ -147,18 +146,6 @@ begin
   if not Assigned(node) then
     exit;
   Result := 1 + Max(GetDepth(node.Left), GetDepth(node.Right));
-end;
-
-procedure TArgoTree.Balance;
-var
-  leftSize, rightSize: Integer;
-begin
-  // exit if no tree to balance
-  if not Assigned(Root) then
-    exit;
-  leftSize := GetSize(Root.Left);
-  rightSize := GetSize(Root.Right);
-  // TODO
 end;
 
 function TArgoTree.GetNode(name: string): PArgoTreeNode;
@@ -198,25 +185,15 @@ function TArgoTree.CreateNode(name: string): PArgoTreeNode;
 begin
   New(Result);
   Result.name := name;
-  Result.value := Size;
+  Result.value := Count;
   Result.right := nil;
   Result.left := nil;
-  Inc(Size);
-end;
-
-function TArgoTree.GetValue(name: string): Integer;
-var
-  node: PArgoTreeNode;
-begin
-  Result := -1;
-  node := GetNode(name);
-  if Assigned(node) then
-    Result := node.Value;
+  Inc(Count);
 end;
 
 function TArgoTree.GetName(index: Integer): String;
 begin
-  if (index < 0) or (index >= Size) then
+  if (index < 0) or (index >= Count) then
     raise Exception.Create('Tree index out of bounds (' + IntToStr(index) + ')');
   Result := GetNodeByValue(Root, index).Name;
 end;
@@ -235,6 +212,16 @@ begin
   end;
 end;
 
+function TArgoTree.IndexOf(name: string): Integer;
+var
+  node: PArgoTreeNode;
+begin
+  Result := -1;
+  node := GetNode(name);
+  if Assigned(node) then
+    Result := node.Value;
+end;
+
 procedure TArgoTree.Add(name: string);
 var
   currentNode, previousNode: PArgoTreeNode;
@@ -248,7 +235,7 @@ begin
   // create new node
   currentNode := Root;
   GetNodeContext(name, currentNode, previousNode, diff);
-  if Assigned(currentNode) then 
+  if Assigned(currentNode) then
     raise Exception.Create('TArgoTree: Key "' + name + '" already present.')
   else begin
     if diff > 0 then

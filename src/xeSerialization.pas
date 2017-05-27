@@ -21,7 +21,7 @@ uses
 procedure SOArrayAdd(ary: TJSONArray; obj: TJSONObject);
 begin
   if obj.Count = 1 then
-    ary.Add(obj.ValueFromIndex[0])
+    ary.AddValue(obj.ValueFromIndex[0])
   else
     ary.Add(obj);
 end;

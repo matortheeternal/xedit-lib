@@ -182,23 +182,26 @@ begin
   Result := false;
   try
     obj := TJSONObject.Create;
-    obj.A['errors'] := TJSONArray.Create;
-    for i := 0 to Pred(errors.Count) do begin
-      error := TRecordError(errors[i]);
-      childObj := TJSONObject.Create;
-      childObj.I['group'] := Ord(error.&type.id);
-      childObj.S['signature'] := string(error.signature);
-      childObj.I['form_id'] := error.formID;
-      childObj.S['name'] := error.name;
-      if error.path <> '' then
-        childObj.S['path'] := error.path;
-      if error.data <> '' then
-        childObj.S['data'] := error.data;
-      obj.A['errors'].Add(childObj);
+    try
+      obj.A['errors'] := TJSONArray.Create;
+      for i := 0 to Pred(errors.Count) do begin
+        error := TRecordError(errors[i]);
+        childObj := TJSONObject.Create;
+        childObj.I['group'] := Ord(error.&type.id);
+        childObj.S['signature'] := string(error.signature);
+        childObj.I['form_id'] := error.formID;
+        childObj.S['name'] := error.name;
+        if error.path <> '' then
+          childObj.S['path'] := error.path;
+        if error.data <> '' then
+          childObj.S['data'] := error.data;
+        obj.A['errors'].Add(childObj);
+      end;
+      StrLCopy(str, PWideChar(WideString(obj.ToString)), len);
+      Result := true;
+    finally
+      obj.Free;
     end;
-    StrLCopy(str, PWideChar(WideString(obj.ToString)), len);
-    errors.Free;
-    Result := true;
   except
     on x: Exception do ExceptionHandler(x);
   end;

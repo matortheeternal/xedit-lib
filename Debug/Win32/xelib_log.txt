@@ -1,9 +1,9 @@
-Access violation at address 12998B2A. Write of address 207B0CE8
-Access violation at address 0040AE3E in module 'XEditLibTests.exe'. Read of address 00000008
-Access violation at address 0040AE74 in module 'XEditLibTests.exe'. Read of address 00000076
-Access violation at address 0040AE74 in module 'XEditLibTests.exe'. Read of address 00000ACA
-Access violation at address 0040AE74 in module 'XEditLibTests.exe'. Read of address 0000000D
-Access violation at address 0040AE3E in module 'XEditLibTests.exe'. Read of address 5C060008
+Access violation at address 0040ADE5 in module 'XEditLibTests.exe'. Read of address 61005004
+Access violation at address 0040ADE2 in module 'XEditLibTests.exe'. Read of address 00000008
+Access violation at address 0040AE18 in module 'XEditLibTests.exe'. Read of address 00000076
+Access violation at address 0040AE18 in module 'XEditLibTests.exe'. Read of address 00000ACA
+Access violation at address 0040AE18 in module 'XEditLibTests.exe'. Read of address 0000000D
+Access violation at address 0040ADE5 in module 'XEditLibTests.exe'. Read of address 70648264
 List index out of bounds (16777215)
 ERROR: Cannot resolve NULL reference.
 ERROR: Cannot resolve NULL reference.
