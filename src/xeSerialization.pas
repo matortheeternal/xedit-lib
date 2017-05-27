@@ -10,7 +10,8 @@ uses
   //function ElementFromJson(_id: Cardinal; path: PWideChar; json: PWideChar; _res: PCardinal): WordBool; cdecl;
 
   // native functions
-  function GroupToSO(group: IwbGroupRecord; obj: TJSONObject): TJSONObject;
+  function NativeElementToJson(element: IwbElement; obj: TJSONObject): TJSONObject;
+  function GroupToJson(group: IwbGroupRecord; obj: TJSONObject): TJSONObject;
 
 implementation
 
@@ -18,7 +19,7 @@ uses
   Variants, SysUtils, StrUtils,
   xeMeta, xeFiles, xeGroups, xeElements, xeElementValues, xeMessages;
 
-procedure SOArrayAdd(ary: TJSONArray; obj: TJSONObject);
+procedure JsonArrayAdd(ary: TJSONArray; obj: TJSONObject);
 begin
   if obj.Count = 1 then
     ary.AddValue(obj.ValueFromIndex[0])
@@ -34,7 +35,7 @@ begin
     and Supports(intDef.Formater[element], IwbFlagsDef);
 end;
 
-function ElementToSO(element: IwbElement; obj: TJSONObject): TJSONObject;
+function NativeElementToJson(element: IwbElement; obj: TJSONObject): TJSONObject;
 const
   ArrayTypes: TSmashTypes = [stUnsortedArray, stUnsortedStructArray, stSortedArray,
     stSortedStructArray];
@@ -53,14 +54,14 @@ begin
       obj.A[path] := TJSONArray.Create;
       for i := 0 to Pred(container.ElementCount) do begin
         childElement := container.Elements[i];
-        SOArrayAdd(obj.A[path], ElementToSO(childElement, TJSONObject.Create));
+        JsonArrayAdd(obj.A[path], NativeElementToJson(childElement, TJSONObject.Create));
       end;
     end
     else begin
       childObject := TJSONObject.Create;
       for i := 0 to Pred(container.ElementCount) do begin
         childElement := container.Elements[i];
-        ElementToSO(childElement, childObject);
+        NativeElementToJson(childElement, childObject);
       end;
       obj.O[path] := childObject;
     end;
@@ -83,18 +84,18 @@ begin
   Result := obj;
 end;
 
-function RecordToSO(rec: IwbMainRecord; obj: TJSONObject): TJSONObject;
+function RecordToJson(rec: IwbMainRecord; obj: TJSONObject): TJSONObject;
 var
   i: Integer;
 begin
   for i := Pred(rec.ElementCount) downto 0 do
-    ElementToSO(rec.Elements[i], obj);
+    NativeElementToJson(rec.Elements[i], obj);
   if Assigned(rec.ChildGroup) then
-    GroupToSO(rec.ChildGroup, obj);
+    GroupToJson(rec.ChildGroup, obj);
   Result := obj;
 end;
 
-function GroupToSO(group: IwbGroupRecord; obj: TJSONObject): TJSONObject;
+function GroupToJson(group: IwbGroupRecord; obj: TJSONObject): TJSONObject;
 var
   name: String;
   i: Integer;
@@ -108,10 +109,10 @@ begin
   // iterate through children
   for i := 0 to Pred(group.ElementCount) do begin
     if Supports(group.Elements[i], IwbMainRecord, rec) then
-      records.Add(RecordToSO(rec, TJSONObject.Create))
+      records.Add(RecordToJson(rec, TJSONObject.Create))
     else if Supports(group.Elements[i], IwbGroupRecord, innerGroup)
     and not (innerGroup.GroupType in [1, 6..7]) then
-      GroupToSO(innerGroup, groups);
+      GroupToJson(innerGroup, groups);
   end;
   // assign objects
   name := GetPathName(group as IwbElement);
@@ -126,7 +127,7 @@ begin
   Result := obj;
 end;
 
-function FileToSO(_file: IwbFile): TJSONObject;
+function FileToJson(_file: IwbFile): TJSONObject;
 var
   obj: TJSONObject;
   group: IwbGroupRecord;
@@ -134,12 +135,11 @@ var
 begin
   obj := TJSONObject.Create;
   obj.S['Filename'] := _file.FileName;
-  obj.O['File Header'] := TJSONObject.Create;
-  RecordToSO(_file.Header, obj.O['File Header']);
+  obj.O['File Header'] := RecordToJson(_file.Header, TJSONObject.Create);
   obj.O['Groups'] := TJSONObject.Create;
   for i := 1 to Pred(_file.ElementCount)  do begin
     if Supports(_file.Elements[i], IwbGroupRecord, group) then
-      GroupToSO(group, obj.O['Groups']);
+      GroupToJson(group, obj.O['Groups']);
   end;
   Result := obj;
 end;
@@ -158,13 +158,13 @@ begin
     e := Resolve(_id);
     obj := nil;
     if Supports(e, IwbFile, _file) then
-      obj := FileToSO(_file)
+      obj := FileToJson(_file)
     else if Supports(e, IwbGroupRecord, group) then
-      obj := GroupToSO(group, TJSONObject.Create)
+      obj := GroupToJson(group, TJSONObject.Create)
     else if Supports(e, IwbMainRecord, rec) then
-      obj := RecordToSO(rec, TJSONObject.Create)
+      obj := RecordToJson(rec, TJSONObject.Create)
     else if Supports(e, IwbElement, element) then
-      obj := ElementToSO(element, TJSONObject.Create);
+      obj := NativeElementToJson(element, TJSONObject.Create);
     if Assigned(obj) then begin
       StrLCopy(json, PWideChar(obj.ToString), len);
       Result := True;
@@ -189,7 +189,7 @@ begin
     Result := container.Assign(High(integer), nil, False);
 end;
 
-{function SOToElement(element: IwbElement; obj: TJSONObject): IInterface;
+{function JsonToElement(element: IwbElement; obj: TJSONObject): IInterface;
 const
   ArrayTypes: TSmashTypes = [stUnsortedArray, stUnsortedStructArray, stSortedArray,
     stSortedStructArray];
@@ -237,12 +237,12 @@ begin
   Result := element;
 end;
 
-procedure ApplySO(container: IwbContainerElementRef; obj: TJSONObject; path: string);
+procedure ApplyJson(container: IwbContainerElementRef; obj: TJSONObject; path: string);
 begin
   SOToElement(container.ElementByPath[path], obj.O[path]);
 end;
 
-procedure SOToElements(container: IwbContainerElementRef; var obj: TJSONObject;
+procedure JsonToElements(container: IwbContainerElementRef; var obj: TJSONObject;
   const excludedPaths: array of string);
 var
   element: IwbElement;
@@ -257,7 +257,7 @@ begin
   end;
 end;
 
-procedure SOToRecordHeader(header: IwbElement; obj: TJSONObject);
+procedure JsonToRecordHeader(header: IwbElement; obj: TJSONObject);
 const
   ExcludedPaths: array[0..1] of string = (
     'Signature',
@@ -281,7 +281,7 @@ begin
   SOToElements(container, obj, ExcludedPaths);
 end;
 
-function SOToRecord(rec: IwbMainRecord; obj: TJSONObject): IInterface;
+function JsonToRecord(rec: IwbMainRecord; obj: TJSONObject): IInterface;
 const
   ExcludedPaths: array[0..0] of string = (
     'Record Header'
@@ -297,7 +297,7 @@ begin
     SOToElements(container, obj, ExcludedPaths);
 end;
 
-function SOToGroup(group: IwbGroupRecord; ary: TJSONArray): IInterface;
+function JsonToGroup(group: IwbGroupRecord; ary: TJSONArray): IInterface;
 var
   recObj, recHeader: TJSONObject;
   e: IInterface;
@@ -320,7 +320,7 @@ begin
   end;
 end;
 
-procedure SOToFileHeader(header: IwbMainRecord; obj: TJSONObject);
+procedure JsonToFileHeader(header: IwbMainRecord; obj: TJSONObject);
 const
   ExcludedPaths: array[0..3] of string = (
     'Record Header',
@@ -347,7 +347,7 @@ begin
   SOToElements(container, obj, ExcludedPaths);
 end;
 
-function SOToFile(_file: IwbFile; obj: TJSONObject): IInterface;
+function JsonToFile(_file: IwbFile; obj: TJSONObject): IInterface;
 var
   groups: TJSONObject;
   group: IwbGroupRecord;
@@ -366,7 +366,7 @@ begin
   end;
 end;
 
-function WriteElementFromSO(e: IInterface; obj: TJSONObject): IInterface;
+function WriteElementFromJson(e: IInterface; obj: TJSONObject): IInterface;
 var
   _file: IwbFile;
   group: IwbGroupRecord;
