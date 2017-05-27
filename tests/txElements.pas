@@ -213,32 +213,37 @@ begin
         begin
           It('Should return true for files that exist', procedure
             begin
-              Expect(ElementExists(0, 'Skyrim.esm'), 'Result should be true');
+              ExpectSuccess(ElementExists(0, 'Skyrim.esm', @b));
+              Expect(b, 'Result should be true');
             end);
 
           It('Should return true for elements that exist', procedure
             begin
-              Expect(ElementExists(rec, 'Male world model'), 'Result should be true');
+              ExpectSuccess(ElementExists(rec, 'Male world model', @b));
+              Expect(b, 'Result should be true');
             end);
 
           It('Should return true for handles that are assigned', procedure
             begin
-              Expect(ElementExists(rec, ''), 'Result should be true');
+              ExpectSuccess(ElementExists(rec, '', @b));
+              Expect(b, 'Result should be true');
             end);
 
           It('Should return false for files that do not exist', procedure
             begin
-              Expect(not ElementExists(0, 'NonExistingFile.esp'), 'Result should be false');
+              ExpectSuccess(ElementExists(0, 'NonExistingFile.esp', @b));
+              Expect(not b, 'Result should be false');
             end);
 
           It('Should return false for elements that do not exist', procedure
             begin
-              Expect(not ElementExists(rec, 'KWDA\[5]'), 'Result should be false');
+              ExpectSuccess(ElementExists(rec, 'KWDA\[5]', @b));
+              Expect(not b, 'Result should be false');
             end);
 
-          It('Should return false for handles that are not assigned', procedure
+          It('Should fail if the handle is not assigned', procedure
             begin
-              Expect(not ElementExists($FFFFFF, ''), 'Result should be false');
+              ExpectFailure(ElementExists($FFFFFF, '', @b));
             end);
         end);
 
@@ -295,15 +300,20 @@ begin
           It('Should return false for identical but different elements', procedure
             begin
               ExpectSuccess(GetElement(testRec, 'DNAM', @h));
-              ExpectFailure(ElementEquals(dnam, h, @b));
+              ExpectSuccess(ElementEquals(dnam, h, @b));
+              Expect(not b, 'Result should be false');
             end);
 
           It('Should return false for different elements', procedure
             begin
-              ExpectFailure(ElementEquals(skyrim, armo, @b));
-              ExpectFailure(ElementEquals(armo, rec, @b));
-              ExpectFailure(ElementEquals(rec, keywords, @b));
-              ExpectFailure(ElementEquals(keywords, dnam, @b));
+              ExpectSuccess(ElementEquals(skyrim, armo, @b));
+              Expect(not b, 'Result should be false');
+              ExpectSuccess(ElementEquals(armo, rec, @b));
+              Expect(not b, 'Result should be false');
+              ExpectSuccess(ElementEquals(rec, keywords, @b));
+              Expect(not b, 'Result should be false');
+              ExpectSuccess(ElementEquals(keywords, dnam, @b));
+              Expect(not b, 'Result should be false');
             end);
 
           It('Should return false if null handle passed', procedure
@@ -509,14 +519,14 @@ begin
           It('Should remove the element at the given path', procedure
             begin
               ExpectSuccess(RemoveElement(testRec, 'Female world model'));
-              b := ElementExists(testRec, 'Female world model');
+              ExpectSuccess(ElementExists(testRec, 'Female world model', @b));
               Expect(not b, 'The element should no longer be present');
             end);
 
           It('Should remove the element at the given indexed path', procedure
             begin
               ExpectSuccess(RemoveElement(testRec2, 'KWDA\[4]'));
-              b := ElementExists(testRec2, 'KWDA\[4]');
+              ExpectSuccess(ElementExists(testRec2, 'KWDA\[4]', @b));
               Expect(not b, 'The element should no longer be present');
             end);
 
@@ -524,7 +534,7 @@ begin
             begin
               ExpectSuccess(GetElement(testRec, 'ZNAM', @element));
               ExpectSuccess(RemoveElement(element, ''));
-              b := ElementExists(testRec, 'ZNAM');
+              ExpectSuccess(ElementExists(testRec, 'ZNAM', @b));
               Expect(not b, 'The element should no longer be present');
             end);
 
