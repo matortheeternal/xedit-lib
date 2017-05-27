@@ -6,7 +6,7 @@ uses
   Argo, ArgoTypes,
   wbInterface;
 
-  function ElementToJson(_id: Cardinal; json: PWideChar; len: Integer): WordBool; cdecl;
+  function ElementToJson(_id: Cardinal; len: PInteger): WordBool; cdecl;
   //function ElementFromJson(_id: Cardinal; path: PWideChar; json: PWideChar; _res: PCardinal): WordBool; cdecl;
 
   // native functions
@@ -144,7 +144,7 @@ begin
   Result := obj;
 end;
 
-function ElementToJson(_id: Cardinal; json: PWideChar; len: Integer): WordBool; cdecl;
+function ElementToJson(_id: Cardinal; len: PInteger): WordBool; cdecl;
 var
   e: IInterface;
   _file: IwbFile;
@@ -166,7 +166,8 @@ begin
     else if Supports(e, IwbElement, element) then
       obj := NativeElementToJson(element, TJSONObject.Create);
     if Assigned(obj) then begin
-      StrLCopy(json, PWideChar(obj.ToString), len);
+      resultStr := obj.ToString;
+      len^ := Length(resultStr) * SizeOf(WideChar);
       Result := True;
     end;
   except
