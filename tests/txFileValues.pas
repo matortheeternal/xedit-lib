@@ -12,6 +12,7 @@ implementation
 
 uses
   Mahogany,
+  txMeta,
 {$IFDEF USE_DLL}
   txImports;
 {$ENDIF}
@@ -22,10 +23,9 @@ uses
 
 procedure BuildFileValueTests;
 var
-  h: Cardinal;
+  h, skyrim, update, xt1, xt2, xt3, v: Cardinal;
   str: PWideChar;
-  bIsEsm: WordBool;
-  nextObjectID, fileHeader: Cardinal;
+  b: WordBool;
   count: Integer;
 begin
   Describe('File Value Functions', procedure
@@ -33,6 +33,11 @@ begin
       BeforeAll(procedure
         begin
           GetMem(str, 4096);
+          FileByName('Skyrim.esm', @skyrim);
+          FileByName('Update.esm', @update);
+          FileByName('xtest-1.esp', @xt1);
+          FileByName('xtest-2.esp', @xt2);
+          FileByName('xtest-3.esp', @xt3);
         end);
 
       AfterAll(procedure
@@ -42,21 +47,19 @@ begin
 
       Describe('GetFileName', procedure
         begin
-          It('Should match filename used with FileByName', procedure
+          It('Should return filename', procedure
             begin
-              FileByName('Skyrim.esm', @h);
-              GetFileName(h, str, 4096);
-              Expect(str = 'Skyrim.esm', 'Filename should be Skyrim.esm');
+              ExpectSuccess(GetFileName(skyrim, str, 4096));
+              ExpectEqual(string(str), 'Skyrim.esm');
             end);
         end);
 
       Describe('GetAuthor', procedure
         begin
-          It('Should match author used with FileByAuthor', procedure
+          It('Should return file author', procedure
             begin
-              FileByAuthor('mcarofano', @h);
-              GetAuthor(h, str, 4096);
-              Expect(str = 'mcarofano', 'Author should be mcarofano');
+              ExpectSuccess(GetAuthor(skyrim, str, 4096));
+              ExpectEqual(string(str), 'mcarofano');
             end);
         end);
 
@@ -64,16 +67,14 @@ begin
         begin
           It('Should return an empty string if plugin has no description', procedure
             begin
-              FileByName('Skyrim.esm', @h);
-              GetDescription(h, str, 4096);
-              Expect(str = '', 'Skyrim.esm''s descriptin should be an empty string');
+              ExpectSuccess(GetDescription(skyrim, str, 4096));
+              ExpectEqual(string(str), '');
             end);
 
           It('Should return the description if defined', procedure
             begin
-              FileByName('xtest-1.esp', @h);
-              GetDescription(h, str, 4096);
-              Expect(str = 'Test plugin for xedit-lib', 'xtest-1.esp''s description should be "Test plugin for xedit-lib"');
+              ExpectSuccess(GetDescription(xt1, str, 4096));
+              ExpectEqual(string(str), 'Test plugin for xedit-lib');
             end);
         end);
 
@@ -81,23 +82,20 @@ begin
         begin
           It('Should return true for ESM files', procedure
             begin
-              FileByName('Skyrim.esm', @h);
-              GetIsESM(h, @bIsEsm);
-              Expect(bIsEsm = true, 'Should return true for Skyrim.esm');
+              ExpectSuccess(GetIsESM(skyrim, @b));
+              Expect(b, 'Should return true for Skyrim.esm');
             end);
 
           It('Should return true for ESP files with the IsESM flag', procedure
             begin
-              FileByName('xtest-1.esp', @h);
-              GetIsESM(h, @bIsEsm);
-              Expect(bIsEsm = true, 'Should return true for xtest-1.esp');
+              ExpectSuccess(GetIsESM(xt1, @b));
+              Expect(b , 'Should return true for xtest-1.esp');
             end);
 
           It('Should return false for ESP files without the IsESM flag', procedure
             begin
-              FileByName('xtest-2.esp', @h);
-              GetIsESM(h, @bIsEsm);
-              Expect(bIsEsm = false, 'Should return false for xtest-2.esp');
+              ExpectSuccess(GetIsESM(xt2, @b));
+              Expect(not b, 'Should return false for xtest-2.esp');
             end);
         end);
 
@@ -105,16 +103,14 @@ begin
         begin
           It('Should return an integer > 0 for Skyrim.esm', procedure
             begin
-              FileByName('Skyrim.esm', @h);
-              GetNextObjectID(h, @nextObjectID);
-              Expect(nextObjectID > 0, 'Should be greater than 0 for Skyrim.esm');
+              ExpectSuccess(GetNextObjectID(skyrim, @v));
+              Expect(v > 0, 'Should be greater than 0 for Skyrim.esm');
             end);
 
           It('Should equal 2048 for xtest-1.esp', procedure
             begin
-              FileByName('xtest-1.esp', @h);
-              GetNextObjectID(h, @nextObjectID);
-              Expect(nextObjectID = 2048, 'Should equal 2048 for xtest-1.esp');
+              ExpectSuccess(GetNextObjectID(xt1, @v));
+              ExpectEqual(v, 2048);
             end);
         end);
 
@@ -122,9 +118,8 @@ begin
         begin
           It('Should return a handle if input resolves to a file', procedure
             begin
-              FileByName('Skyrim.esm', @h);
-              GetFileHeader(h, @fileHeader);
-              Expect(fileHeader > 0, 'Handle should be greater than 0');
+              ExpectSuccess(GetFileHeader(skyrim, @h));
+              Expect(h > 0, 'Handle should be greater than 0');
             end);
         end);
 
@@ -132,16 +127,14 @@ begin
         begin
           It('Should return an integer > 0 for a plugin with overrides', procedure
             begin
-              FileByName('Update.esm', @h);
-              OverrideRecordCount(h, @count);
+              ExpectSuccess(OverrideRecordCount(update, @count));
               Expect(count > 0, 'Should be greater than 0 for Update.esm');
             end);
 
           It('Should return 0 for a plugin with no records', procedure
             begin
-              FileByName('xtest-1.esp', @h);
-              OverrideRecordCount(h, @count);
-              Expect(count = 0, 'Should be equal to 0 for xtest-1.esp');
+              ExpectSuccess(OverrideRecordCount(xt1, @count));
+              ExpectEqual(count, 0);
             end);
         end);
 
@@ -149,18 +142,16 @@ begin
         begin
           It('Should set the author', procedure
             begin
-              FileByName('xtest-1.esp', @h);
-              SetAuthor(h, PWideChar('Test'));
-              GetAuthor(h, str, 4096);
-              Expect(str = 'Test', 'Author should be "Test"');
+              ExpectSuccess(SetAuthor(xt1, 'Test'));
+              ExpectSuccess(GetAuthor(xt1, str, 4096));
+              ExpectEqual(string(str), 'Test');
             end);
 
           It('Should be able to unset the author', procedure
             begin
-              FileByName('xtest-1.esp', @h);
-              SetAuthor(h, PWideChar(''));
-              GetAuthor(h, str, 4096);
-              Expect(str = '', 'Author should be an empty string');
+              ExpectSuccess(SetAuthor(xt1, ''));
+              ExpectSuccess(GetAuthor(xt1, str, 4096));
+              ExpectEqual(string(str), '');
             end);
         end);
 
@@ -168,18 +159,16 @@ begin
         begin
           It('Should create element and set description if the plugin has no description element', procedure
             begin
-              FileByName('xtest-2.esp', @h);
-              SetDescription(h, PWideChar('Test'));
-              GetDescription(h, str, 4096);
-              Expect(str = 'Test', 'Description should be set to "Test"');
+              ExpectSuccess(SetDescription(xt2, 'Test'));
+              ExpectSuccess(GetDescription(xt2, str, 4096));
+              ExpectEqual(string(str), 'Test');
             end);
 
           It('Should be able to unset the description', procedure
             begin
-              FileByName('xtest-2.esp', @h);
-              SetDescription(h, PWideChar(''));
-              GetDescription(h, str, 4096);
-              Expect(str = '', 'Description should be an empty string');
+              ExpectSuccess(SetDescription(xt2, ''));
+              ExpectSuccess(GetDescription(xt2, str, 4096));
+              ExpectEqual(string(str), '');
             end);
         end);
 
@@ -187,18 +176,16 @@ begin
         begin
           It('Should be able to set the ESM flag', procedure
             begin
-              FileByName('xtest-2.esp', @h);
-              SetIsEsm(h, True);
-              GetIsESM(h, @bIsEsm);
-              Expect(bIsEsm, 'ESM flag should be set');
+              ExpectSuccess(SetIsEsm(xt2, True));
+              ExpectSuccess(GetIsESM(xt2, @b));
+              Expect(b, 'ESM flag should be set');
             end);
 
           It('Should be able to unset the ESM flag', procedure
             begin
-              FileByName('xtest-2.esp', @h);
-              SetIsEsm(h, False);
-              GetIsESM(h, @bIsEsm);
-              Expect(not bIsEsm, 'ESM flag should be unset');
+              ExpectSuccess(SetIsEsm(xt2, False));
+              ExpectSuccess(GetIsESM(xt2, @b));
+              Expect(not b, 'ESM flag should be unset');
             end);
         end);
 
@@ -206,10 +193,9 @@ begin
         begin
           It('Should set the next object ID', procedure
             begin
-              FileByName('xtest-1.esp', @h);
-              SetNextObjectID(h, 4096);
-              GetNextObjectID(h, @nextObjectID);
-              Expect(nextObjectID = 4096, 'Next Object ID should equal 4096');
+              ExpectSuccess(SetNextObjectID(xt1, 4096));
+              ExpectSuccess(GetNextObjectID(xt1, @v));
+              ExpectEqual(v, 4096);
             end);
         end);
     end);

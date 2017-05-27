@@ -12,6 +12,7 @@ implementation
 
 uses
   Mahogany,
+  txMeta,
 {$IFDEF USE_DLL}
   txImports;
 {$ENDIF}
@@ -21,7 +22,6 @@ uses
 
 procedure BuildFileHandlingTests;
 var
-  success: WordBool;
   h: Cardinal;
 begin
   Describe('File Handling Functions', procedure
@@ -30,14 +30,13 @@ begin
         begin
           It('Should return a handle if a matching file is loaded', procedure
             begin
-              success := FileByName('Skyrim.esm', @h);
-              Expect(success and (h > 0), 'Handle should be greater than 0');
+              ExpectSuccess(FileByName('Skyrim.esm', @h));
+              Expect(h > 0, 'Handle should be greater than 0');
             end);
 
           It('Should return return false if a matching file is not loaded', procedure
             begin
-              success := FileByName('NonExistingFile.esp', @h);
-              Expect(not success, 'Should return false');
+              ExpectFailure(FileByName('NonExistingFile.esp', @h));
             end);
         end);
 
@@ -45,14 +44,13 @@ begin
         begin
           It('Should return a handle if the index is in bounds', procedure
             begin
-              success := FileByIndex(1, @h);
-              Expect(success and (h > 0), 'Handle should be greater than 0');
+              ExpectSuccess(FileByIndex(1, @h));
+              Expect(h > 0, 'Handle should be greater than 0');
             end);
 
           It('Should return false if index is out of bounds', procedure
             begin
-              success := FileByIndex(999, @h);
-              Expect(not success, 'Should return false');
+              ExpectFailure(FileByIndex(999, @h));
             end);
         end);
 
@@ -60,14 +58,13 @@ begin
         begin
           It('Should return a handle if the index is in bounds', procedure
             begin
-              success := FileByLoadOrder(1, @h);
-              Expect(success and (h > 0), 'Handle should be greater than 0');
+              ExpectSuccess(FileByLoadOrder(1, @h));
+              Expect(h > 0, 'Handle should be greater than 0');
             end);
 
           It('Should return return false if index is out of bounds', procedure
             begin
-              success := FileByLoadOrder(999, @h);
-              Expect(not success, 'Should return false');
+              ExpectFailure(FileByLoadOrder(999, @h));
             end);
         end);
 
@@ -75,14 +72,13 @@ begin
         begin
           It('Should return a handle if a matching file is loaded', procedure
             begin
-              success := FileByAuthor('mcarofano', @h);
-              Expect(success and (h > 0), 'Handle should be greater than 0');
+              ExpectSuccess(FileByAuthor('mcarofano', @h));
+              Expect(h > 0, 'Handle should be greater than 0');
             end);
 
           It('Should return return false if a matching file is not loaded', procedure
             begin
-              success := FileByAuthor('U. N. Owen', @h);
-              Expect(not success, 'Should return false');
+              ExpectFailure(FileByAuthor('U. N. Owen', @h));
             end);
         end);
     end);

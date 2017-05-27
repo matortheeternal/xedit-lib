@@ -9,7 +9,18 @@ uses
   txImports in 'tests\txImports.pas',
   {$ENDIF}
   {$IFNDEF USE_DLL}
+  xeElements in 'src\xeElements.pas',
+  xeElementValues in 'src\xeElementValues.pas',
+  xeErrors in 'src\xeErrors.pas',
+  xeFiles in 'src\xeFiles.pas',
+  xeFileValues in 'src\xeFileValues.pas',
+  xeGroups in 'src\xeGroups.pas',
+  xeMasters in 'src\xeMasters.pas',
   xeMeta in 'src\xeMeta.pas',
+  xeRecords in 'src\xeRecords.pas',
+  xeRecordValues in 'src\xeRecordValues.pas',
+  xeSerialization in 'src\xeSerialization.pas',
+  xeSetup in 'src\xeSetup.pas',
   {$ENDIF}
   txMeta in 'tests\txMeta.pas',
   txSetup in 'tests\txSetup.pas',
