@@ -92,7 +92,7 @@ begin
                   ExpectSuccess(ElementToJson(testFile, json, 16384));
                   WriteStringToFile(json, 'xtest-2.esp.json');
                   obj := TJSONObject.Create(json);
-                end, true);
+                end, True);
 
               It('Should have correct filename', procedure
                 begin
@@ -148,7 +148,7 @@ begin
                     begin
                       ExpectExists(obj, 'Groups');
                       obj2 := obj.O['Groups'];
-                    end, true);
+                    end, True);
 
                   It('Should have the correct groups', procedure
                     begin
@@ -175,7 +175,7 @@ begin
                   obj := TJSONObject.Create(json);
                   ExpectSuccess(ElementToJson(armo, json, 16384));
                   obj2 := TJSONObject.Create(json);
-                end, true);
+                end, True);
 
               It('Should put the group under a key', procedure
                 begin
@@ -183,7 +183,7 @@ begin
                   ExpectExists(obj2, 'ARMO');
                   obj3 := obj.O['CELL'];
                   ary := obj2.A['ARMO'];
-                end, true);
+                end, True);
 
               It('Should include the records in the group', procedure
                 begin
@@ -194,19 +194,19 @@ begin
                 begin
                   ExpectExists(obj3, 'Block 0');
                   obj3 := obj3.O['Block 0'];
-                end, true);
+                end, True);
 
               It('Should serialize sub-blocks', procedure
                 begin
                   ExpectExists(obj3, 'Sub-Block 0');
                   ary := obj3.A['Sub-Block 0'];
-                end, true);
+                end, True);
 
               It('Should serialize sub-block records', procedure
                 begin
                   ExpectEqual(ary.Count, 1, 'There should be 1 record');
                   obj3 := ary.O[0];
-                end, true);
+                end, True);
 
               It('Should serialize child groups', procedure
                 begin

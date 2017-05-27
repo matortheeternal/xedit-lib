@@ -34,7 +34,7 @@ var
   group: IwbGroupRecord;
   element: IwbElement;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
       group := AddGroupIfMissing(_file, string(sig));
@@ -75,18 +75,18 @@ var
   _file: IwbFile;
   group: IwbGroupRecord;
 begin
-  Result := false;
+  Result := False;
   try
     e := Resolve(_id);
     if Supports(e, IwbFile, _file) then begin
       if _file.RecordCount > len then exit;
       StoreRecords(_file, _res);
-      Result := true;
+      Result := True;
     end
     else if Supports(e, IwbGroupRecord, group) then begin
       if group.ElementCount > len then exit;
       StoreRecords(group, _res);
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -102,7 +102,7 @@ var
   group: IwbGroupRecord;
   rec: IwbMainRecord;
 begin
-  Result := false;
+  Result := False;
   try
     _sig := TwbSignature(AnsiString(sig));
     if Supports(Resolve(_id), IwbFile, _file) and _file.HasGroup(_sig) then begin
@@ -127,16 +127,16 @@ var
   _file: IwbFile;
   _group: IwbGroupRecord;
 begin
-  Result := false;
+  Result := False;
   try
     e := Resolve(_id);
     if Supports(e, IwbFile, _file) then begin
       _res^ := Store(_file.Records[index]);
-      Result := true;
+      Result := True;
     end
     else if Supports(e, IwbGroupRecord, _group) then begin
       _res^ := Store(_group.Elements[index]);
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -148,10 +148,10 @@ var
   _file: IwbFile;
   rec: IwbMainRecord;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
-      rec := _file.RecordByFormID[formID, true];
+      rec := _file.RecordByFormID[formID, True];
       StoreIfAssigned(IInterface(rec), _res, Result);
     end;
   except
@@ -179,7 +179,7 @@ var
   rec: IwbMainRecord;
   _group: IwbGroupRecord;
 begin
-  Result := false;
+  Result := False;
   try
     e := Resolve(_id);
     if Supports(e, IwbFile, _file) then
@@ -239,7 +239,7 @@ function RecordByName(_id: Cardinal; full: PWideChar; _res: PCardinal): WordBool
 var
   rec: IwbMainRecord;
 begin
-  Result := false;
+  Result := False;
   try
     rec := FindRecordByName(Resolve(_id), string(full));
     StoreIfAssigned(IInterface(rec), _res, Result);
@@ -252,11 +252,11 @@ function OverrideCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
 var
   rec: IwbMainRecord;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbMainRecord, rec) then begin
       count^ := rec.OverrideCount;
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -267,11 +267,11 @@ function OverrideByIndex(_id: Cardinal; index: Integer; _res: PCardinal): WordBo
 var
   rec: IwbMainRecord;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbMainRecord, rec) then begin
       _res^ := Store(rec.Overrides[index]);
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -282,11 +282,11 @@ function GetFormID(_id: Cardinal; formID: PCardinal): WordBool; cdecl;
 var
   rec: IwbMainRecord;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbMainRecord, rec) then begin
       formID^ := rec.LoadOrderFormID;
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -298,11 +298,11 @@ function SetFormID(_id: Cardinal; formID: Cardinal): WordBool; cdecl;
 var
   rec: IwbMainRecord;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbMainRecord, rec) then begin
       rec.LoadOrderFormID := formID;
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -313,11 +313,11 @@ function ExchangeReferences(_id, oldFormID, newFormID: Cardinal): WordBool; cdec
 var
   rec: IwbMainRecord;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbMainRecord, rec) then begin
       rec.CompareExchangeFormID(oldFormID, newFormID);
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -330,14 +330,14 @@ var
   rec, ref: IwbMainRecord;
   i: Integer;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbMainRecord, rec) then begin
       if rec.ReferencedByCount > len then exit;
       for i := 0 to Pred(rec.ReferencedByCount) do
         if Supports(rec.ReferencedBy[i], IwbMainRecord, ref) then
           _res[i] := Store(ref);
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);

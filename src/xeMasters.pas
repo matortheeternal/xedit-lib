@@ -35,11 +35,11 @@ function CleanMasters(_id: Cardinal): WordBool; cdecl;
 var
   _file: IwbFile;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
       _file.CleanMasters;
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -50,11 +50,11 @@ function SortMasters(_id: Cardinal): WordBool; cdecl;
 var
   _file: IwbFile;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
       _file.SortMasters;
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -65,11 +65,11 @@ function AddMaster(_id: Cardinal; masterName: PWideChar): WordBool; cdecl;
 var
   _file: IwbFile;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
       _file.AddMasterIfMissing(string(masterName));
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -98,7 +98,7 @@ begin
   Result := False;
   for i := 0 to Pred(_file.MasterCount) do
     if _file.Masters[i].FileName = _master.FileName then begin
-      Result := true;
+      Result := True;
       break;
     end;
 end;
@@ -109,13 +109,13 @@ var
   _file: IwbFile;
   i: Integer;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
       if _file.MasterCount > len then exit;
       for i := 0 to Pred(_file.MasterCount) do
         _res[i] := Store(_file.Masters[i]);
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -127,7 +127,7 @@ var
   _file, f: IwbFile;
   i, index: Integer;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
       if High(Files) > len then exit;
@@ -139,7 +139,7 @@ begin
           Inc(index);
         end;
       end;
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);

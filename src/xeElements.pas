@@ -22,14 +22,14 @@ type
   function AddElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
   function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; cdecl;
   function GetLinksTo(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
-  function ElementExists(_id: Cardinal; key: PWideChar): WordBool; cdecl;
+  function ElementExists(_id: Cardinal; key: PWideChar; bool: PWordBool): WordBool; cdecl;
   function ElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
-  function ElementEquals(_id, _id2: Cardinal): WordBool; cdecl;
+  function ElementEquals(_id, _id2: Cardinal; bool: PWordBool): WordBool; cdecl;
   function CopyElement(_id, _id2: Cardinal; aAsNew, aDeepCopy: WordBool; _res: PCardinal): WordBool; cdecl;
-  function IsMaster(_id: Cardinal): WordBool; cdecl;
-  function IsInjected(_id: Cardinal): WordBool; cdecl;
-  function IsOverride(_id: Cardinal): WordBool; cdecl;
-  function IsWinningOverride(_id: Cardinal): WordBool; cdecl;
+  function IsMaster(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
+  function IsInjected(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
+  function IsOverride(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
+  function IsWinningOverride(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
 
   // native functions
   function ResolveFromGroup(group: IwbGroupRecord; path: String): IInterface;
@@ -70,10 +70,10 @@ function IsHexStr(key: String): Boolean;
 var
   i: Integer;
 begin
-  Result := false;
+  Result := False;
   for i := 1 to Length(key) do
     if not CharInSet(key[i], ['A'..'F','0'..'9']) then exit;
-  Result := true;
+  Result := True;
 end;
 
 function ParseFormID(key: String; var formID: Cardinal): Boolean;
@@ -119,7 +119,7 @@ function ResolveRecord(_file: IwbFile; formID: Cardinal; path: String): IInterfa
 var
   rec: IwbMainRecord;
 begin
-  rec := _file.RecordByFormID[formID, true];
+  rec := _file.RecordByFormID[formID, True];
   if Assigned(rec) and (Length(path) > 0) then
     Result := ResolveElement(rec, path)
   else
@@ -317,7 +317,7 @@ function GetElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 var
   element: IwbElement;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbElement, element) then begin
       _res^ := Store(element._File);
@@ -391,15 +391,15 @@ begin
     else begin
       // no key means we're assigning an element at the end of the array
       if Length(key) = 0 then
-        Result := container.Assign(High(integer), nil, false)
+        Result := container.Assign(High(integer), nil, False)
       else begin
         // assign element at given index if index given, else add
         if ParseIndex(key, keyIndex) then begin
-          Result := container.Assign(High(integer), nil, false);
+          Result := container.Assign(High(integer), nil, False);
           NativeMoveToIndex(Result as IwbElement, keyIndex);
         end
         else
-          Result := container.Add(key, true);
+          Result := container.Add(key, True);
       end;
     end;
   end;
@@ -427,12 +427,12 @@ var
   e: IInterface;
   element: IwbElement;
 begin
-  Result := false;
+  Result := False;
   try
     e := NativeGetElement(_id, key);
     if Supports(e, IwbElement, element) then begin
       element.Remove;
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -444,14 +444,14 @@ var
   e: IInterface;
   element, linkedElement: IwbElement;
 begin
-  Result := false;
+  Result := False;
   try
     e := NativeGetElement(_id, key);
     if Supports(e, IwbElement, element) then begin
       linkedElement := element.LinksTo;
       if Assigned(linkedElement) then begin
         _res^ := Store(linkedElement);
-        Result := true;
+        Result := True;
       end;
     end;
   except
@@ -459,15 +459,15 @@ begin
   end;
 end;
 
-// Replaces HasGroup and ElementExists
-function ElementExists(_id: Cardinal; key: PWideChar): WordBool; cdecl;
+function ElementExists(_id: Cardinal; key: PWideChar; bool: PWordBool): WordBool; cdecl;
 var
   e: IInterface;
 begin
-  Result := false;
+  Result := False;
   try
     e := NativeGetElement(_id, key);
-    Result := Assigned(e);
+    bool^ := Assigned(e);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -481,7 +481,7 @@ begin
   try
     if _id = 0 then begin
       count^ := High(Files) + 1;
-      Result := true;
+      Result := True;
     end
     else if Supports(Resolve(_id), IwbContainerElementRef, container) then begin
       count^ := container.ElementCount;
@@ -492,15 +492,17 @@ begin
   end;
 end;
 
-function ElementEquals(_id, _id2: Cardinal): WordBool; cdecl;
+function ElementEquals(_id, _id2: Cardinal; bool: PWordBool): WordBool; cdecl;
 var
   element, element2: IwbElement;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbElement, element) then
-      if Supports(Resolve(_id2), IwbElement, element2) then
-        Result := element.Equals(element2);
+      if Supports(Resolve(_id2), IwbElement, element2) then begin
+        bool^ := element.Equals(element2);
+        Result := True;
+      end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -512,70 +514,78 @@ var
   rec: IwbMainRecord;
   element: IwbElement;
 begin
-  Result := false;
+  Result := False;
   try
     if not Supports(Resolve(_id), IwbElement, element) then exit;
     if Supports(Resolve(_id2), IwbFile, _file) then begin
       _res^ := Store(wbCopyElementToFile(element, _file, aAsNew, aDeepCopy, '', '', ''));
-      Result := true;
+      Result := True;
     end
     else if Supports(Resolve(_id2), IwbMainRecord, rec) then begin
       _res^ := Store(wbCopyElementToRecord(element, rec, aAsNew, aDeepCopy));
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
 end;
 
-function IsMaster(_id: Cardinal): WordBool; cdecl;
+function IsMaster(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
 var
   rec: IwbMainRecord;
 begin
-  Result := false;
+  Result := False;
   try
-    if Supports(Resolve(_id), IwbMainRecord, rec) then
-      Result := rec.IsMaster;
+    if Supports(Resolve(_id), IwbMainRecord, rec) then begin
+      bool^ := rec.IsMaster;
+      Result := True;
+    end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
 end;
 
-function IsInjected(_id: Cardinal): WordBool; cdecl;
+function IsInjected(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
 var
   rec: IwbMainRecord;
 begin
-  Result := false;
+  Result := False;
   try
-    if Supports(Resolve(_id), IwbMainRecord, rec) then
-      Result := rec.IsInjected;
+    if Supports(Resolve(_id), IwbMainRecord, rec) then begin
+      bool^ := rec.IsInjected;
+      Result := True;
+    end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
 end;
 
-function IsOverride(_id: Cardinal): WordBool; cdecl;
+function IsOverride(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
 var
   rec: IwbMainRecord;
 begin
-  Result := false;
+  Result := False;
   try
-    if Supports(Resolve(_id), IwbMainRecord, rec) then
-      Result := not rec.IsMaster;
+    if Supports(Resolve(_id), IwbMainRecord, rec) then begin
+      bool^ := not rec.IsMaster;
+      Result := True;
+    end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
 end;
 
 // TODO: Determine if subrecord is winner
-function IsWinningOverride(_id: Cardinal): WordBool; cdecl;
+function IsWinningOverride(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
 var
   rec: IwbMainRecord;
 begin
-  Result := false;
+  Result := False;
   try
-    if Supports(Resolve(_id), IwbMainRecord, rec) then
-      Result := not rec.IsWinningOverride;
+    if Supports(Resolve(_id), IwbMainRecord, rec) then begin
+      bool^ := not rec.IsWinningOverride;
+      Result := True;
+    end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -586,7 +596,7 @@ function IsSorted(e: IwbElement): boolean;
 var
   Container: IwbSortableContainer;
 begin
-  Result := false;
+  Result := False;
   if Supports(e, IwbSortableContainer, Container) then
     Result := Container.Sorted;
 end;
@@ -596,7 +606,7 @@ function HasStructChildren(e: IwbElement): boolean;
 var
   Container: IwbContainerElementRef;
 begin
-  Result := false;
+  Result := False;
   if Supports(e, IwbContainerElementRef, Container)
   and (Container.ElementCount > 0) then
     Result := GetSmashType(Container.Elements[0]) = stStruct;

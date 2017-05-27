@@ -285,30 +285,30 @@ begin
         begin
           It('Should return true for same element', procedure
             begin
-              ExpectSuccess(ElementEquals(skyrim, skyrim));
-              ExpectSuccess(ElementEquals(armo, armo));
-              ExpectSuccess(ElementEquals(rec, rec));
-              ExpectSuccess(ElementEquals(keywords, keywords));
-              ExpectSuccess(ElementEquals(dnam, dnam));
+              ExpectSuccess(ElementEquals(skyrim, skyrim, @b));
+              ExpectSuccess(ElementEquals(armo, armo, @b));
+              ExpectSuccess(ElementEquals(rec, rec, @b));
+              ExpectSuccess(ElementEquals(keywords, keywords, @b));
+              ExpectSuccess(ElementEquals(dnam, dnam, @b));
             end);
 
           It('Should return false for identical but different elements', procedure
             begin
               ExpectSuccess(GetElement(testRec, 'DNAM', @h));
-              ExpectFailure(ElementEquals(dnam, h));
+              ExpectFailure(ElementEquals(dnam, h, @b));
             end);
 
           It('Should return false for different elements', procedure
             begin
-              ExpectFailure(ElementEquals(skyrim, armo));
-              ExpectFailure(ElementEquals(armo, rec));
-              ExpectFailure(ElementEquals(rec, keywords));
-              ExpectFailure(ElementEquals(keywords, dnam));
+              ExpectFailure(ElementEquals(skyrim, armo, @b));
+              ExpectFailure(ElementEquals(armo, rec, @b));
+              ExpectFailure(ElementEquals(rec, keywords, @b));
+              ExpectFailure(ElementEquals(keywords, dnam, @b));
             end);
 
           It('Should return false if null handle passed', procedure
             begin
-              ExpectFailure(ElementEquals(0, 0));
+              ExpectFailure(ElementEquals(0, 0, @b));
             end);
         end);
 

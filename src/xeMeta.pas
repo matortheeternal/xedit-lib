@@ -92,11 +92,11 @@ end;
 
 function GetExceptionMessage(str: PWideChar; len: Integer): WordBool; cdecl;
 begin
-  Result := false;
+  Result := False;
   try
     if Length(exceptionMessage) > 0 then begin
       StrLCopy(str, PWideChar(WideString(exceptionMessage)), len);
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -105,11 +105,11 @@ end;
 
 function GetGlobal(key, value: PWideChar; len: Integer): WordBool; cdecl;
 begin
-  Result := false;
+  Result := False;
   try
     if Globals.IndexOfName(key) > -1 then begin
       StrLCopy(value, PWideChar(WideString(Globals.Values[key])), len);
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -126,7 +126,7 @@ procedure StoreIfAssigned(var x: IInterface; var _res: PCardinal; var Success: W
 begin
   if Assigned(x) then begin
     _res^ := Store(x);
-    Success := true;
+    Success := True;
   end;
 end;
 

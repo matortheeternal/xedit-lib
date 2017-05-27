@@ -145,14 +145,14 @@ end;
 procedure TErrorCheckThread.Execute;
 begin
   NativeCheckForErrors(elementToCheck, nil);
-  bErrorCheckThreadDone := true;
+  bErrorCheckThreadDone := True;
 end;
 
 function CheckForErrors(_id: Cardinal): WordBool; cdecl;
 var
   element: IwbElement;
 begin
-  Result := false;
+  Result := False;
   try
     if not bErrorCheckThreadDone then
       raise Exception.Create('You''re currently checking a plugin for errors.');
@@ -161,7 +161,7 @@ begin
     if Supports(Resolve(_id), IwbElement, element) then begin
       elementToCheck := element;
       TErrorCheckThread.Create;
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -179,7 +179,7 @@ var
   obj, childObj: TJSONObject;
   error: TRecordError;
 begin
-  Result := false;
+  Result := False;
   try
     obj := TJSONObject.Create;
     try
@@ -198,7 +198,7 @@ begin
         obj.A['errors'].Add(childObj);
       end;
       StrLCopy(str, PWideChar(WideString(obj.ToString)), len);
-      Result := true;
+      Result := True;
     finally
       obj.Free;
     end;
@@ -211,11 +211,11 @@ function GetErrorString(_id: Cardinal; error: PWideChar; len: Integer): WordBool
 var
   element: IwbElement;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbElement, element) then begin
       StrLCopy(error, PWideChar(WideString(element.Check)), len);
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -293,6 +293,6 @@ end;
 
 
 initialization
-  bErrorCheckThreadDone := true;
+  bErrorCheckThreadDone := True;
 
 end.

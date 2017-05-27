@@ -66,7 +66,7 @@ function Name(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
 var
   sName: String;
 begin
-  Result := false;
+  Result := False;
   try
     sName := NativeName(Resolve(_id));
     if sName <> '' then begin
@@ -127,12 +127,12 @@ var
   sPath: String;
   element: IwbElement;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbElement, element) then begin
       sPath := GetPath('', element);
       StrLCopy(str, PWideChar(WideString(sPath)), len);
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -143,11 +143,11 @@ function EditorID(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
 var
   rec: IwbMainRecord;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbMainRecord, rec) then begin
       StrLCopy(str, PWideChar(WideString(rec.EditorID)), len);
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -176,12 +176,12 @@ var
   element: IwbElement;
   sig: String;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbElement, element) then begin
       sig := NativeSignature(element);
       StrLCopy(str, PWideChar(WideString(sig)), len);
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -192,11 +192,11 @@ function FullName(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
 var
   rec: IwbMainRecord;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbMainRecord, rec) and rec.ElementExists['FULL'] then begin
       StrLCopy(str, PWideChar(WideString(rec.FullName)), len);
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -207,11 +207,11 @@ function SortKey(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
 var
   element: IwbElement;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbElement, element) then begin
-      StrLCopy(str, PWideChar(WideString(element.SortKey[false])), len);
-      Result := true;
+      StrLCopy(str, PWideChar(WideString(element.SortKey[False])), len);
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -243,12 +243,12 @@ var
   element: IwbElement;
   s: String;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbElement, element) then begin
       s := etToString(element.ElementType);
       StrLCopy(str, PWideChar(WideString(s)), len);
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -285,12 +285,12 @@ var
   element: IwbElement;
   s: String;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbElement, element) then begin
       s := dtToString(GetDefType(element));
       StrLCopy(str, PWideChar(WideString(s)), len);
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -303,13 +303,13 @@ var
   element: IwbElement;
   sValue: string;
 begin
-  Result := false;
+  Result := False;
   try
     e := NativeGetElement(_id, path);
     if Supports(e, IwbElement, element) then begin
       sValue := element.EditValue;
       StrLCopy(str, PWideChar(WideString(sValue)), len);
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -321,12 +321,12 @@ var
   e: IInterface;
   element: IwbElement;
 begin
-  Result := false;
+  Result := False;
   try
     e := NativeGetElement(_id, path);
     if Supports(e, IwbElement, element) then begin
       element.EditValue := string(value);
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -358,10 +358,10 @@ end;
 
 function GetIntValue(_id: Cardinal; path: PWideChar; value: PInteger): WordBool; cdecl;
 begin
-  Result := false;
+  Result := False;
   try
     value^ := Integer(GetNativeValue(_id, path));
-    Result := true;
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -369,10 +369,10 @@ end;
 
 function SetIntValue(_id: Cardinal; path: PWideChar; value: Integer): WordBool; cdecl;
 begin
-  Result := false;
+  Result := False;
   try
     SetNativeValue(_id, path, value);
-    Result := true;
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -380,10 +380,10 @@ end;
 
 function GetUIntValue(_id: Cardinal; path: PWideChar; value: PCardinal): WordBool; cdecl;
 begin
-  Result := false;
+  Result := False;
   try
     value^ := Cardinal(GetNativeValue(_id, path));
-    Result := true;
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -391,10 +391,10 @@ end;
 
 function SetUIntValue(_id: Cardinal; path: PWideChar; value: Cardinal): WordBool; cdecl;
 begin
-  Result := false;
+  Result := False;
   try
     SetNativeValue(_id, path, value);
-    Result := true;
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -402,10 +402,10 @@ end;
 
 function GetFloatValue(_id: Cardinal; path: PWideChar; value: PDouble): WordBool; cdecl;
 begin
-  Result := false;
+  Result := False;
   try
     value^ := Double(GetNativeValue(_id, path));
-    Result := true;
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -413,10 +413,10 @@ end;
 
 function SetFloatValue(_id: Cardinal; path: PWideChar; value: Double): WordBool; cdecl;
 begin
-  Result := false;
+  Result := False;
   try
     SetNativeValue(_id, path, value);
-    Result := true;
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -430,7 +430,7 @@ var
   i: Integer;
   flagVal: Cardinal;
 begin
-  Result := false;
+  Result := False;
   try
     e := NativeGetElement(_id, path);
     if Supports(e, IwbElement, element)
@@ -481,7 +481,7 @@ var
   i: Integer;
   flagVal: Cardinal;
 begin
-  Result := false;
+  Result := False;
   try
     e := NativeGetElement(_id, path);
     if Supports(e, IwbElement, element)
@@ -509,10 +509,10 @@ var
   i: Integer;
   flagVal: Cardinal;
 begin
-  Result := false;
+  Result := False;
   try
     slFlags := TStringList.Create;
-    slFlags.StrictDelimiter := true;
+    slFlags.StrictDelimiter := True;
     slFlags.Delimiter := ',';
 
     try
@@ -528,7 +528,7 @@ begin
 
       // set output
       StrLCopy(flags, PWideChar(WideString(slFlags.DelimitedText)), len);
-      Result := true;
+      Result := True;
     finally
       slFlags.Free;
     end;

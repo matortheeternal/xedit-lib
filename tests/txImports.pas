@@ -43,8 +43,8 @@ interface
   function GetDescription(_id: Cardinal; desc: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
   function SetDescription(_id: Cardinal; desc: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
   function OverrideRecordCount(_id: Cardinal; count: PInteger): WordBool; cdecl; external 'XEditLib.dll';
-  function GetIsESM(_id: Cardinal; isESM: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
-  function SetIsESM(_id: Cardinal; isESM: WordBool): WordBool; cdecl; external 'XEditLib.dll';
+  function GetIsESM(_id: Cardinal; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
+  function SetIsESM(_id: Cardinal; bool: WordBool): WordBool; cdecl; external 'XEditLib.dll';
 
   // ELEMENT HANDLING METHODS
   function GetElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
@@ -54,13 +54,13 @@ interface
   function AddElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
   function GetLinksTo(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function ElementExists(_id: Cardinal; key: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
+  function ElementExists(_id: Cardinal; key: PWideChar; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
   function ElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl; external 'XEditLib.dll';
-  function ElementEquals(_id, _id2: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function IsMaster(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function IsInjected(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function IsOverride(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function IsWinningOverride(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
+  function ElementEquals(_id, _id2: Cardinal; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
+  function IsMaster(_id: Cardinal; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
+  function IsInjected(_id: Cardinal; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
+  function IsOverride(_id: Cardinal; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
+  function IsWinningOverride(_id: Cardinal; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
 
   // ELEMENT VALUE METHODS
   function Name(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
@@ -80,7 +80,7 @@ interface
   function GetFloatValue(_id: Integer; path: PWideChar; value: PDouble): WordBool; cdecl; external 'XEditLib.dll';
   function SetFloatValue(_id: Integer; path: PWideChar; value: Double): WordBool; cdecl; external 'XEditLib.dll';
   function SetFlag(_id: Integer; path: PWideChar; name: PWideChar; enabled: WordBool): WordBool; cdecl; external 'XEditLib.dll';
-  function GetFlag(_id: Integer; path: PWideChar; name: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
+  function GetFlag(_id: Integer; path: PWideChar; name: PWideChar; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
   function ToggleFlag(_id: Integer; path: PWideChar; name: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
   function GetEnabledFlags(_id: Integer; path: PWideChar; flags: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
 
@@ -89,7 +89,7 @@ interface
   function ElementFromJson(_id: Cardinal; path: PWideChar; json: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
 
   // GROUP HANDLING METHODS
-  function HasGroup(_id: Cardinal; sig: PWideChar; _res: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
+  function HasGroup(_id: Cardinal; sig: PWideChar; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
   function AddGroup(_id: Cardinal; sig: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function GetGroupSignatures(_id: Cardinal; groups: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
   function GetChildGroup(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';

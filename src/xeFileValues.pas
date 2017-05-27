@@ -11,8 +11,8 @@ interface
   function GetDescription(_id: Cardinal; desc: PWideChar; len: Integer): WordBool; cdecl;
   function SetDescription(_id: Cardinal; desc: PWideChar): WordBool; cdecl;
   function OverrideRecordCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
-  function GetIsESM(_id: Cardinal; isESM: PWordBool): WordBool; cdecl;
-  function SetIsESM(_id: Cardinal; isESM: WordBool): WordBool; cdecl;
+  function GetIsESM(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
+  function SetIsESM(_id: Cardinal; bool: WordBool): WordBool; cdecl;
 
 implementation
 
@@ -30,11 +30,11 @@ function GetFileHeader(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 var
   _file: IwbFile;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
       _res^ := Store(_file.Header);
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -45,11 +45,11 @@ function GetNextObjectId(_id: Cardinal; nextObjectID: PCardinal): WordBool; cdec
 var
   _file: IwbFile;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
       nextObjectID^ := _file.Header.ElementNativeValues['HEDR\Next Object ID'];
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -60,11 +60,11 @@ function SetNextObjectId(_id, nextObjectID: Cardinal): WordBool; cdecl;
 var
   _file: IwbFile;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
       _file.Header.ElementNativeValues['HEDR\Next Object ID'] := nextObjectID;
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -76,12 +76,12 @@ var
   _file: IwbFile;
   s: String;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
       s := _file.FileName;
       StrLCopy(fileName, PWideChar(WideString(s)), len);
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -93,12 +93,12 @@ var
   _file: IwbFile;
   s: String;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
       s := _file.Header.ElementEditValues['CNAM'];
       StrLCopy(author, PWideChar(WideString(s)), len);
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -109,11 +109,11 @@ function SetAuthor(_id: Cardinal; author: PWideChar): WordBool; cdecl;
 var
   _file: IwbFile;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
       _file.Header.ElementEditValues['CNAM'] := string(author);
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -125,12 +125,12 @@ var
   _file: IwbFile;
   s: String;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
       s := _file.Header.ElementEditValues['SNAM'];
       StrLCopy(desc, PWideChar(WideString(s)), len);
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -141,11 +141,11 @@ function SetDescription(_id: Cardinal; desc: PWideChar): WordBool; cdecl;
 var
   _file: IwbFile;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
       _file.Header.ElementEditValues['SNAM'] := string(desc);
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -157,44 +157,44 @@ var
   _file: IwbFile;
   i, n: Integer;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
       n := 0;
       for i := 0 to Pred(_file.RecordCount) do
         if not _file.Records[i].IsMaster then n := n + 1;
       count^ := n;
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
 end;
 
-function GetIsESM(_id: Cardinal; isESM: PWordBool): WordBool; cdecl;
+function GetIsESM(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
 var
   _file: IwbFile;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
-      isESM^ := _file.IsESM;
-      Result := true;
+      bool^ := _file.IsESM;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
 end;
 
-function SetIsESM(_id: Cardinal; isESM: WordBool): WordBool; cdecl;
+function SetIsESM(_id: Cardinal; bool: WordBool): WordBool; cdecl;
 var
   _file: IwbFile;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
-      _file.IsESM := isESM;
-      Result := true;
+      _file.IsESM := bool;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);

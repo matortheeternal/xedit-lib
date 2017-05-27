@@ -188,17 +188,17 @@ begin
           It('Should be able to set the ESM flag', procedure
             begin
               FileByName('xtest-2.esp', @h);
-              SetIsEsm(h, true);
+              SetIsEsm(h, True);
               GetIsESM(h, @bIsEsm);
-              Expect(bIsEsm = true, 'ESM flag should be set');
+              Expect(bIsEsm, 'ESM flag should be set');
             end);
 
           It('Should be able to unset the ESM flag', procedure
             begin
               FileByName('xtest-2.esp', @h);
-              SetIsEsm(h, false);
+              SetIsEsm(h, False);
               GetIsESM(h, @bIsEsm);
-              Expect(bIsEsm = false, 'ESM flag should be unset');
+              Expect(not bIsEsm, 'ESM flag should be unset');
             end);
         end);
 

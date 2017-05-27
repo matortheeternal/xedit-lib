@@ -190,13 +190,13 @@ var
   FileStream: TFileStream;
   path: String;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
       path := wbDataPath + _file.FileName + '.save';
       FileStream := TFileStream.Create(path, fmCreate);
       try
-        _file.WritetoStream(FileStream, false);
+        _file.WritetoStream(FileStream, False);
         Result := True;
         // TODO: Need to handle renaming when library is finalized
       finally

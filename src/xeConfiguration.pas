@@ -138,7 +138,7 @@ end;
 { TProgramStatus }
 constructor TProgramStatus.Create;
 begin
-  bLoaderDone := false;
+  bLoaderDone := False;
   ProgramVersion := GetVersionMem;
 end;
 
@@ -240,11 +240,11 @@ function SetGameAbbr(abbrName: String): boolean;
 var
   i: Integer;
 begin
-  Result := false;
+  Result := False;
   for i := Low(GameArray) to High(GameArray) do
     if SameText(GameArray[i].abbrName, abbrName) then begin
       SetGame(i);
-      Result := true;
+      Result := True;
       exit;
     end;
 end;

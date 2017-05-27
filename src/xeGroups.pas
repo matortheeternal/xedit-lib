@@ -5,7 +5,7 @@ interface
 uses
   wbInterface;
 
-  function HasGroup(_id: Cardinal; sig: PWideChar; _res: PWordBool): WordBool; cdecl;
+  function HasGroup(_id: Cardinal; sig: PWideChar; bool: PWordBool): WordBool; cdecl;
   function AddGroup(_id: Cardinal; sig: PWideChar; _res: PCardinal): WordBool; cdecl;
   function GetGroupSignatures(_id: Cardinal; groups: PWideChar; len: Integer): WordBool; cdecl;
   function GetChildGroup(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
@@ -45,15 +45,15 @@ begin
   Result := group.GroupType in [1,6,7];
 end;
 
-function HasGroup(_id: Cardinal; sig: PWideChar; _res: PWordBool): WordBool; cdecl;
+function HasGroup(_id: Cardinal; sig: PWideChar; bool: PWordBool): WordBool; cdecl;
 var
   _file: IwbFile;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
-      _res^ := _file.HasGroup(TwbSignature(AnsiString(sig)));
-      Result := true;
+      bool^ := _file.HasGroup(TwbSignature(AnsiString(sig)));
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -75,11 +75,11 @@ function AddGroup(_id: Cardinal; sig: PWideChar; _res: PCardinal): WordBool; cde
 var
   _file: IwbFile;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
       _res^ := Store(AddGroupIfMissing(_file, string(sig)));
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -92,14 +92,14 @@ var
   s: String;
   i: Integer;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
       s := '';
       for i := 1 to _file.ElementCount do
         s := s + string(IwbGroupRecord(_file.Elements[i]).Signature) + #13;
       StrLCopy(groups, PWideChar(s), len);
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -111,13 +111,13 @@ var
   _rec: IwbMainRecord;
   _group: IwbGroupRecord;
 begin
-  Result := false;
+  Result := False;
   try
     if Supports(Resolve(_id), IwbMainRecord, _rec) then begin
       _group := _rec.ChildGroup;
       if Assigned(_group) then begin
         _res^ := Store(_group);
-        Result := true;
+        Result := True;
       end;
     end;
   except
@@ -129,13 +129,13 @@ function GroupSignatureFromName(name, sig: PWideChar): WordBool; cdecl;
 var
   str: String;
 begin
-  Result := false;
+  Result := False;
   try
     BuildGroupNameMap;
     if slGroupNameMap.IndexOfName(string(name)) > -1 then begin
       str := slGroupNameMap.Values[string(name)];
       StrLCopy(sig, PWideChar(str), 4);
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -147,12 +147,12 @@ var
   str: String;
   RecordDef: PwbRecordDef;
 begin
-  Result := false;
+  Result := False;
   try
     if wbFindRecordDef(AnsiString(sig), RecordDef) then begin
       str := RecordDef.Name;
       StrLCopy(name, PWideChar(WideString(str)), len);
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -163,7 +163,7 @@ function GetGroupSignatureNameMap(str: PWideChar; len: Integer): WordBool; cdecl
 var
   text: String;
 begin
-  Result := false;
+  Result := False;
   try
     BuildGroupNameMap;
     text := slGroupNameMap.Text;

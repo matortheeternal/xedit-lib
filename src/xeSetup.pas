@@ -60,7 +60,7 @@ begin
 
       // load plugin
       try
-        _file := wbFile(wbDataPath + sFileName, i, '', false, false);
+        _file := wbFile(wbDataPath + sFileName, i, '', False, False);
         _file._AddRef;
         SetLength(Files, Length(Files) + 1);
         Files[High(Files)] := _file;
@@ -87,12 +87,12 @@ begin
     end;
 
     // done loading
-    ProgramStatus.bLoaderDone := true;
+    ProgramStatus.bLoaderDone := True;
     AddMessage('Done loading files.');
   except
     on E: Exception do begin
       AddMessage('Fatal Error: <' + e.ClassName + ': ' + e.Message + '>');
-      wbLoaderError := true;
+      wbLoaderError := True;
     end;
   end;
 end;
@@ -123,13 +123,13 @@ var
   slPlugins, slLoadOrder: TStringList;
   sLoadPath, sPath: String;
 begin
-  Result := false;
+  Result := False;
   try
     slPlugins := TStringList.Create;
     slLoadOrder := TStringList.Create;
 
     try
-      slLoadOrder.StrictDelimiter := true;
+      slLoadOrder.StrictDelimiter := True;
 
       sLoadPath := GetCSIDLShellFolder(CSIDL_LOCAL_APPDATA) + wbGameName2 + '\';
       // LOAD LIST OF ACTIVE PLUGINS (plugins.txt)      
@@ -189,7 +189,7 @@ begin
       // RETURN RESULT
       if Length(slLoadOrder.Text) > len then exit;
       StrLCopy(str, PWideChar(WideString(slLoadOrder.Text)), len);
-      Result := true;
+      Result := True;
     finally
       slPlugins.Free;
       slLoadOrder.Free;
@@ -201,7 +201,7 @@ end;
 
 function LoadPlugins(loadOrder: PWideChar): WordBool; cdecl;
 begin
-  Result := false;
+  Result := False;
   try
     // exit if we have already started loading plugins
     if Assigned(slLoadOrder) then exit;
@@ -215,7 +215,7 @@ begin
 
     // start loader thread
     TLoaderThread.Create;
-    Result := true;
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -230,7 +230,7 @@ function GetGamePath(mode: Integer; str: PWideChar; len: Integer): WordBool; cde
 var
   path: String;
 begin
-  Result := false;
+  Result := False;
   try
     path := NativeGetGamePath(GameArray[mode]);
     if path <> '' then begin

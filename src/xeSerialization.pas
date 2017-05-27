@@ -153,7 +153,7 @@ var
   element: IwbElement;
   obj: TJSONObject;
 begin
-  Result := false;
+  Result := False;
   try
     e := Resolve(_id);
     obj := nil;
@@ -167,7 +167,7 @@ begin
       obj := ElementToSO(element, TJSONObject.Create);
     if Assigned(obj) then begin
       StrLCopy(json, PWideChar(obj.ToString), len);
-      Result := true;
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -186,7 +186,7 @@ begin
   if container.ElementCount > index then
     Result := container.Elements[index]
   else
-    Result := container.Assign(High(integer), nil, false);
+    Result := container.Assign(High(integer), nil, False);
 end;
 
 {function SOToElement(element: IwbElement; obj: TJSONObject): IInterface;
@@ -395,12 +395,12 @@ function ElementFromJson(_id: Cardinal; path: PWideChar; json: PWideChar; _res: 
 var
   e: IInterface;
 begin
-  Result := false;
+  Result := False;
   try
     e := ResolveOrAddElement(_id, path);
     WriteElementFromSO(e, TJSONObject.Create(json));
     _res^ := Store(e);
-    Result := true;
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
