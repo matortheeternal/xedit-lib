@@ -8,8 +8,11 @@ uses
   procedure Initialize; cdecl;
   procedure Finalize; cdecl;
   procedure ExceptionHandler(x: Exception);
-  procedure GetBuffer(str: PWideChar; len: Integer); cdecl;
-  procedure FlushBuffer; cdecl;
+  procedure GetMessagesLength(len: PInteger); cdecl;
+  procedure GetMessages(str: PWideChar; len: Integer); cdecl;
+  procedure ClearMessages; cdecl;
+  procedure GetResult(str: PWideChar; len: Integer); cdecl;
+  procedure GetExceptionMessageLength(len: PInteger); cdecl;
   function GetExceptionMessage(str: PWideChar; len: Integer): WordBool; cdecl;
   function GetGlobal(key, value: PWideChar; len: Integer): WordBool; cdecl;
   procedure StoreIfAssigned(var x: IInterface; var _res: PCardinal; var Success: WordBool);
@@ -23,6 +26,7 @@ var
   _releasedIDs: TList<Cardinal>;
   nextID: Cardinal;
   exceptionMessage: String;
+  resultStr: String;
 
 implementation
 
@@ -47,6 +51,7 @@ begin
   _releasedIDs := TList<Cardinal>.Create;
   _store.Add(nil);
   exceptionMessage := '';
+  resultStr := '';
 
   // add welcome message
   AddMessage('XEditLib v' + ProgramStatus.ProgramVersion);
@@ -76,18 +81,34 @@ begin
   AddMessage(exceptionMessage);
 end;
 
-procedure GetBuffer(str: PWideChar; len: Integer); cdecl;
+procedure GetMessagesLength(len: PInteger); cdecl;
+begin
+  len^ := Length(MessageBuffer.Text) * SizeOf(WideChar);
+end;
+
+procedure GetMessages(str: PWideChar; len: Integer); cdecl;
 var
   text: String;
 begin
   text := MessageBuffer.Text;
-  Delete(text, Length(text), 1);
+  Delete(text, 1, Length(text));
   StrLCopy(str, PWideChar(WideString(text)), len);
 end;
 
-procedure FlushBuffer; cdecl;
+procedure GetResult(str: PWideChar; len: Integer); cdecl;
+begin
+  StrLCopy(str, PWideChar(resultStr), len);
+  resultStr := '';
+end;
+
+procedure ClearMessages; cdecl;
 begin
   MessageBuffer.Clear;
+end;
+
+procedure GetExceptionMessageLength(len: PInteger); cdecl;
+begin
+  len^ := Length(exceptionMessage) * SizeOf(WideChar);
 end;
 
 function GetExceptionMessage(str: PWideChar; len: Integer): WordBool; cdecl;
@@ -95,7 +116,7 @@ begin
   Result := False;
   try
     if Length(exceptionMessage) > 0 then begin
-      StrLCopy(str, PWideChar(WideString(exceptionMessage)), len);
+      StrLCopy(str, PWideChar(exceptionMessage), len);
       Result := True;
     end;
   except
