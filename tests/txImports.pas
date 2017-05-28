@@ -7,8 +7,8 @@ type
   PCardinalArray = ^CardinalArray;
 
   // META METHODS
-  procedure Initialize; cdecl; external 'XEditLib.dll';
-  procedure Finalize; cdecl; external 'XEditLib.dll';
+  procedure InitXEdit; cdecl; external 'XEditLib.dll';
+  procedure CloseXEdit; cdecl; external 'XEditLib.dll';
   procedure GetMessagesLength(len: PInteger); cdecl; external 'XEditLib.dll';
   procedure GetMessages(str: PWideChar; len: Integer); cdecl; external 'XEditLib.dll';
   procedure ClearMessages; cdecl; external 'XEditLib.dll';

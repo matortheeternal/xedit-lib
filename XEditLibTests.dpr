@@ -65,10 +65,10 @@ begin
   end;
 
   // run the tests
-  Initialize;
+  InitXEdit;
   LoadXEdit;
   RunTests(LogToConsole);
-  Finalize;
+  CloseXEdit;
 
   // report testing results
   WriteLn(' ');

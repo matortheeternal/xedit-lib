@@ -5,8 +5,8 @@ interface
 uses
   Classes, SysUtils, Generics.Collections;
 
-  procedure Initialize; cdecl;
-  procedure Finalize; cdecl;
+  procedure InitXEdit; cdecl;
+  procedure CloseXEdit; cdecl;
   procedure ExceptionHandler(x: Exception);
   procedure GetMessagesLength(len: PInteger); cdecl;
   procedure GetMessages(str: PWideChar; len: Integer); cdecl;
@@ -44,7 +44,7 @@ uses
 }
 {******************************************************************************}
 
-procedure Initialize; cdecl;
+procedure InitXEdit; cdecl;
 begin
   // initialize variables
   MessageBuffer := TStringList.Create;
@@ -62,7 +62,7 @@ begin
   Globals.Values['Version'] := ProgramStatus.ProgramVersion;
 end;
 
-procedure Finalize; cdecl;
+procedure CloseXEdit; cdecl;
 var
   i: Integer;
 begin
