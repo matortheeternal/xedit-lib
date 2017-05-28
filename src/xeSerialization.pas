@@ -10,7 +10,7 @@ uses
   //function ElementFromJson(_id: Cardinal; path: PWideChar; json: PWideChar; _res: PCardinal): WordBool; cdecl;
 
   // native functions
-  function NativeElementToJson(element: IwbElement; obj: TJSONObject): TJSONObject;
+  function NativeElementToJson(element: IwbElement): TJSONValue;
   function GroupToJson(group: IwbGroupRecord; obj: TJSONObject): TJSONObject;
 
 implementation
@@ -18,14 +18,6 @@ implementation
 uses
   Variants, SysUtils, StrUtils,
   xeMeta, xeFiles, xeGroups, xeElements, xeElementValues, xeMessages;
-
-procedure JsonArrayAdd(ary: TJSONArray; obj: TJSONObject);
-begin
-  if obj.Count = 1 then
-    ary.AddValue(obj.ValueFromIndex[0])
-  else
-    ary.Add(obj);
-end;
 
 function IsFlags(element: IwbElement): Boolean;
 var
@@ -35,64 +27,85 @@ begin
     and Supports(intDef.Formater[element], IwbFlagsDef);
 end;
 
-function NativeElementToJson(element: IwbElement; obj: TJSONObject): TJSONObject;
+function ValueToJson(element: IwbElement): TJSONValue;
+var
+  v: Variant;
+begin
+  Result := TJSONValue.Create;
+  v := element.NativeValue;
+  case VarType(v) of
+    varSmallInt, varInteger, varInt64, varByte, varWord, varLongWord:
+      Result.Put(LongWord(v));
+    varSingle, varDouble:
+      Result.Put(Double(v));
+    varBoolean:
+      Result.Put(Boolean(v));
+  else
+    Result.Put(element.EditValue);
+  end;
+end;
+
+function StructToJson(container: IwbContainerElementRef): TJSONValue;
+var
+  obj: TJSONObject;
+  i: Integer;
+  childElement: IwbElement;
+begin
+  Result := TJSONValue.Create;
+  obj := TJSONObject.Create;
+  for i := 0 to Pred(container.ElementCount) do begin
+    childElement := container.Elements[i];
+    obj[childElement.Name] := NativeElementToJson(childElement);
+  end;
+  Result.Put(obj);
+end;
+
+function ArrayToJson(container: IwbContainerElementRef): TJSONValue;
+var
+  ary: TJSONArray;
+  i: Integer;
+begin
+  Result := TJSONValue.Create;
+  ary := TJSONArray.Create;
+  for i := 0 to Pred(container.ElementCount) do
+    ary.AddValue(NativeElementToJson(container.Elements[i]));
+  Result.Put(ary);
+end;
+
+function NativeElementToJson(element: IwbElement): TJSONValue;
 const
   ArrayTypes: TSmashTypes = [stUnsortedArray, stUnsortedStructArray, stSortedArray,
     stSortedStructArray];
 var
-  path: String;
   container: IwbContainerElementRef;
-  childElement: IwbElement;
-  v: Variant;
-  i: Integer;
-  childObject: TJSONObject;
 begin
-  path := Element.Name;
   if Supports(element, IwbContainerElementRef, container)
   and ((container.ElementCount > 0) or IsFlags(element)) then begin
-    if GetSmashType(element) in ArrayTypes then begin
-      obj.A[path] := TJSONArray.Create;
-      for i := 0 to Pred(container.ElementCount) do begin
-        childElement := container.Elements[i];
-        JsonArrayAdd(obj.A[path], NativeElementToJson(childElement, TJSONObject.Create));
-      end;
-    end
-    else begin
-      childObject := TJSONObject.Create;
-      for i := 0 to Pred(container.ElementCount) do begin
-        childElement := container.Elements[i];
-        NativeElementToJson(childElement, childObject);
-      end;
-      obj.O[path] := childObject;
-    end;
-  end
-  else begin
-    v := element.NativeValue;
-    case VarType(v) of
-      varSmallInt, varInteger, varInt64, varByte, varWord, varLongWord:
-        obj.I[path] := v;
-      varSingle, varDouble:
-        obj.D[path] := Double(v);
-      varBoolean:
-        obj.B[path] := Boolean(v);
+    if GetSmashType(element) in ArrayTypes then
+      Result := ArrayToJson(container)
     else
-      obj.S[path] := element.EditValue;
-    end;
-  end;
-
-  // return the JSON object
-  Result := obj;
+      Result := StructToJson(container);
+  end
+  else
+    Result := ValueToJSON(element);
 end;
 
-function RecordToJson(rec: IwbMainRecord; obj: TJSONObject): TJSONObject;
+function RecordToJson(rec: IwbMainRecord): TJSONObject;
 var
   i: Integer;
+  element: IwbElement;
+  path: String;
 begin
-  for i := Pred(rec.ElementCount) downto 0 do
-    NativeElementToJson(rec.Elements[i], obj);
+  Result := TJSONObject.Create;
+  // serialize elements
+  for i := Pred(rec.ElementCount) downto 0 do begin
+    element := rec.Elements[i];
+    path := element.Name;
+    Result[path] := NativeElementToJson(element);
+  end;
+  // serialize child group
   if Assigned(rec.ChildGroup) then
-    GroupToJson(rec.ChildGroup, obj);
-  Result := obj;
+    GroupToJson(rec.ChildGroup, Result);
 end;
 
 function GroupToJson(group: IwbGroupRecord; obj: TJSONObject): TJSONObject;
@@ -104,44 +117,46 @@ var
   records: TJSONArray;
   groups: TJSONObject;
 begin
+  Result := obj;
   records := TJSONArray.Create;
   groups := TJSONObject.Create;
   // iterate through children
   for i := 0 to Pred(group.ElementCount) do begin
     if Supports(group.Elements[i], IwbMainRecord, rec) then
-      records.Add(RecordToJson(rec, TJSONObject.Create))
+      records.Add(RecordToJson(rec))
     else if Supports(group.Elements[i], IwbGroupRecord, innerGroup)
     and not (innerGroup.GroupType in [1, 6..7]) then
       GroupToJson(innerGroup, groups);
   end;
   // assign objects
   name := GetPathName(group as IwbElement);
-  if groups.Count = 0 then
-    obj.A[name] := records
+  if groups.Count = 0 then begin
+    groups.Free;
+    obj.A[name] := records;
+  end
   else begin
     obj.O[name] := groups;
     if records.Count > 1 then
-      obj.O[name].A['Records'] := records;
+      obj.O[name].A['Records'] := records
+    else
+      records.Free;
   end;
-  // return result
-  Result := obj;
 end;
 
 function FileToJson(_file: IwbFile): TJSONObject;
 var
-  obj: TJSONObject;
   group: IwbGroupRecord;
   i: Integer;
 begin
-  obj := TJSONObject.Create;
-  obj.S['Filename'] := _file.FileName;
-  obj.O['File Header'] := RecordToJson(_file.Header, TJSONObject.Create);
-  obj.O['Groups'] := TJSONObject.Create;
-  for i := 1 to Pred(_file.ElementCount)  do begin
+  Result := TJSONObject.Create;
+  // serialize filename and header
+  Result.S['Filename'] := _file.FileName;
+  Result.O['File Header'] := RecordToJson(_file.Header);
+  // serialize groups
+  Result.O['Groups'] := TJSONObject.Create;
+  for i := 1 to Pred(_file.ElementCount) do
     if Supports(_file.Elements[i], IwbGroupRecord, group) then
-      GroupToJson(group, obj.O['Groups']);
-  end;
-  Result := obj;
+      GroupToJson(group, Result.O['Groups']);
 end;
 
 function ElementToJson(_id: Cardinal; len: PInteger): WordBool; cdecl;
@@ -157,18 +172,24 @@ begin
   try
     e := Resolve(_id);
     obj := nil;
+    // convert input element to JSONObject
     if Supports(e, IwbFile, _file) then
       obj := FileToJson(_file)
     else if Supports(e, IwbGroupRecord, group) then
       obj := GroupToJson(group, TJSONObject.Create)
     else if Supports(e, IwbMainRecord, rec) then
-      obj := RecordToJson(rec, TJSONObject.Create)
-    else if Supports(e, IwbElement, element) then
-      obj := NativeElementToJson(element, TJSONObject.Create);
-    if Assigned(obj) then begin
+      obj := RecordToJson(rec)
+    else if Supports(e, IwbElement, element) then begin
+      obj := TJSONObject.Create;
+      obj[element.Name] := NativeElementToJson(element);
+    end;
+    // serialize JSON to string
+    if Assigned(obj) then try
       resultStr := obj.ToString;
       len^ := Length(resultStr) * SizeOf(WideChar);
       Result := True;
+    finally
+      obj.Free;
     end;
   except
     on x: Exception do ExceptionHandler(x);
