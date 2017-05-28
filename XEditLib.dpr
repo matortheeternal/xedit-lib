@@ -40,8 +40,9 @@ const
 
 exports
   // META METHODS
-  Initialize, Finalize, GetResult, GetMessagesLength, GetMessages, ClearMessages,
-  GetExceptionMessageLength, GetExceptionMessage, GetGlobal, Release, ResetStore,
+  Initialize, Finalize, GetResultString, GetResultArray, GetMessagesLength,
+  GetMessages, ClearMessages, GetExceptionMessageLength, GetExceptionMessage,
+  GetGlobal, Release, ResetStore,
   // LOADING AND SET UP METHODS
   SetGameMode, GetLoadOrder, LoadPlugins, GetLoaderDone, GetGamePath,
   // FILE HANDLING METHODS

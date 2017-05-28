@@ -9,8 +9,8 @@ uses
   function SortMasters(_id: Cardinal): WordBool; cdecl;
   function AddMaster(_id: Cardinal; masterName: PWideChar): WordBool; cdecl;
   function GetMaster(_id: Cardinal; index: Integer; _res: PCardinal): WordBool; cdecl;
-  function GetMasters(_id: Cardinal; _res: PCardinal; len: Integer): WordBool; cdecl;
-  function GetRequiredBy(_id: Cardinal; _res: PCardinal; len: Integer): WordBool; cdecl;
+  function GetMasters(_id: Cardinal; len: PInteger): WordBool; cdecl;
+  function GetRequiredBy(_id: Cardinal; len: PInteger): WordBool; cdecl;
 
   // native functions
   function NativeFileHasMaster(_file, _master: IwbFile): Boolean;
@@ -104,7 +104,7 @@ begin
 end;
 
 {$POINTERMATH ON}
-function GetMasters(_id: Cardinal; _res: PCardinal; len: Integer): WordBool; cdecl;
+function GetMasters(_id: Cardinal; len: PInteger): WordBool; cdecl;
 var
   _file: IwbFile;
   i: Integer;
@@ -112,9 +112,10 @@ begin
   Result := False;
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
-      if _file.MasterCount > len then exit;
+      len^ := _file.MasterCount;
+      SetLength(resultArray, len^);
       for i := 0 to Pred(_file.MasterCount) do
-        _res[i] := Store(_file.Masters[i]);
+        resultArray[i] := Store(_file.Masters[i]);
       Result := True;
     end;
   except
@@ -122,21 +123,21 @@ begin
   end;
 end;
 
-function GetRequiredBy(_id: Cardinal; _res: PCardinal; len: Integer): WordBool; cdecl;
+function GetRequiredBy(_id: Cardinal; len: PInteger): WordBool; cdecl;
 var
   _file, f: IwbFile;
-  i, index: Integer;
+  i: Integer;
 begin
   Result := False;
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
-      if High(xFiles) > len then exit;
-      index := 0;
+      len^ := 0;
+      SetLength(resultArray, High(xFiles) + 1);
       for i := Low(xFiles) to High(xFiles) do begin
         f := xFiles[i];
         if NativeFileHasMaster(f, _file) then begin
-          _res[index] := Store(f);
-          Inc(index);
+          resultArray[len^] := Store(f);
+          Inc(len^);
         end;
       end;
       Result := True;

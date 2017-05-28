@@ -48,6 +48,7 @@ var
   rec: IwbMainRecord;
   element: IwbElement;
 begin
+  Result := '';
   if Supports(e, IwbFile, _file) then
     Result := _file.FileName
   else if Supports(e, IwbGroupRecord, group) then
@@ -56,7 +57,9 @@ begin
     if rec.ElementExists['FULL'] then
       Result := rec.FullName
     else if rec.ElementExists['NAME'] then
-      Result := rec.ElementEditValues['NAME'];
+      Result := rec.ElementEditValues['NAME']
+    else if rec.Signature = 'TES4' then
+      Result := 'File Header';
   end
   else if Supports(e, IwbElement, element) then
     Result := element.Name;

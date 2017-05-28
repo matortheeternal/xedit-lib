@@ -16,7 +16,7 @@ type
   TSmashTypes = set of TSmashType;
 
   function GetElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
-  function GetElements(_id: Cardinal; _res: PCardinal; len: Integer): WordBool; cdecl;
+  function GetElements(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function GetElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function GetContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function AddElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
@@ -272,42 +272,41 @@ begin
   end;
 end;
 
-{$POINTERMATH ON}
-function GetFiles(_res: PCardinal; len: Integer): WordBool;
+function GetFiles(len: PInteger): WordBool;
 var
   i: Integer;
 begin
-  Result := False;
-  if High(xFiles) + 1 > len then exit;
+  len^ := High(xFiles) + 1;
+  SetLength(resultArray, len^);
   for i := 0 to High(xFiles) do
-    _res[i] := Store(xFiles[i]);
+    resultArray[i] := Store(xFiles[i]);
   Result := True;
 end;
 
-function GetChildrenElements(_id: Cardinal; _res: PCardinal; len: Integer): WordBool;
+function GetChildrenElements(_id: Cardinal; len: PInteger): WordBool;
 var
   i: Integer;
   container: IwbContainerElementRef;
 begin
   Result := False;
   if Supports(Resolve(_id), IwbContainerElementRef, container) then begin
-    if container.ElementCount > len then exit;
+    len^ := container.ElementCount;
+    SetLength(resultArray, len^);
     for i := 0 to Pred(container.ElementCount) do
-      _res[i] := Store(container.Elements[i]);
+      resultArray[i] := Store(container.Elements[i]);
     Result := True;
   end;
 end;
-{$POINTERMATH OFF}
 
 // returns an array of handles for the elements in a container
-function GetElements(_id: Cardinal; _res: PCardinal; len: Integer): WordBool; cdecl;
+function GetElements(_id: Cardinal; len: PInteger): WordBool; cdecl;
 begin
   Result := False;
   try
     if _id = 0 then
-      Result := GetFiles(_res, len)
+      Result := GetFiles(len)
     else
-      Result := GetChildrenElements(_id, _res, len);
+      Result := GetChildrenElements(_id, len);
   except
     on x: Exception do ExceptionHandler(x);
   end;

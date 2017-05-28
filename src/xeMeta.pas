@@ -11,7 +11,8 @@ uses
   procedure GetMessagesLength(len: PInteger); cdecl;
   procedure GetMessages(str: PWideChar; len: Integer); cdecl;
   procedure ClearMessages; cdecl;
-  procedure GetResult(str: PWideChar; len: Integer); cdecl;
+  procedure GetResultString(str: PWideChar; len: Integer); cdecl;
+  procedure GetResultArray(_res: PCardinal; len: Integer); cdecl;
   procedure GetExceptionMessageLength(len: PInteger); cdecl;
   function GetExceptionMessage(str: PWideChar; len: Integer): WordBool; cdecl;
   function GetGlobal(key, value: PWideChar; len: Integer): WordBool; cdecl;
@@ -27,6 +28,7 @@ var
   nextID: Cardinal;
   exceptionMessage: String;
   resultStr: String;
+  resultArray: array of Cardinal;
 
 implementation
 
@@ -63,8 +65,6 @@ begin
 end;
 
 procedure CloseXEdit; cdecl;
-var
-  i: Integer;
 begin
   SaveBuffer;
   settings.Free;
@@ -97,11 +97,24 @@ begin
   StrLCopy(str, PWideChar(MessageBuffer.Text), len);
 end;
 
-procedure GetResult(str: PWideChar; len: Integer); cdecl;
+procedure GetResultString(str: PWideChar; len: Integer); cdecl;
 begin
   StrLCopy(str, PWideChar(resultStr), len);
   resultStr := '';
 end;
+
+{$POINTERMATH ON}
+procedure GetResultArray(_res: PCardinal; len: Integer); cdecl;
+var
+  i: Integer;
+begin
+  for i := 0 to High(resultArray) do begin
+    if i >= len then break;
+    _res[i] := resultArray[i];
+  end;
+  SetLength(resultArray, 0);
+end;
+{$POINTERMATH OFF}
 
 procedure ClearMessages; cdecl;
 begin
