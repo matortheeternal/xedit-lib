@@ -65,6 +65,7 @@ type
   procedure ExpectException(proc: TProc; msg: String = '');
   procedure RunTests(messageProc: TMessageProc);
   procedure ReportResults(messageProc: TMessageProc);
+  procedure FreeTests;
 
   // PRIVATE
   procedure CannotCallException(target, context: String);
@@ -201,6 +202,17 @@ begin
   for i := 0 to Pred(MainSuites.Count) do begin
     suite := TSuite(MainSuites[i]);
     suite.Execute;
+  end;
+end;
+
+procedure FreeTests;
+var
+  i: Integer;
+  suite: TSuite;
+begin
+  for i := Pred(MainSuites.Count) downto 0 do begin
+    suite := TSuite(MainSuites[i]);
+    suite.Free;
   end;
 end;
 
@@ -376,7 +388,17 @@ begin
 end;
 
 destructor TSuite.Destroy;
+var
+  i: Integer;
+  test: TTest;
 begin
+  for i := Pred(children.Count) downto 0 do begin
+    test := TTest(children[i]);
+    if test is TSuite then
+      TSuite(test).Free
+    else if test is TSpec then
+      TSpec(test).Free;
+  end;
   children.Free;
   inherited;
 end;
@@ -459,6 +481,8 @@ end;
 
 finalization
 begin
+  FreeTests;
+  ActiveSuite := nil;
   MainSuites.Free;
   Failures.Free;
 end;
