@@ -12,7 +12,8 @@ type
   procedure GetMessagesLength(len: PInteger); cdecl; external 'XEditLib.dll';
   procedure GetMessages(str: PWideChar; len: Integer); cdecl; external 'XEditLib.dll';
   procedure ClearMessages; cdecl; external 'XEditLib.dll';
-  procedure GetResult(str: PWideChar; len: Integer); cdecl; external 'XEditLib.dll';
+  procedure GetResultString(str: PWideChar; len: Integer); cdecl; external 'XEditLib.dll';
+  procedure GetResultArray(_res: PCardinal; len: Integer); cdecl; external 'XEditLib.dll';
   procedure GetExceptionMessageLength(len: PInteger); cdecl; external 'XEditLib.dll';
   function GetExceptionMessage(str: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
   function GetGlobal(key, value: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
@@ -55,7 +56,7 @@ type
 
   // ELEMENT HANDLING METHODS
   function GetElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function GetElements(_id: Cardinal; _res: PCardinal; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
+  function GetElements(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function GetContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function AddElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
@@ -106,7 +107,7 @@ type
 
   // RECORD HANDLING METHODS
   function AddRecord(_id: Cardinal; sig: string; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function GetRecords(_id: Cardinal; _res: PCardinal; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
+  function GetRecords(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function RecordsBySignature(_id: Cardinal; sig: string; _res: PCardinalArray): WordBool; cdecl; external 'XEditLib.dll';
   function RecordByIndex(_id: Cardinal; index: Integer; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function RecordByFormID(_id, formID: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';

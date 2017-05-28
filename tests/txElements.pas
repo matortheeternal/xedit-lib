@@ -17,18 +17,36 @@ uses
   txImports,
 {$ENDIF}
 {$IFNDEF USE_DLL}
-  xeFiles, xeElements,
+  xeFiles, xeElements, xeElementValues,
 {$ENDIF}
   txMeta;
+
+procedure TestNames(a: CardinalArray; firstName, secondName: String);
+var
+  len: Integer;
+begin
+  ExpectSuccess(Name(a[Low(a)], @len));
+  ExpectEqual(grs(len), firstName);
+  ExpectSuccess(Name(a[High(a)], @len));
+  ExpectEqual(grs(len), secondName);
+end;
+
+procedure TestEdids(a: CardinalArray; firstEdid, secondEdid: String);
+var
+  len: Integer;
+begin
+  ExpectSuccess(EditorID(a[Low(a)], @len));
+  ExpectEqual(grs(len), firstEdid);
+  ExpectSuccess(EditorID(a[High(a)], @len));
+  ExpectEqual(grs(len), secondEdid);
+end;
 
 procedure BuildElementHandlingTests;
 var
   b: WordBool;
   h, skyrim, xt3, armo, rec, keywords, keyword, dnam, element, xtArmo,
   xtRec, xtRec2: Cardinal;
-  a: PCardinal;
-  i: Integer;
-  lst: TList;
+  len, i: Integer;
 begin
   Describe('Element Handling', procedure
     begin
@@ -324,52 +342,39 @@ begin
 
       Describe('GetElements', procedure
         begin
-          BeforeEach(procedure
-            begin
-              GetMem(a, 4096 * 4);
-              FillChar(a^, 4096 * 4, 0);
-              lst := TList.Create;
-            end);
-
-          AfterEach(procedure
-            begin
-              FreeMem(a, 4096 * 4);
-              lst.Free;
-            end);
-
           It('Should resolve root children (files)', procedure
             begin
-              ExpectSuccess(GetElements(0, a, 4096));
-              GetCardinalArray(a, 4096, lst);
-              Expect(lst.Count = 8, 'There should be 8 handles');
+              ExpectSuccess(GetElements(0, @len));
+              ExpectEqual(len, 8);
+              TestNames(gra(len), 'Skyrim.esm', 'xtest-5.esp');
             end);
 
           It('Should resolve file children (file header and groups)', procedure
             begin
-              ExpectSuccess(GetElements(skyrim, a, 4096));
-              GetCardinalArray(a, 4096, lst);
-              Expect(lst.Count = 118, 'There should be 118 handles');
+              ExpectSuccess(GetElements(skyrim, @len));
+              ExpectEqual(len, 118);
+              TestNames(gra(len), 'File Header', 'Reverb Parameters');
             end);
 
           It('Should resolve group children (records)', procedure
             begin
-              ExpectSuccess(GetElements(armo, a, 4096));
-              GetCardinalArray(a, 4096, lst);
-              Expect(lst.Count = 2762, 'There should be 2762 handles');
+              ExpectSuccess(GetElements(armo, @len));
+              ExpectEqual(len, 2762);
+              TestEdids(gra(len), 'DremoraBoots', 'SkinNaked');
             end);
 
           It('Should resolve record children (subrecords/elements)', procedure
             begin
-              ExpectSuccess(GetElements(rec, a, 4096));
-              GetCardinalArray(a, 4096, lst);
-              Expect(lst.Count = 13, 'There should be 13 handles');
+              ExpectSuccess(GetElements(rec, @len));
+              ExpectEqual(len, 13);
+              TestNames(gra(len), 'Record Header', 'DNAM - Armor Rating');
             end);
 
           It('Should resolve element children', procedure
             begin
-              ExpectSuccess(GetElements(keywords, a, 4096));
-              GetCardinalArray(a, 4096, lst);
-              Expect(lst.Count = 5, 'There should be 5 handles');
+              ExpectSuccess(GetElements(keywords, @len));
+              ExpectEqual(len, 5);
+              TestNames(gra(len), 'Keyword', 'Keyword');
             end);
         end);
 

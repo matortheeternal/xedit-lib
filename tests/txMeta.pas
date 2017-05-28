@@ -18,9 +18,8 @@ type
   procedure ExpectSuccess(b: WordBool);
   procedure ExpectFailure(b: WordBool);
   procedure BuildMetaTests;
-  function grs(len: Integer): String;
-  procedure GetCardinalArray(a: PCardinal; len: Integer; lst: TList);
-  procedure WriteCardinalArray(lst: TList);
+  function grs(len: Integer): WideString;
+  function gra(len: Integer): CardinalArray;
 
 implementation
 
@@ -51,42 +50,30 @@ begin
 end;
 
 // grs = Get Result String
-function grs(len: Integer): String;
+function grs(len: Integer): WideString;
 var
-  str: WideString;
   wcBuffer: PWideChar;
 begin
   if len = 0 then begin
     Result := '';
     exit;
   end;
-  SetLength(str, len div 2);
-  wcBuffer := PWideChar(str);
-  GetResult(wcBuffer, len);
-  Result := str;
+  SetLength(Result, len div 2);
+  wcBuffer := PWideChar(Result);
+  GetResultString(wcBuffer, len);
 end;
 
-{$POINTERMATH ON}
-procedure GetCardinalArray(a: PCardinal; len: Integer; lst: TList);
+function gra(len: Integer): CardinalArray;
 var
-  i: Integer;
+  cBuffer: PCardinal;
 begin
-  for i := 0 to Pred(len) do begin
-    if a[i] = 0 then break;
-    lst.Add(Pointer(a[i]));
+  if len = 0 then begin
+    SetLength(Result, 0);
+    exit;
   end;
-end;
-{$POINTERMATH OFF}
-
-procedure WriteCardinalArray(lst: TList);
-var
-  str: String;
-  i: Integer;
-begin
-  str := '';
-  for i := 0 to Pred(lst.Count) do
-    str := str + IntToStr(Cardinal(lst[i])) + ',';
-  WriteLn(str);
+  SetLength(Result, len);
+  cBuffer := PCardinal(Result);
+  GetResultArray(cBuffer, len);
 end;
 
 procedure WriteArray(a: CardinalArray);
