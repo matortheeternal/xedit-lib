@@ -22,7 +22,6 @@ var
   xt2, block, subBlock, childGroup, persistentGroup, refr, armo, rec,
   element, keyword, h, c: Cardinal;
   expectedName: String;
-  sig: PWideChar;
   f: Double;
   len, i: Integer;
 begin
@@ -30,7 +29,6 @@ begin
     begin
       BeforeAll(procedure
         begin
-          GetMem(sig, 8);
           GetElement(0, 'xtest-2.esp', @xt2);
           GetElement(xt2, 'ARMO', @armo);
           GetElement(armo, '00012E46', @rec);
@@ -41,11 +39,6 @@ begin
           GetElement(block, '[0]', @subBlock);
           GetElement(childGroup, '[0]', @persistentGroup);
           GetElement(xt2, '000170F0', @refr);
-        end);
-
-      AfterAll(procedure
-        begin
-          FreeMem(sig, 8);
         end);
         
       Describe('Name', procedure
