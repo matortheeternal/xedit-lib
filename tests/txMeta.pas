@@ -36,12 +36,15 @@ uses
 procedure WriteBuffer;
 var
   len: Integer;
-  str: PWideChar;
+  str: WideString;
+  wcBuffer: PWideChar;
 begin
   GetMessagesLength(@len);
   if len > 0 then begin
-    GetMem(str, len);
-    GetMessages(str, len);
+    SetLength(str, len div 2);
+    wcBuffer := PWideChar(str);
+    GetMessages(wcBuffer, len);
+    Delete(str, Length(str) - 1, 2);
     ClearMessages;
     WriteLn(str);
   end;
@@ -50,15 +53,17 @@ end;
 // grs = Get Result String
 function grs(len: Integer): String;
 var
-  str: PWideChar;
+  str: WideString;
+  wcBuffer: PWideChar;
 begin
   if len = 0 then begin
     Result := '';
     exit;
   end;
-  GetMem(str, len);
-  GetResult(str, len);
-  Result := String(str);
+  SetLength(str, len div 2);
+  wcBuffer := PWideChar(str);
+  GetResult(wcBuffer, len);
+  Result := str;
 end;
 
 {$POINTERMATH ON}
@@ -102,12 +107,14 @@ end;
 procedure WriteExceptions;
 var
   len: Integer;
-  str: PWideChar;
+  str: WideString;
+  wcBuffer: PWideChar;
 begin
   GetExceptionMessageLength(@len);
   if len > 0 then begin
-    GetMem(str, len);
-    GetExceptionMessage(str, len);
+    SetLength(str, len div 2);
+    wcBuffer := PWideChar(str);
+    GetExceptionMessage(wcBuffer, len);
     WriteLn(str);
   end;
 end;
