@@ -173,10 +173,30 @@ begin
   Result := bErrorCheckThreadDone;
 end;
 
+function ErrorToJson(error: TRecordError): TJSONObject;
+begin
+  Result := TJSONObject.Create;
+  try
+    Result.I['group'] := Ord(error.&type.id);
+    Result.S['signature'] := string(error.signature);
+    Result.I['form_id'] := error.formID;
+    Result.S['name'] := error.name;
+    if error.path <> '' then
+      Result.S['path'] := error.path;
+    if error.data <> '' then
+      Result.S['data'] := error.data;
+  except
+    on x: Exception do begin
+      Result.Free;
+      raise x;
+    end;
+  end;
+end;
+
 function GetErrors(len: PInteger): WordBool; cdecl;
 var
   i: Integer;      
-  obj, childObj: TJSONObject;
+  obj: TJSONObject;
   error: TRecordError;
 begin
   Result := False;
@@ -186,16 +206,7 @@ begin
       obj.A['errors'] := TJSONArray.Create;
       for i := 0 to Pred(errors.Count) do begin
         error := TRecordError(errors[i]);
-        childObj := TJSONObject.Create;
-        childObj.I['group'] := Ord(error.&type.id);
-        childObj.S['signature'] := string(error.signature);
-        childObj.I['form_id'] := error.formID;
-        childObj.S['name'] := error.name;
-        if error.path <> '' then
-          childObj.S['path'] := error.path;
-        if error.data <> '' then
-          childObj.S['data'] := error.data;
-        obj.A['errors'].Add(childObj);
+        obj.A['errors'].Add(ErrorToJson(error));
       end;
       resultStr := obj.ToString;
       len^ := Length(resultStr) * SizeOf(WideChar);

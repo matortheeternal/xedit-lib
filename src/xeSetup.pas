@@ -48,11 +48,30 @@ uses
 }
 {******************************************************************************}
 
+procedure LoadFile(filePath: String; loadOrder: Integer);
+var
+  _file: IwbFile;
+begin
+  _file := wbFile(filePath, loadOrder, '', False, False);
+  _file._AddRef;
+  SetLength(xFiles, Length(xFiles) + 1);
+  xFiles[High(xFiles)] := _file;
+end;
+
+procedure LoadHardcodedDat;
+var
+  _file: IwbFile;
+begin
+  _file := wbFile(Globals.Values['ProgramPath'] + wbGameName + wbHardcodedDat, 0);
+  _file._AddRef;
+  SetLength(xFiles, Length(xFiles) + 1);
+  xFiles[High(xFiles)] := _file;
+end;
+
 procedure TLoaderThread.Execute;
 var
   i: Integer;
   sFileName: String;
-  _file: IwbFile;
 begin
   try
     for i := 0 to Pred(slLoadOrder.Count) do begin
@@ -61,10 +80,7 @@ begin
 
       // load plugin
       try
-        _file := wbFile(wbDataPath + sFileName, i, '', False, False);
-        _file._AddRef;
-        SetLength(xFiles, Length(xFiles) + 1);
-        xFiles[High(xFiles)] := _file;
+        LoadFile(wbDataPath + sFileName, i);
       except
         on x: Exception do begin
           AddMessage('Exception loading ' + sFileName);
@@ -75,10 +91,7 @@ begin
 
       // load hardcoded dat
       if i = 0 then try
-        _file := wbFile(Globals.Values['ProgramPath'] + wbGameName + wbHardcodedDat, 0);
-        _file._AddRef;
-        SetLength(xFiles, Length(xFiles) + 1);
-        xFiles[High(xFiles)] := _file;
+        LoadHardCodedDat;
       except
         on x: Exception do begin
           AddMessage('Exception loading ' + wbGameName + wbHardcodedDat);
@@ -189,6 +202,7 @@ begin
 
       // SET RESULT STRING
       resultStr := slLoadOrder.Text;
+      Delete(resultStr, Length(resultStr) - 1, 2);
       len^ := Length(resultStr) * SizeOf(WideChar);
       Result := True;
     finally
