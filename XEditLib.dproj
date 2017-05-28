@@ -4,7 +4,7 @@
 			<MainSource>XEditLib.dpr</MainSource>
 			<ProjectVersion>12.3</ProjectVersion>
 			<Base>True</Base>
-			<Config Condition="'$(Config)'==''">Debug</Config>
+			<Config Condition="'$(Config)'==''">Release</Config>
 			<Platform>Win32</Platform>
 			<AppType>Library</AppType>
 			<FrameworkType>None</FrameworkType>
@@ -46,12 +46,11 @@
 			<DCC_GenerateStackFrames>true</DCC_GenerateStackFrames>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Cfg_2)'!=''">
+			<DCC_MapFile>3</DCC_MapFile>
 			<DCC_ExeOutput>.</DCC_ExeOutput>
 			<DCC_DcuOutput>.\units</DCC_DcuOutput>
-			<DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>
 			<DCC_Define>RELEASE;$(DCC_Define)</DCC_Define>
 			<DCC_SymbolReferenceInfo>0</DCC_SymbolReferenceInfo>
-			<DCC_DebugInformation>false</DCC_DebugInformation>
 		</PropertyGroup>
 		<ItemGroup>
 			<DelphiCompile Include="XEditLib.dpr">
@@ -113,7 +112,7 @@
 						<VersionInfo Name="MajorVer">0</VersionInfo>
 						<VersionInfo Name="MinorVer">0</VersionInfo>
 						<VersionInfo Name="Release">0</VersionInfo>
-						<VersionInfo Name="Build">333</VersionInfo>
+						<VersionInfo Name="Build">342</VersionInfo>
 						<VersionInfo Name="Debug">False</VersionInfo>
 						<VersionInfo Name="PreRelease">False</VersionInfo>
 						<VersionInfo Name="Special">False</VersionInfo>
@@ -125,7 +124,7 @@
 					<VersionInfoKeys>
 						<VersionInfoKeys Name="CompanyName"/>
 						<VersionInfoKeys Name="FileDescription"/>
-						<VersionInfoKeys Name="FileVersion">0.0.0.333</VersionInfoKeys>
+						<VersionInfoKeys Name="FileVersion">0.0.0.342</VersionInfoKeys>
 						<VersionInfoKeys Name="InternalName"/>
 						<VersionInfoKeys Name="LegalCopyright"/>
 						<VersionInfoKeys Name="LegalTrademarks"/>

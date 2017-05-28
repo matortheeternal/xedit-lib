@@ -24,6 +24,7 @@
 			<Base>true</Base>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Base)'!=''">
+			<DCC_Define>USE_DLL;$(DCC_Define)</DCC_Define>
 			<DCC_UnitSearchPath>src;lib\mahogany;lib\Argo;lib\xedit;lib\xedit\lz4;lib\xedit\zlib;lib\imaging;lib\mte;lib\imaging\zlib;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
 			<DCC_ImageBase>00400000</DCC_ImageBase>
 			<DCC_DcuOutput>.\$(Config)\$(Platform)\units</DCC_DcuOutput>
@@ -51,18 +52,7 @@
 			<DelphiCompile Include="XEditLibTests.dpr">
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
-			<DCCReference Include="src\xeElements.pas"/>
-			<DCCReference Include="src\xeElementValues.pas"/>
-			<DCCReference Include="src\xeErrors.pas"/>
-			<DCCReference Include="src\xeFiles.pas"/>
-			<DCCReference Include="src\xeFileValues.pas"/>
-			<DCCReference Include="src\xeGroups.pas"/>
-			<DCCReference Include="src\xeMasters.pas"/>
-			<DCCReference Include="src\xeMeta.pas"/>
-			<DCCReference Include="src\xeRecords.pas"/>
-			<DCCReference Include="src\xeRecordValues.pas"/>
-			<DCCReference Include="src\xeSerialization.pas"/>
-			<DCCReference Include="src\xeSetup.pas"/>
+			<DCCReference Include="tests\txImports.pas"/>
 			<DCCReference Include="tests\txMeta.pas"/>
 			<DCCReference Include="tests\txSetup.pas"/>
 			<DCCReference Include="tests\txFiles.pas"/>
