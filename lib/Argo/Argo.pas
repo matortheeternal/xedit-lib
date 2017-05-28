@@ -974,8 +974,10 @@ begin
   i := _Keys.IndexOf(key);
   _Keys.Delete(i);
   {$ENDIF}
-  if i > -1 then
+  if i > -1 then begin
+    TJSONValue(_Values[i]).Free;
     _Values.Delete(i);
+  end;
 end;
 
 function TJSONObject.ToString: String;
