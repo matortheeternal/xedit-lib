@@ -16,7 +16,7 @@ type
   procedure GetResultArray(_res: PCardinal; len: Integer); cdecl; external 'XEditLib.dll';
   procedure GetExceptionMessageLength(len: PInteger); cdecl; external 'XEditLib.dll';
   function GetExceptionMessage(str: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
-  function GetGlobal(key, value: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
+  function GetGlobal(key: PWideChar; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function Release(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
   function ResetStore: WordBool; cdecl; external 'XEditLib.dll';
 

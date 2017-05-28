@@ -34,10 +34,10 @@ begin
   SetGameMode(3);
   LoadPlugins(TestLoadOrder);
   while not GetLoaderDone do begin
-    WriteBuffer;
+    WriteMessages;
     Sleep(100);
   end;
-  WriteBuffer;
+  WriteMessages;
   WriteLn(' ');
 end;
 

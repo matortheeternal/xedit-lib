@@ -11,7 +11,7 @@ type
   PCardinalArray = ^CardinalArray;
 
   // PUBLIC TESTING INTERFACE
-  procedure WriteBuffer;
+  procedure WriteMessages;
   procedure WriteArray(a: CardinalArray);
   procedure WriteExceptions;
   procedure WriteStringToFile(str, filename: string);
@@ -32,7 +32,7 @@ uses
   xeMeta, xeFiles;
 {$ENDIF}
 
-procedure WriteBuffer;
+procedure WriteMessages;
 var
   len: Integer;
   str: WideString;
@@ -132,64 +132,52 @@ end;
 
 procedure BuildMetaTests;
 var
-  str: PWideChar;
-  success: WordBool;
   h1, h2: Cardinal;
+  len: Integer;
 begin
   Describe('Meta Methods', procedure
     begin
       Describe('GetGlobal', procedure
         begin
-          BeforeEach(procedure
-            begin
-              GetMem(str, 512);
-            end);
-
-          AfterEach(procedure
-            begin
-              FreeMem(str, 512);
-            end);
-
           It('Should have the ProgramPath global', procedure
             begin
-              GetGlobal(PWideChar('ProgramPath'), str, 512);
-              Expect(Length(str) > 0, 'Should return a string');
+              GetGlobal('ProgramPath', @len);
+              Expect(Length(grs(len)) > 0, 'Should return a string');
             end);
 
           It('Should have the Version global', procedure
             begin
-              GetGlobal(PWideChar('Version'), str, 512);
-              Expect(Length(str) > 0, 'Should return a string');
+              GetGlobal('Version', @len);
+              Expect(Length(grs(len)) > 0, 'Should return a string');
             end);
 
           It('Should have the GameName global', procedure
             begin
-              GetGlobal(PWideChar('GameName'), str, 512);
-              Expect(Length(str) > 0, 'Should return a string');
+              GetGlobal('GameName', @len);
+              Expect(Length(grs(len)) > 0, 'Should return a string');
             end);
 
           It('Should have the AppName global', procedure
             begin
-              GetGlobal(PWideChar('AppName'), str, 512);
-              Expect(Length(str) > 0, 'Should return a string');
+              GetGlobal('AppName', @len);
+              Expect(Length(grs(len)) > 0, 'Should return a string');
             end);
 
           It('Should have the LongGameName global', procedure
             begin
-              GetGlobal(PWideChar('LongGameName'), str, 512);
-              Expect(Length(str) > 0, 'Should return a string');
+              GetGlobal('LongGameName', @len);
+              Expect(Length(grs(len)) > 0, 'Should return a string');
             end);
 
           It('Should have the DataPath global', procedure
             begin
-              GetGlobal(PWideChar('DataPath'), str, 512);
-              Expect(Length(str) > 0, 'Should return a string');
+              GetGlobal('DataPath', @len);
+              Expect(Length(grs(len)) > 0, 'Should return a string');
             end);
 
           It('Should fail if global does not exist', procedure
             begin
-              success := GetGlobal(PWideChar('DoesNotExist'), str, 512);
-              Expect(not success, 'Result should be false');
+              ExpectFailure(GetGlobal('DoesNotExist', @len));
             end);
         end);
 
@@ -197,22 +185,19 @@ begin
         begin
           It('Should fail if handle is not allocated', procedure
             begin
-              success := Release(100);
-              Expect(not success, 'Result should be false');
+              ExpectFailure(Release(100));
             end);
 
           It('Should fail if null handle is passed', procedure
             begin
-              success := Release(0);
-              Expect(not success, 'Result should be false');
+              ExpectFailure(Release(0));
             end);
 
           It('Should free an allocated handle', procedure
             begin
-              FileByName('Skyrim.esm', @h1);
-              success := Release(h1);
-              Expect(success, 'Result should be true');
-              FileByName('Skyrim.esm', @h2);
+              ExpectSuccess(FileByName('Skyrim.esm', @h1));
+              ExpectSuccess(Release(h1));
+              ExpectSuccess(FileByName('Skyrim.esm', @h2));
               Expect(h1 = h2, 'Next allocation should use the freed handle');
             end);
         end);
@@ -221,9 +206,8 @@ begin
         begin
           It('Should clear all handles', procedure
             begin
-              success := ResetStore;
-              Expect(success, 'Result should be true');
-              FileByName('Skyrim.esm', @h1);
+              ExpectSuccess(ResetStore);
+              ExpectSuccess(FileByName('Skyrim.esm', @h1));
               Expect(h1 = 1, 'First handle allocated after resetting store should be 1');
             end);
         end);
