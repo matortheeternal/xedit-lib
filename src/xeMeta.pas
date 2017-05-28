@@ -15,7 +15,7 @@ uses
   procedure GetResultArray(_res: PCardinal; len: Integer); cdecl;
   procedure GetExceptionMessageLength(len: PInteger); cdecl;
   function GetExceptionMessage(str: PWideChar; len: Integer): WordBool; cdecl;
-  function GetGlobal(key, value: PWideChar; len: Integer): WordBool; cdecl;
+  function GetGlobal(key: PWideChar; len: PInteger): WordBool; cdecl;
   procedure StoreIfAssigned(var x: IInterface; var _res: PCardinal; var Success: WordBool);
   function Resolve(_id: Cardinal): IInterface;
   function Store(x: IInterface): Cardinal;
@@ -139,12 +139,13 @@ begin
   end;
 end;
 
-function GetGlobal(key, value: PWideChar; len: Integer): WordBool; cdecl;
+function GetGlobal(key: PWideChar; len: PInteger): WordBool; cdecl;
 begin
   Result := False;
   try
     if Globals.IndexOfName(key) > -1 then begin
-      StrLCopy(value, PWideChar(WideString(Globals.Values[key])), len);
+      resultStr := Globals.Values[key];
+      len^ := Length(resultStr) * SizeOf(WideChar);
       Result := True;
     end;
   except
