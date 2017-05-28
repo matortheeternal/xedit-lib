@@ -40,7 +40,7 @@ const
 
 exports
   // META METHODS
-  Initialize, Finalize, GetResultString, GetResultArray, GetMessagesLength,
+  InitXEdit, CloseXEdit, GetResultString, GetResultArray, GetMessagesLength,
   GetMessages, ClearMessages, GetExceptionMessageLength, GetExceptionMessage,
   GetGlobal, Release, ResetStore,
   // LOADING AND SET UP METHODS
