@@ -1,7 +1,6 @@
 program XEditLibTests;
 
 {$APPTYPE CONSOLE}
-{$DEFINE USE_DELL}
 
 uses
   SysUtils,

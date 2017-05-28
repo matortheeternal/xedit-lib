@@ -42,6 +42,7 @@ begin
   if len > 0 then begin
     GetMem(str, len);
     GetMessages(str, len);
+    ClearMessages;
     WriteLn(str);
   end;
 end;

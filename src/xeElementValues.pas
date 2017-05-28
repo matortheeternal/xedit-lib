@@ -8,7 +8,7 @@ uses
   function Name(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function Path(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function EditorID(_id: Cardinal; len: PInteger): WordBool; cdecl;
-  function Signature(_id: Cardinal; sig: PWideChar): WordBool; cdecl;
+  function Signature(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function FullName(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function SortKey(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function ElementType(_id: Cardinal; len: PInteger): WordBool; cdecl;
@@ -122,7 +122,6 @@ end;
 
 function Path(_id: Cardinal; len: PInteger): WordBool; cdecl;
 var
-  sPath: String;
   element: IwbElement;
 begin
   Result := False;
@@ -170,14 +169,15 @@ begin
     raise Exception.Create('Error: Element does not have a signature.');
 end;
 
-function Signature(_id: Cardinal; sig: PWideChar): WordBool; cdecl;
+function Signature(_id: Cardinal; len: PInteger): WordBool; cdecl;
 var
   element: IwbElement;
 begin
   Result := False;
   try
     if Supports(Resolve(_id), IwbElement, element) then begin
-      StrLCopy(sig, PWideChar(NativeSignature(element)), 4);
+      resultStr := NativeSignature(element);
+      len^ := Length(resultStr) * SizeOf(WideChar);
       Result := True;
     end;
   except
@@ -240,7 +240,6 @@ end;
 function ElementType(_id: Cardinal; len: PInteger): WordBool; cdecl;
 var
   element: IwbElement;
-  s: String;
 begin
   Result := False;
   try
@@ -299,7 +298,6 @@ function GetValue(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdec
 var
   e: IInterface;
   element: IwbElement;
-  sValue: string;
 begin
   Result := False;
   try

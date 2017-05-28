@@ -89,7 +89,7 @@ var
   text: String;
 begin
   text := MessageBuffer.Text;
-  Delete(text, 1, Length(text));
+  Delete(text, Length(text), 1);
   StrLCopy(str, PWideChar(WideString(text)), len);
 end;
 

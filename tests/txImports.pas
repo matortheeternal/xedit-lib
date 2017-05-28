@@ -73,7 +73,7 @@ type
   function Name(_id: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function Path(_id: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function EditorID(_id: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
-  function Signature(_id: Integer; sig: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
+  function Signature(_id: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function FullName(_id: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function SortKey(_id: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function ElementType(_id: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
@@ -100,7 +100,7 @@ type
   function AddGroup(_id: Cardinal; sig: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function GetGroupSignatures(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetChildGroup(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function GroupSignatureFromName(name, str: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
+  function GroupSignatureFromName(name: PWideChar; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GroupNameFromSignature(sig: PWideChar; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetGroupSignatureNameMap(len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
 

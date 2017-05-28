@@ -24,8 +24,8 @@ uses
 procedure BuildElementHandlingTests;
 var
   b: WordBool;
-  h, skyrim, testFile, armo, rec, keywords, keyword, dnam, element, testArmo,
-  testRec, testRec2: Cardinal;
+  h, skyrim, xt3, armo, rec, keywords, keyword, dnam, element, xtArmo,
+  xtRec, xtRec2: Cardinal;
   a: PCardinal;
   i: Integer;
   lst: TList;
@@ -40,10 +40,10 @@ begin
           GetElement(rec, 'KWDA', @keywords);
           GetElement(keywords, '[0]', @keyword);
           GetElement(rec, 'DNAM', @dnam);
-          GetElement(0, 'xtest-3.esp', @testFile);
-          GetElement(testFile, 'ARMO', @testArmo);
-          GetElement(testArmo, '00012E46', @testRec);
-          GetElement(0, 'xtest-2.esp\00012E46', @testRec2);
+          GetElement(0, 'xtest-3.esp', @xt3);
+          GetElement(xt3, 'ARMO', @xtArmo);
+          GetElement(xtArmo, '00012E46', @xtRec);
+          GetElement(0, 'xtest-2.esp\00012E46', @xtRec2);
         end);
 
       Describe('GetElement', procedure
@@ -299,7 +299,7 @@ begin
 
           It('Should return false for identical but different elements', procedure
             begin
-              ExpectSuccess(GetElement(testRec, 'DNAM', @h));
+              ExpectSuccess(GetElement(xtRec, 'DNAM', @h));
               ExpectSuccess(ElementEquals(dnam, h, @b));
               Expect(not b, 'Result should be false');
             end);
@@ -447,7 +447,7 @@ begin
 
           It('Should fail if called on a NULL reference', procedure
             begin
-              ExpectFailure(GetLinksTo(testArmo, 'ZNAM', @h));
+              ExpectFailure(GetLinksTo(xtArmo, 'ZNAM', @h));
             end);
 
           It('Should fail if path is invalid', procedure
@@ -474,19 +474,19 @@ begin
 
           It('Should be able to add groups to files', procedure
             begin
-              ExpectSuccess(AddElement(testFile, 'ARMO', @h));
+              ExpectSuccess(AddElement(xt3, 'ARMO', @h));
               Expect(h > 0, 'Handle should be greater than 0');
             end);
 
           It('Should be able to add records to groups', procedure
             begin
-              ExpectSuccess(AddElement(testArmo, 'ARMO', @h));
+              ExpectSuccess(AddElement(xtArmo, 'ARMO', @h));
               Expect(h > 0, 'Handle should be greater than 0');
             end);
 
           It('Should be able to create a new element on a record', procedure
             begin
-              ExpectSuccess(AddElement(testRec, 'Destructable', @h));
+              ExpectSuccess(AddElement(xtRec, 'Destructable', @h));
               Expect(h > 0, 'Handle should be greater than 0');
             end);
 
@@ -504,7 +504,7 @@ begin
 
           It('Should fail if parent element is not a container', procedure
             begin
-              GetElement(testRec, 'FULL', @element);
+              GetElement(xtRec, 'FULL', @element);
               ExpectFailure(AddElement(element, '', @h));
             end);
         end);
@@ -513,23 +513,23 @@ begin
         begin
           It('Should remove the element at the given path', procedure
             begin
-              ExpectSuccess(RemoveElement(testRec, 'Female world model'));
-              ExpectSuccess(ElementExists(testRec, 'Female world model', @b));
+              ExpectSuccess(RemoveElement(xtRec, 'Female world model'));
+              ExpectSuccess(ElementExists(xtRec, 'Female world model', @b));
               Expect(not b, 'The element should no longer be present');
             end);
 
           It('Should remove the element at the given indexed path', procedure
             begin
-              ExpectSuccess(RemoveElement(testRec2, 'KWDA\[4]'));
-              ExpectSuccess(ElementExists(testRec2, 'KWDA\[4]', @b));
+              ExpectSuccess(RemoveElement(xtRec2, 'KWDA\[4]'));
+              ExpectSuccess(ElementExists(xtRec2, 'KWDA\[4]', @b));
               Expect(not b, 'The element should no longer be present');
             end);
 
           It('Should remove the element passed if no path is given', procedure
             begin
-              ExpectSuccess(GetElement(testRec, 'ZNAM', @element));
+              ExpectSuccess(GetElement(xtRec, 'ZNAM', @element));
               ExpectSuccess(RemoveElement(element, ''));
-              ExpectSuccess(ElementExists(testRec, 'ZNAM', @b));
+              ExpectSuccess(ElementExists(xtRec, 'ZNAM', @b));
               Expect(not b, 'The element should no longer be present');
             end);
 
@@ -540,7 +540,7 @@ begin
 
           It('Should fail if no element exists at the given path', procedure
             begin
-              ExpectFailure(RemoveElement(testRec, 'YNAM'));
+              ExpectFailure(RemoveElement(xtRec, 'YNAM'));
             end);
         end);
     end);

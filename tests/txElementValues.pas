@@ -19,7 +19,7 @@ uses
 
 procedure BuildElementValueTests;
 var
-  testFile, block, subBlock, childGroup, persistentGroup, refr, armo, rec, 
+  xt2, block, subBlock, childGroup, persistentGroup, refr, armo, rec,
   element, keyword, h, c: Cardinal;
   expectedName: String;
   sig: PWideChar;
@@ -31,16 +31,16 @@ begin
       BeforeAll(procedure
         begin
           GetMem(sig, 8);
-          GetElement(0, 'xtest-2.esp', @testFile);
-          GetElement(testFile, 'ARMO', @armo);
+          GetElement(0, 'xtest-2.esp', @xt2);
+          GetElement(xt2, 'ARMO', @armo);
           GetElement(armo, '00012E46', @rec);
           GetElement(rec, 'DNAM', @element);
           GetElement(rec, 'KWDA\[1]', @keyword);
-          GetElement(testFile, '00027D1C\Child Group', @childGroup);
-          GetElement(testFile, 'CELL\[0]', @block);
+          GetElement(xt2, '00027D1C\Child Group', @childGroup);
+          GetElement(xt2, 'CELL\[0]', @block);
           GetElement(block, '[0]', @subBlock);
           GetElement(childGroup, '[0]', @persistentGroup);
-          GetElement(testFile, '000170F0', @refr);
+          GetElement(xt2, '000170F0', @refr);
         end);
 
       AfterAll(procedure
@@ -52,7 +52,7 @@ begin
         begin
           It('Should resolve file names', procedure
             begin
-              ExpectSuccess(Name(testFile, @len));
+              ExpectSuccess(Name(xt2, @len));
               ExpectEqual(grs(len), 'xtest-2.esp', '');
             end);
           Describe('Group names', procedure
@@ -110,7 +110,7 @@ begin
         begin
           It('Should resolve file names', procedure
             begin
-              ExpectSuccess(Path(testFile, @len));
+              ExpectSuccess(Path(xt2, @len));
               ExpectEqual(grs(len), 'xtest-2.esp', '');
             end);
           It('Should resolve group signatures', procedure
@@ -159,7 +159,7 @@ begin
         begin
           It('Should fail if a file is passed', procedure
             begin
-              ExpectFailure(EditorID(testFile, @len));
+              ExpectFailure(EditorID(xt2, @len));
             end);
           It('Should fail if a group is passed', procedure
             begin
@@ -187,36 +187,36 @@ begin
         begin
           It('Should fail if a file is passed', procedure
             begin
-              ExpectFailure(Signature(testFile, sig));
+              ExpectFailure(Signature(xt2, @len));
             end);
           It('Should fail if an element with no signature is passed', procedure
             begin
-              ExpectFailure(Signature(keyword, sig));
+              ExpectFailure(Signature(keyword, @len));
             end);
           It('Should resolve group signatures', procedure
             begin
-              ExpectSuccess(Signature(block, sig));
-              ExpectEqual(String(sig), 'GRUP', '');
-              ExpectSuccess(Signature(subBlock, sig));
-              ExpectEqual(String(sig), 'GRUP', '');
-              ExpectSuccess(Signature(childGroup, sig));
-              ExpectEqual(String(sig), 'GRUP', '');
-              ExpectSuccess(Signature(persistentGroup, sig));
-              ExpectEqual(String(sig), 'GRUP', '');
-              ExpectSuccess(Signature(armo, sig));
-              ExpectEqual(String(sig), 'ARMO', '');
+              ExpectSuccess(Signature(block, @len));
+              ExpectEqual(grs(len), 'GRUP', '');
+              ExpectSuccess(Signature(subBlock, @len));
+              ExpectEqual(grs(len), 'GRUP', '');
+              ExpectSuccess(Signature(childGroup, @len));
+              ExpectEqual(grs(len), 'GRUP', '');
+              ExpectSuccess(Signature(persistentGroup, @len));
+              ExpectEqual(grs(len), 'GRUP', '');
+              ExpectSuccess(Signature(armo, @len));
+              ExpectEqual(grs(len), 'ARMO', '');
             end);
           It('Should resolve record signatures', procedure
             begin
-              ExpectSuccess(Signature(rec, sig));
-              ExpectEqual(String(sig), 'ARMO', '');
-              ExpectSuccess(Signature(refr, sig));
-              ExpectEqual(String(sig), 'REFR', '');
+              ExpectSuccess(Signature(rec, @len));
+              ExpectEqual(grs(len), 'ARMO', '');
+              ExpectSuccess(Signature(refr, @len));
+              ExpectEqual(grs(len), 'REFR', '');
             end);
           It('Should resolve element signatures', procedure
             begin
-              ExpectSuccess(Signature(element, sig));
-              ExpectEqual(String(sig), 'DNAM', '');
+              ExpectSuccess(Signature(element, @len));
+              ExpectEqual(grs(len), 'DNAM', '');
             end);
         end);
         
@@ -224,7 +224,7 @@ begin
         begin
           It('Should fail if a file is passed', procedure
             begin
-              ExpectFailure(FullName(testFile, @len));
+              ExpectFailure(FullName(xt2, @len));
             end);
           It('Should fail if a group is passed', procedure
             begin

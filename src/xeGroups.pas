@@ -9,7 +9,7 @@ uses
   function AddGroup(_id: Cardinal; sig: PWideChar; _res: PCardinal): WordBool; cdecl;
   function GetGroupSignatures(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function GetChildGroup(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
-  function GroupSignatureFromName(name, sig: PWideChar): WordBool; cdecl;
+  function GroupSignatureFromName(name: PWideChar; len: PInteger): WordBool; cdecl;
   function GroupNameFromSignature(sig: PWideChar; len: PInteger): WordBool; cdecl;
   function GetGroupSignatureNameMap(len: PInteger): WordBool; cdecl;
 
@@ -124,16 +124,14 @@ begin
   end;
 end;
 
-function GroupSignatureFromName(name, sig: PWideChar): WordBool; cdecl;
-var
-  str: string;
+function GroupSignatureFromName(name: PWideChar; len: PInteger): WordBool; cdecl;
 begin
   Result := False;
   try
     BuildGroupNameMap;
     if slGroupNameMap.IndexOfName(string(name)) > -1 then begin
-      str := slGroupNameMap.Values[string(name)];
-      StrLCopy(sig, PWideChar(str), 4);
+      resultStr := slGroupNameMap.Values[string(name)];
+      len^ := Length(resultStr) * SizeOf(WideChar);
       Result := True;
     end;
   except
