@@ -31,10 +31,11 @@ var
 implementation
 
 uses
+  wbImplementation, wbInterface,
   // mte modules
   mteHelpers,
   // xelib modules
-  xeConfiguration, xeMessages;
+  xeConfiguration, xeMessages, xeSetup;
 
 
 {******************************************************************************}
@@ -62,12 +63,19 @@ begin
 end;
 
 procedure Finalize; cdecl;
+var
+  i: Integer;
 begin
-  // TODO: Clear loaded files
   SaveBuffer;
+  settings.Free;
   MessageBuffer.Free;
-  _store.Free;
   _releasedIDs.Free;
+  _store.Free;
+  SetLength(xFiles, 0);
+  xFiles := nil;
+  wbFileForceClosed;
+  if Assigned(wbContainerHandler) then
+    wbContainerHandler._Release;
 end;
 
 procedure ExceptionHandler(x: Exception);
@@ -85,12 +93,8 @@ begin
 end;
 
 procedure GetMessages(str: PWideChar; len: Integer); cdecl;
-var
-  text: String;
 begin
-  text := MessageBuffer.Text;
-  Delete(text, Length(text), 1);
-  StrLCopy(str, PWideChar(WideString(text)), len);
+  StrLCopy(str, PWideChar(MessageBuffer.Text), len);
 end;
 
 procedure GetResult(str: PWideChar; len: Integer); cdecl;

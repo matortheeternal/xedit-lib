@@ -130,10 +130,10 @@ begin
   Result := False;
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
-      if High(Files) > len then exit;
+      if High(xFiles) > len then exit;
       index := 0;
-      for i := Low(Files) to High(Files) do begin
-        f := Files[i];
+      for i := Low(xFiles) to High(xFiles) do begin
+        f := xFiles[i];
         if NativeFileHasMaster(f, _file) then begin
           _res[index] := Store(f);
           Inc(index);

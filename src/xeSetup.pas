@@ -28,8 +28,9 @@ type
   function PluginListCompare(List: TStringList; Index1, Index2: Integer): Integer;
 
 var
-  Files: array of IwbFile;
+  xFiles: array of IwbFile;
   slLoadOrder: TStringList;
+  LoaderThread: TLoaderThread;
 
 implementation
 
@@ -62,8 +63,8 @@ begin
       try
         _file := wbFile(wbDataPath + sFileName, i, '', False, False);
         _file._AddRef;
-        SetLength(Files, Length(Files) + 1);
-        Files[High(Files)] := _file;
+        SetLength(xFiles, Length(xFiles) + 1);
+        xFiles[High(xFiles)] := _file;
       except
         on x: Exception do begin
           AddMessage('Exception loading ' + sFileName);
@@ -76,8 +77,8 @@ begin
       if i = 0 then try
         _file := wbFile(Globals.Values['ProgramPath'] + wbGameName + wbHardcodedDat, 0);
         _file._AddRef;
-        SetLength(Files, Length(Files) + 1);
-        Files[High(Files)] := _file;
+        SetLength(xFiles, Length(xFiles) + 1);
+        xFiles[High(xFiles)] := _file;
       except
         on x: Exception do begin
           AddMessage('Exception loading ' + wbGameName + wbHardcodedDat);
@@ -214,7 +215,7 @@ begin
     Globals.Values['FileCount'] := IntToStr(slLoadOrder.Count);
 
     // start loader thread
-    TLoaderThread.Create;
+    LoaderThread := TLoaderThread.Create;
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
@@ -224,6 +225,10 @@ end;
 function GetLoaderDone: WordBool; cdecl;
 begin
   Result := ProgramStatus.bLoaderDone;
+  if Result then begin
+    if Assigned(LoaderThread) then LoaderThread.Free;
+    if Assigned(slLoadOrder) then slLoadOrder.Free;
+  end;
 end;
 
 function GetGamePath(mode: Integer; len: PInteger): WordBool; cdecl;

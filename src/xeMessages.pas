@@ -23,14 +23,4 @@ begin
   MessageBuffer.SaveToFile('xelib_log.txt');
 end;
 
-initialization
-begin
-  MessageBuffer := TStringList.Create;
-end;
-
-finalization
-begin
-  MessageBuffer.Free;
-end;
-
 end.

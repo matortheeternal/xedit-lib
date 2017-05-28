@@ -40,8 +40,8 @@ uses
 function NextLoadOrder: Integer;
 begin
   Result := 0;
-  if Length(Files) > 0 then
-    Result := Succ(Files[High(Files)].LoadOrder);
+  if Length(xFiles) > 0 then
+    Result := Succ(xFiles[High(xFiles)].LoadOrder);
 end;
 
 function NativeAddFile(filename: string): IwbFile;
@@ -62,8 +62,8 @@ begin
 
   // create new file
   _file := wbNewFile(filePath, LoadOrder);
-  SetLength(Files, Succ(Length(Files)));
-  Files[High(Files)] := _file;
+  SetLength(xFiles, Succ(Length(xFiles)));
+  xFiles[High(xFiles)] := _file;
   _file._AddRef;
   Result := _file;
 end;
@@ -81,7 +81,7 @@ end;
 
 function NativeFileByIndex(index: Integer): IwbFile;
 begin
-  Result := Files[index];
+  Result := xFiles[index];
 end;
 
 function FileByIndex(index: Integer; _res: PCardinal): WordBool; cdecl;
@@ -104,9 +104,9 @@ function NativeFileByLoadOrder(load_order: Integer): IwbFile;
 var
   i: Integer;
 begin
-  for i := Low(Files) to High(Files) do
-    if Files[i].LoadOrder = load_order then begin
-      Result := Files[i];
+  for i := Low(xFiles) to High(xFiles) do
+    if xFiles[i].LoadOrder = load_order then begin
+      Result := xFiles[i];
       exit;
     end;
 end;
@@ -131,9 +131,9 @@ function NativeFileByName(name: String): IwbFile;
 var
   i: Integer;
 begin
-  for i := Low(Files) to High(Files) do
-    if Files[i].FileName = string(name) then begin
-      Result := Files[i];
+  for i := Low(xFiles) to High(xFiles) do
+    if xFiles[i].FileName = string(name) then begin
+      Result := xFiles[i];
       exit;
     end;
 end;
@@ -159,10 +159,10 @@ var
   i: Integer;
   s: String;
 begin
-  for i := Low(Files) to High(Files) do begin
-    s := Files[i].Header.ElementEditValues['CNAM'];
+  for i := Low(xFiles) to High(xFiles) do begin
+    s := xFiles[i].Header.ElementEditValues['CNAM'];
     if SameText(s, author) then begin
-      Result := Files[i];
+      Result := xFiles[i];
       exit;
     end;
   end;

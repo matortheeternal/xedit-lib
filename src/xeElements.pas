@@ -278,9 +278,9 @@ var
   i: Integer;
 begin
   Result := False;
-  if High(Files) + 1 > len then exit;
-  for i := 0 to High(Files) do
-    _res[i] := Store(Files[i]);
+  if High(xFiles) + 1 > len then exit;
+  for i := 0 to High(xFiles) do
+    _res[i] := Store(xFiles[i]);
   Result := True;
 end;
 
@@ -480,7 +480,7 @@ begin
   Result := False;
   try
     if _id = 0 then begin
-      count^ := High(Files) + 1;
+      count^ := High(xFiles) + 1;
       Result := True;
     end
     else if Supports(Resolve(_id), IwbContainerElementRef, container) then begin
