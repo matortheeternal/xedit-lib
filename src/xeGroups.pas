@@ -7,11 +7,11 @@ uses
 
   function HasGroup(_id: Cardinal; sig: PWideChar; bool: PWordBool): WordBool; cdecl;
   function AddGroup(_id: Cardinal; sig: PWideChar; _res: PCardinal): WordBool; cdecl;
-  function GetGroupSignatures(_id: Cardinal; groups: PWideChar; len: Integer): WordBool; cdecl;
+  function GetGroupSignatures(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function GetChildGroup(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function GroupSignatureFromName(name, sig: PWideChar): WordBool; cdecl;
-  function GroupNameFromSignature(sig, name: PWideChar; len: Integer): WordBool; cdecl;
-  function GetGroupSignatureNameMap(str: PWideChar; len: Integer): WordBool; cdecl;
+  function GroupNameFromSignature(sig: PWideChar; len: PInteger): WordBool; cdecl;
+  function GetGroupSignatureNameMap(len: PInteger): WordBool; cdecl;
 
   // native functions
   function IsChildGroup(group: IwbGroupRecord): Boolean;
@@ -86,19 +86,18 @@ begin
   end;
 end;
 
-function GetGroupSignatures(_id: Cardinal; groups: PWideChar; len: Integer): WordBool; cdecl;
+function GetGroupSignatures(_id: Cardinal; len: PInteger): WordBool; cdecl;
 var
   _file: IwbFile;
-  s: String;
   i: Integer;
 begin
   Result := False;
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
-      s := '';
+      resultStr := '';
       for i := 1 to _file.ElementCount do
-        s := s + string(IwbGroupRecord(_file.Elements[i]).Signature) + #13;
-      StrLCopy(groups, PWideChar(s), len);
+        resultStr := resultStr + string(IwbGroupRecord(_file.Elements[i]).Signature) + #13;
+      len^ := Length(resultStr) * SizeOf(WideChar);
       Result := True;
     end;
   except
@@ -127,7 +126,7 @@ end;
 
 function GroupSignatureFromName(name, sig: PWideChar): WordBool; cdecl;
 var
-  str: String;
+  str: string;
 begin
   Result := False;
   try
@@ -142,16 +141,15 @@ begin
   end;
 end;
 
-function GroupNameFromSignature(sig, name: PWideChar; len: Integer): WordBool; cdecl;
+function GroupNameFromSignature(sig: PWideChar; len: PInteger): WordBool; cdecl;
 var
-  str: String;
   RecordDef: PwbRecordDef;
 begin
   Result := False;
   try
     if wbFindRecordDef(AnsiString(sig), RecordDef) then begin
-      str := RecordDef.Name;
-      StrLCopy(name, PWideChar(WideString(str)), len);
+      resultStr := RecordDef.Name;
+      len^ := Length(resultStr) * SizeOf(WideChar);
       Result := True;
     end;
   except
@@ -159,16 +157,14 @@ begin
   end;
 end;
 
-function GetGroupSignatureNameMap(str: PWideChar; len: Integer): WordBool; cdecl;
-var
-  text: String;
+function GetGroupSignatureNameMap(len: PInteger): WordBool; cdecl;
 begin
   Result := False;
   try
     BuildGroupNameMap;
-    text := slGroupNameMap.Text;
-    Delete(text, Length(text), 1);
-    StrLCopy(str, PWideChar(text), len);
+    resultStr := slGroupNameMap.Text;
+    len^ := Length(resultStr) * SizeOf(WideChar);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;

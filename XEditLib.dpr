@@ -33,7 +33,6 @@ uses
   wbStreams in 'lib\xedit\wbStreams.pas',
   Argo in 'lib\Argo\Argo.pas';
 
-{$R *.RES}
 {$MAXSTACKSIZE 2097152}
 
 const
@@ -41,8 +40,8 @@ const
 
 exports
   // META METHODS
-  Initialize, Finalize, GetBuffer, FlushBuffer, GetExceptionMessage, GetGlobal,
-  Release, ResetStore,
+  Initialize, Finalize, GetResult, GetMessagesLength, GetMessages, ClearMessages,
+  GetExceptionMessageLength, GetExceptionMessage, GetGlobal, Release, ResetStore,
   // LOADING AND SET UP METHODS
   SetGameMode, GetLoadOrder, LoadPlugins, GetLoaderDone, GetGamePath,
   // FILE HANDLING METHODS

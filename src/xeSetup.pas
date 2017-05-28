@@ -14,10 +14,10 @@ type
   end;
 
   function SetGameMode(mode: Integer): WordBool; cdecl;
-  function GetLoadOrder(str: PWideChar; len: Integer): WordBool; cdecl;
+  function GetLoadOrder(len: PInteger): WordBool; cdecl;
   function LoadPlugins(loadOrder: PWideChar): WordBool; cdecl;
   function GetLoaderDone: WordBool; cdecl;
-  function GetGamePath(mode: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
+  function GetGamePath(mode: Integer; len: PInteger): WordBool; cdecl;
 
   // LOAD ORDER HELPERS
   procedure RemoveCommentsAndEmpty(var sl: TStringList);
@@ -118,7 +118,7 @@ begin
   end;
 end;
 
-function GetLoadOrder(str: PWideChar; len: Integer): WordBool; cdecl;
+function GetLoadOrder(len: PInteger): WordBool; cdecl;
 var
   slPlugins, slLoadOrder: TStringList;
   sLoadPath, sPath: String;
@@ -186,9 +186,9 @@ begin
         slLoadOrder.CustomSort(PluginListCompare);
       end;
 
-      // RETURN RESULT
-      if Length(slLoadOrder.Text) > len then exit;
-      StrLCopy(str, PWideChar(WideString(slLoadOrder.Text)), len);
+      // SET RESULT STRING
+      resultStr := slLoadOrder.Text;
+      len^ := Length(resultStr) * SizeOf(WideChar);
       Result := True;
     finally
       slPlugins.Free;
@@ -226,15 +226,13 @@ begin
   Result := ProgramStatus.bLoaderDone;
 end;
 
-function GetGamePath(mode: Integer; str: PWideChar; len: Integer): WordBool; cdecl;
-var
-  path: String;
+function GetGamePath(mode: Integer; len: PInteger): WordBool; cdecl;
 begin
   Result := False;
   try
-    path := NativeGetGamePath(GameArray[mode]);
-    if path <> '' then begin
-      StrLCopy(str, PWideChar(WideString(path)), len);
+    resultStr := NativeGetGamePath(GameArray[mode]);
+    if resultStr <> '' then begin
+      len^ := Length(resultStr) * SizeOf(WideChar);
       Result := True;
     end;
   except

@@ -317,7 +317,7 @@ const
 var
   context: PWideChar;
 begin
-  GetMem(context, 34);
+  GetMem(context, 36);
   StrLCopy(context, pos - 8, 17);
   self.Message := Format(JSONExceptionMessages[Ord(exceptionType)], [context]);
 end;
@@ -812,7 +812,7 @@ end;
 
 function TJSONObject.GetKey(index: Integer): String;
 begin
-  Result := _Keys.Names[index];
+  Result := _Keys.Strings[index];
 end;
 
 function TJSONObject.GetValue(key: String): TJSONValue;

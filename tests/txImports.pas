@@ -21,10 +21,10 @@ type
 
   // LOADING AND SET UP METHODS
   function SetGameMode(mode: Integer): Boolean; cdecl; external 'XEditLib.dll';
-  function GetLoadOrder(str: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
+  function GetLoadOrder(len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function LoadPlugins(loadOrder: PWideChar): WordBool; cdecl; cdecl; external 'XEditLib.dll';
   function GetLoaderDone: WordBool; cdecl; external 'XEditLib.dll';
-  function GetGamePath(gameMode: Integer; str: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
+  function GetGamePath(gameMode: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
 
   // MASTER HANDLING METHODS
   function CleanMasters(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
@@ -44,10 +44,10 @@ type
   function GetFileHeader(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function GetNextObjectId(_id: Cardinal; nextObjectID: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function SetNextObjectID(_id, nextObjectID: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function GetFileName(_id: Cardinal; fileName: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
-  function GetAuthor(_id: Cardinal; author: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
+  function GetFileName(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function GetAuthor(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function SetAuthor(_id: Cardinal; author: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
-  function GetDescription(_id: Cardinal; desc: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
+  function GetDescription(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function SetDescription(_id: Cardinal; desc: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
   function OverrideRecordCount(_id: Cardinal; count: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetIsESM(_id: Cardinal; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
@@ -70,15 +70,15 @@ type
   function IsWinningOverride(_id: Cardinal; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
 
   // ELEMENT VALUE METHODS
-  function Name(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
-  function Path(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
-  function EditorID(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
-  function Signature(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
-  function FullName(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
-  function SortKey(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
-  function ElementType(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
-  function DefType(_id: Integer; str: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
-  function GetValue(_id: Integer; path: PWideChar; str: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
+  function Name(_id: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function Path(_id: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function EditorID(_id: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function Signature(_id: Integer; sig: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
+  function FullName(_id: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function SortKey(_id: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function ElementType(_id: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function DefType(_id: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function GetValue(_id: Integer; path: PWideChar; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function SetValue(_id: Integer; path: PWideChar; value: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
   function GetIntValue(_id: Integer; path: PWideChar; value: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function SetIntValue(_id: Integer; path: PWideChar; value: Integer): WordBool; cdecl; external 'XEditLib.dll';
@@ -98,11 +98,11 @@ type
   // GROUP HANDLING METHODS
   function HasGroup(_id: Cardinal; sig: PWideChar; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
   function AddGroup(_id: Cardinal; sig: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function GetGroupSignatures(_id: Cardinal; groups: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
+  function GetGroupSignatures(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetChildGroup(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function GroupSignatureFromName(name, str: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
-  function GroupNameFromSignature(sig, str: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
-  function GetGroupSignatureNameMap(str: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
+  function GroupNameFromSignature(sig: PWideChar; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function GetGroupSignatureNameMap(len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
 
   // RECORD HANDLING METHODS
   function AddRecord(_id: Cardinal; sig: string; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';

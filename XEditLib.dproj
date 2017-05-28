@@ -85,9 +85,7 @@
 			<DCCReference Include="lib\xedit\wbDefinitionsTES5.pas"/>
 			<DCCReference Include="lib\xedit\wbHelpers.pas"/>
 			<DCCReference Include="lib\xedit\wbLocalization.pas"/>
-			<DCCReference Include="lib\xedit\wbStreams.pas">
-				<Form>$R *.RES</Form>
-			</DCCReference>
+			<DCCReference Include="lib\xedit\wbStreams.pas"/>
 			<DCCReference Include="lib\Argo\Argo.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>

@@ -30,13 +30,9 @@ const
     'xtest-5.esp';
 
 procedure LoadXEdit;
-var
-  str: PWideChar;
 begin
   SetGameMode(3);
-  GetMem(str, 4096); // 16KB for load order, to be safe
-  StrLCopy(str, PWideChar(TestLoadOrder), 4096);
-  LoadPlugins(str);
+  LoadPlugins(TestLoadOrder);
   while not GetLoaderDone do begin
     WriteBuffer;
     Sleep(100);

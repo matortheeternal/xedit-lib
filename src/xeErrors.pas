@@ -38,8 +38,8 @@ type
 
   function CheckForErrors(_id: Cardinal): WordBool; cdecl;
   function GetErrorThreadDone: WordBool; cdecl;
-  function GetErrors(str: PWideChar; len: Integer): WordBool; cdecl;
-  function GetErrorString(_id: Cardinal; error: PWideChar; len: Integer): WordBool; cdecl;
+  function GetErrors(len: PInteger): WordBool; cdecl;
+  function GetErrorString(_id: Cardinal; len: PInteger): WordBool; cdecl;
 
 const
   ErrorTypes: array[0..6] of TErrorType = (
@@ -173,7 +173,7 @@ begin
   Result := bErrorCheckThreadDone;
 end;
 
-function GetErrors(str: PWideChar; len: Integer): WordBool; cdecl;
+function GetErrors(len: PInteger): WordBool; cdecl;
 var
   i: Integer;      
   obj, childObj: TJSONObject;
@@ -197,7 +197,8 @@ begin
           childObj.S['data'] := error.data;
         obj.A['errors'].Add(childObj);
       end;
-      StrLCopy(str, PWideChar(WideString(obj.ToString)), len);
+      resultStr := obj.ToString;
+      len^ := Length(resultStr) * SizeOf(WideChar);
       Result := True;
     finally
       obj.Free;
@@ -207,14 +208,15 @@ begin
   end;
 end;
 
-function GetErrorString(_id: Cardinal; error: PWideChar; len: Integer): WordBool; cdecl;
+function GetErrorString(_id: Cardinal; len: PInteger): WordBool; cdecl;
 var
   element: IwbElement;
 begin
   Result := False;
   try
     if Supports(Resolve(_id), IwbElement, element) then begin
-      StrLCopy(error, PWideChar(WideString(element.Check)), len);
+      resultStr := element.Check;
+      len^ := Length(resultStr) * SizeOf(WideChar);
       Result := True;
     end;
   except

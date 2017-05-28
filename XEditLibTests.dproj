@@ -36,6 +36,7 @@
 			<DCC_K>false</DCC_K>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Cfg_1)'!=''">
+			<DCC_MapFile>3</DCC_MapFile>
 			<DCC_Define>DEBUG;$(DCC_Define)</DCC_Define>
 			<DCC_Optimize>false</DCC_Optimize>
 			<DCC_GenerateStackFrames>true</DCC_GenerateStackFrames>
@@ -50,9 +51,7 @@
 			<DelphiCompile Include="XEditLibTests.dpr">
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
-			<DCCReference Include="src\xeElements.pas">
-				<Form>$ENDIF</Form>
-			</DCCReference>
+			<DCCReference Include="src\xeElements.pas"/>
 			<DCCReference Include="src\xeElementValues.pas"/>
 			<DCCReference Include="src\xeErrors.pas"/>
 			<DCCReference Include="src\xeFiles.pas"/>

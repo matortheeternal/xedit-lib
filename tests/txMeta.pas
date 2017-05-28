@@ -18,7 +18,7 @@ type
   procedure ExpectSuccess(b: WordBool);
   procedure ExpectFailure(b: WordBool);
   procedure BuildMetaTests;
-  function GetResultString(len: Integer): String;
+  function grs(len: Integer): String;
   procedure GetCardinalArray(a: PCardinal; len: Integer; lst: TList);
   procedure WriteCardinalArray(lst: TList);
 
@@ -46,10 +46,15 @@ begin
   end;
 end;
 
-function GetResultString(len: Integer): String;
+// grs = Get Result String
+function grs(len: Integer): String;
 var
   str: PWideChar;
 begin
+  if len = 0 then begin
+    Result := '';
+    exit;
+  end;
   GetMem(str, len);
   GetResult(str, len);
   Result := String(str);

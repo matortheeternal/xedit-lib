@@ -24,15 +24,13 @@ uses
 procedure BuildFileValueTests;
 var
   h, skyrim, update, xt1, xt2, xt3, v: Cardinal;
-  str: PWideChar;
   b: WordBool;
-  count: Integer;
+  len, count: Integer;
 begin
   Describe('File Value Functions', procedure
     begin
       BeforeAll(procedure
         begin
-          GetMem(str, 4096);
           FileByName('Skyrim.esm', @skyrim);
           FileByName('Update.esm', @update);
           FileByName('xtest-1.esp', @xt1);
@@ -40,17 +38,12 @@ begin
           FileByName('xtest-3.esp', @xt3);
         end);
 
-      AfterAll(procedure
-        begin
-          FreeMem(str, 4096);
-        end);
-
       Describe('GetFileName', procedure
         begin
           It('Should return filename', procedure
             begin
-              ExpectSuccess(GetFileName(skyrim, str, 4096));
-              ExpectEqual(string(str), 'Skyrim.esm');
+              ExpectSuccess(GetFileName(skyrim, @len));
+              ExpectEqual(grs(len), 'Skyrim.esm');
             end);
         end);
 
@@ -58,8 +51,8 @@ begin
         begin
           It('Should return file author', procedure
             begin
-              ExpectSuccess(GetAuthor(skyrim, str, 4096));
-              ExpectEqual(string(str), 'mcarofano');
+              ExpectSuccess(GetAuthor(skyrim, @len));
+              ExpectEqual(grs(len), 'mcarofano');
             end);
         end);
 
@@ -67,14 +60,14 @@ begin
         begin
           It('Should return an empty string if plugin has no description', procedure
             begin
-              ExpectSuccess(GetDescription(skyrim, str, 4096));
-              ExpectEqual(string(str), '');
+              ExpectSuccess(GetDescription(skyrim, @len));
+              ExpectEqual(grs(len), '');
             end);
 
           It('Should return the description if defined', procedure
             begin
-              ExpectSuccess(GetDescription(xt1, str, 4096));
-              ExpectEqual(string(str), 'Test plugin for xedit-lib');
+              ExpectSuccess(GetDescription(xt1, @len));
+              ExpectEqual(grs(len), 'Test plugin for xedit-lib');
             end);
         end);
 
@@ -143,15 +136,15 @@ begin
           It('Should set the author', procedure
             begin
               ExpectSuccess(SetAuthor(xt1, 'Test'));
-              ExpectSuccess(GetAuthor(xt1, str, 4096));
-              ExpectEqual(string(str), 'Test');
+              ExpectSuccess(GetAuthor(xt1, @len));
+              ExpectEqual(grs(len), 'Test');
             end);
 
           It('Should be able to unset the author', procedure
             begin
               ExpectSuccess(SetAuthor(xt1, ''));
-              ExpectSuccess(GetAuthor(xt1, str, 4096));
-              ExpectEqual(string(str), '');
+              ExpectSuccess(GetAuthor(xt1, @len));
+              ExpectEqual(grs(len), '');
             end);
         end);
 
@@ -160,15 +153,15 @@ begin
           It('Should create element and set description if the plugin has no description element', procedure
             begin
               ExpectSuccess(SetDescription(xt2, 'Test'));
-              ExpectSuccess(GetDescription(xt2, str, 4096));
-              ExpectEqual(string(str), 'Test');
+              ExpectSuccess(GetDescription(xt2, @len));
+              ExpectEqual(grs(len), 'Test');
             end);
 
           It('Should be able to unset the description', procedure
             begin
               ExpectSuccess(SetDescription(xt2, ''));
-              ExpectSuccess(GetDescription(xt2, str, 4096));
-              ExpectEqual(string(str), '');
+              ExpectSuccess(GetDescription(xt2, @len));
+              ExpectEqual(grs(len), '');
             end);
         end);
 

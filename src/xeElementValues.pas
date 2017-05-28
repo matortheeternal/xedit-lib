@@ -5,15 +5,15 @@ interface
 uses
   wbInterface;
 
-  function Name(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
-  function Path(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
-  function EditorID(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
-  function Signature(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
-  function FullName(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
-  function SortKey(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
-  function ElementType(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
-  function DefType(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
-  function GetValue(_id: Cardinal; path, str: PWideChar; len: Integer): WordBool; cdecl;
+  function Name(_id: Cardinal; len: PInteger): WordBool; cdecl;
+  function Path(_id: Cardinal; len: PInteger): WordBool; cdecl;
+  function EditorID(_id: Cardinal; len: PInteger): WordBool; cdecl;
+  function Signature(_id: Cardinal; sig: PWideChar): WordBool; cdecl;
+  function FullName(_id: Cardinal; len: PInteger): WordBool; cdecl;
+  function SortKey(_id: Cardinal; len: PInteger): WordBool; cdecl;
+  function ElementType(_id: Cardinal; len: PInteger): WordBool; cdecl;
+  function DefType(_id: Cardinal; len: PInteger): WordBool; cdecl;
+  function GetValue(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
   function SetValue(_id: Cardinal; path, value: PWideChar): WordBool; cdecl;
   function GetIntValue(_id: Cardinal; path: PWideChar; value: PInteger): WordBool; cdecl;
   function SetIntValue(_id: Cardinal; path: PWideChar; value: Integer): WordBool; cdecl;
@@ -24,7 +24,7 @@ uses
   function SetFlag(_id: Cardinal; path, name: PWideChar; enabled: WordBool): WordBool; cdecl;
   function GetFlag(_id: Cardinal; path, name: PWideChar; enabled: PWordBool): WordBool; cdecl;
   function ToggleFlag(_id: Cardinal; path, name: PWideChar): WordBool; cdecl;
-  function GetEnabledFlags(_id: Cardinal; path, flags: PWideChar; len: Integer): WordBool; cdecl;
+  function GetEnabledFlags(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 
   // native functions
   function GetPathName(element: IwbElement): String;
@@ -62,15 +62,13 @@ begin
     Result := element.Name;
 end;
 
-function Name(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
-var
-  sName: String;
+function Name(_id: Cardinal; len: PInteger): WordBool; cdecl;
 begin
   Result := False;
   try
-    sName := NativeName(Resolve(_id));
-    if sName <> '' then begin
-      StrLCopy(str, PWideChar(WideString(sName)), len);
+    resultStr := NativeName(Resolve(_id));
+    if resultStr <> '' then begin
+      len^ := Length(resultStr) * SizeOf(WideChar);
       Result := True;
     end;
   except
@@ -122,7 +120,7 @@ begin
     Result := GetPath(Result, NativeContainer(element) as IwbElement);
 end;
 
-function Path(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
+function Path(_id: Cardinal; len: PInteger): WordBool; cdecl;
 var
   sPath: String;
   element: IwbElement;
@@ -130,8 +128,8 @@ begin
   Result := False;
   try
     if Supports(Resolve(_id), IwbElement, element) then begin
-      sPath := GetPath('', element);
-      StrLCopy(str, PWideChar(WideString(sPath)), len);
+      resultStr := GetPath('', element);
+      len^ := Length(resultStr) * SizeOf(WideChar);
       Result := True;
     end;
   except
@@ -139,14 +137,15 @@ begin
   end;
 end;
 
-function EditorID(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
+function EditorID(_id: Cardinal; len: PInteger): WordBool; cdecl;
 var
   rec: IwbMainRecord;
 begin
   Result := False;
   try
     if Supports(Resolve(_id), IwbMainRecord, rec) then begin
-      StrLCopy(str, PWideChar(WideString(rec.EditorID)), len);
+      resultStr := rec.EditorID;
+      len^ := Length(resultStr) * SizeOf(WideChar);
       Result := True;
     end;
   except
@@ -171,16 +170,14 @@ begin
     raise Exception.Create('Error: Element does not have a signature.');
 end;
 
-function Signature(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
+function Signature(_id: Cardinal; sig: PWideChar): WordBool; cdecl;
 var
   element: IwbElement;
-  sig: String;
 begin
   Result := False;
   try
     if Supports(Resolve(_id), IwbElement, element) then begin
-      sig := NativeSignature(element);
-      StrLCopy(str, PWideChar(WideString(sig)), len);
+      StrLCopy(sig, PWideChar(NativeSignature(element)), 4);
       Result := True;
     end;
   except
@@ -188,14 +185,15 @@ begin
   end;
 end;
 
-function FullName(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
+function FullName(_id: Cardinal; len: PInteger): WordBool; cdecl;
 var
   rec: IwbMainRecord;
 begin
   Result := False;
   try
     if Supports(Resolve(_id), IwbMainRecord, rec) and rec.ElementExists['FULL'] then begin
-      StrLCopy(str, PWideChar(WideString(rec.FullName)), len);
+      resultStr := rec.FullName;
+      len^ := Length(resultStr) * SizeOf(WideChar);
       Result := True;
     end;
   except
@@ -203,14 +201,15 @@ begin
   end;
 end;
 
-function SortKey(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
+function SortKey(_id: Cardinal; len: PInteger): WordBool; cdecl;
 var
   element: IwbElement;
 begin
   Result := False;
   try
     if Supports(Resolve(_id), IwbElement, element) then begin
-      StrLCopy(str, PWideChar(WideString(element.SortKey[False])), len);
+      resultStr := element.SortKey[False];
+      len^ := Length(resultStr) * SizeOf(WideChar);
       Result := True;
     end;
   except
@@ -238,7 +237,7 @@ begin
   end;
 end;
 
-function ElementType(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
+function ElementType(_id: Cardinal; len: PInteger): WordBool; cdecl;
 var
   element: IwbElement;
   s: String;
@@ -246,8 +245,8 @@ begin
   Result := False;
   try
     if Supports(Resolve(_id), IwbElement, element) then begin
-      s := etToString(element.ElementType);
-      StrLCopy(str, PWideChar(WideString(s)), len);
+      resultStr := etToString(element.ElementType);
+      len^ := Length(resultStr) * SizeOf(WideChar);
       Result := True;
     end;
   except
@@ -280,16 +279,15 @@ begin
   end;
 end;
 
-function DefType(_id: Cardinal; str: PWideChar; len: Integer): WordBool; cdecl;
+function DefType(_id: Cardinal; len: PInteger): WordBool; cdecl;
 var
   element: IwbElement;
-  s: String;
 begin
   Result := False;
   try
     if Supports(Resolve(_id), IwbElement, element) then begin
-      s := dtToString(GetDefType(element));
-      StrLCopy(str, PWideChar(WideString(s)), len);
+      resultStr := dtToString(GetDefType(element));
+      len^ := Length(resultStr) * SizeOf(WideChar);
       Result := True;
     end;
   except
@@ -297,7 +295,7 @@ begin
   end;
 end;
 
-function GetValue(_id: Cardinal; path, str: PWideChar; len: Integer): WordBool; cdecl;
+function GetValue(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 var
   e: IInterface;
   element: IwbElement;
@@ -307,8 +305,8 @@ begin
   try
     e := NativeGetElement(_id, path);
     if Supports(e, IwbElement, element) then begin
-      sValue := element.EditValue;
-      StrLCopy(str, PWideChar(WideString(sValue)), len);
+      resultStr := element.EditValue;
+      len^ := Length(resultStr) * SizeOf(WideChar);
       Result := True;
     end;
   except
@@ -500,7 +498,7 @@ begin
   end;
 end;
 
-function GetEnabledFlags(_id: Cardinal; path, flags: PWideChar; len: Integer): WordBool; cdecl;
+function GetEnabledFlags(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 var
   slFlags: TStringList;
   e: IInterface;
@@ -527,7 +525,8 @@ begin
       end;
 
       // set output
-      StrLCopy(flags, PWideChar(WideString(slFlags.DelimitedText)), len);
+      resultStr := slFlags.DelimitedText;
+      len^ := Length(resultStr) * SizeOf(WideChar);
       Result := True;
     finally
       slFlags.Free;

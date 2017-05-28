@@ -6249,7 +6249,7 @@ begin
       dtSubRecord       : begin
         (CurrentRec as IwbSubRecordInternal).SetDef(CurrentDef as IwbSubRecordDef);
         if CurrentRec.Signature = 'EDID' then
-          mrEditorID := CurrentRec.Value
+          mrEditorID := CurrentRec.Value // RAISING EXCEPTION?
         else if CurrentRec.Signature = 'FULL' then
           mrFullName := CurrentRec.Value
         else if (CurrentRec.Signature = 'NAME') and
@@ -10019,8 +10019,14 @@ begin
     Exit;
   DoInit;
 
-  if Assigned(srValueDef) then
+  if Assigned(srValueDef) then try
     Result := srValueDef.ToString(GetDataBasePtr, dcDataEndPtr, Self);
+  except
+    on x: Exception do begin
+      Result := x.Message;
+      raise x;
+    end;
+  end;
 end;
 
 function TwbSubRecord.GetValueDef: IwbValueDef;

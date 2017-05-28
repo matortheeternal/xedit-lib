@@ -1,11 +1,11 @@
 program XEditLibTests;
 
 {$APPTYPE CONSOLE}
+{$DEFINE USE_DELL}
 
 uses
   SysUtils,
   {$IFDEF USE_DLL}
-  ShareMem,
   txImports in 'tests\txImports.pas',
   {$ENDIF}
   {$IFNDEF USE_DLL}
@@ -35,6 +35,11 @@ uses
   txRecordValues in 'tests\txRecordValues.pas',
   Argo in 'lib\Argo\Argo.pas',
   Mahogany in 'lib\mahogany\Mahogany.pas';
+
+{$MAXSTACKSIZE 2097152}
+
+const
+  IMAGE_FILE_LARGE_ADDRESS_AWARE = $0020;
 
 procedure BuildXETests;
 begin
