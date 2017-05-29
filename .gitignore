@@ -73,3 +73,5 @@ mod-dump/mod_dump_log.txt
 test/Delphi/Debug/
 test/Delphi-mahogany/Debug/
 Debug/
+Release/
+*.mes

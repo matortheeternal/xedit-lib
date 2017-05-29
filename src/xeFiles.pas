@@ -132,7 +132,7 @@ var
   i: Integer;
 begin
   for i := Low(xFiles) to High(xFiles) do
-    if xFiles[i].FileName = string(name) then begin
+    if xFiles[i].FileName = name then begin
       Result := xFiles[i];
       exit;
     end;
