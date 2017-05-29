@@ -52,16 +52,16 @@ begin
     begin
       BeforeAll(procedure
         begin
-          GetElement(0, 'Skyrim.esm', @skyrim);
-          GetElement(skyrim, 'ARMO', @armo);
-          GetElement(armo, '00012E46', @rec);
-          GetElement(rec, 'KWDA', @keywords);
-          GetElement(keywords, '[0]', @keyword);
-          GetElement(rec, 'DNAM', @dnam);
-          GetElement(0, 'xtest-3.esp', @xt3);
-          GetElement(xt3, 'ARMO', @xtArmo);
-          GetElement(xtArmo, '00012E46', @xtRec);
-          GetElement(0, 'xtest-2.esp\00012E46', @xtRec2);
+          ExpectSuccess(GetElement(0, 'Skyrim.esm', @skyrim));
+          ExpectSuccess(GetElement(skyrim, 'ARMO', @armo));
+          ExpectSuccess(GetElement(armo, '00012E46', @rec));
+          ExpectSuccess(GetElement(rec, 'KWDA', @keywords));
+          ExpectSuccess(GetElement(keywords, '[0]', @keyword));
+          ExpectSuccess(GetElement(rec, 'DNAM', @dnam));
+          ExpectSuccess(GetElement(0, 'xtest-3.esp', @xt3));
+          ExpectSuccess(GetElement(xt3, 'ARMO', @xtArmo));
+          ExpectSuccess(GetElement(xtArmo, '00012E46', @xtRec));
+          ExpectSuccess(GetElement(0, 'xtest-2.esp\00012E46', @xtRec2));
         end);
 
       Describe('GetElement', procedure

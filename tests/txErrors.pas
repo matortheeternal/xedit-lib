@@ -33,7 +33,7 @@ begin
   Expect(Length(errors) > 0, 'Should return errors');
 end;
 
-{$DEFINE FULL_ERROR_CHECK}
+{/$DEFINE FULL_ERROR_CHECK}
 procedure BuildPluginErrorTests;
 begin
   Describe('Plugin Error Functions', procedure

@@ -29,7 +29,7 @@ uses
   txImports;
 {$ENDIF}
 {$IFNDEF USE_DLL}
-  xeMeta, xeFiles;
+  xeMeta, xeFiles, xeMessages;
 {$ENDIF}
 
 procedure WriteMessages;
@@ -40,11 +40,10 @@ var
 begin
   GetMessagesLength(@len);
   if len > 0 then begin
-    SetLength(str, len div 2);
+    SetLength(str, len + 1);
     wcBuffer := PWideChar(str);
     GetMessages(wcBuffer, len);
     Delete(str, Length(str) - 1, 2);
-    ClearMessages;
     WriteLn(str);
   end;
 end;
@@ -58,7 +57,7 @@ begin
     Result := '';
     exit;
   end;
-  SetLength(Result, len div 2);
+  SetLength(Result, len);
   wcBuffer := PWideChar(Result);
   ExpectSuccess(GetResultString(wcBuffer, len));
 end;
