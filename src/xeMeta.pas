@@ -9,10 +9,10 @@ uses
   procedure CloseXEdit; cdecl;
   procedure ExceptionHandler(x: Exception);
   procedure GetMessagesLength(len: PInteger); cdecl;
-  procedure GetMessages(str: PWideChar; len: Integer); cdecl;
+  function GetMessages(str: PWideChar; len: Integer): WordBool; cdecl;
   procedure ClearMessages; cdecl;
-  procedure GetResultString(str: PWideChar; len: Integer); cdecl;
-  procedure GetResultArray(_res: PCardinal; len: Integer); cdecl;
+  function GetResultString(str: PWideChar; len: Integer): WordBool; cdecl;
+  function GetResultArray(_res: PCardinal; len: Integer): WordBool; cdecl;
   procedure GetExceptionMessageLength(len: PInteger); cdecl;
   function GetExceptionMessage(str: PWideChar; len: Integer): WordBool; cdecl;
   function GetGlobal(key: PWideChar; len: PInteger): WordBool; cdecl;
@@ -92,19 +92,31 @@ begin
   len^ := Length(MessageBuffer.Text) * SizeOf(WideChar);
 end;
 
-procedure GetMessages(str: PWideChar; len: Integer); cdecl;
+function GetMessages(str: PWideChar; len: Integer): WordBool; cdecl;
 begin
-  StrLCopy(str, PWideChar(MessageBuffer.Text), len);
+  Result := False;
+  try
+    StrMove(str, PWideChar(MessageBuffer.Text), len);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
 end;
 
-procedure GetResultString(str: PWideChar; len: Integer); cdecl;
+function GetResultString(str: PWideChar; len: Integer): WordBool; cdecl;
 begin
-  StrLCopy(str, PWideChar(resultStr), len);
-  resultStr := '';
+  Result := False;
+  try
+    StrMove(str, PWideChar(resultStr), len);
+    resultStr := '';
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
 end;
 
 {$POINTERMATH ON}
-procedure GetResultArray(_res: PCardinal; len: Integer); cdecl;
+function GetResultArray(_res: PCardinal; len: Integer): WordBool; cdecl;
 var
   i: Integer;
 begin
@@ -131,7 +143,7 @@ begin
   Result := False;
   try
     if Length(exceptionMessage) > 0 then begin
-      StrLCopy(str, PWideChar(exceptionMessage), len);
+      StrMove(str, PWideChar(exceptionMessage), len);
       Result := True;
     end;
   except

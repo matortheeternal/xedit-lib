@@ -10,10 +10,10 @@ type
   procedure InitXEdit; cdecl; external 'XEditLib.dll';
   procedure CloseXEdit; cdecl; external 'XEditLib.dll';
   procedure GetMessagesLength(len: PInteger); cdecl; external 'XEditLib.dll';
-  procedure GetMessages(str: PWideChar; len: Integer); cdecl; external 'XEditLib.dll';
+  function GetMessages(str: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
   procedure ClearMessages; cdecl; external 'XEditLib.dll';
-  procedure GetResultString(str: PWideChar; len: Integer); cdecl; external 'XEditLib.dll';
-  procedure GetResultArray(_res: PCardinal; len: Integer); cdecl; external 'XEditLib.dll';
+  function GetResultString(str: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
+  function GetResultArray(_res: PCardinal; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
   procedure GetExceptionMessageLength(len: PInteger); cdecl; external 'XEditLib.dll';
   function GetExceptionMessage(str: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
   function GetGlobal(key: PWideChar; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
