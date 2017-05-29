@@ -5,29 +5,26 @@ interface
 uses
   Classes, SysUtils, Generics.Collections;
 
+  // API METHODS
   procedure InitXEdit; cdecl;
   procedure CloseXEdit; cdecl;
-  procedure ExceptionHandler(x: Exception);
-  procedure GetMessagesLength(len: PInteger); cdecl;
-  function GetMessages(str: PWideChar; len: Integer): WordBool; cdecl;
-  procedure ClearMessages; cdecl;
-  function GetResultString(str: PWideChar; len: Integer): WordBool; cdecl;
-  function GetResultArray(_res: PCardinal; len: Integer): WordBool; cdecl;
-  procedure GetExceptionMessageLength(len: PInteger); cdecl;
-  function GetExceptionMessage(str: PWideChar; len: Integer): WordBool; cdecl;
+  function GetResultString(str: PWideChar; maxLen: Integer): WordBool; cdecl;
+  function GetResultArray(_res: PCardinal; maxLen: Integer): WordBool; cdecl;
   function GetGlobal(key: PWideChar; len: PInteger): WordBool; cdecl;
-  procedure StoreIfAssigned(var x: IInterface; var _res: PCardinal; var Success: WordBool);
-  function Resolve(_id: Cardinal): IInterface;
-  function Store(x: IInterface): Cardinal;
   function Release(_id: Cardinal): WordBool; cdecl;
   function ResetStore: WordBool; cdecl;
+
+  // NATIVE METHODS
+  function Resolve(_id: Cardinal): IInterface;
+  procedure StoreIfAssigned(var x: IInterface; var _res: PCardinal; var Success: WordBool);
+  function Store(x: IInterface): Cardinal;
+  function xStrCopy(source: WideString; dest: PWideChar; maxLen: Integer): WordBool;
 
 var
   _store: TInterfaceList;
   _releasedIDs: TList<Cardinal>;
   nextID: Cardinal;
-  exceptionMessage: String;
-  resultStr: String;
+  resultStr: WideString;
   resultArray: array of Cardinal;
 
 implementation
@@ -49,11 +46,10 @@ uses
 procedure InitXEdit; cdecl;
 begin
   // initialize variables
-  MessageBuffer := TStringList.Create;
   _store := TInterfaceList.Create;
   _releasedIDs := TList<Cardinal>.Create;
   _store.Add(nil);
-  exceptionMessage := '';
+  ExceptionMessage := '';
   resultStr := '';
 
   // add welcome message
@@ -66,9 +62,8 @@ end;
 
 procedure CloseXEdit; cdecl;
 begin
-  SaveBuffer;
+  SaveMessages;
   settings.Free;
-  MessageBuffer.Free;
   _releasedIDs.Free;
   _store.Free;
   SetLength(xFiles, 0);
@@ -78,78 +73,46 @@ begin
     wbContainerHandler._Release;
 end;
 
-procedure ExceptionHandler(x: Exception);
-begin
-  if x.Message <> '' then
-    exceptionMessage := x.Message
-  else
-    exceptionMessage := 'Unknown exception.';
-  AddMessage(exceptionMessage);
-end;
-
-procedure GetMessagesLength(len: PInteger); cdecl;
-begin
-  len^ := Length(MessageBuffer.Text) * SizeOf(WideChar);
-end;
-
-function GetMessages(str: PWideChar; len: Integer): WordBool; cdecl;
+function xStrCopy(source: WideString; dest: PWideChar; maxLen: Integer): WordBool;
+var
+  len: Integer;
 begin
   Result := False;
   try
-    StrMove(str, PWideChar(MessageBuffer.Text), len);
+    len := Length(source);
+    if len > maxLen then
+      raise Exception.Create(Format('Found buffer length %d, expected %d.', [maxLen, len + 1]));
+    Move(PWideChar(source)^, dest^, len * SizeOf(WideChar));
+    dest[len] := #0;
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
 end;
 
-function GetResultString(str: PWideChar; len: Integer): WordBool; cdecl;
+function GetResultString(str: PWideChar; maxLen: Integer): WordBool; cdecl;
 begin
-  Result := False;
-  try
-    StrMove(str, PWideChar(resultStr), len);
-    resultStr := '';
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
+  Result := xStrCopy(resultStr, str, maxLen);
 end;
 
 {$POINTERMATH ON}
-function GetResultArray(_res: PCardinal; len: Integer): WordBool; cdecl;
+function GetResultArray(_res: PCardinal; maxLen: Integer): WordBool; cdecl;
 var
   i: Integer;
 begin
-  for i := 0 to High(resultArray) do begin
-    if i >= len then break;
-    _res[i] := resultArray[i];
-  end;
-  SetLength(resultArray, 0);
-end;
-{$POINTERMATH OFF}
-
-procedure ClearMessages; cdecl;
-begin
-  MessageBuffer.Clear;
-end;
-
-procedure GetExceptionMessageLength(len: PInteger); cdecl;
-begin
-  len^ := Length(exceptionMessage) * SizeOf(WideChar);
-end;
-
-function GetExceptionMessage(str: PWideChar; len: Integer): WordBool; cdecl;
-begin
   Result := False;
   try
-    if Length(exceptionMessage) > 0 then begin
-      StrMove(str, PWideChar(exceptionMessage), len);
-      Result := True;
+    for i := 0 to High(resultArray) do begin
+      if i >= maxLen then break;
+      _res[i] := resultArray[i];
     end;
+    SetLength(resultArray, 0);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
 end;
+{$POINTERMATH OFF}
 
 function GetGlobal(key: PWideChar; len: PInteger): WordBool; cdecl;
 begin
@@ -157,7 +120,7 @@ begin
   try
     if Globals.IndexOfName(key) > -1 then begin
       resultStr := Globals.Values[key];
-      len^ := Length(resultStr) * SizeOf(WideChar);
+      len^ := Length(resultStr);
       Result := True;
     end;
   except

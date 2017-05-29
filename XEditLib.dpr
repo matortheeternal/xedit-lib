@@ -42,9 +42,11 @@ const
 
 exports
   // META METHODS
-  InitXEdit, CloseXEdit, GetResultString, GetResultArray, GetMessagesLength,
-  GetMessages, ClearMessages, GetExceptionMessageLength, GetExceptionMessage,
-  GetGlobal, Release, ResetStore,
+  InitXEdit, CloseXEdit, GetResultString, GetResultArray, GetGlobal, Release,
+  ResetStore,
+  // MESSAGE METHODS
+  GetMessagesLength, GetMessages, ClearMessages, GetExceptionMessageLength,
+  GetExceptionMessage,
   // LOADING AND SET UP METHODS
   SetGameMode, GetLoadOrder, LoadPlugins, GetLoaderDone, GetGamePath,
   // FILE HANDLING METHODS

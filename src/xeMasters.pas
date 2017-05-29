@@ -22,7 +22,7 @@ uses
   // xedit modules
   wbImplementation,
   // xelib modules
-  xeMeta, xeSetup;
+  xeMeta, xeMessages, xeSetup;
 
 
 {******************************************************************************}

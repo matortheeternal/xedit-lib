@@ -26,7 +26,7 @@ uses
   // xedit units
   wbInterface, wbImplementation,
   // xelib units
-  xeGroups;
+  xeGroups, xeMessages;
 
 function AddRecord(_id: Cardinal; sig: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
