@@ -150,6 +150,9 @@ type
 
 implementation
 
+uses
+  Math;
+
 { === DESERIALIZATION === }
 
 var
@@ -315,10 +318,14 @@ const
     'Expected comma separating object/array members near <%s>.'
   );
 var
-  context: PWideChar;
+  len: Integer;
+  context: WideString;
+  pwBuffer: PWideChar;
 begin
-  GetMem(context, 36);
-  StrLCopy(context, pos - 8, 17);
+  len := Min(Length(pos) + 8, 17);
+  SetLength(context, len);
+  pwBuffer := PWideChar(context);
+  StrLCopy(pwBuffer, pos - 8, len);
   self.Message := Format(JSONExceptionMessages[Ord(exceptionType)], [context]);
 end;
 
