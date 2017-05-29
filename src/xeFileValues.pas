@@ -79,7 +79,7 @@ begin
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
       resultStr := _file.FileName;
-      len^ := Length(resultStr) * SizeOf(WideChar);
+      len^ := Length(resultStr);
       Result := True;
     end;
   except
@@ -95,7 +95,7 @@ begin
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
       resultStr := _file.Header.ElementEditValues['CNAM'];
-      len^ := Length(resultStr) * SizeOf(WideChar);
+      len^ := Length(resultStr);
       Result := True;
     end;
   except
@@ -126,7 +126,7 @@ begin
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
       resultStr := _file.Header.ElementEditValues['SNAM'];
-      len^ := Length(resultStr) * SizeOf(WideChar);
+      len^ := Length(resultStr);
       Result := True;
     end;
   except

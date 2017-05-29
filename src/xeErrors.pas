@@ -209,7 +209,7 @@ begin
         obj.A['errors'].Add(ErrorToJson(error));
       end;
       resultStr := obj.ToString;
-      len^ := Length(resultStr) * SizeOf(WideChar);
+      len^ := Length(resultStr);
       Result := True;
     finally
       obj.Free;
@@ -227,7 +227,7 @@ begin
   try
     if Supports(Resolve(_id), IwbElement, element) then begin
       resultStr := element.Check;
-      len^ := Length(resultStr) * SizeOf(WideChar);
+      len^ := Length(resultStr);
       Result := True;
     end;
   except

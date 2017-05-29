@@ -186,7 +186,7 @@ begin
     // serialize JSON to string
     if Assigned(obj) then try
       resultStr := obj.ToString;
-      len^ := Length(resultStr) * SizeOf(WideChar);
+      len^ := Length(resultStr);
       Result := True;
     finally
       obj.Free;

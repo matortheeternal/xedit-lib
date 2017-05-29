@@ -97,7 +97,7 @@ begin
       resultStr := '';
       for i := 1 to _file.ElementCount do
         resultStr := resultStr + string(IwbGroupRecord(_file.Elements[i]).Signature) + #13;
-      len^ := Length(resultStr) * SizeOf(WideChar);
+      len^ := Length(resultStr);
       Result := True;
     end;
   except
@@ -131,7 +131,7 @@ begin
     BuildGroupNameMap;
     if slGroupNameMap.IndexOfName(string(name)) > -1 then begin
       resultStr := slGroupNameMap.Values[string(name)];
-      len^ := Length(resultStr) * SizeOf(WideChar);
+      len^ := Length(resultStr);
       Result := True;
     end;
   except
@@ -147,7 +147,7 @@ begin
   try
     if wbFindRecordDef(AnsiString(sig), RecordDef) then begin
       resultStr := RecordDef.Name;
-      len^ := Length(resultStr) * SizeOf(WideChar);
+      len^ := Length(resultStr);
       Result := True;
     end;
   except
@@ -161,7 +161,7 @@ begin
   try
     BuildGroupNameMap;
     resultStr := slGroupNameMap.Text;
-    len^ := Length(resultStr) * SizeOf(WideChar);
+    len^ := Length(resultStr);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);

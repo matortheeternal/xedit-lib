@@ -71,7 +71,7 @@ begin
   try
     resultStr := NativeName(Resolve(_id));
     if resultStr <> '' then begin
-      len^ := Length(resultStr) * SizeOf(WideChar);
+      len^ := Length(resultStr);
       Result := True;
     end;
   except
@@ -131,7 +131,7 @@ begin
   try
     if Supports(Resolve(_id), IwbElement, element) then begin
       resultStr := GetPath('', element);
-      len^ := Length(resultStr) * SizeOf(WideChar);
+      len^ := Length(resultStr);
       Result := True;
     end;
   except
@@ -147,7 +147,7 @@ begin
   try
     if Supports(Resolve(_id), IwbMainRecord, rec) then begin
       resultStr := rec.EditorID;
-      len^ := Length(resultStr) * SizeOf(WideChar);
+      len^ := Length(resultStr);
       Result := True;
     end;
   except
@@ -180,7 +180,7 @@ begin
   try
     if Supports(Resolve(_id), IwbElement, element) then begin
       resultStr := NativeSignature(element);
-      len^ := Length(resultStr) * SizeOf(WideChar);
+      len^ := Length(resultStr);
       Result := True;
     end;
   except
@@ -196,7 +196,7 @@ begin
   try
     if Supports(Resolve(_id), IwbMainRecord, rec) and rec.ElementExists['FULL'] then begin
       resultStr := rec.FullName;
-      len^ := Length(resultStr) * SizeOf(WideChar);
+      len^ := Length(resultStr);
       Result := True;
     end;
   except
@@ -212,7 +212,7 @@ begin
   try
     if Supports(Resolve(_id), IwbElement, element) then begin
       resultStr := element.SortKey[False];
-      len^ := Length(resultStr) * SizeOf(WideChar);
+      len^ := Length(resultStr);
       Result := True;
     end;
   except
@@ -248,7 +248,7 @@ begin
   try
     if Supports(Resolve(_id), IwbElement, element) then begin
       resultStr := etToString(element.ElementType);
-      len^ := Length(resultStr) * SizeOf(WideChar);
+      len^ := Length(resultStr);
       Result := True;
     end;
   except
@@ -289,7 +289,7 @@ begin
   try
     if Supports(Resolve(_id), IwbElement, element) then begin
       resultStr := dtToString(GetDefType(element));
-      len^ := Length(resultStr) * SizeOf(WideChar);
+      len^ := Length(resultStr);
       Result := True;
     end;
   except
@@ -307,7 +307,7 @@ begin
     e := NativeGetElement(_id, path);
     if Supports(e, IwbElement, element) then begin
       resultStr := element.EditValue;
-      len^ := Length(resultStr) * SizeOf(WideChar);
+      len^ := Length(resultStr);
       Result := True;
     end;
   except
@@ -527,7 +527,7 @@ begin
 
       // set output
       resultStr := slFlags.DelimitedText;
-      len^ := Length(resultStr) * SizeOf(WideChar);
+      len^ := Length(resultStr);
       Result := True;
     finally
       slFlags.Free;

@@ -203,7 +203,7 @@ begin
       // SET RESULT STRING
       resultStr := slLoadOrder.Text;
       Delete(resultStr, Length(resultStr) - 1, 2);
-      len^ := Length(resultStr) * SizeOf(WideChar);
+      len^ := Length(resultStr);
       Result := True;
     finally
       slPlugins.Free;
@@ -251,7 +251,7 @@ begin
   try
     resultStr := NativeGetGamePath(GameArray[mode]);
     if resultStr <> '' then begin
-      len^ := Length(resultStr) * SizeOf(WideChar);
+      len^ := Length(resultStr);
       Result := True;
     end;
   except
