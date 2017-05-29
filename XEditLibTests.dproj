@@ -4,7 +4,7 @@
 			<MainSource>XEditLibTests.dpr</MainSource>
 			<ProjectVersion>12.3</ProjectVersion>
 			<Base>True</Base>
-			<Config Condition="'$(Config)'==''">Debug</Config>
+			<Config Condition="'$(Config)'==''">Release</Config>
 			<Platform>Win32</Platform>
 			<AppType>Console</AppType>
 			<FrameworkType>None</FrameworkType>
@@ -24,7 +24,6 @@
 			<Base>true</Base>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Base)'!=''">
-			<DCC_Define>USE_DLL;$(DCC_Define)</DCC_Define>
 			<DCC_UnitSearchPath>src;lib\mahogany;lib\Argo;lib\xedit;lib\xedit\lz4;lib\xedit\zlib;lib\imaging;lib\mte;lib\imaging\zlib;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
 			<DCC_ImageBase>00400000</DCC_ImageBase>
 			<DCC_DcuOutput>.\$(Config)\$(Platform)\units</DCC_DcuOutput>
@@ -44,7 +43,7 @@
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Cfg_2)'!=''">
 			<DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>
-			<DCC_Define>RELEASE;$(DCC_Define)</DCC_Define>
+			<DCC_Define>RELEASE;USE_DLL;$(DCC_Define)</DCC_Define>
 			<DCC_SymbolReferenceInfo>0</DCC_SymbolReferenceInfo>
 			<DCC_DebugInformation>false</DCC_DebugInformation>
 		</PropertyGroup>
@@ -64,6 +63,7 @@
 			<DCCReference Include="tests\txGroups.pas"/>
 			<DCCReference Include="tests\txRecords.pas"/>
 			<DCCReference Include="tests\txRecordValues.pas"/>
+			<DCCReference Include="tests\txErrors.pas"/>
 			<DCCReference Include="lib\Argo\Argo.pas"/>
 			<DCCReference Include="lib\mahogany\Mahogany.pas"/>
 			<BuildConfiguration Include="Release">

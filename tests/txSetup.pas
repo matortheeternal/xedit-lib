@@ -23,6 +23,9 @@ const
   TestLoadOrder =
     'Skyrim.esm'#13 +
     'Update.esm'#13 +
+    'Dawnguard.esm'#13 +
+    'HearthFires.esm'#13 +
+    'Dragonborn.esm'#13 +
     'xtest-1.esp'#13 +
     'xtest-2.esp'#13 +
     'xtest-3.esp'#13 +

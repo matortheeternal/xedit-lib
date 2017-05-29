@@ -60,7 +60,7 @@ begin
   end;
   SetLength(Result, len div 2);
   wcBuffer := PWideChar(Result);
-  GetResultString(wcBuffer, len);
+  ExpectSuccess(GetResultString(wcBuffer, len));
 end;
 
 function gra(len: Integer): CardinalArray;
@@ -73,7 +73,7 @@ begin
   end;
   SetLength(Result, len);
   cBuffer := PCardinal(Result);
-  GetResultArray(cBuffer, len);
+  ExpectSuccess(GetResultArray(cBuffer, len));
 end;
 
 procedure WriteArray(a: CardinalArray);

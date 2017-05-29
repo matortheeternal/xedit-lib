@@ -32,6 +32,7 @@ uses
   txGroups in 'tests\txGroups.pas',
   txRecords in 'tests\txRecords.pas',
   txRecordValues in 'tests\txRecordValues.pas',
+  txErrors in 'tests\txErrors.pas',
   Argo in 'lib\Argo\Argo.pas',
   Mahogany in 'lib\mahogany\Mahogany.pas';
 
@@ -52,6 +53,7 @@ begin
   BuildGroupHandlingTests;
   BuildRecordHandlingTests;
   BuildRecordValueTests;
+  BuildPluginErrorTests;
 end;
 
 procedure RunXETests;

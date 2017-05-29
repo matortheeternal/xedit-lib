@@ -118,5 +118,11 @@ type
   function GetFormID(_id: Cardinal; formID: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function SetFormID(_id: Cardinal; formID: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
 
+  // PLUGIN ERROR METHODS
+  function CheckForErrors(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
+  function GetErrorThreadDone: WordBool; cdecl; external 'XEditLib.dll';
+  function GetErrors(len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function GetErrorString(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+
 implementation
 end.
