@@ -12,8 +12,7 @@ uses
   function RecordByFormID(_id, formID: Cardinal; _res: PCardinal): WordBool; cdecl;
   function RecordByEditorID(_id: Cardinal; edid: PWideChar; _res: PCardinal): WordBool; cdecl;
   function RecordByName(_id: Cardinal; full: PWideChar; _res: PCardinal): WordBool; cdecl;
-  function OverrideCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
-  function OverrideByIndex(_id: Cardinal; index: Integer; _res: PCardinal): WordBool; cdecl;
+  function GetOverrides(_id: Cardinal; count: PInteger): WordBool; cdecl;
   function GetFormID(_id: Cardinal; formID: PCardinal): WordBool; cdecl;
   function SetFormID(_id: Cardinal; formID: Cardinal): WordBool; cdecl;
   function ExchangeReferences(_id, oldFormID, newFormID: Cardinal): WordBool; cdecl;
@@ -249,31 +248,16 @@ begin
   end;
 end;
 
-function OverrideCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
+function GetOverrides(_id: Cardinal; count: PInteger): WordBool; cdecl;
 var
   rec: IwbMainRecord;
 begin
   Result := False;
   try
-    if Supports(Resolve(_id), IwbMainRecord, rec) then begin
-      count^ := rec.OverrideCount;
-      Result := True;
-    end;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function OverrideByIndex(_id: Cardinal; index: Integer; _res: PCardinal): WordBool; cdecl;
-var
-  rec: IwbMainRecord;
-begin
-  Result := False;
-  try
-    if Supports(Resolve(_id), IwbMainRecord, rec) then begin
-      _res^ := Store(rec.Overrides[index]);
-      Result := True;
-    end;
+    if not Supports(Resolve(_id), IwbMainRecord, rec) then
+      raise Exception.Create('Error Message');
+    count^ := rec.OverrideCount + 1;
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;

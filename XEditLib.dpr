@@ -60,7 +60,7 @@ exports
   // ELEMENT HANDLING METHODS
   GetElement, GetElements, GetElementFile, GetContainer, AddElement,
   RemoveElement, ElementExists, ElementCount, GetLinksTo, ElementEquals,
-  CopyElement, IsMaster, IsInjected, IsOverride, IsWinningOverride,
+  CopyElement,
   // ERROR CHECKING METHODS
   CheckForErrors, GetErrorThreadDone, GetErrors, GetErrorString,
   // SERIALIZATION METHODS
@@ -73,9 +73,9 @@ exports
   HasGroup, AddGroup, GetGroupSignatures, GetChildGroup, GroupSignatureFromName,
   GroupNameFromSignature, GetGroupSignatureNameMap,
   // RECORD HANDLING METHODS
-  AddRecord, GetRecords, RecordsBySignature, RecordByIndex, RecordByFormID,
-  RecordByEditorID, RecordByName, OverrideCount, OverrideByIndex, GetFormID,
-  SetFormID, ExchangeReferences, GetReferences;
+  AddRecord, GetRecords, RecordsBySignature, RecordByFormID, RecordByEditorID,
+  RecordByName, GetOverrides, GetFormID, SetFormID, ExchangeReferences,
+  GetReferences, IsMaster, IsInjected, IsOverride, IsWinningOverride;
   // RECORD VALUE METHODS
 
 begin
