@@ -45,7 +45,7 @@ procedure BuildElementHandlingTests;
 var
   b: WordBool;
   h, skyrim, xt3, armo1, ar1, keywords, keyword, dnam, element, armo2,
-  ar2, ar3, kw1, kw2, kw3: Cardinal;
+  ar2, ar3: Cardinal;
   len, i: Integer;
 begin
   Describe('Element Handling', procedure

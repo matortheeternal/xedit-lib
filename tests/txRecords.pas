@@ -43,6 +43,10 @@ begin
             begin
               ExpectSuccess(IsMaster(ar1, @b));
               Expect(b);
+              ExpectSuccess(IsMaster(kw1, @b));
+              Expect(b);
+              ExpectSuccess(IsMaster(kw2, @b));
+              Expect(b);
             end);
 
           It('Should return false for override records', procedure
@@ -51,14 +55,8 @@ begin
               Expect(not b);
               ExpectSuccess(IsMaster(ar3, @b));
               Expect(not b);
-            end);
-
-          It('Should return true for injected records', procedure
-            begin
-              ExpectSuccess(IsMaster(kw1, @b));
-              Expect(b);
-              ExpectSuccess(IsMaster(kw2, @b));
-              Expect(b);
+              ExpectSuccess(IsMaster(kw3, @b));
+              Expect(not b);
             end);
 
           It('Should fail on elements that are not records', procedure
@@ -115,6 +113,10 @@ begin
             begin
               ExpectSuccess(IsOverride(ar1, @b));
               Expect(not b);
+              ExpectSuccess(IsOverride(kw1, @b));
+              Expect(not b);
+              ExpectSuccess(IsOverride(kw2, @b));
+              Expect(not b);
             end);
 
           It('Should return true for override records', procedure
@@ -123,14 +125,8 @@ begin
               Expect(b);
               ExpectSuccess(IsOverride(ar3, @b));
               Expect(b);
-            end);
-
-          It('Should return false for injected records', procedure
-            begin
-              ExpectSuccess(IsOverride(kw1, @b));
-              Expect(not b);
-              ExpectSuccess(IsOverride(kw2, @b));
-              Expect(not b);
+              ExpectSuccess(IsOverride(kw3, @b));
+              Expect(b);
             end);
 
           It('Should fail on elements that are not records', procedure
