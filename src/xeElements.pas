@@ -31,6 +31,7 @@ type
   function ResolveFromGroup(group: IwbGroupRecord; path: String): IInterface;
   function ResolveElement(e: IInterface; path: String): IInterface;
   function NativeGetElement(_id: Cardinal; key: PWideChar): IInterface;
+  function NativeGetElementEx(_id: Cardinal; key: PWideChar): IwbElement;
   procedure NativeMoveToIndex(element: IwbElement; index: Integer);
   function NativeContainer(element: IwbElement): IwbContainer;
   function NativeAddElement(_id: Cardinal; key: string): IInterface;
@@ -250,19 +251,26 @@ begin
     Result := ResolveElement(Resolve(_id), string(key));
 end;
 
+function NativeGetElementEx(_id: Cardinal; key: PWideChar): IwbElement;
+var
+  e: IInterface;
+begin
+  e := NativeGetElement(_id, key);
+  if not Supports(e, IwbElement, Result) then
+    raise Exception.Create('Failed to resolve element at path: ' + string(key));
+end;
+
 // Replaces ElementByName, ElementByPath, ElementByIndex, GroupBySignature, and
 // ElementBySignature.  Supports indexed paths.
 function GetElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
-  e: IInterface;
+  element: IwbElement;
 begin
   Result := False;
   try
-    e := NativeGetElement(_id, key);
-    if Assigned(e) then begin
-      _res^ := Store(e);
-      Result := True;
-    end;
+    element := NativeGetElementEx(_id, key);
+    _res^ := Store(element as IInterface);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -314,10 +322,10 @@ var
 begin
   Result := False;
   try
-    if Supports(Resolve(_id), IwbElement, element) then begin
-      _res^ := Store(element._File);
-      Result := True;
-    end;
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    _res^ := Store(element._File);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -354,10 +362,12 @@ begin
   Result := False;
   try
     e := Resolve(_id);
-    if not Supports(e, IwbFile) and Supports(e, IwbElement, element) then begin
-      _res^ := Store(NativeContainer(element));
-      Result := True;
-    end;
+    if Supports(e, IwbFile) then
+      raise Exception.Create('Cannot call GetContainer on files.');
+    if not Supports(e, IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    _res^ := Store(NativeContainer(element));
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -408,10 +418,10 @@ begin
   Result := False;
   try
     element := NativeAddElement(_id, string(key));
-    if Assigned(element) then begin
-      _res^ := Store(element);
-      Result := True;
-    end;
+    if not Assigned(element) then
+      raise Exception.Create('Failed to add element at path: ' + string(key));
+    _res^ := Store(element);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -425,10 +435,10 @@ begin
   Result := False;
   try
     e := NativeGetElement(_id, key);
-    if Supports(e, IwbElement, element) then begin
-      element.Remove;
-      Result := True;
-    end;
+    if not Supports(e, IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    element.Remove;
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -436,19 +446,16 @@ end;
 
 function GetLinksTo(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
-  e: IInterface;
   element, linkedElement: IwbElement;
 begin
   Result := False;
   try
-    e := NativeGetElement(_id, key);
-    if Supports(e, IwbElement, element) then begin
-      linkedElement := element.LinksTo;
-      if Assigned(linkedElement) then begin
-        _res^ := Store(linkedElement);
-        Result := True;
-      end;
-    end;
+    element := NativeGetElementEx(_id, key);
+    linkedElement := element.LinksTo;
+    if not Assigned(linkedElement) then
+      raise Exception.Create('Failed to resolve linked element.');
+    _res^ := Store(linkedElement);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -474,14 +481,13 @@ var
 begin
   Result := False;
   try
-    if _id = 0 then begin
-      count^ := High(xFiles) + 1;
-      Result := True;
-    end
-    else if Supports(Resolve(_id), IwbContainerElementRef, container) then begin
-      count^ := container.ElementCount;
-      Result := True;
-    end;
+    if _id = 0 then
+      count^ := High(xFiles) + 1
+    else if Supports(Resolve(_id), IwbContainerElementRef, container) then
+      count^ := container.ElementCount
+    else
+      count^ := 0;
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -493,11 +499,12 @@ var
 begin
   Result := False;
   try
-    if Supports(Resolve(_id), IwbElement, element) then
-      if Supports(Resolve(_id2), IwbElement, element2) then begin
-        bool^ := element.Equals(element2);
-        Result := True;
-      end;
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('First interface is not an element.');
+    if not Supports(Resolve(_id2), IwbElement, element2) then
+      raise Exception.Create('Second interface is not an element.');
+    bool^ := element.Equals(element2);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -511,15 +518,15 @@ var
 begin
   Result := False;
   try
-    if not Supports(Resolve(_id), IwbElement, element) then exit;
-    if Supports(Resolve(_id2), IwbFile, _file) then begin
-      _res^ := Store(wbCopyElementToFile(element, _file, aAsNew, aDeepCopy, '', '', ''));
-      Result := True;
-    end
-    else if Supports(Resolve(_id2), IwbMainRecord, rec) then begin
-      _res^ := Store(wbCopyElementToRecord(element, rec, aAsNew, aDeepCopy));
-      Result := True;
-    end;
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    if Supports(Resolve(_id2), IwbFile, _file) then
+      _res^ := Store(wbCopyElementToFile(element, _file, aAsNew, aDeepCopy, '', '', ''))
+    else if Supports(Resolve(_id2), IwbMainRecord, rec) then
+      _res^ := Store(wbCopyElementToRecord(element, rec, aAsNew, aDeepCopy))
+    else
+      raise Exception.Create('Second interface must be a file or a main record.');
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;

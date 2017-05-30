@@ -299,17 +299,14 @@ end;
 
 function GetValue(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 var
-  e: IInterface;
   element: IwbElement;
 begin
   Result := False;
   try
-    e := NativeGetElement(_id, path);
-    if Supports(e, IwbElement, element) then begin
-      resultStr := element.EditValue;
-      len^ := Length(resultStr);
-      Result := True;
-    end;
+    element := NativeGetElementEx(_id, path);
+    resultStr := element.EditValue;
+    len^ := Length(resultStr);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -322,11 +319,9 @@ var
 begin
   Result := False;
   try
-    e := NativeGetElement(_id, path);
-    if Supports(e, IwbElement, element) then begin
-      element.EditValue := string(value);
-      Result := True;
-    end;
+    element := NativeGetElementEx(_id, path);
+    element.EditValue := string(value);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -334,25 +329,19 @@ end;
 
 function GetNativeValue(_id: Cardinal; path: PWideChar): Variant;
 var
-  e: IInterface;
   element: IwbElement;
 begin
   Result := Variants.Null;
-  e := NativeGetElement(_id, path);
-  if Supports(e, IwbElement, element) then
-    Result := element.NativeValue;
+  element := NativeGetElementEx(_id, path);
+  Result := element.NativeValue;
 end;
 
 procedure SetNativeValue(_id: Cardinal; path: PWideChar; value: Variant);
 var
-  e: IInterface;
   element: IwbElement;
 begin
-  e := NativeGetElement(_id, path);
-  if Supports(e, IwbElement, element) then
-    element.NativeValue := value
-  else
-    raise Exception.Create('Element not found at path ' + string(path));
+  element := NativeGetElementEx(_id, path);
+  element.NativeValue := value;
 end;
 
 function GetIntValue(_id: Cardinal; path: PWideChar; value: PInteger): WordBool; cdecl;
@@ -423,7 +412,6 @@ end;
 
 function SetFlag(_id: Cardinal; path, name: PWideChar; enabled: WordBool): WordBool; cdecl;
 var
-  e: IInterface;
   element: IwbElement;
   enumDef: IwbEnumDef;
   i: Integer;
@@ -431,18 +419,17 @@ var
 begin
   Result := False;
   try
-    e := NativeGetElement(_id, path);
-    if Supports(e, IwbElement, element)
-    and Supports(element.Def, IwbEnumDef, enumDef) then begin
-      for i := 0 to Pred(enumDef.NameCount) do
-        if SameText(enumDef.Names[i], String(name)) then begin
-          flagVal := 1 shl i;
-          if enabled then
-            element.NativeValue := element.NativeValue or flagVal
-          else
-            element.NativeValue := element.NativeValue and not flagVal;
-        end;
-    end;
+    element := NativeGetElementEx(_id, path);
+    if not Supports(element.Def, IwbEnumDef, enumDef) then
+      raise Exception.Create('Element does not have flags');
+    for i := 0 to Pred(enumDef.NameCount) do
+      if SameText(enumDef.Names[i], String(name)) then begin
+        flagVal := 1 shl i;
+        if enabled then
+          element.NativeValue := element.NativeValue or flagVal
+        else
+          element.NativeValue := element.NativeValue and not flagVal;
+      end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
