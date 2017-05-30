@@ -98,7 +98,7 @@ var
 begin
   GetExceptionMessageLength(@len);
   if len > 0 then begin
-    SetLength(str, len div 2);
+    SetLength(str, len);
     wcBuffer := PWideChar(str);
     GetExceptionMessage(wcBuffer, len);
     WriteLn(str);
