@@ -73,7 +73,6 @@ var
   i: Integer;
   sFileName: String;
 begin
-  AddMessage('Loading Plugins');
   for i := 0 to Pred(slLoadOrder.Count) do begin
     sFileName := slLoadOrder[i];
     AddMessage(Format('Loading %s (%d/%d)', [sFileName, i + 1, slLoadOrder.Count]));
@@ -121,7 +120,6 @@ var
   _file: IwbFile;
   bIsTES5: Boolean;
 begin
-  AddMessage('Loading Resources');
   wbContainerHandler.AddFolder(wbDataPath);
   slBSAFileNames := TStringList.Create;
   try
