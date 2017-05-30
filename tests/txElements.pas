@@ -44,8 +44,8 @@ end;
 procedure BuildElementHandlingTests;
 var
   b: WordBool;
-  h, skyrim, xt3, armo, rec, keywords, keyword, dnam, element, xtArmo,
-  xtRec, xtRec2: Cardinal;
+  h, skyrim, xt3, armo1, ar1, keywords, keyword, dnam, element, armo2,
+  ar2, ar3, kw1, kw2, kw3: Cardinal;
   len, i: Integer;
 begin
   Describe('Element Handling', procedure
@@ -53,15 +53,15 @@ begin
       BeforeAll(procedure
         begin
           ExpectSuccess(GetElement(0, 'Skyrim.esm', @skyrim));
-          ExpectSuccess(GetElement(skyrim, 'ARMO', @armo));
-          ExpectSuccess(GetElement(armo, '00012E46', @rec));
-          ExpectSuccess(GetElement(rec, 'KWDA', @keywords));
+          ExpectSuccess(GetElement(skyrim, 'ARMO', @armo1));
+          ExpectSuccess(GetElement(armo1, '00012E46', @ar1));
+          ExpectSuccess(GetElement(ar1, 'KWDA', @keywords));
           ExpectSuccess(GetElement(keywords, '[0]', @keyword));
-          ExpectSuccess(GetElement(rec, 'DNAM', @dnam));
+          ExpectSuccess(GetElement(ar1, 'DNAM', @dnam));
+          ExpectSuccess(GetElement(0, 'xtest-2.esp\00012E46', @ar2));
           ExpectSuccess(GetElement(0, 'xtest-3.esp', @xt3));
-          ExpectSuccess(GetElement(xt3, 'ARMO', @xtArmo));
-          ExpectSuccess(GetElement(xtArmo, '00012E46', @xtRec));
-          ExpectSuccess(GetElement(0, 'xtest-2.esp\00012E46', @xtRec2));
+          ExpectSuccess(GetElement(xt3, 'ARMO', @armo2));
+          ExpectSuccess(GetElement(armo2, '00012E46', @ar3));
         end);
 
       Describe('GetElement', procedure
@@ -126,13 +126,13 @@ begin
             begin
               It('Should return a handle if the index is in bounds', procedure
                 begin
-                  ExpectSuccess(GetElement(armo, '[0]', @h));
+                  ExpectSuccess(GetElement(armo1, '[0]', @h));
                   Expect(h > 0, 'Handle should be greater than 0');
                 end);
 
               It('Should fail if index is out of bounds', procedure
                 begin
-                  ExpectFailure(GetElement(armo, '[-1]', @h));
+                  ExpectFailure(GetElement(armo1, '[-1]', @h));
                 end);
             end);
 
@@ -140,13 +140,13 @@ begin
             begin
               It('Should return a handle if the record exists', procedure
                 begin
-                  ExpectSuccess(GetElement(armo, '00012E46', @h));
+                  ExpectSuccess(GetElement(armo1, '00012E46', @h));
                   Expect(h > 0, 'Handle should be greater than 0');
                 end);
 
               It('Should fail if the record does not exist', procedure
                 begin
-                  ExpectFailure(GetElement(armo, '00000000', @h));
+                  ExpectFailure(GetElement(armo1, '00000000', @h));
                 end);
             end);
 
@@ -154,13 +154,13 @@ begin
             begin
               It('Should return a handle if the index is in bounds', procedure
                  begin
-                   ExpectSuccess(GetElement(rec, '[0]', @h));
+                   ExpectSuccess(GetElement(ar1, '[0]', @h));
                    Expect(h > 0, 'Handle should be greater than 0');
                  end);
 
               It('Should fail if index is out of bounds', procedure
                 begin
-                  ExpectFailure(GetElement(rec, '[-1]', @h));
+                  ExpectFailure(GetElement(ar1, '[-1]', @h));
                 end);
             end);
 
@@ -168,13 +168,13 @@ begin
             begin
               It('Should return a handle if the element exists', procedure
                 begin
-                  ExpectSuccess(GetElement(rec, 'FULL', @h));
+                  ExpectSuccess(GetElement(ar1, 'FULL', @h));
                   Expect(h > 0, 'Handle should be greater than 0');
                 end);
 
               It('Should fail if the element does not exist', procedure
                 begin
-                  ExpectFailure(GetElement(rec, 'ABCD', @h));
+                  ExpectFailure(GetElement(ar1, 'ABCD', @h));
                 end);
             end);
 
@@ -182,13 +182,13 @@ begin
             begin
               It('Should return a handle if the element exists', procedure
                 begin
-                  ExpectSuccess(GetElement(rec, 'Male world model', @h));
+                  ExpectSuccess(GetElement(ar1, 'Male world model', @h));
                   Expect(h > 0, 'Handle should be greater than 0');
                 end);
 
               It('Should fail if the element does not exist', procedure
                 begin
-                  ExpectFailure(GetElement(rec, 'Does not exist', @h));
+                  ExpectFailure(GetElement(ar1, 'Does not exist', @h));
                 end);
             end);
 
@@ -196,7 +196,7 @@ begin
             begin
               It('Should return a handle if the element exists', procedure
                 begin
-                  ExpectSuccess(GetElement(rec, 'BODT - Body Template', @h));
+                  ExpectSuccess(GetElement(ar1, 'BODT - Body Template', @h));
                   Expect(h > 0, 'Handle should be greater than 0');
                 end);
             end);
@@ -237,13 +237,13 @@ begin
 
           It('Should return true for elements that exist', procedure
             begin
-              ExpectSuccess(ElementExists(rec, 'Male world model', @b));
+              ExpectSuccess(ElementExists(ar1, 'Male world model', @b));
               Expect(b, 'Result should be true');
             end);
 
           It('Should return true for handles that are assigned', procedure
             begin
-              ExpectSuccess(ElementExists(rec, '', @b));
+              ExpectSuccess(ElementExists(ar1, '', @b));
               Expect(b, 'Result should be true');
             end);
 
@@ -255,7 +255,7 @@ begin
 
           It('Should return false for elements that do not exist', procedure
             begin
-              ExpectSuccess(ElementExists(rec, 'KWDA\[5]', @b));
+              ExpectSuccess(ElementExists(ar1, 'KWDA\[5]', @b));
               Expect(not b, 'Result should be false');
             end);
 
@@ -281,13 +281,13 @@ begin
 
           It('Should return the number of elements in a group', procedure
             begin
-              ExpectSuccess(ElementCount(armo, @i));
+              ExpectSuccess(ElementCount(armo1, @i));
               ExpectEqual(i, 2762, '');
             end);
 
           It('Should return the number of elements in a record', procedure
             begin
-              ExpectSuccess(ElementCount(rec, @i));
+              ExpectSuccess(ElementCount(ar1, @i));
               ExpectEqual(i, 13, '');
             end);
 
@@ -309,26 +309,26 @@ begin
           It('Should return true for same element', procedure
             begin
               ExpectSuccess(ElementEquals(skyrim, skyrim, @b));
-              ExpectSuccess(ElementEquals(armo, armo, @b));
-              ExpectSuccess(ElementEquals(rec, rec, @b));
+              ExpectSuccess(ElementEquals(armo1, armo1, @b));
+              ExpectSuccess(ElementEquals(ar1, ar1, @b));
               ExpectSuccess(ElementEquals(keywords, keywords, @b));
               ExpectSuccess(ElementEquals(dnam, dnam, @b));
             end);
 
           It('Should return false for identical but different elements', procedure
             begin
-              ExpectSuccess(GetElement(xtRec, 'DNAM', @h));
+              ExpectSuccess(GetElement(ar2, 'DNAM', @h));
               ExpectSuccess(ElementEquals(dnam, h, @b));
               Expect(not b, 'Result should be false');
             end);
 
           It('Should return false for different elements', procedure
             begin
-              ExpectSuccess(ElementEquals(skyrim, armo, @b));
+              ExpectSuccess(ElementEquals(skyrim, armo1, @b));
               Expect(not b, 'Result should be false');
-              ExpectSuccess(ElementEquals(armo, rec, @b));
+              ExpectSuccess(ElementEquals(armo1, ar1, @b));
               Expect(not b, 'Result should be false');
-              ExpectSuccess(ElementEquals(rec, keywords, @b));
+              ExpectSuccess(ElementEquals(ar1, keywords, @b));
               Expect(not b, 'Result should be false');
               ExpectSuccess(ElementEquals(keywords, dnam, @b));
               Expect(not b, 'Result should be false');
@@ -358,14 +358,14 @@ begin
 
           It('Should resolve group children (records)', procedure
             begin
-              ExpectSuccess(GetElements(armo, @len));
+              ExpectSuccess(GetElements(armo1, @len));
               ExpectEqual(len, 2762);
               TestEdids(gra(len), 'DremoraBoots', 'SkinNaked');
             end);
 
           It('Should resolve record children (subrecords/elements)', procedure
             begin
-              ExpectSuccess(GetElements(rec, @len));
+              ExpectSuccess(GetElements(ar1, @len));
               ExpectEqual(len, 13);
               TestNames(gra(len), 'Record Header', 'DNAM - Armor Rating');
             end);
@@ -388,19 +388,19 @@ begin
 
           It('Should return the file containing a group', procedure
             begin
-              ExpectSuccess(GetElementFile(armo, @h));
+              ExpectSuccess(GetElementFile(armo1, @h));
               Expect(h > 0, 'Handle should be greater than 0');
             end);
 
           It('Should return the file containing a record', procedure
             begin
-              ExpectSuccess(GetElementFile(rec, @h));
+              ExpectSuccess(GetElementFile(ar1, @h));
               Expect(h > 0, 'Handle should be greater than 0');
             end);
 
           It('Should return the file containing an element', procedure
             begin
-              GetElement(rec, 'DATA\Value', @element);
+              GetElement(ar1, 'DATA\Value', @element);
               ExpectSuccess(GetElementFile(element, @h));
               Expect(h > 0, 'Handle should be greater than 0');
             end);
@@ -410,26 +410,26 @@ begin
         begin
           It('Should return the file containing a group', procedure
             begin
-              ExpectSuccess(GetContainer(armo, @h));
+              ExpectSuccess(GetContainer(armo1, @h));
               Expect(h > 0, 'Handle should be greater than 0');
             end);
 
           It('Should return the group containing a record', procedure
             begin
-              ExpectSuccess(GetContainer(rec, @h));
+              ExpectSuccess(GetContainer(ar1, @h));
               Expect(h > 0, 'Handle should be greater than 0');
             end);
 
           It('Should return the record containing an element', procedure
             begin
-              GetElement(rec, 'EDID', @element);
+              GetElement(ar1, 'EDID', @element);
               ExpectSuccess(GetContainer(element, @h));
               Expect(h > 0, 'Handle should be greater than 0');
             end);
 
           It('Should return the parent element containing a child element', procedure
             begin
-              GetElement(rec, 'BODT\Armor Type', @element);
+              GetElement(ar1, 'BODT\Armor Type', @element);
               ExpectSuccess(GetContainer(element, @h));
               Expect(h > 0, 'Handle should be greater than 0');
             end);
@@ -446,13 +446,13 @@ begin
             begin
               ExpectSuccess(GetLinksTo(keyword, '', @h));
               Expect(h > 0, 'Handle should be greater than 0');
-              ExpectSuccess(GetLinksTo(rec, 'RNAM', @h));
+              ExpectSuccess(GetLinksTo(ar1, 'RNAM', @h));
               Expect(h > 0, 'Handle should be greater than 0');
             end);
 
           It('Should fail if called on a NULL reference', procedure
             begin
-              ExpectFailure(GetLinksTo(xtArmo, 'ZNAM', @h));
+              ExpectFailure(GetLinksTo(armo2, 'ZNAM', @h));
             end);
 
           It('Should fail if path is invalid', procedure
@@ -464,7 +464,7 @@ begin
             begin
               ExpectFailure(GetLinksTo(0, '', @h));
               ExpectFailure(GetLinksTo(skyrim, '', @h));
-              ExpectFailure(GetLinksTo(rec, '', @h));
+              ExpectFailure(GetLinksTo(ar1, '', @h));
               ExpectFailure(GetLinksTo(dnam, '', @h));
             end);
         end);
@@ -485,13 +485,13 @@ begin
 
           It('Should be able to add records to groups', procedure
             begin
-              ExpectSuccess(AddElement(xtArmo, 'ARMO', @h));
+              ExpectSuccess(AddElement(armo2, 'ARMO', @h));
               Expect(h > 0, 'Handle should be greater than 0');
             end);
 
           It('Should be able to create a new element on a record', procedure
             begin
-              ExpectSuccess(AddElement(xtRec, 'Destructable', @h));
+              ExpectSuccess(AddElement(ar2, 'Destructable', @h));
               Expect(h > 0, 'Handle should be greater than 0');
             end);
 
@@ -509,7 +509,7 @@ begin
 
           It('Should fail if parent element is not a container', procedure
             begin
-              GetElement(xtRec, 'FULL', @element);
+              GetElement(ar2, 'FULL', @element);
               ExpectFailure(AddElement(element, '', @h));
             end);
         end);
@@ -518,23 +518,23 @@ begin
         begin
           It('Should remove the element at the given path', procedure
             begin
-              ExpectSuccess(RemoveElement(xtRec, 'Female world model'));
-              ExpectSuccess(ElementExists(xtRec, 'Female world model', @b));
+              ExpectSuccess(RemoveElement(ar3, 'Female world model'));
+              ExpectSuccess(ElementExists(ar3, 'Female world model', @b));
               Expect(not b, 'The element should no longer be present');
             end);
 
           It('Should remove the element at the given indexed path', procedure
             begin
-              ExpectSuccess(RemoveElement(xtRec2, 'KWDA\[4]'));
-              ExpectSuccess(ElementExists(xtRec2, 'KWDA\[4]', @b));
+              ExpectSuccess(RemoveElement(ar3, 'KWDA\[4]'));
+              ExpectSuccess(ElementExists(ar3, 'KWDA\[4]', @b));
               Expect(not b, 'The element should no longer be present');
             end);
 
           It('Should remove the element passed if no path is given', procedure
             begin
-              ExpectSuccess(GetElement(xtRec, 'ZNAM', @element));
+              ExpectSuccess(GetElement(ar3, 'ZNAM', @element));
               ExpectSuccess(RemoveElement(element, ''));
-              ExpectSuccess(ElementExists(xtRec, 'ZNAM', @b));
+              ExpectSuccess(ElementExists(ar3, 'ZNAM', @b));
               Expect(not b, 'The element should no longer be present');
             end);
 
@@ -545,7 +545,7 @@ begin
 
           It('Should fail if no element exists at the given path', procedure
             begin
-              ExpectFailure(RemoveElement(xtRec, 'YNAM'));
+              ExpectFailure(RemoveElement(ar3, 'YNAM'));
             end);
         end);
     end);

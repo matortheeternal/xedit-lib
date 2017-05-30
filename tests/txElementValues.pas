@@ -248,18 +248,18 @@ begin
           It('Should resolve element values', procedure
             begin
               ExpectSuccess(GetValue(element, '', @len));
-              ExpectEqual(grs(len), '10.000000', '');
+              ExpectEqual(grs(len), '10.000000');
               ExpectSuccess(GetValue(keyword, '', @len));
-              ExpectEqual(grs(len), 'ArmorHeavy [KYWD:0006BBD2]', '');
+              ExpectEqual(grs(len), 'ArmorHeavy [KYWD:0006BBD2]');
             end);
           It('Should resolve element value at path', procedure
             begin
               ExpectSuccess(GetValue(rec, 'OBND\X1', @len));
-              ExpectEqual(grs(len), '-11', '');
+              ExpectEqual(grs(len), '-11');
               ExpectSuccess(GetValue(rec, 'KWDA\[1]', @len));
-              ExpectEqual(grs(len), 'ArmorHeavy [KYWD:0006BBD2]', '');
+              ExpectEqual(grs(len), 'ArmorHeavy [KYWD:0006BBD2]');
               ExpectSuccess(GetValue(rec, 'Female world model\MOD4', @len));
-              ExpectEqual(grs(len), 'Test', '');
+              ExpectEqual(grs(len), 'Test');
             end);
           It('Should fail if path does not exist', procedure
             begin
@@ -291,12 +291,12 @@ begin
           It('Should resolve element unsigned integer values', procedure
             begin
               ExpectSuccess(GetUIntValue(keyword, '', @c));
-              ExpectEqual(c, $6BBD2, '');
+              ExpectEqual(c, $6BBD2);
             end);
           It('Should resolve element unsigned integer values at paths', procedure
             begin
               ExpectSuccess(GetUIntValue(rec, 'KWDA\[0]', @c));
-              ExpectEqual(c, $424EF, '');
+              ExpectEqual(c, $424EF);
             end);
           It('Should fail if path does not exist', procedure
             begin
@@ -310,12 +310,12 @@ begin
             begin
               ExpectSuccess(GetFloatValue(element, '', @f));
               // armor rating is stored at *100 internally, for some reason
-              ExpectEqual(f, 1000.0, '');
+              ExpectEqual(f, 1000.0);
             end);
           It('Should resolve element float values at paths', procedure
             begin
               ExpectSuccess(GetFloatValue(rec, 'DATA\Weight', @f));
-              ExpectEqual(f, 5.0, '');
+              ExpectEqual(f, 5.0);
             end);
           It('Should fail if path does not exist', procedure
             begin
@@ -329,22 +329,22 @@ begin
             begin
               ExpectSuccess(SetValue(element, '', '14.100000'));
               ExpectSuccess(GetValue(element, '', @len));
-              ExpectEqual(grs(len), '14.100000', '');
+              ExpectEqual(grs(len), '14.100000');
               ExpectSuccess(SetValue(keyword, '', 'ArmorLight [KYWD:0006BBD3]'));
               ExpectSuccess(GetValue(keyword, '', @len));
-              ExpectEqual(grs(len), 'ArmorLight [KYWD:0006BBD3]', '');
+              ExpectEqual(grs(len), 'ArmorLight [KYWD:0006BBD3]');
             end);
           It('Should set element value at path', procedure
             begin
               ExpectSuccess(SetValue(rec, 'OBND\X1', '-8'));
               ExpectSuccess(GetValue(rec, 'OBND\X1', @len));
-              ExpectEqual(grs(len), '-8', '');
+              ExpectEqual(grs(len), '-8');
               ExpectSuccess(SetValue(rec, 'KWDA\[0]', 'PerkFistsEbony [KYWD:0002C178]'));
               ExpectSuccess(GetValue(rec, 'KWDA\[0]', @len));
-              ExpectEqual(grs(len), 'PerkFistsEbony [KYWD:0002C178]', '');
+              ExpectEqual(grs(len), 'PerkFistsEbony [KYWD:0002C178]');
               ExpectSuccess(SetValue(rec, 'Female world model\MOD4', 'Armor\Iron\F\GauntletsGND.nif'));
               ExpectSuccess(GetValue(rec, 'Female world model\MOD4', @len));
-              ExpectEqual(grs(len), 'Armor\Iron\F\GauntletsGND.nif', '');
+              ExpectEqual(grs(len), 'Armor\Iron\F\GauntletsGND.nif');
             end);
           It('Should fail if path does not exist', procedure
             begin
@@ -359,13 +359,13 @@ begin
               GetElement(rec, 'OBND\Y1', @h);
               ExpectSuccess(SetIntValue(h, '', -13));
               ExpectSuccess(GetIntValue(h, '', @i));
-              ExpectEqual(i, -13, '');
+              ExpectEqual(i, -13);
             end);
           It('Should set element integer values at paths', procedure
             begin
               ExpectSuccess(SetIntValue(rec, 'OBND\Z1', -4));
               ExpectSuccess(GetIntValue(rec, 'OBND\Z1', @i));
-              ExpectEqual(i, -4, '');
+              ExpectEqual(i, -4);
             end);
           It('Should fail if path does not exist', procedure
             begin
@@ -379,13 +379,13 @@ begin
             begin
               ExpectSuccess(SetUIntValue(keyword, '', $6BBE2));
               ExpectSuccess(GetUIntValue(keyword, '', @c));
-              ExpectEqual(c, $6BBE2, '');
+              ExpectEqual(c, $6BBE2);
             end);
           It('Should set element unsigned integer values at paths', procedure
             begin
               ExpectSuccess(SetUIntValue(rec, 'KWDA\[0]', $2C177));
               ExpectSuccess(GetUIntValue(rec, 'KWDA\[0]', @c));
-              ExpectEqual(c, $2C177, '');
+              ExpectEqual(c, $2C177);
             end);
           It('Should fail if path does not exist', procedure
             begin
@@ -400,13 +400,13 @@ begin
               ExpectSuccess(SetFloatValue(element, '', 1920.0));
               ExpectSuccess(GetFloatValue(element, '', @f));
               // armor rating is stored at *100 internally, for some reason
-              ExpectEqual(f, 1920.0, '');
+              ExpectEqual(f, 1920.0);
             end);
           It('Should resolve element float values at paths', procedure
             begin
               ExpectSuccess(SetFloatValue(rec, 'DATA\Weight', 7.3));
               ExpectSuccess(GetFloatValue(rec, 'DATA\Weight', @f));
-              ExpectEqual(f, 7.3, '');
+              ExpectEqual(f, 7.3);
             end);
           It('Should fail if path does not exist', procedure
             begin
