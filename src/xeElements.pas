@@ -21,6 +21,7 @@ type
   function GetContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function AddElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
   function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; cdecl;
+  function RemoveElementOrParent(_id: Cardinal): WordBool; cdecl;
   function GetLinksTo(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
   function ElementExists(_id: Cardinal; key: PWideChar; bool: PWordBool): WordBool; cdecl;
   function ElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
@@ -438,6 +439,36 @@ begin
     if not Supports(e, IwbElement, element) then
       raise Exception.Create('Interface is not an element.');
     element.Remove;
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function RemoveElementOrParent(_id: Cardinal): WordBool; cdecl;
+var
+  e: IInterface;
+  element: IwbElement;
+  container: IwbContainer;
+begin
+  Result := False;
+  try
+    e := Resolve(_id);
+    if Supports(e, IwbFile) or Supports(e, IwbGroupRecord)
+    or Supports(e, IwbMainRecord) then
+      raise Exception.Create('Interface cannot be a file, group, or main record.');
+    if not Supports(e, IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    container := element.Container;
+    while not container.IsElementRemoveable(element) do begin
+      if Supports(container, IwbMainRecord) then
+        raise Exception.Create('Reached main record - could not remove.');
+      if container.IsElementRemoveable(element) then
+        break;
+      element := container as IwbElement;
+      container := element.Container;
+    end;
+    container.RemoveElement(container.IndexOf(element));
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
