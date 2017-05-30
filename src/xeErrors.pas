@@ -10,7 +10,7 @@ uses
   xeMeta;
 
 type
-  TErrorTypeID = ( erUnknown, erITM, erITPO, erUDR, erUES, erURR, erUER );
+  TErrorTypeID = ( erITM, erITPO, erUDR, erUES, erURR, erUER, erUnknown );
   TErrorType = record
     id: TErrorTypeID;
     shortName: string[4];
@@ -43,7 +43,6 @@ type
 
 const
   ErrorTypes: array[0..6] of TErrorType = (
-    (id: erUnknown; shortName: 'UNK'; longName: 'Unknown'; expr: ''),
     (id: erITM; shortName: 'ITM'; longName: 'Identical to Master'; expr: ''),
     (id: erITPO; shortName: 'ITPO'; longName: 'Identical to Previous Override';
       expr: ''),
@@ -54,7 +53,8 @@ const
     (id: erURR; shortName: 'URR'; longName: 'Unresolved Reference';
       expr: '\[([0-9A-F]+)\] \< Error: Could not be resolved \>'),
     (id: erUER; shortName: 'UER'; longName: 'Unexpected Reference';
-      expr: 'Found a ([a-zA-Z_]+) reference, expected: (\w+)')
+      expr: 'Found a ([a-zA-Z_]+) reference, expected: (\w+)'),
+    (id: erUnknown; shortName: 'UNK'; longName: 'Unknown'; expr: '')
   );
 
 implementation
