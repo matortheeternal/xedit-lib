@@ -68,37 +68,97 @@ begin
   xFiles[High(xFiles)] := _file;
 end;
 
-procedure TLoaderThread.Execute;
+procedure LoadPluginFiles;
 var
   i: Integer;
   sFileName: String;
 begin
-  try
-    for i := 0 to Pred(slLoadOrder.Count) do begin
-      sFileName := slLoadOrder[i];
-      AddMessage(Format('Loading %s (%d/%d)', [sFileName, i + 1, slLoadOrder.Count]));
+  AddMessage('Loading Plugins');
+  for i := 0 to Pred(slLoadOrder.Count) do begin
+    sFileName := slLoadOrder[i];
+    AddMessage(Format('Loading %s (%d/%d)', [sFileName, i + 1, slLoadOrder.Count]));
 
-      // load plugin
-      try
-        LoadFile(wbDataPath + sFileName, i);
-      except
-        on x: Exception do begin
-          AddMessage('Exception loading ' + sFileName);
-          AddMessage(x.Message);
-          raise x;
-        end;
-      end;
-
-      // load hardcoded dat
-      if i = 0 then try
-        LoadHardCodedDat;
-      except
-        on x: Exception do begin
-          AddMessage('Exception loading ' + wbGameName + wbHardcodedDat);
-          raise x;
-        end;
+    // load plugin
+    try
+      LoadFile(wbDataPath + sFileName, i);
+    except
+      on x: Exception do begin
+        AddMessage('Exception loading ' + sFileName);
+        AddMessage(x.Message);
+        raise x;
       end;
     end;
+
+    // load hardcoded dat
+    if i = 0 then try
+      LoadHardCodedDat;
+    except
+      on x: Exception do begin
+        AddMessage('Exception loading ' + wbGameName + wbHardcodedDat);
+        raise x;
+      end;
+    end;
+  end;
+end;
+
+procedure LoadBSAFile(sFileName: String);
+var
+  sFileExt: String;
+begin
+  sFileExt := ExtractFileExt(sFileName);
+  AddMessage('Loading resources from ' + sFileName);
+  if sFileExt = '.bsa' then
+    wbContainerHandler.AddBSA(wbDataPath + sFileName)
+  else if sFileExt = '.ba2' then
+    wbContainerHandler.AddBA2(wbDataPath + sFileName);
+end;
+
+procedure LoadResources;
+var
+  slBSAFileNames: TStringList;
+  slErrors: TStringList;
+  i, j: Integer;
+  _file: IwbFile;
+  bIsTES5: Boolean;
+begin
+  AddMessage('Loading Resources');
+  wbContainerHandler.AddFolder(wbDataPath);
+  slBSAFileNames := TStringList.Create;
+  try
+    slErrors:= TStringList.Create;
+    try
+      FindBSAs(wbTheGameIniFileName, wbDataPath, slBSAFileNames, slErrors);
+      for i := 0 to slBSAFileNames.Count - 1 do
+        LoadBSAFile(slBSAFileNames[i]);
+      for i := 0 to slErrors.Count - 1 do
+        AddMessage(slErrors[i] + ' was not found');
+
+      for j := Low(xFiles) to High(xFiles) do begin
+        slBSAFileNames.Clear;
+        slErrors.Clear;
+        _file := xFiles[j];
+        bIsTES5 := wbGameMode in [gmTES5, gmSSE];
+
+        HasBSAs(ChangeFileExt(_file.Name, ''), wbDataPath, bIsTES5,
+          bIsTES5, slBSAFileNames, slErrors);
+        for i := 0 to slBSAFileNames.Count - 1 do
+          LoadBSAFile(slBSAFileNames[i]);
+        for i := 0 to slErrors.Count - 1 do
+          AddMessage(slErrors[i] + ' was not found');
+      end;
+    finally
+      slErrors.Free;
+    end;
+  finally
+    slBSAFileNames.Free;
+  end;
+end;
+
+procedure TLoaderThread.Execute;
+begin
+  try
+    LoadPluginFiles;
+    LoadResources;
 
     // done loading
     ProgramStatus.bLoaderDone := True;

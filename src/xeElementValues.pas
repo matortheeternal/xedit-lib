@@ -314,7 +314,6 @@ end;
 
 function SetValue(_id: Cardinal; path, value: PWideChar): WordBool; cdecl;
 var
-  e: IInterface;
   element: IwbElement;
 begin
   Result := False;
