@@ -26,10 +26,6 @@ type
   function ElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
   function ElementEquals(_id, _id2: Cardinal; bool: PWordBool): WordBool; cdecl;
   function CopyElement(_id, _id2: Cardinal; aAsNew, aDeepCopy: WordBool; _res: PCardinal): WordBool; cdecl;
-  function IsMaster(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
-  function IsInjected(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
-  function IsOverride(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
-  function IsWinningOverride(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
 
   // native functions
   function ResolveFromGroup(group: IwbGroupRecord; path: String): IInterface;
@@ -522,67 +518,6 @@ begin
     end
     else if Supports(Resolve(_id2), IwbMainRecord, rec) then begin
       _res^ := Store(wbCopyElementToRecord(element, rec, aAsNew, aDeepCopy));
-      Result := True;
-    end;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function IsMaster(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
-var
-  rec: IwbMainRecord;
-begin
-  Result := False;
-  try
-    if Supports(Resolve(_id), IwbMainRecord, rec) then begin
-      bool^ := rec.IsMaster;
-      Result := True;
-    end;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function IsInjected(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
-var
-  rec: IwbMainRecord;
-begin
-  Result := False;
-  try
-    if Supports(Resolve(_id), IwbMainRecord, rec) then begin
-      bool^ := rec.IsInjected;
-      Result := True;
-    end;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function IsOverride(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
-var
-  rec: IwbMainRecord;
-begin
-  Result := False;
-  try
-    if Supports(Resolve(_id), IwbMainRecord, rec) then begin
-      bool^ := not rec.IsMaster;
-      Result := True;
-    end;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-// TODO: Determine if subrecord is winner
-function IsWinningOverride(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
-var
-  rec: IwbMainRecord;
-begin
-  Result := False;
-  try
-    if Supports(Resolve(_id), IwbMainRecord, rec) then begin
-      bool^ := not rec.IsWinningOverride;
       Result := True;
     end;
   except

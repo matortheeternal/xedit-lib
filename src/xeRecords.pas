@@ -18,6 +18,10 @@ uses
   function SetFormID(_id: Cardinal; formID: Cardinal): WordBool; cdecl;
   function ExchangeReferences(_id, oldFormID, newFormID: Cardinal): WordBool; cdecl;
   function GetReferences(_id: Cardinal; len: PInteger): WordBool; cdecl;
+  function IsMaster(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
+  function IsInjected(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
+  function IsOverride(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
+  function IsWinningOverride(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
 
 implementation
 
@@ -336,6 +340,66 @@ begin
           resultArray[i] := Store(ref);
       Result := True;
     end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function IsMaster(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
+var
+  rec: IwbMainRecord;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbMainRecord, rec) then
+      raise Exception.Create('Interface must be a main record.');
+    bool^ := rec.IsMaster;
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function IsInjected(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
+var
+  rec: IwbMainRecord;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbMainRecord, rec) then
+      raise Exception.Create('Interface must be a main record.');
+    bool^ := rec.IsInjected;
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function IsOverride(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
+var
+  rec: IwbMainRecord;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbMainRecord, rec) then
+      raise Exception.Create('Interface must be a main record.');
+    bool^ := not rec.IsMaster;
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function IsWinningOverride(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
+var
+  rec: IwbMainRecord;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbMainRecord, rec) then
+      raise Exception.Create('Interface must be a main record.');
+    bool^ := rec.IsWinningOverride;
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
