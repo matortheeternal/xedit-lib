@@ -46,56 +46,70 @@ begin
           It('Should resolve file names', procedure
             begin
               ExpectSuccess(Name(xt2, @len));
-              ExpectEqual(grs(len), 'xtest-2.esp', '');
+              ExpectEqual(grs(len), 'xtest-2.esp');
             end);
+
           Describe('Group names', procedure
             begin
               It('Should resolve top level group names', procedure
                 begin
                   ExpectSuccess(Name(armo, @len));
-                  ExpectEqual(grs(len), 'Armor', '');
+                  ExpectEqual(grs(len), 'Armor');
                 end);
               It('Should resolve block names', procedure
                 begin
                   ExpectSuccess(Name(block, @len));
-                  ExpectEqual(grs(len), 'Block 0', '');
+                  ExpectEqual(grs(len), 'Block 0');
                 end);
               It('Should resolve sub-block names', procedure
                 begin
                   ExpectSuccess(Name(subBlock, @len));
-                  ExpectEqual(grs(len), 'Sub-Block 0', '');
+                  ExpectEqual(grs(len), 'Sub-Block 0');
                 end);
               It('Should resolve child group names', procedure
                 begin
                   ExpectSuccess(Name(childGroup, @len));
                   expectedName := 'Children of 00027D1C';
-                  ExpectEqual(grs(len), expectedName, '');
+                  ExpectEqual(grs(len), expectedName);
                 end);
               It('Should resolve persistent/temporary group names', procedure
                 begin
                   ExpectSuccess(Name(persistentGroup, @len));
                   expectedName := 'Persistent';
-                  ExpectEqual(grs(len), expectedName, '');
+                  ExpectEqual(grs(len), expectedName);
                 end);
             end);
+
           Describe('Record names', procedure
             begin
               It('Should resolve FULL name, if present', procedure
                 begin
                   ExpectSuccess(Name(rec, @len));
-                  ExpectEqual(grs(len), 'Iron Gauntlets', '');
+                  ExpectEqual(grs(len), 'Iron Gauntlets');
                 end);
-              It('Should resolve BASE name, if present', procedure
+              It('Should resolve Editor ID, if present', procedure
                 begin
                   ExpectSuccess(Name(refr, @len));
-                  expectedName := 'DA09PedestalEmpty "Pedestal" [ACTI:0007F82A]';
-                  ExpectEqual(grs(len), expectedName, '');
+                  ExpectEqual(grs(len), 'DA09PedestalEmptyRef');
+                end);
+              It('Should resolve context for cells with no EDID or FULL', procedure
+                begin
+                  ExpectSuccess(GetElement(0, 'Update.esm\00038381', @h));
+                  ExpectSuccess(Name(h, @len));
+                  ExpectEqual(grs(len), '"Windhelm" <32,9>');
+                end);
+              It('Should resolve context for placements with no EDID', procedure
+                begin
+                  ExpectSuccess(GetElement(0, 'Update.esm\0003F70F', @h));
+                  ExpectSuccess(Name(h, @len));
+                  ExpectEqual(grs(len), 'Places "Chest" in "Skyrim" <0,0>');
                 end);
             end);
+
           It('Should resolve element names', procedure
             begin
               ExpectSuccess(Name(element, @len));
-              ExpectEqual(grs(len), 'DNAM - Armor Rating', '');
+              ExpectEqual(grs(len), 'DNAM - Armor Rating');
             end);
         end);
 
@@ -104,47 +118,47 @@ begin
           It('Should resolve file names', procedure
             begin
               ExpectSuccess(Path(xt2, @len));
-              ExpectEqual(grs(len), 'xtest-2.esp', '');
+              ExpectEqual(grs(len), 'xtest-2.esp');
             end);
           It('Should resolve group signatures', procedure
             begin
               ExpectSuccess(Path(armo, @len));
-              ExpectEqual(grs(len), 'xtest-2.esp\ARMO', '');
+              ExpectEqual(grs(len), 'xtest-2.esp\ARMO');
             end);
           It('Should resolve block names', procedure
             begin
               ExpectSuccess(Path(block, @len));
-              ExpectEqual(grs(len), 'xtest-2.esp\CELL\Block 0', '');
+              ExpectEqual(grs(len), 'xtest-2.esp\CELL\Block 0');
             end);
           It('Should resolve sub-block names', procedure
             begin
               ExpectSuccess(Path(subBlock, @len));
-              ExpectEqual(grs(len), 'xtest-2.esp\CELL\Block 0\Sub-Block 0', '');
+              ExpectEqual(grs(len), 'xtest-2.esp\CELL\Block 0\Sub-Block 0');
             end);
           It('Should resolve child groups', procedure
             begin
               ExpectSuccess(Path(childGroup, @len));
-              ExpectEqual(grs(len), 'xtest-2.esp\00027D1C\Child Group', '');
+              ExpectEqual(grs(len), 'xtest-2.esp\00027D1C\Child Group');
             end);
           It('Should resolve temporary/persistent groups', procedure
             begin
               ExpectSuccess(Path(persistentGroup, @len));
-              ExpectEqual(grs(len), 'xtest-2.esp\00027D1C\Child Group\Persistent', '');
+              ExpectEqual(grs(len), 'xtest-2.esp\00027D1C\Child Group\Persistent');
             end);
           It('Should resolve record FormIDs', procedure
             begin
               ExpectSuccess(Path(refr, @len));
-              ExpectEqual(grs(len), 'xtest-2.esp\000170F0', '');
+              ExpectEqual(grs(len), 'xtest-2.esp\000170F0');
             end);
           It('Should resolve element names', procedure
             begin
               ExpectSuccess(Path(element, @len));
-              ExpectEqual(grs(len), 'xtest-2.esp\00012E46\DNAM - Armor Rating', '');
+              ExpectEqual(grs(len), 'xtest-2.esp\00012E46\DNAM - Armor Rating');
             end);
           It('Should resolve array element indexes', procedure
             begin
               ExpectSuccess(Path(keyword, @len));
-              ExpectEqual(grs(len), 'xtest-2.esp\00012E46\KWDA - Keywords\[1]', '');
+              ExpectEqual(grs(len), 'xtest-2.esp\00012E46\KWDA - Keywords\[1]');
             end);
         end);
         
@@ -170,9 +184,9 @@ begin
           It('Should return EditorID if a record is passed', procedure
             begin
               ExpectSuccess(EditorID(rec, @len));
-              ExpectEqual(grs(len), 'ArmorIronGauntlets', '');
+              ExpectEqual(grs(len), 'ArmorIronGauntlets');
               ExpectSuccess(EditorID(refr, @len));
-              ExpectEqual(grs(len), 'DA09PedestalEmptyRef', '');
+              ExpectEqual(grs(len), 'DA09PedestalEmptyRef');
             end);
         end);
         
@@ -189,27 +203,27 @@ begin
           It('Should resolve group signatures', procedure
             begin
               ExpectSuccess(Signature(block, @len));
-              ExpectEqual(grs(len), 'GRUP', '');
+              ExpectEqual(grs(len), 'GRUP');
               ExpectSuccess(Signature(subBlock, @len));
-              ExpectEqual(grs(len), 'GRUP', '');
+              ExpectEqual(grs(len), 'GRUP');
               ExpectSuccess(Signature(childGroup, @len));
-              ExpectEqual(grs(len), 'GRUP', '');
+              ExpectEqual(grs(len), 'GRUP');
               ExpectSuccess(Signature(persistentGroup, @len));
-              ExpectEqual(grs(len), 'GRUP', '');
+              ExpectEqual(grs(len), 'GRUP');
               ExpectSuccess(Signature(armo, @len));
-              ExpectEqual(grs(len), 'ARMO', '');
+              ExpectEqual(grs(len), 'ARMO');
             end);
           It('Should resolve record signatures', procedure
             begin
               ExpectSuccess(Signature(rec, @len));
-              ExpectEqual(grs(len), 'ARMO', '');
+              ExpectEqual(grs(len), 'ARMO');
               ExpectSuccess(Signature(refr, @len));
-              ExpectEqual(grs(len), 'REFR', '');
+              ExpectEqual(grs(len), 'REFR');
             end);
           It('Should resolve element signatures', procedure
             begin
               ExpectSuccess(Signature(element, @len));
-              ExpectEqual(grs(len), 'DNAM', '');
+              ExpectEqual(grs(len), 'DNAM');
             end);
         end);
         
@@ -271,14 +285,14 @@ begin
         begin
           It('Should resolve element integer values', procedure
             begin
-              GetElement(rec, 'OBND\Y1', @h);
+              ExpectSuccess(GetElement(rec, 'OBND\Y1', @h));
               ExpectSuccess(GetIntValue(h, '', @i));
-              ExpectEqual(i, -15, '');
+              ExpectEqual(i, -15);
             end);
           It('Should resolve element integer values at paths', procedure
             begin
               ExpectSuccess(GetIntValue(rec, 'OBND\Z1', @i));
-              ExpectEqual(i, -1, '');
+              ExpectEqual(i, -1);
             end);
           It('Should fail if path does not exist', procedure
             begin
