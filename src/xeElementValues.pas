@@ -8,7 +8,7 @@ uses
   function Name(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function LongName(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function DisplayName(_id: Cardinal; len: PInteger): WordBool; cdecl;
-  function Path(_id: Cardinal; len: PInteger): WordBool; cdecl;
+  function Path(_id: Cardinal; full: WordBool; len: PInteger): WordBool; cdecl;
   function EditorID(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function Signature(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function FullName(_id: Cardinal; len: PInteger): WordBool; cdecl;
@@ -29,6 +29,7 @@ uses
   function GetEnabledFlags(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 
   // native functions
+  function GetPath(element: IwbElement; full: WordBool = True; curPath: String = ''): String;
   function GetPathName(element: IwbElement): String;
   function NativeName(e: IwbElement; quoteFull: Boolean = False): String;
 
@@ -179,18 +180,20 @@ begin
   end;
 end;
 
-function GetPath(curPath: String; element: IwbElement): String;
+function GetPath(element: IwbElement; full: WordBool = True; curPath: String = ''): String;
 begin
   Result := GetPathName(element);
   if curPath <> '' then
     Result := Format('%s\%s', [Result, curPath]);
-  if Supports(element, IwbMainRecord) then
-    Result := GetPath(Result, element._File as IwbElement)
+  if Supports(element, IwbMainRecord) then begin
+    if not full then exit;
+    Result := GetPath(element._File as IwbElement, full, Result)
+  end
   else if not Supports(element, IwbFile) then
-    Result := GetPath(Result, NativeContainer(element) as IwbElement);
+    Result := GetPath(NativeContainer(element) as IwbElement, full, Result);
 end;
 
-function Path(_id: Cardinal; len: PInteger): WordBool; cdecl;
+function Path(_id: Cardinal; full: WordBool; len: PInteger): WordBool; cdecl;
 var
   element: IwbElement;
 begin
@@ -198,7 +201,7 @@ begin
   try
     if not Supports(Resolve(_id), IwbElement, element) then
       raise Exception.Create('Interface is not an element.');
-    resultStr := GetPath('', element);
+    resultStr := GetPath(element, full);
     len^ := Length(resultStr);
     Result := True;
   except
