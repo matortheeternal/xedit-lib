@@ -112,37 +112,39 @@ begin
     wbContainerHandler.AddBA2(wbDataPath + sFileName);
 end;
 
+procedure LoadBSAs(var slBSAFileNames, slErrors: TStringList);
+var
+  i: Integer;
+begin
+  for i := 0 to slBSAFileNames.Count - 1 do
+    LoadBSAFile(slBSAFileNames[i]);
+  for i := 0 to slErrors.Count - 1 do
+    AddMessage(slErrors[i] + ' was not found');
+end;
+
 procedure LoadResources;
 var
   slBSAFileNames: TStringList;
   slErrors: TStringList;
-  i, j: Integer;
-  _file: IwbFile;
+  i: Integer;
+  modName: String;
   bIsTES5: Boolean;
 begin
   wbContainerHandler.AddFolder(wbDataPath);
+  bIsTES5 := wbGameMode in [gmTES5, gmSSE];
   slBSAFileNames := TStringList.Create;
   try
-    slErrors:= TStringList.Create;
+    slErrors := TStringList.Create;
     try
       FindBSAs(wbTheGameIniFileName, wbDataPath, slBSAFileNames, slErrors);
-      for i := 0 to slBSAFileNames.Count - 1 do
-        LoadBSAFile(slBSAFileNames[i]);
-      for i := 0 to slErrors.Count - 1 do
-        AddMessage(slErrors[i] + ' was not found');
+      LoadBSAs(slBSAFileNames, slErrors);
 
-      for j := Low(xFiles) to High(xFiles) do begin
+      for i := Low(xFiles) to High(xFiles) do begin
         slBSAFileNames.Clear;
         slErrors.Clear;
-        _file := xFiles[j];
-        bIsTES5 := wbGameMode in [gmTES5, gmSSE];
-
-        HasBSAs(ChangeFileExt(_file.Name, ''), wbDataPath, bIsTES5,
-          bIsTES5, slBSAFileNames, slErrors);
-        for i := 0 to slBSAFileNames.Count - 1 do
-          LoadBSAFile(slBSAFileNames[i]);
-        for i := 0 to slErrors.Count - 1 do
-          AddMessage(slErrors[i] + ' was not found');
+        modName := ChangeFileExt(xFiles[i].GetFileName, '');
+        HasBSAs(modName, wbDataPath, bIsTES5, bIsTES5, slBSAFileNames, slErrors);
+        LoadBSAs(slBSAFileNames, slErrors);
       end;
     finally
       slErrors.Free;
@@ -175,15 +177,16 @@ begin
   try
     SetGame(mode);
     // log message
-    AddMessage(Format('Game: %s, DataPath: %s', [
-      ProgramStatus.GameMode.gameName,
-      settings.gameDataPath
-    ]));
+    AddMessage(Format('Game: %s, DataPath: %s', [wbGameName, wbDataPath]));
     // set global values
     Globals.Values['GameName'] := ProgramStatus.GameMode.gameName;
     Globals.Values['AppName'] := ProgramStatus.GameMode.appName;
     Globals.Values['LongGameName'] := ProgramStatus.GameMode.longName;
-    Globals.Values['DataPath'] := settings.gameDataPath;
+    Globals.Values['DataPath'] := wbDataPath;
+    Globals.Values['AppDataPath'] := wbAppDataPath;
+    Globals.Values['MyGamesPath'] := wbMyGamesPath;
+    Globals.Values['GameIniPath'] := wbTheGameIniFileName;
+    // success
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
@@ -202,10 +205,8 @@ begin
 
     try
       slLoadOrder.StrictDelimiter := True;
-
-      sLoadPath := GetCSIDLShellFolder(CSIDL_LOCAL_APPDATA) + wbGameName2 + '\';
-      // LOAD LIST OF ACTIVE PLUGINS (plugins.txt)      
-      slPlugins := TStringList.Create;
+      // LOAD LIST OF ACTIVE PLUGINS (plugins.txt)
+      sLoadPath := Globals.Values['AppDataPath'];
       sPath := sLoadPath + 'plugins.txt';
       if FileExists(sPath) then
         slPlugins.LoadFromFile(sPath)

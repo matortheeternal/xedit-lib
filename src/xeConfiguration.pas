@@ -46,6 +46,7 @@ type
   end;
 
   procedure SetGame(id: integer);
+  procedure SetGameIniPath;
   function NativeGetGamePath(mode: TGameMode): string;
   function SetGameAbbr(abbrName: string): boolean;
   function SetGameParam(param: string): boolean;
@@ -56,7 +57,8 @@ var
   ProgramStatus: TProgramStatus;
   Globals: TStringList;
   settings: TSettings;
-  dummyPluginHash: string;
+  wbAppDataPath: String;
+  wbMyGamesPath: String;
 
 const
   // GAME MODES
@@ -142,6 +144,39 @@ begin
   ProgramVersion := GetVersionMem;
 end;
 
+function GetMyGamesPath: String;
+var
+  profilePath: String;
+begin
+  Result := '';
+  profilePath := GetCSIDLShellFolder(CSIDL_PERSONAL);
+  if profilePath <> '' then
+    Result := profilePath + wbGameName2 + '\';
+end;
+
+function GetAppDataPath: String;
+var
+  appDataPath: STring;
+begin
+  Result := '';
+  appDataPath := GetCSIDLShellFolder(CSIDL_LOCAL_APPDATA);
+  if appDataPath <> '' then
+    Result := appDataPath + wbGameName2 + '\';
+end;
+
+function GetGameIniPath: String;
+var
+  myGamesPath: String;
+begin
+  Result := '';
+  if wbMyGamesPath <> '' then begin
+    if wbGameMode in [gmFO3, gmFNV] then
+      Result := wbMyGamesPath + 'Fallout.ini'
+    else
+      Result := wbMyGamesPath + wbGameName + '.ini';
+  end;
+end;
+
 { Sets the game mode in the TES5Edit API }
 procedure SetGame(id: integer);
 var
@@ -173,17 +208,9 @@ begin
   wbLoaderDone := True;
   wbContainerHandler := wbCreateContainerHandler;
   wbContainerHandler._AddRef;
-
-  // find game ini inside the user's documents folder.
-  sMyDocumentsPath := GetCSIDLShellFolder(CSIDL_PERSONAL);
-  if sMyDocumentsPath <> '' then begin
-    sIniPath := sMyDocumentsPath + 'My Games\' + wbGameName + '\';
-
-    if wbGameMode in [gmFO3, gmFNV] then
-      wbTheGameIniFileName := sIniPath + 'Fallout.ini'
-    else
-      wbTheGameIniFileName := sIniPath + wbGameName + '.ini';
-  end;
+  wbAppDataPath := GetAppDataPath;
+  wbMyGamesPath := GetMyGamesPath;
+  wbTheGameIniFileName := GetGameIniPath;
 
   // load definitions
   case wbGameMode of
