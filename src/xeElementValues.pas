@@ -196,11 +196,11 @@ var
 begin
   Result := False;
   try
-    if Supports(Resolve(_id), IwbElement, element) then begin
-      resultStr := GetPath('', element);
-      len^ := Length(resultStr);
-      Result := True;
-    end;
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    resultStr := GetPath('', element);
+    len^ := Length(resultStr);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -245,11 +245,11 @@ var
 begin
   Result := False;
   try
-    if Supports(Resolve(_id), IwbElement, element) then begin
-      resultStr := NativeSignature(element);
-      len^ := Length(resultStr);
-      Result := True;
-    end;
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    resultStr := NativeSignature(element);
+    len^ := Length(resultStr);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -261,11 +261,13 @@ var
 begin
   Result := False;
   try
-    if Supports(Resolve(_id), IwbMainRecord, rec) and rec.ElementExists['FULL'] then begin
-      resultStr := rec.FullName;
-      len^ := Length(resultStr);
-      Result := True;
-    end;
+    if not Supports(Resolve(_id), IwbMainRecord, rec) then
+      raise Exception.Create('Interface must be a main record.');
+    if not rec.ElementExists['FULL'] then
+      raise Exception.Create('Record does not have a FULL name.');
+    resultStr := rec.FullName;
+    len^ := Length(resultStr);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -277,11 +279,11 @@ var
 begin
   Result := False;
   try
-    if Supports(Resolve(_id), IwbElement, element) then begin
-      resultStr := element.SortKey[False];
-      len^ := Length(resultStr);
-      Result := True;
-    end;
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    resultStr := element.SortKey[False];
+    len^ := Length(resultStr);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -313,11 +315,11 @@ var
 begin
   Result := False;
   try
-    if Supports(Resolve(_id), IwbElement, element) then begin
-      resultStr := etToString(element.ElementType);
-      len^ := Length(resultStr);
-      Result := True;
-    end;
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    resultStr := etToString(element.ElementType);
+    len^ := Length(resultStr);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -354,11 +356,11 @@ var
 begin
   Result := False;
   try
-    if Supports(Resolve(_id), IwbElement, element) then begin
-      resultStr := dtToString(GetDefType(element));
-      len^ := Length(resultStr);
-      Result := True;
-    end;
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    resultStr := dtToString(GetDefType(element));
+    len^ := Length(resultStr);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -503,23 +505,21 @@ end;
 
 function GetFlag(_id: Cardinal; path, name: PWideChar; enabled: PWordBool): WordBool; cdecl;
 var
-  e: IInterface;
   element: IwbElement;
   enumDef: IwbEnumDef;
   i: Integer;
 begin
   Result := False;
   try
-    e := NativeGetElement(_id, path);
-    if Supports(e, IwbElement, element)
-    and Supports(element.Def, IwbEnumDef, enumDef) then begin
-      for i := 0 to Pred(enumDef.NameCount) do
-        if SameText(enumDef.Names[i], name) then begin
-          enabled^ := element.NativeValue and (1 shl i);
-          exit;
-        end;
-      Result := True;
-    end;
+    element := NativeGetElementEx(_id, path);
+    if not Supports(element.Def, IwbEnumDef, enumDef) then
+      raise Exception.Create('Element does not have flags');
+    for i := 0 to Pred(enumDef.NameCount) do
+      if SameText(enumDef.Names[i], name) then begin
+        enabled^ := element.NativeValue and (1 shl i);
+        exit;
+      end;
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -527,7 +527,6 @@ end;
 
 function ToggleFlag(_id: Cardinal; path, name: PWideChar): WordBool; cdecl;
 var
-  e: IInterface;
   element: IwbElement;
   enumDef: IwbEnumDef;
   i: Integer;
@@ -535,18 +534,18 @@ var
 begin
   Result := False;
   try
-    e := NativeGetElement(_id, path);
-    if Supports(e, IwbElement, element)
-    and Supports(element.Def, IwbEnumDef, enumDef) then begin
-      for i := 0 to Pred(enumDef.NameCount) do
-        if SameText(enumDef.Names[i], name) then begin
-          flagVal := 1 shl i;
-          if element.NativeValue and flagVal then
-            element.NativeValue := element.NativeValue and not flagVal
-          else
-            element.NativeValue := element.NativeValue or flagVal;
-        end;
-    end;
+    element := NativeGetElementEx(_id, path);
+    if not Supports(element.Def, IwbEnumDef, enumDef) then
+      raise Exception.Create('Element does not have flags');
+    for i := 0 to Pred(enumDef.NameCount) do
+      if SameText(enumDef.Names[i], name) then begin
+        flagVal := 1 shl i;
+        if element.NativeValue and flagVal then
+          element.NativeValue := element.NativeValue and not flagVal
+        else
+          element.NativeValue := element.NativeValue or flagVal;
+      end;
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -555,7 +554,6 @@ end;
 function GetEnabledFlags(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
 var
   slFlags: TStringList;
-  e: IInterface;
   element: IwbElement;
   enumDef: IwbEnumDef;
   i: Integer;
@@ -568,14 +566,13 @@ begin
     slFlags.Delimiter := ',';
 
     try
-      e := NativeGetElement(_id, path);
-      if Supports(e, IwbElement, element)
-      and Supports(element.Def, IwbEnumDef, enumDef) then begin
-        for i := 0 to Pred(enumDef.NameCount) do begin
-          flagVal := 1 shl i;
-          if element.NativeValue and flagVal then
-            slFlags.Add(enumDef.Names[i]);
-        end;
+      element := NativeGetElementEx(_id, path);
+      if not Supports(element.Def, IwbEnumDef, enumDef) then
+        raise Exception.Create('Element does not have flags');
+      for i := 0 to Pred(enumDef.NameCount) do begin
+        flagVal := 1 shl i;
+        if element.NativeValue and flagVal then
+          slFlags.Add(enumDef.Names[i]);
       end;
 
       // set output
