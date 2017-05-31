@@ -27,6 +27,7 @@ type
   function ElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
   function ElementEquals(_id, _id2: Cardinal; bool: PWordBool): WordBool; cdecl;
   function CopyElement(_id, _id2: Cardinal; aAsNew, aDeepCopy: WordBool; _res: PCardinal): WordBool; cdecl;
+  function GetExpectedSignatures(_id: Cardinal; len: PInteger): WordBool; cdecl;
 
   // native functions
   function ResolveFromGroup(group: IwbGroupRecord; path: String): IInterface;
@@ -557,6 +558,22 @@ begin
       _res^ := Store(wbCopyElementToRecord(element, rec, aAsNew, aDeepCopy))
     else
       raise Exception.Create('Second interface must be a file or a main record.');
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetExpectedSignatures(_id: Cardinal; len: PInteger): WordBool; cdecl;
+var
+  element: IwbFormIDChecked;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbFormIDChecked, element) then
+      raise Exception.Create('Interface must be an element which holds a FormID value.');
+    resultStr := element.SignaturesText;
+    len^ := Length(resultStr);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
