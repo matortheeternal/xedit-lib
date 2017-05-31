@@ -66,7 +66,7 @@ uses
   // mte units
   mteConflict,
   // xelib units
-  xeMessages,
+  xeMessages, xeElementValues,
   // library units
   Argo;
 
@@ -297,7 +297,7 @@ constructor TRecordError.Create(rec: IwbMainRecord; element: IwbElement;
   error: string);
 begin
   Init(rec);
-  path := element.Path;
+  path := GetPath(element, false);
   ParseError(error, &type, data);
 end;
 
