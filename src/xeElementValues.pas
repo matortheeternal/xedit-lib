@@ -28,7 +28,7 @@ uses
 
   // native functions
   function GetPathName(element: IwbElement): String;
-  function NativeName(e: IInterface): String;
+  function NativeName(e: IwbElement; quoteFull: Boolean = False): String;
 
 implementation
 
@@ -41,39 +41,72 @@ uses
   // xelib modules
   xeElements, xeMessages, xeGroups, xeMeta;
 
-function NativeName(e: IInterface): String;
+function FormString(rec: IwbMainRecord): String;
+begin
+  Result := Format('[%s:%s]', [
+    AnsiString(rec.Signature),
+    IntToHex(rec.LoadOrderFormID, 8)
+  ]);
+end;
+
+function CellName(rec: IwbMainRecord): String;
+begin
+  Result := Format('%s <%d,%d>', [
+    NativeName(rec.ElementByPath['Worldspace'].LinksTo, true),
+    Integer(rec.ElementNativeValues['XCLC\X']),
+    Integer(rec.ElementNativeValues['XCLC\Y'])
+  ]);
+end;
+
+function PlacementName(rec: IwbMainRecord): String;
+begin
+  Result := Format('Places %s in %s', [
+    NativeName(rec.ElementByPath['NAME'].LinksTo, true),
+    NativeName(rec.ElementByPath['Cell'].LinksTo, true)
+  ]);
+end;
+
+function NativeName(e: IwbElement; quoteFull: Boolean = False): String;
 var
   _file: IwbFile;
   group: IwbGroupRecord;
   rec: IwbMainRecord;
-  element: IwbElement;
 begin
-  Result := '';
   if Supports(e, IwbFile, _file) then
     Result := _file.FileName
   else if Supports(e, IwbGroupRecord, group) then
     Result := group.ShortName
   else if Supports(e, IwbMainRecord, rec) then begin
-    if rec.ElementExists['FULL'] then
-      Result := rec.FullName
+    if rec.ElementExists['FULL'] then begin
+      if quoteFull then
+        Result := '"' + rec.FullName + '"'
+      else
+        Result := rec.FullName;
+    end
+    else if rec.ElementExists['EDID'] then
+      Result := rec.EditorID
+    else if String(rec.Signature) = 'CELL' then
+      Result := CellName(rec)
     else if rec.ElementExists['NAME'] then
-      Result := rec.ElementEditValues['NAME']
+      Result := PlacementName(rec)
     else if rec.Signature = 'TES4' then
       Result := 'File Header';
   end
-  else if Supports(e, IwbElement, element) then
-    Result := element.Name;
+  else
+    Result := e.Name;
 end;
 
 function Name(_id: Cardinal; len: PInteger): WordBool; cdecl;
+var
+  element: IwbElement;
 begin
   Result := False;
   try
-    resultStr := NativeName(Resolve(_id));
-    if resultStr <> '' then begin
-      len^ := Length(resultStr);
-      Result := True;
-    end;
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    resultStr := NativeName(element);
+    len^ := Length(resultStr);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
