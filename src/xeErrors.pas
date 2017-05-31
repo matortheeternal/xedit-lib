@@ -20,6 +20,7 @@ type
   TRecordError = class
   public
     &type: TErrorType;
+    handle: Cardinal;
     signature: TwbSignature;
     formID: integer;
     name: string;
@@ -30,6 +31,7 @@ type
       error: string); overload;
     constructor Create(rec: IwbMainRecord; element: IwbElement;
       error: string); overload;
+    procedure Init(rec: IwbMainRecord);
   end;
   TErrorCheckThread = class(TThread)
   protected
@@ -178,6 +180,7 @@ begin
   Result := TJSONObject.Create;
   try
     Result.I['group'] := Ord(error.&type.id);
+    Result.I['handle'] := error.handle;
     Result.S['signature'] := string(error.signature);
     Result.I['form_id'] := error.formID;
     Result.S['name'] := error.name;
@@ -278,18 +281,14 @@ end;
 { TRecordError }
 constructor TRecordError.Create(rec: IwbMainRecord; id: TErrorTypeID);
 begin
-  signature := rec.signature;
-  formID := rec.FixedFormID;
-  name := rec.Name;
+  Init(rec);
   &type := ErrorTypes[Ord(id)];
 end;
 
 constructor TRecordError.Create(rec: IwbMainRecord; id: TErrorTypeID;
   error: string);
 begin
-  signature := rec.signature;
-  formID := rec.FixedFormID;
-  name := rec.Name;
+  Init(rec);
   &type := ErrorTypes[Ord(id)];
   data := error;
 end;
@@ -297,11 +296,17 @@ end;
 constructor TRecordError.Create(rec: IwbMainRecord; element: IwbElement;
   error: string);
 begin
+  Init(rec);
+  path := element.Path;
+  ParseError(error, &type, data);
+end;
+
+procedure TRecordError.Init(rec: IwbMainRecord);
+begin
+  handle := Store(rec);
   signature := rec.signature;
   formID := rec.FixedFormID;
   name := rec.Name;
-  path := element.Path;
-  ParseError(error, &type, data);
 end;
 
 
