@@ -46,7 +46,6 @@ type
   end;
 
   procedure SetGame(id: integer);
-  procedure SetGameIniPath;
   function NativeGetGamePath(mode: TGameMode): string;
   function SetGameAbbr(abbrName: string): boolean;
   function SetGameParam(param: string): boolean;
@@ -151,12 +150,12 @@ begin
   Result := '';
   profilePath := GetCSIDLShellFolder(CSIDL_PERSONAL);
   if profilePath <> '' then
-    Result := profilePath + wbGameName2 + '\';
+    Result := profilePath + 'My Games\' + wbGameName2 + '\';
 end;
 
 function GetAppDataPath: String;
 var
-  appDataPath: STring;
+  appDataPath: String;
 begin
   Result := '';
   appDataPath := GetCSIDLShellFolder(CSIDL_LOCAL_APPDATA);
@@ -165,8 +164,6 @@ begin
 end;
 
 function GetGameIniPath: String;
-var
-  myGamesPath: String;
 begin
   Result := '';
   if wbMyGamesPath <> '' then begin
