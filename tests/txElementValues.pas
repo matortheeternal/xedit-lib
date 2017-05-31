@@ -117,47 +117,47 @@ begin
         begin
           It('Should resolve file names', procedure
             begin
-              ExpectSuccess(Path(xt2, @len));
+              ExpectSuccess(Path(xt2, true, @len));
               ExpectEqual(grs(len), 'xtest-2.esp');
             end);
           It('Should resolve group signatures', procedure
             begin
-              ExpectSuccess(Path(armo, @len));
+              ExpectSuccess(Path(armo, true, @len));
               ExpectEqual(grs(len), 'xtest-2.esp\ARMO');
             end);
           It('Should resolve block names', procedure
             begin
-              ExpectSuccess(Path(block, @len));
+              ExpectSuccess(Path(block, true, @len));
               ExpectEqual(grs(len), 'xtest-2.esp\CELL\Block 0');
             end);
           It('Should resolve sub-block names', procedure
             begin
-              ExpectSuccess(Path(subBlock, @len));
+              ExpectSuccess(Path(subBlock, true, @len));
               ExpectEqual(grs(len), 'xtest-2.esp\CELL\Block 0\Sub-Block 0');
             end);
           It('Should resolve child groups', procedure
             begin
-              ExpectSuccess(Path(childGroup, @len));
+              ExpectSuccess(Path(childGroup, true, @len));
               ExpectEqual(grs(len), 'xtest-2.esp\00027D1C\Child Group');
             end);
           It('Should resolve temporary/persistent groups', procedure
             begin
-              ExpectSuccess(Path(persistentGroup, @len));
+              ExpectSuccess(Path(persistentGroup, true, @len));
               ExpectEqual(grs(len), 'xtest-2.esp\00027D1C\Child Group\Persistent');
             end);
           It('Should resolve record FormIDs', procedure
             begin
-              ExpectSuccess(Path(refr, @len));
+              ExpectSuccess(Path(refr, true, @len));
               ExpectEqual(grs(len), 'xtest-2.esp\000170F0');
             end);
           It('Should resolve element names', procedure
             begin
-              ExpectSuccess(Path(element, @len));
+              ExpectSuccess(Path(element, true, @len));
               ExpectEqual(grs(len), 'xtest-2.esp\00012E46\DNAM - Armor Rating');
             end);
           It('Should resolve array element indexes', procedure
             begin
-              ExpectSuccess(Path(keyword, @len));
+              ExpectSuccess(Path(keyword, true, @len));
               ExpectEqual(grs(len), 'xtest-2.esp\00012E46\KWDA - Keywords\[1]');
             end);
         end);
