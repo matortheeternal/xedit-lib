@@ -70,6 +70,8 @@ type
 
   // ELEMENT VALUE METHODS
   function Name(_id: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function LongName(_id: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function DisplayName(_id: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function Path(_id: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function EditorID(_id: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function Signature(_id: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';

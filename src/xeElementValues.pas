@@ -6,6 +6,8 @@ uses
   wbInterface;
 
   function Name(_id: Cardinal; len: PInteger): WordBool; cdecl;
+  function LongName(_id: Cardinal; len: PInteger): WordBool; cdecl;
+  function DisplayName(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function Path(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function EditorID(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function Signature(_id: Cardinal; len: PInteger): WordBool; cdecl;
@@ -105,6 +107,38 @@ begin
     if not Supports(Resolve(_id), IwbElement, element) then
       raise Exception.Create('Interface is not an element.');
     resultStr := NativeName(element);
+    len^ := Length(resultStr);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function LongName(_id: Cardinal; len: PInteger): WordBool; cdecl;
+var
+  element: IwbElement;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    resultStr := element.Name;
+    len^ := Length(resultStr);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function DisplayName(_id: Cardinal; len: PInteger): WordBool; cdecl;
+var
+  element: IwbElement;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    resultStr := element.DisplayName;
     len^ := Length(resultStr);
     Result := True;
   except
