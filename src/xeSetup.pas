@@ -204,7 +204,6 @@ begin
     slLoadOrder := TStringList.Create;
 
     try
-      slLoadOrder.StrictDelimiter := True;
       // LOAD LIST OF ACTIVE PLUGINS (plugins.txt)
       sLoadPath := Globals.Values['AppDataPath'];
       sPath := sLoadPath + 'plugins.txt';
