@@ -566,13 +566,18 @@ end;
 
 function GetExpectedSignatures(_id: Cardinal; len: PInteger): WordBool; cdecl;
 var
-  element: IwbFormIDChecked;
+  element: IwbElement;
+  integerDef: IwbIntegerDef;
+  formDef: IwbFormIDChecked;
 begin
   Result := False;
   try
-    if not Supports(Resolve(_id), IwbFormIDChecked, element) then
-      raise Exception.Create('Interface must be an element which holds a FormID value.');
-    resultStr := element.SignaturesText;
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    if not Supports(element.ValueDef, IwbIntegerDef, integerDef)
+    or not Supports(integerDef.Formater[element], IwbFormIDChecked, formDef) then
+      raise Exception.Create('Interface must be able to hold a FormID value.');
+    resultStr := formDef.SignaturesText;
     len^ := Length(resultStr);
     Result := True;
   except

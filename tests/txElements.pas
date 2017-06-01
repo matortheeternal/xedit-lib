@@ -548,6 +548,33 @@ begin
               ExpectFailure(RemoveElement(ar3, 'YNAM'));
             end);
         end);
+
+      Describe('GetExpectedSignatures', procedure
+        begin
+          It('Should list allowed signatures', procedure
+            begin
+              ExpectSuccess(GetExpectedSignatures(keyword, @len));
+              ExpectEqual(grs(len), 'KYWD,NULL');
+              ExpectSuccess(GetElement(ar2, 'ZNAM', @h));
+              ExpectSuccess(GetExpectedSignatures(h, @len));
+              ExpectEqual(grs(len), 'SNDR');
+            end);
+          It('Should raise an exception if a null handle is passed', procedure
+            begin
+              ExpectFailure(GetExpectedSignatures(0, @len));
+            end);
+          It('Should raise an exception if element isn''t an integer', procedure
+            begin
+              ExpectFailure(GetExpectedSignatures(skyrim, @len));
+              ExpectFailure(GetExpectedSignatures(armo1, @len));
+              ExpectFailure(GetExpectedSignatures(ar1, @len));
+              ExpectFailure(GetExpectedSignatures(keywords, @len));
+            end);
+          It('Should raise an exception if element can''t hold formIDs', procedure
+            begin
+              ExpectFailure(GetExpectedSignatures(dnam, @len));
+            end);
+        end);
     end);
 end;
 

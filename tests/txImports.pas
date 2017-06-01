@@ -67,6 +67,7 @@ type
   function ElementExists(_id: Cardinal; key: PWideChar; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
   function ElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function ElementEquals(_id, _id2: Cardinal; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
+  function GetExpectedSignatures(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
 
   // ELEMENT VALUE METHODS
   function Name(_id: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
