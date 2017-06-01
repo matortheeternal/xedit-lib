@@ -174,7 +174,6 @@ begin
   Result := False;
   try
     if (_id = 0) or (_id >= Cardinal(_store.Count)) then exit;
-    _store[_id]._Release;
     _store[_id] := nil;
     _releasedIDs.Add(_id);
     Result := True;

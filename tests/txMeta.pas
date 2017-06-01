@@ -198,6 +198,7 @@ begin
               ExpectSuccess(Release(h1));
               ExpectSuccess(FileByName('Skyrim.esm', @h2));
               Expect(h1 = h2, 'Next allocation should use the freed handle');
+              ExpectSuccess(Release(h2));
             end);
         end);
 
