@@ -182,17 +182,17 @@ end;
 
 function GetPath(element: IwbElement; full: WordBool = True; curPath: String = ''): String;
 var
-  isMainRecord: Boolean;
+  container: IwbContainer;
 begin
   Result := GetPathName(element);
   if curPath <> '' then
     Result := Format('%s\%s', [Result, curPath]);
-  isMainRecord := Supports(element, IwbMainRecord);
-  if isMainRecord then
+  if Supports(element, IwbMainRecord) then
     Result := GetPath(element._File as IwbElement, full, Result)
   else if not Supports(element, IwbFile) then begin
-    if isMainRecord and not full then exit;
-    Result := GetPath(NativeContainer(element) as IwbElement, full, Result);
+    container := NativeContainer(element);
+    if Supports(container, IwbMainRecord) and not full then exit;
+    Result := GetPath(container as IwbElement, full, Result);
   end;
 end;
 
