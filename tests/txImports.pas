@@ -92,6 +92,9 @@ type
   function GetFlag(_id: Integer; path: PWideChar; name: PWideChar; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
   function ToggleFlag(_id: Integer; path: PWideChar; name: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
   function GetEnabledFlags(_id: Integer; path: PWideChar; flags: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
+  function SignatureFromName(name: PWideChar; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function NameFromSignature(sig: PWideChar; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function GetSignatureNameMap(len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
 
   // SERIALIZATION METHODS
   function ElementToJson(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
@@ -100,11 +103,7 @@ type
   // GROUP HANDLING METHODS
   function HasGroup(_id: Cardinal; sig: PWideChar; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
   function AddGroup(_id: Cardinal; sig: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function GetGroupSignatures(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetChildGroup(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function GroupSignatureFromName(name: PWideChar; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
-  function GroupNameFromSignature(sig: PWideChar; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
-  function GetGroupSignatureNameMap(len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
 
   // RECORD HANDLING METHODS
   function AddRecord(_id: Cardinal; sig: string; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';

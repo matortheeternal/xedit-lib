@@ -7,7 +7,6 @@ uses
 
   function HasGroup(_id: Cardinal; sig: PWideChar; bool: PWordBool): WordBool; cdecl;
   function AddGroup(_id: Cardinal; sig: PWideChar; _res: PCardinal): WordBool; cdecl;
-  function GetGroupSignatures(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function GetChildGroup(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 
   // native functions
@@ -71,25 +70,6 @@ begin
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
       _res^ := Store(AddGroupIfMissing(_file, string(sig)));
-      Result := True;
-    end;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function GetGroupSignatures(_id: Cardinal; len: PInteger): WordBool; cdecl;
-var
-  _file: IwbFile;
-  i: Integer;
-begin
-  Result := False;
-  try
-    if Supports(Resolve(_id), IwbFile, _file) then begin
-      resultStr := '';
-      for i := 1 to _file.ElementCount do
-        resultStr := resultStr + string(IwbGroupRecord(_file.Elements[i]).Signature) + #13;
-      len^ := Length(resultStr);
       Result := True;
     end;
   except

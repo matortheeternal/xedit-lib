@@ -32,7 +32,8 @@ uses
   wbHelpers in 'lib\xedit\wbHelpers.pas',
   wbLocalization in 'lib\xedit\wbLocalization.pas',
   wbStreams in 'lib\xedit\wbStreams.pas',
-  Argo in 'lib\Argo\Argo.pas';
+  Argo in 'lib\Argo\Argo.pas',
+  ArgoTypes in 'lib\Argo\ArgoTypes.pas';
 
 {$R *.RES}
 {$MAXSTACKSIZE 2097152}
@@ -70,9 +71,9 @@ exports
   Name, LongName, DisplayName, Path, EditorID, Signature, FullName, GetValue,
   SetValue, GetIntValue, SetIntValue, GetUIntValue, SetUIntValue, GetFloatValue,
   SetFloatValue, SetFlag, GetFlag, ToggleFlag, GetEnabledFlags,
+  SignatureFromName, NameFromSignature, GetSignatureNameMap,
   // GROUP HANDLING METHODS
-  HasGroup, AddGroup, GetGroupSignatures, GetChildGroup, GroupSignatureFromName,
-  GroupNameFromSignature, GetGroupSignatureNameMap,
+  HasGroup, AddGroup, GetChildGroup,
   // RECORD HANDLING METHODS
   AddRecord, GetRecords, RecordsBySignature, RecordByFormID, RecordByEditorID,
   RecordByName, GetOverrides, GetFormID, SetFormID, ExchangeReferences,

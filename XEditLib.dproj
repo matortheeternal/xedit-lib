@@ -87,6 +87,7 @@
 			<DCCReference Include="lib\xedit\wbLocalization.pas"/>
 			<DCCReference Include="lib\xedit\wbStreams.pas"/>
 			<DCCReference Include="lib\Argo\Argo.pas"/>
+			<DCCReference Include="lib\Argo\ArgoTypes.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>
