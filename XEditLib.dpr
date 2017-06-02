@@ -60,16 +60,16 @@ exports
   // ELEMENT HANDLING METHODS
   GetElement, GetElements, GetElementFile, GetContainer, AddElement,
   RemoveElement, RemoveElementOrParent, ElementExists, ElementCount, GetLinksTo,
-  ElementEquals, CopyElement, GetExpectedSignatures,
+  ElementEquals, CopyElement, GetExpectedSignatures, SortKey, ElementType,
+  DefType,
   // ERROR CHECKING METHODS
   CheckForErrors, GetErrorThreadDone, GetErrors, GetErrorString,
   // SERIALIZATION METHODS
   ElementToJson, {ElementFromJson,}
   // ELEMENT VALUE METHODS
-  Name, LongName, DisplayName, Path, EditorID, Signature, FullName, SortKey,
-  ElementType, DefType, GetValue, SetValue, GetIntValue, SetIntValue,
-  GetUIntValue, SetUIntValue, GetFloatValue, SetFloatValue, SetFlag, GetFlag,
-  ToggleFlag, GetEnabledFlags,
+  Name, LongName, DisplayName, Path, EditorID, Signature, FullName, GetValue,
+  SetValue, GetIntValue, SetIntValue, GetUIntValue, SetUIntValue, GetFloatValue,
+  SetFloatValue, SetFlag, GetFlag, ToggleFlag, GetEnabledFlags,
   // GROUP HANDLING METHODS
   HasGroup, AddGroup, GetGroupSignatures, GetChildGroup, GroupSignatureFromName,
   GroupNameFromSignature, GetGroupSignatureNameMap,

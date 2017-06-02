@@ -12,9 +12,6 @@ uses
   function EditorID(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function Signature(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function FullName(_id: Cardinal; len: PInteger): WordBool; cdecl;
-  function SortKey(_id: Cardinal; len: PInteger): WordBool; cdecl;
-  function ElementType(_id: Cardinal; len: PInteger): WordBool; cdecl;
-  function DefType(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function GetValue(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
   function SetValue(_id: Cardinal; path, value: PWideChar): WordBool; cdecl;
   function GetIntValue(_id: Cardinal; path: PWideChar; value: PInteger): WordBool; cdecl;
@@ -272,99 +269,6 @@ begin
     if not rec.ElementExists['FULL'] then
       raise Exception.Create('Record does not have a FULL name.');
     resultStr := rec.FullName;
-    len^ := Length(resultStr);
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function SortKey(_id: Cardinal; len: PInteger): WordBool; cdecl;
-var
-  element: IwbElement;
-begin
-  Result := False;
-  try
-    if not Supports(Resolve(_id), IwbElement, element) then
-      raise Exception.Create('Interface is not an element.');
-    resultStr := element.SortKey[False];
-    len^ := Length(resultStr);
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function etToString(et: TwbElementType): String;
-begin
-  case Ord(et) of
-    Ord(etFile): Result := 'etFile';
-    Ord(etMainRecord): Result := 'etMainRecord';
-    Ord(etGroupRecord): Result := 'etGroupRecord';
-    Ord(etSubRecord): Result := 'etSubRecord';
-    Ord(etSubRecordStruct): Result := 'etSubRecordStruct';
-    Ord(etSubRecordArray): Result := 'etSubRecordArray';
-    Ord(etSubRecordUnion): Result := 'etSubRecordUnion';
-    Ord(etArray): Result := 'etArray';
-    Ord(etStruct): Result := 'etStruct';
-    Ord(etValue): Result := 'etValue';
-    Ord(etFlag): Result := 'etFlag';
-    Ord(etStringListTerminator): Result := 'etStringListTerminator';
-    Ord(etUnion): Result := 'etUnion';
-    Ord(etStructChapter): Result := 'etStructChapter';
-  end;
-end;
-
-function ElementType(_id: Cardinal; len: PInteger): WordBool; cdecl;
-var
-  element: IwbElement;
-begin
-  Result := False;
-  try
-    if not Supports(Resolve(_id), IwbElement, element) then
-      raise Exception.Create('Interface is not an element.');
-    resultStr := etToString(element.ElementType);
-    len^ := Length(resultStr);
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function dtToString(dt: TwbDefType): String;
-begin
-  case Ord(dt) of
-    Ord(dtRecord): Result := 'dtRecord';
-    Ord(dtSubRecord): Result := 'dtSubRecord';
-    Ord(dtSubRecordArray): Result := 'dtSubRecordArray';
-    Ord(dtSubRecordStruct): Result := 'dtSubRecordStruct';
-    Ord(dtSubRecordUnion): Result := 'dtSubRecordUnion';
-    Ord(dtString): Result := 'dtString';
-    Ord(dtLString): Result := 'dtLString';
-    Ord(dtLenString): Result := 'dtLenString';
-    Ord(dtByteArray): Result := 'dtByteArray';
-    Ord(dtInteger): Result := 'dtInteger';
-    Ord(dtIntegerFormater): Result := 'dtIntegerFormater';
-    Ord(dtIntegerFormaterUnion): Result := 'dtIntegerFormaterUnion';
-    Ord(dtFlag): Result := 'dtFlag';
-    Ord(dtFloat): Result := 'dtFloat';
-    Ord(dtArray): Result := 'dtArray';
-    Ord(dtStruct): Result := 'dtStruct';
-    Ord(dtUnion): Result := 'dtUnion';
-    Ord(dtEmpty): Result := 'dtEmpty';
-    Ord(dtStructChapter): Result := 'dtStructChapter';
-  end;
-end;
-
-function DefType(_id: Cardinal; len: PInteger): WordBool; cdecl;
-var
-  element: IwbElement;
-begin
-  Result := False;
-  try
-    if not Supports(Resolve(_id), IwbElement, element) then
-      raise Exception.Create('Interface is not an element.');
-    resultStr := dtToString(GetDefType(element));
     len^ := Length(resultStr);
     Result := True;
   except

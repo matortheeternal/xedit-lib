@@ -28,6 +28,9 @@ type
   function ElementEquals(_id, _id2: Cardinal; bool: PWordBool): WordBool; cdecl;
   function CopyElement(_id, _id2: Cardinal; aAsNew, aDeepCopy: WordBool; _res: PCardinal): WordBool; cdecl;
   function GetExpectedSignatures(_id: Cardinal; len: PInteger): WordBool; cdecl;
+  function SortKey(_id: Cardinal; len: PInteger): WordBool; cdecl;
+  function ElementType(_id: Cardinal; enum: PByte): WordBool; cdecl;
+  function DefType(_id: Cardinal; enum: PByte): WordBool; cdecl;
 
   // native functions
   function ResolveFromGroup(group: IwbGroupRecord; path: String): IInterface;
@@ -582,6 +585,52 @@ begin
     else
       resultStr := '*';
     len^ := Length(resultStr);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function SortKey(_id: Cardinal; len: PInteger): WordBool; cdecl;
+var
+  element: IwbElement;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    resultStr := element.SortKey[False];
+    len^ := Length(resultStr);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function ElementType(_id: Cardinal; enum: PByte): WordBool; cdecl;
+var
+  element: IwbElement;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    enum^ := Ord(element.ElementType);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function DefType(_id: Cardinal; enum: PByte): WordBool; cdecl;
+var
+  element: IwbElement;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    enum^ := Ord(GetDefType(element));
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
