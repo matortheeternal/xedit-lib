@@ -570,12 +570,21 @@ begin
   Result := _v.t = jtNull;
 end;
 
+function BoolToStr(b: Boolean): String;
+begin
+  if b then
+    Result := 'true'
+  else
+    Result := 'false';
+end;
+
+
 function TJSONValue.ToString: String;
 begin
   case _v.t of
     jtNull: Result := 'null';
     jtString: Result := '"' + Escape(_s) + '"';
-    jtBoolean: Result := BoolToStr(_v.b, true);
+    jtBoolean: Result := BoolToStr(_v.b);
     jtInt: Result := IntToStr(_v.i);
     jtDouble: Result := FloatToStr(_v.d);
     jtArray: Result := _v.a.ToString;
