@@ -62,7 +62,7 @@ exports
   GetElement, GetElements, GetElementFile, GetContainer, AddElement,
   RemoveElement, RemoveElementOrParent, ElementExists, ElementCount, GetLinksTo,
   ElementEquals, CopyElement, MoveElement, GetExpectedSignatures, SortKey,
-  ElementType, DefType,
+  ElementType, DefType, SmashType,
   // ERROR CHECKING METHODS
   CheckForErrors, GetErrorThreadDone, GetErrors, GetErrorString,
   // SERIALIZATION METHODS

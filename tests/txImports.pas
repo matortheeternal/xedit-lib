@@ -68,6 +68,10 @@ type
   function ElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function ElementEquals(_id, _id2: Cardinal; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
   function GetExpectedSignatures(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function SortKey(_id: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function ElementType(_id: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function DefType(_id: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function SmashType(_id: Cardinal; enum: PByte): WordBool; cdecl; external 'XEditLib.dll';
 
   // ELEMENT VALUE METHODS
   function Name(_id: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
@@ -77,9 +81,6 @@ type
   function EditorID(_id: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function Signature(_id: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function FullName(_id: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
-  function SortKey(_id: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
-  function ElementType(_id: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
-  function DefType(_id: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetValue(_id: Integer; path: PWideChar; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function SetValue(_id: Integer; path: PWideChar; value: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
   function GetIntValue(_id: Integer; path: PWideChar; value: PInteger): WordBool; cdecl; external 'XEditLib.dll';
