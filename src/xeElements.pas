@@ -27,7 +27,7 @@ type
   function ElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
   function ElementEquals(_id, _id2: Cardinal; bool: PWordBool): WordBool; cdecl;
   function CopyElement(_id, _id2: Cardinal; aAsNew, aDeepCopy: WordBool; _res: PCardinal): WordBool; cdecl;
-  function MoveElement(_id: Cardinal; index: Integer): WordBool; cdecl;
+  function MoveElementToIndex(_id: Cardinal; index: Integer): WordBool; cdecl;
   function GetExpectedSignatures(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function SortKey(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function ElementType(_id: Cardinal; enum: PByte): WordBool; cdecl;
@@ -39,7 +39,7 @@ type
   function ResolveElement(e: IInterface; path: String): IInterface;
   function NativeGetElement(_id: Cardinal; key: PWideChar): IInterface;
   function NativeGetElementEx(_id: Cardinal; key: PWideChar): IwbElement;
-  procedure NativeMoveElement(element: IwbElement; index: Integer);
+  procedure NativeMoveElementToIndex(element: IwbElement; index: Integer);
   function NativeContainer(element: IwbElement): IwbContainer;
   function NativeAddElement(_id: Cardinal; key: string): IInterface;
   function IsArray(element: IwbElement): Boolean;
@@ -339,7 +339,7 @@ begin
   end;
 end;
 
-procedure NativeMoveElement(element: IwbElement; index: Integer);
+procedure NativeMoveElementToIndex(element: IwbElement; index: Integer);
 var
   container: IwbContainerElementRef;
 begin
@@ -409,7 +409,7 @@ begin
         // assign element at given index if index given, else add
         if ParseIndex(key, keyIndex) then begin
           Result := container.Assign(High(integer), nil, False);
-          NativeMoveElement(Result as IwbElement, keyIndex);
+          NativeMoveElementToIndex(Result as IwbElement, keyIndex);
         end
         else
           Result := container.Add(key, True);
@@ -570,7 +570,7 @@ begin
   end;
 end;
 
-function MoveElement(_id: Cardinal; index: Integer): WordBool; cdecl;
+function MoveElementToIndex(_id: Cardinal; index: Integer): WordBool; cdecl;
 var
   element: IwbElement;
 begin
@@ -578,7 +578,7 @@ begin
   try
     if not Supports(Resolve(_id), IwbElement, element) then
       raise Exception.Create('Interface is not an element.');
-    NativeMoveElement(element, index);
+    NativeMoveElementToIndex(element, index);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
