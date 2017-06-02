@@ -9,14 +9,10 @@ uses
   function AddGroup(_id: Cardinal; sig: PWideChar; _res: PCardinal): WordBool; cdecl;
   function GetGroupSignatures(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function GetChildGroup(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
-  function GroupSignatureFromName(name: PWideChar; len: PInteger): WordBool; cdecl;
-  function GroupNameFromSignature(sig: PWideChar; len: PInteger): WordBool; cdecl;
-  function GetGroupSignatureNameMap(len: PInteger): WordBool; cdecl;
 
   // native functions
   function IsChildGroup(group: IwbGroupRecord): Boolean;
   function AddGroupIfMissing(_file: IwbFile; sig: string): IwbGroupRecord;
-  procedure BuildGroupNameMap;
 
 implementation
 
@@ -28,10 +24,6 @@ uses
   wbImplementation,
   // xelib modules
   xeMessages, xeMeta, xeSetup;
-
-var
-  slGroupNameMap: TStringList;
-  bGroupNameMapBuilt: Boolean;
 
 
 {******************************************************************************}
@@ -122,79 +114,6 @@ begin
   except
     on x: Exception do ExceptionHandler(x);
   end;
-end;
-
-function GroupSignatureFromName(name: PWideChar; len: PInteger): WordBool; cdecl;
-begin
-  Result := False;
-  try
-    BuildGroupNameMap;
-    if slGroupNameMap.IndexOfName(string(name)) > -1 then begin
-      resultStr := slGroupNameMap.Values[string(name)];
-      len^ := Length(resultStr);
-      Result := True;
-    end;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function GroupNameFromSignature(sig: PWideChar; len: PInteger): WordBool; cdecl;
-var
-  RecordDef: PwbRecordDef;
-begin
-  Result := False;
-  try
-    if wbFindRecordDef(AnsiString(sig), RecordDef) then begin
-      resultStr := RecordDef.Name;
-      len^ := Length(resultStr);
-      Result := True;
-    end;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function GetGroupSignatureNameMap(len: PInteger): WordBool; cdecl;
-begin
-  Result := False;
-  try
-    BuildGroupNameMap;
-    resultStr := slGroupNameMap.Text;
-    len^ := Length(resultStr);
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-procedure BuildGroupNameMap;
-var
-  i: Integer;
-  sig: string;
-  RecordDef: PwbRecordDef;
-begin
-  if bGroupNameMapBuilt then exit;
-  for i := 0 to Pred(wbGroupOrder.Count) do begin
-    sig := wbGroupOrder[i];
-    if wbFindRecordDef(AnsiString(sig), RecordDef) then
-      slGroupNameMap.Values[sig] := RecordDef.Name;
-  end;
-  bGroupNameMapBuilt := True;
-end;
-
-initialization
-begin
-  slGroupNameMap := TStringList.Create;
-  slGroupNameMap.Sorted := True;
-  slGroupNameMap.Duplicates := dupIgnore;
-  bGroupNameMapBuilt := False;
-end;
-
-
-finalization
-begin
-  slGroupNameMap.Free;
 end;
 
 

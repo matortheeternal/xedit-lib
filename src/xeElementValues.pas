@@ -3,7 +3,7 @@ unit xeElementValues;
 interface
 
 uses
-  wbInterface;
+  ArgoTypes, wbInterface;
 
   function Name(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function LongName(_id: Cardinal; len: PInteger): WordBool; cdecl;
@@ -24,11 +24,19 @@ uses
   function GetFlag(_id: Cardinal; path, name: PWideChar; enabled: PWordBool): WordBool; cdecl;
   function ToggleFlag(_id: Cardinal; path, name: PWideChar): WordBool; cdecl;
   function GetEnabledFlags(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
+  function SignatureFromName(_name: PWideChar; len: PInteger): WordBool; cdecl;
+  function NameFromSignature(_sig: PWideChar; len: PInteger): WordBool; cdecl;
+  function GetSignatureNameMap(len: PInteger): WordBool; cdecl;
 
   // native functions
   function GetPath(element: IwbElement; full: WordBool = True; curPath: String = ''): String;
   function GetPathName(element: IwbElement): String;
   function NativeName(e: IwbElement; quoteFull: Boolean = False): String;
+  procedure BuildSignatureNameMap;
+
+var
+  slSignatureNameMap: TFastStringList;
+  bSignatureNameMapBuilt: Boolean;
 
 implementation
 
@@ -495,6 +503,87 @@ begin
   except
     on x: Exception do ExceptionHandler(x);
   end;
+end;
+
+function SignatureFromName(_name: PWideChar; len: PInteger): WordBool; cdecl;
+var
+  name: String;
+  n: Integer;
+begin
+  Result := False;
+  try
+    BuildSignatureNameMap;
+    name := string(_name);
+    n := slSignatureNameMap.IndexOfValue(name);
+    if n = -1 then
+      raise Exception.Create('Could not find signature for name: ' + name);
+    resultStr := slSignatureNameMap.Names[n];
+    len^ := Length(resultStr);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function NameFromSignature(_sig: PWideChar; len: PInteger): WordBool; cdecl;
+var
+  sig: AnsiString;
+  n: Integer;
+begin
+  Result := False;
+  try
+    BuildSignatureNameMap;
+    sig := AnsiString(_sig);
+    n := slSignatureNameMap.IndexOfName(sig);
+    if n = -1 then
+      raise Exception.Create('Could not find name for signature: ' + sig);
+    resultStr := slSignatureNameMap.ValueFromIndex[n];
+    len^ := Length(resultStr);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetSignatureNameMap(len: PInteger): WordBool; cdecl;
+begin
+  Result := False;
+  try
+    BuildSignatureNameMap;
+    resultStr := slSignatureNameMap.Text;
+    len^ := Length(resultStr);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+procedure BuildSignatureNameMap;
+var
+  i: Integer;
+  sig: string;
+  recordDef: TwbRecordDefEntry;
+begin
+  if bSignatureNameMapBuilt then exit;
+  for i := Low(wbRecordDefs) to High(wbRecordDefs) do begin
+    recordDef := wbRecordDefs[i];
+    sig := AnsiString(recordDef.rdeSignature);
+    slSignatureNameMap.Values[sig] := recordDef.rdeDef.Name;
+  end;
+  bSignatureNameMapBuilt := True;
+end;
+
+initialization
+begin
+  slSignatureNameMap := TFastStringList.Create;
+  slSignatureNameMap.Sorted := True;
+  slSignatureNameMap.Duplicates := dupIgnore;
+  bSignatureNameMapBuilt := False;
+end;
+
+finalization
+begin
+  slSignatureNameMap.Free;
 end;
 
 end.
