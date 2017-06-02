@@ -575,9 +575,12 @@ begin
     if not Supports(Resolve(_id), IwbElement, element) then
       raise Exception.Create('Interface is not an element.');
     if not Supports(element.ValueDef, IwbIntegerDef, integerDef)
-    or not Supports(integerDef.Formater[element], IwbFormIDChecked, formDef) then
+    or not Supports(integerDef.Formater[element], IwbFormID) then
       raise Exception.Create('Interface must be able to hold a FormID value.');
-    resultStr := formDef.SignaturesText;
+    if Supports(integerDef.Formater[element], IwbFormIDChecked, formDef) then
+      resultStr := formDef.SignaturesText
+    else
+      resultStr := '*';
     len^ := Length(resultStr);
     Result := True;
   except
