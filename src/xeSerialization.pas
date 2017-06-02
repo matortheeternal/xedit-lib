@@ -6,7 +6,7 @@ uses
   Argo, ArgoTypes,
   wbInterface;
 
-  function ElementToJson(_id: Cardinal; len: PInteger): WordBool; cdecl;
+  function ElementToJson(_id: Cardinal; len: PInteger; editValues: WordBool): WordBool; cdecl;
   //function ElementFromJson(_id: Cardinal; path: PWideChar; json: PWideChar; _res: PCardinal): WordBool; cdecl;
 
   // native functions
@@ -18,6 +18,9 @@ implementation
 uses
   Variants, SysUtils, StrUtils,
   xeMeta, xeFiles, xeGroups, xeElements, xeElementValues, xeMessages;
+
+var
+  SerializeEditValues: Boolean;
 
 function IsFlags(element: IwbElement): Boolean;
 var
@@ -32,16 +35,20 @@ var
   v: Variant;
 begin
   Result := TJSONValue.Create;
-  v := element.NativeValue;
-  case VarType(v) of
-    varSmallInt, varInteger, varInt64, varByte, varWord, varLongWord:
-      Result.Put(LongWord(v));
-    varSingle, varDouble:
-      Result.Put(Double(v));
-    varBoolean:
-      Result.Put(Boolean(v));
-  else
-    Result.Put(element.EditValue);
+  if SerializeEditValues then
+    Result.Put(element.EditValue)
+  else begin
+    v := element.NativeValue;
+    case VarType(v) of
+      varSmallInt, varInteger, varInt64, varByte, varWord, varLongWord:
+        Result.Put(LongWord(v));
+      varSingle, varDouble:
+        Result.Put(Double(v));
+      varBoolean:
+        Result.Put(Boolean(v));
+    else
+      Result.Put(element.EditValue);
+    end;
   end;
 end;
 
@@ -159,7 +166,7 @@ begin
       GroupToJson(group, Result.O['Groups']);
 end;
 
-function ElementToJson(_id: Cardinal; len: PInteger): WordBool; cdecl;
+function ElementToJson(_id: Cardinal; len: PInteger; editValues: WordBool): WordBool; cdecl;
 var
   e: IInterface;
   _file: IwbFile;
@@ -170,6 +177,7 @@ var
 begin
   Result := False;
   try
+    SerializeEditValues := editValues;
     e := Resolve(_id);
     obj := nil;
     // convert input element to JSONObject
