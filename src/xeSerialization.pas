@@ -105,7 +105,7 @@ var
 begin
   Result := TJSONObject.Create;
   // serialize elements
-  for i := Pred(rec.ElementCount) downto 0 do begin
+  for i := 0 to Pred(rec.ElementCount) do begin
     element := rec.Elements[i];
     path := element.Name;
     Result[path] := NativeElementToJson(element);
