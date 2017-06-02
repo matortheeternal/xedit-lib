@@ -17,6 +17,7 @@ uses
   xeGroups in 'src\xeGroups.pas',
   xeSerialization in 'src\xeSerialization.pas',
   mteHelpers in 'lib\mte\mteHelpers.pas',
+  mteConflict in 'lib\mte\mteConflict.pas',
   CRC32 in 'lib\mte\CRC32.pas',
   RttiIni in 'lib\mte\RttiIni.pas',
   wbImplementation in 'lib\xedit\wbImplementation.pas',
@@ -77,7 +78,8 @@ exports
   // RECORD HANDLING METHODS
   AddRecord, GetRecords, RecordsBySignature, RecordByFormID, RecordByEditorID,
   RecordByName, GetOverrides, GetFormID, SetFormID, ExchangeReferences,
-  GetReferences, IsMaster, IsInjected, IsOverride, IsWinningOverride;
+  GetReferences, IsMaster, IsInjected, IsOverride, IsWinningOverride,
+  ConflictThis, ConflictAll;
   // RECORD VALUE METHODS
 
 begin

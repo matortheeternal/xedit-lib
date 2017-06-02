@@ -21,6 +21,8 @@ uses
   function IsInjected(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
   function IsOverride(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
   function IsWinningOverride(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
+  function ConflictAll(_id: Cardinal; enum: PByte): WordBool; cdecl;
+  function ConflictThis(_id: Cardinal; enum: PByte): WordBool; cdecl;
 
   // NATIVE FUNCTIONS
   procedure StoreRecords(_file: IwbFile; len: PInteger); overload;
@@ -32,6 +34,7 @@ implementation
 
 uses
   Classes, SysUtils,
+  mteConflict,
   wbImplementation,
   xeGroups, xeMessages;
 
@@ -413,6 +416,36 @@ begin
     if not Supports(Resolve(_id), IwbMainRecord, rec) then
       raise Exception.Create('Interface must be a main record.');
     bool^ := rec.IsWinningOverride;
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function ConflictAll(_id: Cardinal; enum: PByte): WordBool; cdecl;
+var
+  rec: IwbMainRecord;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbMainRecord, rec) then
+      raise Exception.Create('Interface must be a main record.');
+    enum^ := Ord(ConflictAllForMainRecord(rec));
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function ConflictThis(_id: Cardinal; enum: PByte): WordBool; cdecl;
+var
+  rec: IwbMainRecord;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbMainRecord, rec) then
+      raise Exception.Create('Interface must be a main record.');
+    enum^ := Ord(ConflictThisForMainRecord(rec));
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
