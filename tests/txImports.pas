@@ -98,7 +98,7 @@ type
   function GetSignatureNameMap(len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
 
   // SERIALIZATION METHODS
-  function ElementToJson(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function ElementToJson(_id: Cardinal; len: PInteger; editValues: WordBool): WordBool; cdecl; external 'XEditLib.dll';
   //function ElementFromJson(_id: Cardinal; path: PWideChar; json: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
 
   // GROUP HANDLING METHODS
