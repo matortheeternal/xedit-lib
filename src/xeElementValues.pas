@@ -527,13 +527,13 @@ end;
 
 function NameFromSignature(_sig: PWideChar; len: PInteger): WordBool; cdecl;
 var
-  sig: AnsiString;
+  sig: String;
   n: Integer;
 begin
   Result := False;
   try
     BuildSignatureNameMap;
-    sig := AnsiString(_sig);
+    sig := string(_sig);
     n := slSignatureNameMap.IndexOfName(sig);
     if n = -1 then
       raise Exception.Create('Could not find name for signature: ' + sig);
@@ -561,13 +561,13 @@ end;
 procedure BuildSignatureNameMap;
 var
   i: Integer;
-  sig: string;
+  sig: String;
   recordDef: TwbRecordDefEntry;
 begin
   if bSignatureNameMapBuilt then exit;
   for i := Low(wbRecordDefs) to High(wbRecordDefs) do begin
     recordDef := wbRecordDefs[i];
-    sig := AnsiString(recordDef.rdeSignature);
+    sig := String(recordDef.rdeSignature);
     slSignatureNameMap.Values[sig] := recordDef.rdeDef.Name;
   end;
   bSignatureNameMapBuilt := True;
