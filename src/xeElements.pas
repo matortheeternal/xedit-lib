@@ -41,7 +41,10 @@ type
   function NativeGetElementEx(_id: Cardinal; key: PWideChar): IwbElement;
   procedure NativeMoveElementToIndex(element: IwbElement; index: Integer);
   function NativeContainer(element: IwbElement): IwbContainer;
+  function CreateFromGroup(group: IwbGroupRecord; path: String): IInterface;
+  function CreateElement(e: IInterface; path: String): IInterface;
   function NativeAddElement(_id: Cardinal; key: string): IInterface;
+  function IsSorted(e: IwbElement): Boolean;
   function IsArray(element: IwbElement): Boolean;
   function GetDefType(element: IwbElement): TwbDefType;
   function GetSmashType(element: IwbElement): TSmashType;
@@ -385,41 +388,187 @@ begin
   end;
 end;
 
-function NativeAddElement(_id: Cardinal; key: string): IInterface;
-var
-  e: IInterface;
-  _file: IwbFile;
-  group: IwbGroupRecord;
-  container: IwbContainerElementRef;
-  keyIndex: Integer;
+function CreateByIndex(container: IwbContainerElementRef; index: Integer; nextPath: String): IInterface;
 begin
-  if _id = 0 then begin
-    Result := NativeFileByName(key);
-    if not Assigned(Result) then
-      Result := NativeAddFile(key);
+  // resolve element from container if container present
+  // else resolve file at index
+  if Assigned(container) then
+    Result := container.Elements[index]
+  else
+    Result := NativeFileByIndex(index);
+
+  // create next element if nextPath is present
+  if nextPath <> '' then
+    Result := CreateElement(Result, nextPath);
+end;
+
+function CreateFromContainer(container: IwbContainerElementRef; path: String): IInterface;
+var
+  key, nextPath: String;
+  index: Integer;
+  nextContainer: IwbContainerElementRef;
+begin
+  SplitPath(path, key, nextPath);
+  // . corresponds to appending a new element
+  // ^ corresponds to inserting an element at an index, e.g. ^3 inserts at index 3
+  // else we get element at key/create it if missing
+  if key = '.' then
+    Result := container.Assign(High(Integer), nil, false)
+  else if key[1] = '^' then begin
+    Result := container.Assign(High(Integer), nil, false);
+    index := StrToInt(Copy(key, 2, Length(key) - 1));
+    NativeMoveElementToIndex(Result as IwbElement, index);
   end
   else begin
-    e := Resolve(_id);
-    if not Supports(e, IwbContainerElementRef, container) then exit;
-    if Supports(e, IwbFile, _file) then
-      Result := AddGroupIfMissing(_file, key)
-    else if Supports(e, IwbGroupRecord, group) then
-      Result := group.Add(key) // TODO: Handle Temporary/Persistent groups?
-    else begin
-      // no key means we're assigning an element at the end of the array
-      if Length(key) = 0 then
-        Result := container.Assign(High(integer), nil, False)
-      else begin
-        // assign element at given index if index given, else add
-        if ParseIndex(key, keyIndex) then begin
-          Result := container.Assign(High(integer), nil, False);
-          NativeMoveElementToIndex(Result as IwbElement, keyIndex);
-        end
-        else
-          Result := container.Add(key, True);
-      end;
-    end;
+    Result := container.ElementByPath[key];
+    if not Assigned(Result) then
+      Result := container.Add(key);
   end;
+  // recurse for next path if present
+  if nextPath <> '' then begin
+    if not Supports(Result, IwbContainerElementRef, nextContainer) then
+      raise Exception.Create('Failed to traverse into ' + nextPath);
+    Result := CreateFromContainer(nextContainer, nextPath);
+  end;
+end;
+
+function CreateChildGroup(rec: IwbMainRecord; nextPath: String): IInterface;
+begin
+  Result := rec.ChildGroup;
+  if not Assigned(Result) then
+    raise Exception.Create('Child group not found for ' + rec.Name);
+  if nextPath <> '' then
+    Result := CreateFromGroup(Result as IwbGroupRecord, nextPath);
+end;
+
+function CreateFromRecord(rec: IwbMainRecord; path: String): IInterface;
+var
+  key, nextPath: String;
+  container: IwbContainerElementRef;
+begin
+  SplitPath(path, key, nextPath);
+  if SameText(key, 'Child Group') then
+    Result := CreateChildGroup(rec, nextPath)
+  else begin
+    if not Supports(rec, IwbContainerElementRef, container) then
+      raise Exception.Create('Failed to treat record as container, ' + rec.Name);
+    Result := CreateFromContainer(container, path);
+  end;
+end;
+
+function CreateRecord(group: IwbGroupRecord; formID: Cardinal; path: String): IInterface;
+var
+  sig: TwbSignature;
+  rec: IwbMainRecord;
+begin
+  sig := TwbSignature(group.GroupLabel);
+  rec := group._File.RecordByFormID[formID, True];
+  if Assigned(rec) then begin
+    if rec.Signature <> sig then
+      raise Exception.Create(Format('Found record %s does not match expected ' +
+        'signature %s.', [rec.Name, string(sig)]));
+  end
+  else begin
+    rec := group.Add(String(TwbSignature(group.GroupLabel))) as IwbMainRecord;
+    rec.LoadOrderFormID := formID;
+  end;
+  if path <> '' then
+    Result := CreateFromRecord(rec, path)
+  else
+    Result := rec;
+end;
+
+function CreateFromGroup(group: IwbGroupRecord; path: String): IInterface;
+var
+  key, nextPath: String;
+  index: Integer;
+  formID: Cardinal;
+begin
+  Result := nil;
+  SplitPath(path, key, nextPath);
+  // resolve record by index if key is an index
+  // else resolve record by formID
+  // else create new record by signature
+  if ParseIndex(key, index) then
+    Result := CreateByIndex(group as IwbContainerElementRef, index, nextPath)
+  else if ParseFormID(key, formID) then
+    Result := CreateRecord(group, formID, nextPath)
+  else
+    Result := group.Add(key);
+end;
+
+function CreateGroup(_file: IwbFile; sig: TwbSignature; nextPath: String): IInterface;
+begin
+  Result := AddGroupIfMissing(_file, String(sig));
+  if nextPath <> '' then
+    Result := CreateFromGroup(Result as IwbGroupRecord, nextPath);
+end;
+
+function CreateFromFile(_file: IwbFile; path: String): IInterface;
+var
+  key, nextPath: String;
+  index: Integer;
+  formID: Cardinal;
+begin
+  SplitPath(path, key, nextPath);
+  // resolve group by index if key is an index
+  // else resolve record by formID if key is a formID
+  // else resolve by group signature
+  if ParseIndex(key, index) then
+    Result := CreateByIndex(_file as IwbContainerElementRef, index, nextPath)
+  else if ParseFormID(key, formID) then
+    Result := CreateFromRecord(_file.RecordByFormID[formID, false], nextPath)
+  else
+    Result := CreateGroup(_file, StrToSignature(key), nextPath);
+end;
+
+function CreateFile(fileName, nextPath: String): IInterface;
+begin
+  Result := NativeFileByName(fileName);
+  if not Assigned(Result) then
+    Result := NativeAddFile(fileName);
+  if nextPath <> '' then
+    Result := CreateFromFile(Result as IwbFile, nextPath);
+end;
+
+function CreateFromRoot(path: String): IInterface;
+var
+  key, nextPath: String;
+  index: Integer;
+begin
+  SplitPath(path, key, nextPath);
+  // resolve file by index if key is an index
+  // else resolve by file name
+  if ParseIndex(key, index) then
+    Result := CreateByIndex(nil, index, nextPath)
+  else
+    Result := CreateFile(key, nextPath);
+end;
+
+function CreateElement(e: IInterface; path: String): IInterface;
+var
+  _file: IwbFile;
+  group: IwbGroupRecord;
+  rec: IwbMainRecord;
+  container: IwbContainerElementRef;
+begin
+  Result := nil;
+  if Supports(e, IwbFile, _file) then
+    Result := CreateFromFile(_file, path)
+  else if Supports(e, IwbGroupRecord, group) then
+    Result := CreateFromGroup(group, path)
+  else if Supports(e, IwbMainRecord, rec) then
+    Result := CreateFromRecord(rec, path)
+  else if Supports(e, IwbContainerElementRef, container) then
+    Result := CreateFromContainer(container, path);
+end;
+
+function NativeAddElement(_id: Cardinal; key: String): IInterface;
+begin
+  if _id = 0 then
+    Result := CreateFromRoot(key)
+  else
+    Result := CreateElement(Resolve(_id), key);
 end;
 
 // replaces ElementAssign, Add, AddElement, and InsertElement
@@ -675,7 +824,7 @@ begin
 end;
 
 { Returns true if @e is a sorted container }
-function IsSorted(e: IwbElement): boolean;
+function IsSorted(e: IwbElement): Boolean;
 var
   Container: IwbSortableContainer;
 begin
