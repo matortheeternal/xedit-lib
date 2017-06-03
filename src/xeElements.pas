@@ -271,8 +271,9 @@ begin
     raise Exception.Create('Failed to resolve element at path: ' + string(key));
 end;
 
-// Replaces ElementByName, ElementByPath, ElementByIndex, GroupBySignature, and
-// ElementBySignature.  Supports indexed paths.
+// Has the functionality of ElementByName, ElementByPath, ElementByIndex,
+// ElementBySignature, GroupBySignature, FileByName, FileByIndex, RecordByFormID,
+// RecordByIndex, and supports indexed paths.
 function GetElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
   element: IwbElement;

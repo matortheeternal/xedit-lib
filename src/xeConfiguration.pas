@@ -176,8 +176,6 @@ end;
 
 { Sets the game mode in the TES5Edit API }
 procedure SetGame(id: integer);
-var
-  sMyDocumentsPath, sIniPath: String;
 begin
   // update our vars
   ProgramStatus.GameMode := GameArray[id];
