@@ -29,6 +29,8 @@ uses
   procedure StoreRecords(group: IwbGroupRecord; len: PInteger); overload;
   procedure FindRecordsBySignature(group: IwbGroupRecord; sig: TwbSignature; len: PInteger); overload;
   procedure FindRecordsBySignature(_file: IwbFile; sig: TwbSignature; len: PInteger); overload;
+  function FindRecordByName(_file: IwbFile; full: string): IwbMainRecord; overload;
+  function FindRecordByName(group: IwbGroupRecord; full: string): IwbMainRecord; overload;
 
 implementation
 
@@ -214,33 +216,21 @@ end;
 function FindRecordByName(_file: IwbFile; full: string): IwbMainRecord; overload;
 var
   i: Integer;
-  rec: IwbMainRecord;
-  s: String;
 begin
-  for i := 0 to Pred(_file.RecordCount) do begin
-    rec := _file.Records[i];
-    s := rec.ElementEditValues['FULL'];
-    if SameText(s, full) then begin
-      Result := rec;
-      break;
-    end;
-  end;
+  for i := 0 to Pred(_file.RecordCount) do
+    if Supports(_file.Records[i], IwbMainRecord, Result) then
+      if Result.ElementEditValues['FULL'] = full then exit;
+  Result := nil;
 end;
 
 function FindRecordByName(group: IwbGroupRecord; full: string): IwbMainRecord; overload;
 var
   i: Integer;
-  rec: IwbMainRecord;
-  s: String;
 begin
   for i := 0 to Pred(group.ElementCount) do
-    if Supports(group.Elements[i], IwbMainRecord, rec) then begin
-      s := rec.ElementEditValues['FULL'];
-      if SameText(s, full) then begin
-        Result := rec;
-        break;
-      end;
-    end;
+    if Supports(group.Elements[i], IwbMainRecord, Result) then
+      if Result.ElementEditValues['FULL'] = full then exit;
+  Result := nil;
 end;
 
 function FindRecordByName(e: IInterface; full: string): IwbMainRecord; overload;
