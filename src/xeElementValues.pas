@@ -24,14 +24,16 @@ uses
   function GetFlag(_id: Cardinal; path, name: PWideChar; enabled: PWordBool): WordBool; cdecl;
   function ToggleFlag(_id: Cardinal; path, name: PWideChar): WordBool; cdecl;
   function GetEnabledFlags(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
-  function SignatureFromName(_name: PWideChar; len: PInteger): WordBool; cdecl;
-  function NameFromSignature(_sig: PWideChar; len: PInteger): WordBool; cdecl;
+  function SignatureFromName(name: PWideChar; len: PInteger): WordBool; cdecl;
+  function NameFromSignature(sig: PWideChar; len: PInteger): WordBool; cdecl;
   function GetSignatureNameMap(len: PInteger): WordBool; cdecl;
 
   // native functions
   function GetPath(element: IwbElement; full: WordBool = True; curPath: String = ''): String;
   function GetPathName(element: IwbElement): String;
   function NativeName(e: IwbElement; quoteFull: Boolean = False): String;
+  function NativeSignatureFromName(name: String): String;
+  function NativeNameFromSignature(sig: String): String;
   procedure BuildSignatureNameMap;
 
 var
@@ -505,19 +507,22 @@ begin
   end;
 end;
 
-function SignatureFromName(_name: PWideChar; len: PInteger): WordBool; cdecl;
+function NativeSignatureFromName(name: String): String;
 var
-  name: String;
-  n: Integer;
+  i: Integer;
+begin
+  BuildSignatureNameMap;
+  i := slSignatureNameMap.IndexOfValue(name);
+  if i = -1 then
+    raise Exception.Create('Could not find signature for name: ' + name);
+  Result := slSignatureNameMap.Names[i];
+end;
+
+function SignatureFromName(name: PWideChar; len: PInteger): WordBool; cdecl;
 begin
   Result := False;
   try
-    BuildSignatureNameMap;
-    name := string(_name);
-    n := slSignatureNameMap.IndexOfValue(name);
-    if n = -1 then
-      raise Exception.Create('Could not find signature for name: ' + name);
-    resultStr := slSignatureNameMap.Names[n];
+    resultStr := NativeSignatureFromName(string(name));
     len^ := Length(resultStr);
     Result := True;
   except
@@ -525,19 +530,22 @@ begin
   end;
 end;
 
-function NameFromSignature(_sig: PWideChar; len: PInteger): WordBool; cdecl;
+function NativeNameFromSignature(sig: String): String;
 var
-  sig: String;
-  n: Integer;
+  i: Integer;
+begin
+  BuildSignatureNameMap;
+  i := slSignatureNameMap.IndexOfName(sig);
+  if i = -1 then
+    raise Exception.Create('Could not find name for signature: ' + sig);
+  Result := slSignatureNameMap.ValueFromIndex[i];
+end;
+
+function NameFromSignature(sig: PWideChar; len: PInteger): WordBool; cdecl;
 begin
   Result := False;
   try
-    BuildSignatureNameMap;
-    sig := string(_sig);
-    n := slSignatureNameMap.IndexOfName(sig);
-    if n = -1 then
-      raise Exception.Create('Could not find name for signature: ' + sig);
-    resultStr := slSignatureNameMap.ValueFromIndex[n];
+    resultStr := NativeNameFromSignature(sig);
     len^ := Length(resultStr);
     Result := True;
   except
