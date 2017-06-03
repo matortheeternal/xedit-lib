@@ -104,11 +104,12 @@ function NativeFileByLoadOrder(load_order: Integer): IwbFile;
 var
   i: Integer;
 begin
-  for i := Low(xFiles) to High(xFiles) do
-    if xFiles[i].LoadOrder = load_order then begin
-      Result := xFiles[i];
+  for i := Low(xFiles) to High(xFiles) do begin
+    Result := xFiles[i];
+    if Result.LoadOrder = load_order then
       exit;
-    end;
+  end;
+  Result := nil;
 end;
 
 function FileByLoadOrder(load_order: Integer; _res: PCardinal): WordBool; cdecl;
@@ -131,11 +132,12 @@ function NativeFileByName(name: String): IwbFile;
 var
   i: Integer;
 begin
-  for i := Low(xFiles) to High(xFiles) do
-    if xFiles[i].FileName = name then begin
-      Result := xFiles[i];
+  for i := Low(xFiles) to High(xFiles) do begin
+    Result := xFiles[i];
+    if Result.FileName = name then
       exit;
-    end;
+  end;
+  Result := nil;
 end;
 
 function FileByName(name: PWideChar; _res: PCardinal): WordBool; cdecl;
@@ -157,15 +159,13 @@ end;
 function NativeFileByAuthor(author: String): IwbFile;
 var
   i: Integer;
-  s: String;
 begin
   for i := Low(xFiles) to High(xFiles) do begin
-    s := xFiles[i].Header.ElementEditValues['CNAM'];
-    if SameText(s, author) then begin
-      Result := xFiles[i];
+    Result := xFiles[i];
+    if SameText(Result.Header.ElementEditValues['CNAM'], author) then
       exit;
-    end;
   end;
+  Result := nil;
 end;
 
 function FileByAuthor(author: PWideChar; _res: PCardinal): WordBool; cdecl;
