@@ -344,6 +344,10 @@ var
   container: IwbContainerElementRef;
 begin
   container := element.Container as IwbContainerElementRef;
+  if not IsArray(container) then
+    raise Exception.Create('Cannot move elements in non-array containers.');
+  if IsSorted(container) then
+    raise Exception.Create('Cannot move elements in sorted arrays.');
   if index > container.IndexOf(element) then
     Dec(index);
   element.Remove;
