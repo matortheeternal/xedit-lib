@@ -58,7 +58,7 @@ uses
   // xedit units
   wbImplementation,
   // xelib units
-  xeMessages, xeFiles, xeGroups, xeSetup;
+  xeMessages, xeFiles, xeGroups, xeRecords, xeElementValues, xeSetup;
 
 
 {******************************************************************************}
@@ -144,15 +144,25 @@ begin
     Result := ResolveFromContainer(container, path);
 end;
 
-function ResolveRecord(_file: IwbFile; formID: Cardinal; path: String): IInterface;
-var
-  rec: IwbMainRecord;
+function ResolveRecord(_file: IwbFile; formID: Cardinal; path: String): IInterface; overload;
 begin
-  rec := _file.RecordByFormID[formID, True];
-  if Assigned(rec) and (path <> '') then
-    Result := ResolveElement(rec, path)
+  Result := _file.RecordByFormID[formID, True];
+  if path <> '' then
+    Result := ResolveElement(Result, path);
+end;
+
+function ResolveRecord(group: IwbGroupRecord; key, path: String): IInterface; overload;
+var
+  name: String;
+begin
+  if (key[1] = '"') and (key[Length(key)] = '"') then begin
+    name := Copy(key, 2, Length(key) - 2);
+    Result := FindRecordByName(group, name);
+  end
   else
-    Result := rec;
+    Result := group._File.RecordByEditorID[key];
+  if path <> '' then
+    ResolveFromRecord(Result as IwbMainRecord, path);
 end;
 
 function ResolveFromGroup(group: IwbGroupRecord; path: String): IInterface;
@@ -161,14 +171,16 @@ var
   index: Integer;
   formID: Cardinal;
 begin
-  Result := nil;
   SplitPath(path, key, nextPath);
   // resolve record by index if key is an index
   // else resolve record by formID
+  // TODO: resolve record by name/editorID
   if ParseIndex(key, index) then
     Result := ResolveByIndex(group as IwbContainerElementRef, index, nextPath)
   else if ParseFormID(key, formID) then
-    Result := ResolveRecord(group._File, formID, nextPath);
+    Result := ResolveRecord(group._File, formID, nextPath)
+  else
+    Result := ResolveRecord(group, key, nextPath);
 end;
 
 function ResolveGroup(_file: IwbFile; key: String; nextPath: String): IInterface;
