@@ -190,35 +190,21 @@ begin
   end;
 end;
 
-function FindRecordByEditorID(group: IwbGroupRecord; edid: string): IwbMainRecord;
-var
-  i: Integer;
-  rec: IwbMainRecord;
-begin
-  for i := 0 to Pred(group.ElementCount) do
-    if Supports(group.Elements[i], IwbMainRecord, rec) then
-      if SameText(rec.EditorID, edid) then begin
-        Result := rec;
-        break;
-      end;
-end;
-
 function RecordByEditorID(_id: Cardinal; edid: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
   e: IInterface;
   _file: IwbFile;
   rec: IwbMainRecord;
-  _group: IwbGroupRecord;
+  group: IwbGroupRecord;
 begin
   Result := False;
   try
     e := Resolve(_id);
-    if Supports(e, IwbFile, _file) then
-      rec := _file.RecordByEditorID[string(edid)]
-    else if Supports(e, IwbGroupRecord, _group) then
-      rec := FindRecordByEditorID(_group, string(edid))
-    else
+    if Supports(e, IwbGroupRecord, group) then
+      _file := group._File
+    else if not Supports(e, IwbFile, _file) then
       raise Exception.Create('Input interface must be a file or a group.');
+    rec := _file.RecordByEditorID[string(edid)];
     StoreIfAssigned(IInterface(rec), _res, Result);
   except
     on x: Exception do ExceptionHandler(x);
