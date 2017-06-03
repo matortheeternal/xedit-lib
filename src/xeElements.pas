@@ -105,22 +105,18 @@ begin
 end;
 
 function ResolveByIndex(container: IwbContainerElementRef; index: Integer; nextPath: String): IInterface;
-var
-  element: IwbElement;
 begin
   // resolve element from container if container present
   // else resolve file at index
   if Assigned(container) and (index < container.ElementCount) then
-    element := container.Elements[index]
+    Result := container.Elements[index]
   else
-    element := NativeFileByIndex(index);
+    Result := NativeFileByIndex(index);
 
   // resolve next element if nextPath is present
   // else store the element and return it
-  if Assigned(element) and (nextPath <> '') then
-    Result := ResolveElement(element, nextPath)
-  else
-    Result := element;
+  if nextPath <> '' then
+    Result := ResolveElement(Result, nextPath);
 end;
 
 function ResolveFromContainer(container: IwbContainerElementRef; path: String): IInterface;
@@ -129,14 +125,10 @@ begin
 end;
 
 function ResolveChildGroup(rec: IwbMainRecord; nextPath: String): IInterface;
-var
-  group: IwbGroupRecord;
 begin
-  group := rec.ChildGroup;
+  Result := rec.ChildGroup;
   if nextPath <> '' then
-    Result := ResolveFromGroup(group, nextPath)
-  else
-    Result := group;
+    Result := ResolveFromGroup(Result as IwbGroupRecord, nextPath);
 end;
 
 function ResolveFromRecord(rec: IwbMainRecord; path: String): IInterface;
@@ -179,16 +171,13 @@ begin
     Result := ResolveRecord(group._File, formID, nextPath);
 end;
 
-function ResolveGroup(_file: IwbFile; sig: TwbSignature; nextPath: String): IInterface;
-var
-  group: IwbGroupRecord;
+function ResolveGroup(_file: IwbFile; key: String; nextPath: String): IInterface;
 begin
-  // TODO: perhaps also by group name?
-  group := _file.GroupBySignature[sig];
-  if Assigned(group) and (nextPath <> '') then
-    Result := ResolveFromGroup(group, nextPath)
-  else
-    Result := group;
+  if Length(key) > 4 then
+    key := NativeSignatureFromName(key);
+  Result := _file.GroupBySignature[StrToSignature(key)];
+  if nextPath <> '' then
+    Result := ResolveFromGroup(Result as IwbGroupRecord, nextPath);
 end;
 
 function ResolveFromFile(_file: IwbFile; path: String): IInterface;
@@ -206,7 +195,7 @@ begin
   else if ParseFormID(key, formID) then
     Result := ResolveRecord(_file, formID, nextPath)
   else 
-    Result := ResolveGroup(_file, StrToSignature(key), nextPath);
+    Result := ResolveGroup(_file, key, nextPath);
 end;
 
 function ResolveFile(fileName, nextPath: String): IInterface;
