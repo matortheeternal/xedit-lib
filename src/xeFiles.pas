@@ -3,7 +3,7 @@ unit xeFiles;
 interface
 
 uses
-  wbInterface;
+  Classes, wbInterface;
 
   function AddFile(filename: PWideChar; _res: PCardinal): WordBool; cdecl;
   function FileByIndex(index: Integer; _res: PCardinal): WordBool; cdecl;
@@ -13,6 +13,7 @@ uses
   function SaveFile(_id: Cardinal): WordBool; cdecl;
 
   // native functions
+  function CompareLoadOrder(List: TStringList; Index1, Index2: Integer): Integer;
   function NativeAddFile(filename: string): IwbFile;
   function NativeFileByIndex(index: Integer): IwbFile;
   function NativeFileByLoadOrder(load_order: Integer): IwbFile;
@@ -22,7 +23,7 @@ uses
 implementation
 
 uses
-  Classes, SysUtils,
+  SysUtils,
   // mte modules
   mteHelpers,
   // xedit modules
@@ -36,6 +37,16 @@ uses
   Methods for handling loaded files.
 }
 {******************************************************************************}
+
+function CompareLoadOrder(List: TStringList; Index1, Index2: Integer): Integer;
+begin
+  if Index1 = Index2 then
+    Result := 0
+  else
+    Result := CmpI32(
+      IwbFile(Pointer(List.Objects[Index1])).LoadOrder,
+      IwbFile(Pointer(List.Objects[Index2])).LoadOrder);
+end;
 
 function NextLoadOrder: Integer;
 begin
