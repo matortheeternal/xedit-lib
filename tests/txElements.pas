@@ -469,7 +469,7 @@ begin
             end);
         end);
 
-      Describe('NewElement', procedure
+      Describe('AddElement', procedure
         begin
           It('Should create a new file if no handle given', procedure
             begin
