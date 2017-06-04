@@ -54,7 +54,8 @@ exports
   // FILE HANDLING METHODS
   AddFile, FileByIndex, FileByLoadOrder, FileByName, FileByAuthor, SaveFile,
   // MASTER HANDLING METHODS
-  CleanMasters, SortMasters, AddMaster, GetMaster, GetMasters, GetRequiredBy,
+  CleanMasters, SortMasters, AddMaster, AddMasters, GetMaster, GetMasters,
+  GetRequiredBy,
   // FILE VALUE METHODS
   GetFileHeader, GetNextObjectId, SetNextObjectID, GetFileName, GetAuthor,
   SetAuthor, GetDescription, SetDescription, OverrideRecordCount, GetIsESM,

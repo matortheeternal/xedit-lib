@@ -8,6 +8,7 @@ uses
   function CleanMasters(_id: Cardinal): WordBool; cdecl;
   function SortMasters(_id: Cardinal): WordBool; cdecl;
   function AddMaster(_id: Cardinal; masterName: PWideChar): WordBool; cdecl;
+  function AddMasters(_id: Cardinal; masters: PWideChar): WordBool; cdecl;
   function GetMaster(_id: Cardinal; index: Integer; _res: PCardinal): WordBool; cdecl;
   function GetMasters(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function GetRequiredBy(_id: Cardinal; len: PInteger): WordBool; cdecl;
@@ -23,7 +24,7 @@ uses
   // xedit modules
   wbImplementation,
   // xelib modules
-  xeMeta, xeMessages, xeSetup;
+  xeMeta, xeFiles, xeMessages, xeSetup;
 
 
 {******************************************************************************}
@@ -68,10 +69,10 @@ var
 begin
   Result := False;
   try
-    if Supports(Resolve(_id), IwbFile, _file) then begin
-      _file.AddMasterIfMissing(string(masterName));
-      Result := True;
-    end;
+    if not Supports(Resolve(_id), IwbFile, _file) then
+      raise Exception.Create('Interface must be a file.');
+    _file.AddMasterIfMissing(string(masterName));
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -89,6 +90,31 @@ begin
   masters.Sorted := False;
   masters.CustomSort(CompareLoadOrder);
   targetFile.AddMasters(masters);
+end;
+
+function AddMasters(_id: Cardinal; masters: PWideChar): WordBool; cdecl;
+var
+  _file: IwbFile;
+  sl: TStringList;
+  i: Integer;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbFile, _file) then
+      raise Exception.Create('Interface must be a file.');
+    sl := TStringList.Create;
+    try
+      sl.Text := string(masters);
+      for i := 0 to Pred(sl.Count) do
+        sl.Objects[i] := NativeFileByName(sl[i]);
+      NativeAddMasters(_file, sl);
+    finally
+      sl.Free;
+    end;
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
 end;
 
 procedure GetMissingMasters(targetFile: IwbFile; var masters: TStringList);
