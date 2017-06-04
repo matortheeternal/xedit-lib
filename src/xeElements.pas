@@ -58,7 +58,7 @@ uses
   // xedit units
   wbImplementation,
   // xelib units
-  xeMessages, xeFiles, xeGroups, xeRecords, xeElementValues, xeSetup;
+  xeMessages, xeFiles, xeMasters, xeGroups, xeRecords, xeElementValues, xeSetup;
 
 
 {******************************************************************************}
@@ -446,38 +446,51 @@ end;
 function CreateFromRecord(rec: IwbMainRecord; path: String): IInterface;
 var
   key, nextPath: String;
-  container: IwbContainerElementRef;
 begin
   SplitPath(path, key, nextPath);
   if SameText(key, 'Child Group') then
     Result := CreateChildGroup(rec, nextPath)
-  else begin
-    if not Supports(rec, IwbContainerElementRef, container) then
-      raise Exception.Create('Failed to treat record as container, ' + rec.Name);
-    Result := CreateFromContainer(container, path);
-  end;
+  else
+    Result := CreateFromContainer(rec as IwbContainerElementRef, path);
 end;
 
-function CreateRecord(group: IwbGroupRecord; formID: Cardinal; path: String): IInterface;
+function OverrideRecord(targetFile: IwbFile; formID: Cardinal; sig: TwbSignature): IwbMainRecord;
 var
-  sig: TwbSignature;
+  f: IwbFile;
   rec: IwbMainRecord;
 begin
+  f := NativeFileByLoadOrder(formID shr 24);
+  if not Assigned(f) then
+    raise Exception.Create(Format('Failed to find file at load order %s to ' +
+      'copy record %s from', [IntToHex(formID shr 24, 2), IntToHex(formID, 8)]));
+  rec := f.RecordByFormID[formID, false];
+  if not Assigned(rec) then
+    raise Exception.Create(Format('Failed to find record %s in file %s',
+      [IntToHex(formID, 8), f.FileName]));
+  NativeAddRequiredMasters(rec as IwbElement, f, false);
+  Result := wbCopyElementToFile(rec, targetFile, false, true, '', '', '') as IwbMainRecord;
+end;
+
+function CreateRecord(group: IwbGroupRecord; formID: Cardinal; path: String): IInterface; overload;
+var
+  sig: TwbSignature;
+begin
   sig := TwbSignature(group.GroupLabel);
-  rec := group._File.RecordByFormID[formID, True];
-  if Assigned(rec) then begin
-    if rec.Signature <> sig then
-      raise Exception.Create(Format('Found record %s does not match expected ' +
-        'signature %s.', [rec.Name, string(sig)]));
-  end
-  else begin
-    rec := group.Add(String(TwbSignature(group.GroupLabel))) as IwbMainRecord;
-    rec.LoadOrderFormID := formID;
-  end;
+  Result := group._File.RecordByFormID[formID, true];
+  if not Assigned(Result) then
+    Result := OverrideRecord(group._File, formID, sig);
+  if Assigned(Result) and ((Result as IwbMainRecord).Signature <> sig) then
+    raise Exception.Create(Format('Found record %s does not match expected ' +
+      'signature %s.', [(Result as IwbMainRecord).Name, string(sig)]));
   if path <> '' then
-    Result := CreateFromRecord(rec, path)
-  else
-    Result := rec;
+    Result := CreateFromRecord(Result as IwbMainRecord, path);
+end;
+
+function CreateRecord(group: IwbGroupRecord; key, path: String): IwbMainRecord; overload;
+begin
+  Result := group.Add(key) as IwbMainRecord;
+  if path <> '' then
+    Result := CreateFromRecord(Result, path) as IwbMainRecord;
 end;
 
 function CreateFromGroup(group: IwbGroupRecord; path: String): IInterface;
@@ -486,8 +499,9 @@ var
   index: Integer;
   formID: Cardinal;
 begin
-  Result := nil;
   SplitPath(path, key, nextPath);
+  if key = '.' then
+    key := String(AnsiString(group.GroupLabel));
   // resolve record by index if key is an index
   // else resolve record by formID
   // else create new record by signature
@@ -496,12 +510,14 @@ begin
   else if ParseFormID(key, formID) then
     Result := CreateRecord(group, formID, nextPath)
   else
-    Result := group.Add(key);
+    Result := CreateRecord(group, key, nextPath);
 end;
 
-function CreateGroup(_file: IwbFile; sig: TwbSignature; nextPath: String): IInterface;
+function CreateGroup(_file: IwbFile; key: String; nextPath: String): IInterface;
 begin
-  Result := AddGroupIfMissing(_file, String(sig));
+  if Length(key) > 4 then
+    key := NativeSignatureFromName(key);
+  Result := AddGroupIfMissing(_file, key);
   if nextPath <> '' then
     Result := CreateFromGroup(Result as IwbGroupRecord, nextPath);
 end;
@@ -521,7 +537,7 @@ begin
   else if ParseFormID(key, formID) then
     Result := CreateFromRecord(_file.RecordByFormID[formID, false], nextPath)
   else
-    Result := CreateGroup(_file, StrToSignature(key), nextPath);
+    Result := CreateGroup(_file, key, nextPath);
 end;
 
 function CreateFile(fileName, nextPath: String): IInterface;
