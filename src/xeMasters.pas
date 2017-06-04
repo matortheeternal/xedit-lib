@@ -13,12 +13,13 @@ uses
   function GetRequiredBy(_id: Cardinal; len: PInteger): WordBool; cdecl;
 
   // native functions
+  procedure NativeAddRequiredMasters(element: IwbElement; targetFile: IwbFile; asNew: Boolean);
   function NativeFileHasMaster(_file, _master: IwbFile): Boolean;
 
 implementation
 
 uses
-  SysUtils,
+  SysUtils, Classes,
   // xedit modules
   wbImplementation,
   // xelib modules
@@ -73,6 +74,48 @@ begin
     end;
   except
     on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+procedure NativeAddMasters(targetFile: IwbFile; var masters: TStringList);
+var
+  i: Integer;
+begin
+  for i := 0 to Pred(masters.Count) do
+    if IwbFile(Pointer(masters.Objects[i])).LoadOrder >= targetFile.LoadOrder then
+      raise Exception.Create(Format('The required master "%s" cannot be ' +
+        'added to "%s" because it has a higher load order.', [masters[i],
+        targetFile.FileName]));
+  masters.Sorted := False;
+  masters.CustomSort(CompareLoadOrder);
+  targetFile.AddMasters(masters);
+end;
+
+procedure GetMissingMasters(targetFile: IwbFile; var masters: TStringList);
+var
+  i, j: Integer;
+begin
+  for i := 0 to Pred(targetFile.MasterCount) do
+    if masters.Find(targetFile.Masters[i].FileName, j) then
+      masters.Delete(j);
+  if masters.Find(targetFile.FileName, j) then
+    masters.Delete(j);
+end;
+
+procedure NativeAddRequiredMasters(element: IwbElement; targetFile: IwbFile; asNew: Boolean);
+var
+  sl: TStringList;
+begin
+  sl := TStringList.Create;
+  sl.Sorted := True;
+  sl.Duplicates := dupIgnore;
+  try
+    element.ReportRequiredMasters(sl, asNew);
+    GetMissingMasters(targetFile, sl);
+    if sl.Count > 0 then
+      NativeAddMasters(targetFile, sl);
+  finally
+    sl.Free;
   end;
 end;
 
