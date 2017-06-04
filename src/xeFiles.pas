@@ -7,7 +7,7 @@ uses
 
   function AddFile(filename: PWideChar; _res: PCardinal): WordBool; cdecl;
   function FileByIndex(index: Integer; _res: PCardinal): WordBool; cdecl;
-  function FileByLoadOrder(load_order: Integer; _res: PCardinal): WordBool; cdecl;
+  function FileByLoadOrder(loadOrder: Integer; _res: PCardinal): WordBool; cdecl;
   function FileByName(name: PWideChar; _res: PCardinal): WordBool; cdecl;
   function FileByAuthor(author: PWideChar; _res: PCardinal): WordBool; cdecl;
   function SaveFile(_id: Cardinal): WordBool; cdecl;
@@ -16,7 +16,7 @@ uses
   function CompareLoadOrder(List: TStringList; Index1, Index2: Integer): Integer;
   function NativeAddFile(filename: string): IwbFile;
   function NativeFileByIndex(index: Integer): IwbFile;
-  function NativeFileByLoadOrder(load_order: Integer): IwbFile;
+  function NativeFileByLoadOrder(loadOrder: Integer): IwbFile;
   function NativeFileByName(name: String): IwbFile;
   function NativeFileByAuthor(author: String): IwbFile;
 
@@ -96,44 +96,34 @@ begin
 end;
 
 function FileByIndex(index: Integer; _res: PCardinal): WordBool; cdecl;
-var
-  _file: IwbFile;
 begin
   Result := False;
   try
-    _file := NativeFileByIndex(index);
-    if Assigned(_file) then begin
-      _res^ := Store(_file);
-      Result := True;
-    end;
+    _res^ := Store(NativeFileByIndex(index));
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
 end;
 
-function NativeFileByLoadOrder(load_order: Integer): IwbFile;
+function NativeFileByLoadOrder(loadOrder: Integer): IwbFile;
 var
   i: Integer;
 begin
   for i := Low(xFiles) to High(xFiles) do begin
     Result := xFiles[i];
-    if Result.LoadOrder = load_order then
+    if Result.LoadOrder = loadOrder then
       exit;
   end;
-  Result := nil;
+  raise Exception.Create('Failed to find file with load order: ' + IntToHex(loadOrder, 2));
 end;
 
-function FileByLoadOrder(load_order: Integer; _res: PCardinal): WordBool; cdecl;
-var
-  _file: IwbFile;
+function FileByLoadOrder(loadOrder: Integer; _res: PCardinal): WordBool; cdecl;
 begin
   Result := False;
   try
-    _file := NativeFileByLoadOrder(load_order);
-    if Assigned(_file) then begin
-      _res^ := Store(_file);
-      Result := True;
-    end;
+    _res^ := Store(NativeFileByLoadOrder(loadOrder));
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -148,20 +138,15 @@ begin
     if Result.FileName = name then
       exit;
   end;
-  Result := nil;
+  raise Exception.Create('Failed to find file with name: ' + name);
 end;
 
 function FileByName(name: PWideChar; _res: PCardinal): WordBool; cdecl;
-var
-  _file: IwbFile;
 begin
   Result := False;
   try
-    _file := NativeFileByName(string(name));
-    if Assigned(_file) then begin
-      _res^ := Store(_file);
-      Result := True;
-    end;
+    _res^ := Store(NativeFileByName(string(name)));
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -176,20 +161,15 @@ begin
     if SameText(Result.Header.ElementEditValues['CNAM'], author) then
       exit;
   end;
-  Result := nil;
+  raise Exception.Create('Failed to find file with author: ' + author);
 end;
 
 function FileByAuthor(author: PWideChar; _res: PCardinal): WordBool; cdecl;
-var
-  _file: IwbFile;
 begin
   Result := False;
   try
-    _file := NativeFileByAuthor(string(author));
-    if Assigned(_file) then begin
-      _res^ := Store(_file);
-      Result := True;
-    end;
+    _res^ := Store(NativeFileByAuthor(string(author)));
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
