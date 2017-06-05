@@ -108,14 +108,17 @@ function ResolveByIndex(container: IwbContainerElementRef; index: Integer; nextP
 begin
   // resolve element from container if container present
   // else resolve file at index
-  if Assigned(container) and (index < container.ElementCount) then
-    Result := container.Elements[index]
-  else
-    Result := NativeFileByIndex(index);
+  if Assigned(container) then begin
+    if index < container.ElementCount then
+      Result := container.Elements[index];
+  end
+  else begin
+    if index <= High(xFiles) then
+      Result := NativeFileByIndex(index);
+  end;
 
   // resolve next element if nextPath is present
-  // else store the element and return it
-  if nextPath <> '' then
+  if Assigned(Result) and (nextPath <> '') then
     Result := ResolveElement(Result, nextPath);
 end;
 
@@ -127,7 +130,7 @@ end;
 function ResolveChildGroup(rec: IwbMainRecord; nextPath: String): IInterface;
 begin
   Result := rec.ChildGroup;
-  if nextPath <> '' then
+  if Assigned(Result) and (nextPath <> '') then
     Result := ResolveFromGroup(Result as IwbGroupRecord, nextPath);
 end;
 
@@ -144,14 +147,14 @@ begin
     Result := ResolveFromContainer(container, path);
 end;
 
-function ResolveRecord(_file: IwbFile; formID: Cardinal; path: String): IInterface; overload;
+function ResolveRecord(_file: IwbFile; formID: Cardinal; nextPath: String): IInterface; overload;
 begin
   Result := _file.RecordByFormID[formID, True];
-  if path <> '' then
-    Result := ResolveElement(Result, path);
+  if Assigned(Result) and (nextPath <> '') then
+    Result := ResolveElement(Result, nextPath);
 end;
 
-function ResolveRecord(group: IwbGroupRecord; key, path: String): IInterface; overload;
+function ResolveRecord(group: IwbGroupRecord; key, nextPath: String): IInterface; overload;
 var
   name: String;
 begin
@@ -161,8 +164,8 @@ begin
   end
   else
     Result := group._File.RecordByEditorID[key];
-  if path <> '' then
-    ResolveFromRecord(Result as IwbMainRecord, path);
+  if Assigned(Result) and (nextPath <> '') then
+    ResolveFromRecord(Result as IwbMainRecord, nextPath);
 end;
 
 function ResolveFromGroup(group: IwbGroupRecord; path: String): IInterface;
@@ -188,7 +191,7 @@ begin
   if Length(key) > 4 then
     key := NativeSignatureFromName(key);
   Result := _file.GroupBySignature[StrToSignature(key)];
-  if nextPath <> '' then
+  if Assigned(Result) and (nextPath <> '') then
     Result := ResolveFromGroup(Result as IwbGroupRecord, nextPath);
 end;
 
@@ -211,14 +214,10 @@ begin
 end;
 
 function ResolveFile(fileName, nextPath: String): IInterface;
-var
-  _file: IwbFile;
 begin
-  _file := NativeFileByName(fileName);
-  if Assigned(_file) and (nextPath <> '') then
-    Result := ResolveFromFile(_file, nextPath)
-  else
-    Result := _file;
+  Result := NativeFileByName(fileName);
+  if Assigned(Result) and (nextPath <> '') then
+    Result := ResolveFromFile(Result as IwbFile, nextPath);
 end;
 
 function ResolveFromRoot(path: String): IInterface;
