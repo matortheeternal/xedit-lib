@@ -15,15 +15,19 @@ type
 
   function SetGameMode(mode: Integer): WordBool; cdecl;
   function GetLoadOrder(len: PInteger): WordBool; cdecl;
+  function GetActivePlugins(len: PInteger): WordBool; cdecl;
   function LoadPlugins(loadOrder: PWideChar): WordBool; cdecl;
   function GetLoaderDone: WordBool; cdecl;
   function GetGamePath(mode: Integer; len: PInteger): WordBool; cdecl;
 
   // LOAD ORDER HELPERS
+  procedure BuildPluginsList(sLoadPath: String; var sl: TStringList);
+  procedure BuildLoadOrder(sLoadPath: String; var slLoadOrder, slPlugins: TStringList);
   procedure RemoveCommentsAndEmpty(var sl: TStringList);
   procedure RemoveMissingFiles(var sl: TStringList);
   procedure AddMissingFiles(var sl: TStringList);
   procedure GetPluginDates(var sl: TStringList);
+  procedure AddBaseMasters(var sl: TStringList);
   procedure FixLoadOrder(var sl: TStringList; filename: String; index: Integer);
   function PluginListCompare(List: TStringList; Index1, Index2: Integer): Integer;
 
@@ -204,57 +208,18 @@ begin
     slLoadOrder := TStringList.Create;
 
     try
-      // LOAD LIST OF ACTIVE PLUGINS (plugins.txt)
       sLoadPath := Globals.Values['AppDataPath'];
-      sPath := sLoadPath + 'plugins.txt';
-      if FileExists(sPath) then
-        slPlugins.LoadFromFile(sPath)
-      else
-        AddMissingFiles(slPlugins);
+      BuildPluginsList(sLoadPath, slPlugins);
+      BuildLoadOrder(sLoadPath, slLoadOrder, slPlugins);
 
-      // PREPARE PLUGINS LIST
-      RemoveCommentsAndEmpty(slPlugins);
-      RemoveMissingFiles(slPlugins);
+      // add base masters if missing
+      AddBaseMasters(slPlugins);
+      AddBaseMasters(slLoadOrder);
 
-      // LOAD ORDER OF ALL PLUGINS (loadorder.txt)    
-      sPath := sLoadPath + 'loadorder.txt';
-      if FileExists(sPath) then
-        slLoadOrder.LoadFromFile(sPath)
-      else
-        slLoadOrder.AddStrings(slPlugins);
-
-      // PREPARE LOAD ORDER
-      RemoveCommentsAndEmpty(slLoadOrder);
-      RemoveMissingFiles(slLoadOrder);
-      AddMissingFiles(slLoadOrder);
-
-      // if GameMode is not Skyrim, SkyrimSE or Fallout 4 and user
-      // isn't using MO, sort by date modified else add base masters
-      // to load order if missing
-      if (wbGameMode = gmTES5) then begin
-        FixLoadOrder(slLoadOrder, 'Skyrim.esm', 0);
-        FixLoadOrder(slLoadOrder, 'Update.esm', 1);
-      end
-      else if (wbGameMode = gmSSE) then begin
-        FixLoadOrder(slLoadOrder, 'Skyrim.esm', 0);
-        FixLoadOrder(slLoadOrder, 'Update.esm', 1);
-        FixLoadOrder(slLoadOrder, 'Dawnguard.esm', 2);
-        FixLoadOrder(slLoadOrder, 'Hearthfires.esm', 3);
-        FixLoadOrder(slLoadOrder, 'Dragonborn.esm', 4);
-      end
-      else if (wbGameMode = gmFO4) then begin
-        FixLoadOrder(slLoadOrder, 'Fallout4.esm', 0);
-        FixLoadOrder(slLoadOrder, 'DLCRobot.esm', 1);
-        FixLoadOrder(slLoadOrder, 'DLCworkshop01.esm', 2);
-        FixLoadOrder(slLoadOrder, 'DLCCoast.esm', 3);
-        FixLoadOrder(slLoadOrder, 'DLCworkshop02.esm', 4);
-        FixLoadOrder(slLoadOrder, 'DLCworkshop03.esm', 5);
-        FixLoadOrder(slLoadOrder, 'DLCNukaworld.esm', 6);
-      end
-      else begin
-        GetPluginDates(slPlugins);
+      // if GameMode is not Skyrim, SkyrimSE or Fallout 4 sort
+      // by date modified
+      if not wbGameMode in [gmTES5, gmSSE, gmFO4] then begin
         GetPluginDates(slLoadOrder);
-        slPlugins.CustomSort(PluginListCompare);
         slLoadOrder.CustomSort(PluginListCompare);
       end;
 
@@ -266,6 +231,33 @@ begin
     finally
       slPlugins.Free;
       slLoadOrder.Free;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetActivePlugins(len: PInteger): WordBool; cdecl;
+var
+  slPlugins: TStringList;
+  sLoadPath, sPath: String;
+begin
+  Result := False;
+  try
+    slPlugins := TStringList.Create;
+
+    try
+      sLoadPath := Globals.Values['AppDataPath'];
+      BuildPluginsList(sLoadPath, slPlugins);
+      AddBaseMasters(slPlugins);
+
+      // SET RESULT STRING
+      resultStr := slPlugins.Text;
+      Delete(resultStr, Length(resultStr) - 1, 2);
+      len^ := Length(resultStr);
+      Result := True;
+    finally
+      slPlugins.Free;
     end;
   except
     on x: Exception do ExceptionHandler(x);
@@ -322,6 +314,37 @@ end;
 { LOAD ORDER HELPERS
   Set of helper functions for building a working load order.
 {******************************************************************************}
+
+procedure BuildPluginsList(sLoadPath: String; var sl: TStringList);
+var
+  sPath: String;
+begin
+  sPath := sLoadPath + 'plugins.txt';
+  if FileExists(sPath) then
+    sl.LoadFromFile(sPath)
+  else
+    AddMissingFiles(sl);
+
+  // remove comments and missing files
+  RemoveCommentsAndEmpty(sl);
+  RemoveMissingFiles(sl);
+end;
+
+procedure BuildLoadOrder(sLoadPath: String; var slLoadOrder, slPlugins: TStringList);
+var
+  sPath: String;
+begin
+  sPath := sLoadPath + 'loadorder.txt';
+  if FileExists(sPath) then
+    slLoadOrder.LoadFromFile(sPath)
+  else
+    slLoadOrder.AddStrings(slPlugins);
+
+  // remove comments and add/remove files
+  RemoveCommentsAndEmpty(slLoadOrder);
+  RemoveMissingFiles(slLoadOrder);
+  AddMissingFiles(slLoadOrder);
+end;
 
 { Remove comments and empty lines from a stringlist }
 procedure RemoveCommentsAndEmpty(var sl: TStringList);
@@ -407,6 +430,30 @@ var
 begin
   for i := 0 to Pred(sl.Count) do
     sl.Objects[i] := TObject(FileAge(wbDataPath + sl[i]));
+end;
+
+procedure AddBaseMasters(var sl: TStringList);
+begin
+  if (wbGameMode = gmTES5) then begin
+    FixLoadOrder(sl, 'Skyrim.esm', 0);
+    FixLoadOrder(sl, 'Update.esm', 1);
+  end
+  else if (wbGameMode = gmSSE) then begin
+    FixLoadOrder(sl, 'Skyrim.esm', 0);
+    FixLoadOrder(sl, 'Update.esm', 1);
+    FixLoadOrder(sl, 'Dawnguard.esm', 2);
+    FixLoadOrder(sl, 'Hearthfires.esm', 3);
+    FixLoadOrder(sl, 'Dragonborn.esm', 4);
+  end
+  else if (wbGameMode = gmFO4) then begin
+    FixLoadOrder(sl, 'Fallout4.esm', 0);
+    FixLoadOrder(sl, 'DLCRobot.esm', 1);
+    FixLoadOrder(sl, 'DLCworkshop01.esm', 2);
+    FixLoadOrder(sl, 'DLCCoast.esm', 3);
+    FixLoadOrder(sl, 'DLCworkshop02.esm', 4);
+    FixLoadOrder(sl, 'DLCworkshop03.esm', 5);
+    FixLoadOrder(sl, 'DLCNukaworld.esm', 6);
+  end;
 end;
 
 { Forces a plugin to load at a specific position }
