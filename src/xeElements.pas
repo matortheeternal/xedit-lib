@@ -417,7 +417,7 @@ begin
   // . corresponds to appending a new element
   // ^ corresponds to inserting an element at an index, e.g. ^3 inserts at index 3
   // else we get element at key/create it if missing
-  if key = '.' then
+  if (key = '') or (key = '.') then
     Result := container.Assign(High(Integer), nil, false)
   else if key[1] = '^' then begin
     Result := container.Assign(High(Integer), nil, false);
