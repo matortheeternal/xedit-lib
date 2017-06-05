@@ -9,9 +9,7 @@ uses
   function LongName(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function DisplayName(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function Path(_id: Cardinal; full: WordBool; len: PInteger): WordBool; cdecl;
-  function EditorID(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function Signature(_id: Cardinal; len: PInteger): WordBool; cdecl;
-  function FullName(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function GetValue(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
   function SetValue(_id: Cardinal; path, value: PWideChar): WordBool; cdecl;
   function GetIntValue(_id: Cardinal; path: PWideChar; value: PInteger): WordBool; cdecl;
@@ -220,22 +218,6 @@ begin
   end;
 end;
 
-function EditorID(_id: Cardinal; len: PInteger): WordBool; cdecl;
-var
-  rec: IwbMainRecord;
-begin
-  Result := False;
-  try
-    if Supports(Resolve(_id), IwbMainRecord, rec) then begin
-      resultStr := rec.EditorID;
-      len^ := Length(resultStr);
-      Result := True;
-    end;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
 function NativeSignature(element: IwbElement): String;
 var
   group: IwbGroupRecord;
@@ -262,24 +244,6 @@ begin
     if not Supports(Resolve(_id), IwbElement, element) then
       raise Exception.Create('Interface is not an element.');
     resultStr := NativeSignature(element);
-    len^ := Length(resultStr);
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function FullName(_id: Cardinal; len: PInteger): WordBool; cdecl;
-var
-  rec: IwbMainRecord;
-begin
-  Result := False;
-  try
-    if not Supports(Resolve(_id), IwbMainRecord, rec) then
-      raise Exception.Create('Interface must be a main record.');
-    if not rec.ElementExists['FULL'] then
-      raise Exception.Create('Record does not have a FULL name.');
-    resultStr := rec.FullName;
     len^ := Length(resultStr);
     Result := True;
   except
@@ -540,6 +504,65 @@ begin
     on x: Exception do ExceptionHandler(x);
   end;
 end;
+
+function NativeElementMatches(element: IwbElement; value: PWideChar): WordBool;
+var
+  rec: IwbMainRecord;
+begin
+  Result := string(value) = element.EditValue;
+  if not Result and Supports(element.LinksTo, IwbMainRecord, rec) then
+    Result := string(value) = NativeName(rec);
+end;
+
+function NativeGetArrayValue(container: IwbContainerElementRef; value: PWideChar): IwbElement;
+var
+  i: Integer;
+begin
+  for i := 0 to Pred(container.ElementCount) do begin
+    Result := container.Elements[i];
+    if NativeElementMatches(Result, value) then
+      exit;
+  end;
+  Result := nil;
+end;
+
+function HasArrayValue(_id: Cardinal; value: PWideChar; bool: PWordBool): WordBool; cdecl;
+var
+  container: IwbContainerElementRef;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbContainerElementRef, container)
+    or not IsArray(container) then
+      raise Exception.Create('Interface must be an array.');
+    bool^ := Assigned(NativeGetArrayValue(container, value));
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetArrayValue(_id: Cardinal; value: PWideChar; _res: PCardinal): WordBool; cdecl;
+var
+  element: IInterface;
+  container: IwbContainerElementRef;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbContainerElementRef, container)
+    or not IsArray(container) then
+      raise Exception.Create('Interface must be an array.');
+    element := NativeGetArrayValue(container, value);
+    StoreIfAssigned(element, _res, Result);
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+{function DeleteArrayValue(_id: Cardinal; value: PWideChar): WordBool; cdecl;
+begin
+
+end;}
 
 function NativeSignatureFromName(name: String): String;
 var

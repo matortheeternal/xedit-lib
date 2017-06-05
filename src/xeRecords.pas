@@ -13,8 +13,6 @@ uses
   function RecordByEditorID(_id: Cardinal; edid: PWideChar; _res: PCardinal): WordBool; cdecl;
   function RecordByName(_id: Cardinal; full: PWideChar; _res: PCardinal): WordBool; cdecl;
   function GetOverrides(_id: Cardinal; count: PInteger): WordBool; cdecl;
-  function GetFormID(_id: Cardinal; formID: PCardinal): WordBool; cdecl;
-  function SetFormID(_id: Cardinal; formID: Cardinal): WordBool; cdecl;
   function ExchangeReferences(_id, oldFormID, newFormID: Cardinal): WordBool; cdecl;
   function GetReferences(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function IsMaster(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
@@ -266,37 +264,6 @@ begin
     if not Supports(Resolve(_id), IwbMainRecord, rec) then
       raise Exception.Create('Error Message');
     count^ := rec.OverrideCount + 1;
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function GetFormID(_id: Cardinal; formID: PCardinal): WordBool; cdecl;
-var
-  rec: IwbMainRecord;
-begin
-  Result := False;
-  try
-    if not Supports(Resolve(_id), IwbMainRecord, rec) then
-      raise Exception.Create('Interface must be a main record.');
-    formID^ := rec.LoadOrderFormID;
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-// TODO: Fix references
-function SetFormID(_id: Cardinal; formID: Cardinal): WordBool; cdecl;
-var
-  rec: IwbMainRecord;
-begin
-  Result := False;
-  try
-    if not Supports(Resolve(_id), IwbMainRecord, rec) then
-      raise Exception.Create('Interface must be a main record.');
-    rec.LoadOrderFormID := formID;
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);

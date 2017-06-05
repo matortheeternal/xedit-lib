@@ -70,18 +70,18 @@ exports
   // SERIALIZATION METHODS
   ElementToJson, {ElementFromJson,}
   // ELEMENT VALUE METHODS
-  Name, LongName, DisplayName, Path, EditorID, Signature, FullName, GetValue,
-  SetValue, GetIntValue, SetIntValue, GetUIntValue, SetUIntValue, GetFloatValue,
-  SetFloatValue, SetFlag, GetFlag, ToggleFlag, GetEnabledFlags,
-  SignatureFromName, NameFromSignature, GetSignatureNameMap,
+  Name, LongName, DisplayName, Path, Signature, GetValue, SetValue, GetIntValue,
+  SetIntValue, GetUIntValue, SetUIntValue, GetFloatValue, SetFloatValue,
+  SetFlag, GetFlag, ToggleFlag, GetAllFlags, GetEnabledFlags, SignatureFromName,
+  NameFromSignature, GetSignatureNameMap,
   // GROUP HANDLING METHODS
   HasGroup, AddGroup, GetChildGroup,
   // RECORD HANDLING METHODS
   AddRecord, GetRecords, RecordsBySignature, RecordByFormID, RecordByEditorID,
-  RecordByName, GetOverrides, GetFormID, SetFormID, ExchangeReferences,
-  GetReferences, IsMaster, IsInjected, IsOverride, IsWinningOverride,
-  ConflictThis, ConflictAll;
+  RecordByName, GetOverrides, GetReferences, ExchangeReferences, IsMaster,
+  IsInjected, IsOverride, IsWinningOverride, ConflictThis, ConflictAll,
   // RECORD VALUE METHODS
+  EditorID, FullName, GetFormID, SetFormID;
 
 begin
   IsMultiThread := True;
