@@ -393,13 +393,17 @@ function CreateByIndex(container: IwbContainerElementRef; index: Integer; nextPa
 begin
   // resolve element from container if container present
   // else resolve file at index
-  if Assigned(container) then
-    Result := container.Elements[index]
-  else
-    Result := NativeFileByIndex(index);
+  if Assigned(container) then begin
+    if index < container.ElementCount then
+      Result := container.Elements[index];
+  end
+  else begin
+    if index <= High(xFiles) then
+      Result := NativeFileByIndex(index);
+  end;
 
   // create next element if nextPath is present
-  if nextPath <> '' then
+  if Assigned(Result) and (nextPath <> '') then
     Result := CreateElement(Result, nextPath);
 end;
 
@@ -426,7 +430,7 @@ begin
       Result := container.Add(key);
   end;
   // recurse for next path if present
-  if nextPath <> '' then begin
+  if Assigned(Result) and (nextPath <> '') then begin
     if not Supports(Result, IwbContainerElementRef, nextContainer) then
       raise Exception.Create('Failed to traverse into ' + nextPath);
     Result := CreateFromContainer(nextContainer, nextPath);
@@ -438,7 +442,7 @@ begin
   Result := rec.ChildGroup;
   if not Assigned(Result) then
     raise Exception.Create('Child group not found for ' + rec.Name);
-  if nextPath <> '' then
+  if Assigned(Result) and (nextPath <> '') then
     Result := CreateFromGroup(Result as IwbGroupRecord, nextPath);
 end;
 
@@ -470,7 +474,7 @@ begin
   Result := wbCopyElementToFile(rec, targetFile, false, true, '', '', '') as IwbMainRecord;
 end;
 
-function CreateRecord(group: IwbGroupRecord; formID: Cardinal; path: String): IInterface; overload;
+function CreateRecord(group: IwbGroupRecord; formID: Cardinal; nextPath: String): IInterface; overload;
 var
   sig: TwbSignature;
 begin
@@ -481,15 +485,15 @@ begin
   if Assigned(Result) and ((Result as IwbMainRecord).Signature <> sig) then
     raise Exception.Create(Format('Found record %s does not match expected ' +
       'signature %s.', [(Result as IwbMainRecord).Name, string(sig)]));
-  if path <> '' then
-    Result := CreateFromRecord(Result as IwbMainRecord, path);
+  if Assigned(Result) and (nextPath <> '') then
+    Result := CreateFromRecord(Result as IwbMainRecord, nextPath);
 end;
 
-function CreateRecord(group: IwbGroupRecord; key, path: String): IwbMainRecord; overload;
+function CreateRecord(group: IwbGroupRecord; key, nextPath: String): IwbMainRecord; overload;
 begin
   Result := group.Add(key) as IwbMainRecord;
-  if path <> '' then
-    Result := CreateFromRecord(Result, path) as IwbMainRecord;
+  if Assigned(Result) and (nextPath <> '') then
+    Result := CreateFromRecord(Result, nextPath) as IwbMainRecord;
 end;
 
 function CreateFromGroup(group: IwbGroupRecord; path: String): IInterface;
@@ -517,7 +521,7 @@ begin
   if Length(key) > 4 then
     key := NativeSignatureFromName(key);
   Result := AddGroupIfMissing(_file, key);
-  if nextPath <> '' then
+  if Assigned(Result) and (nextPath <> '') then
     Result := CreateFromGroup(Result as IwbGroupRecord, nextPath);
 end;
 
@@ -544,7 +548,7 @@ begin
   Result := NativeFileByName(fileName);
   if not Assigned(Result) then
     Result := NativeAddFile(fileName);
-  if nextPath <> '' then
+  if Assigned(Result) and (nextPath <> '') then
     Result := CreateFromFile(Result as IwbFile, nextPath);
 end;
 
