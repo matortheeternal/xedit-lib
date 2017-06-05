@@ -18,6 +18,7 @@ uses
   function NativeFileByIndex(index: Integer): IwbFile;
   function NativeFileByLoadOrder(loadOrder: Integer): IwbFile;
   function NativeFileByName(name: String): IwbFile;
+  function NativeFileByNameEx(name: String): IwbFile;
   function NativeFileByAuthor(author: String): IwbFile;
 
 implementation
@@ -138,14 +139,21 @@ begin
     if Result.FileName = name then
       exit;
   end;
-  raise Exception.Create('Failed to find file with name: ' + name);
+  Result := nil;
+end;
+
+function NativeFileByNameEx(name: String): IwbFile;
+begin
+  Result := NativeFileByName(name);
+  if not Assigned(Result) then
+    raise Exception.Create('Failed to find file with name: ' + name);
 end;
 
 function FileByName(name: PWideChar; _res: PCardinal): WordBool; cdecl;
 begin
   Result := False;
   try
-    _res^ := Store(NativeFileByName(string(name)));
+    _res^ := Store(NativeFileByNameEx(string(name)));
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
