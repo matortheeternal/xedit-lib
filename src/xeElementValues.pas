@@ -23,6 +23,7 @@ uses
   function SetFlag(_id: Cardinal; path, name: PWideChar; enabled: WordBool): WordBool; cdecl;
   function GetFlag(_id: Cardinal; path, name: PWideChar; enabled: PWordBool): WordBool; cdecl;
   function ToggleFlag(_id: Cardinal; path, name: PWideChar): WordBool; cdecl;
+  function GetAllFlags(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
   function GetEnabledFlags(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
   function SignatureFromName(name: PWideChar; len: PInteger): WordBool; cdecl;
   function NameFromSignature(sig: PWideChar; len: PInteger): WordBool; cdecl;
@@ -466,6 +467,39 @@ begin
           element.NativeValue := element.NativeValue or flagVal;
       end;
     Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetAllFlags(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
+var
+  slFlags: TStringList;
+  element: IwbElement;
+  enumDef: IwbEnumDef;
+  i: Integer;
+  flagVal: Cardinal;
+begin
+  Result := False;
+  try
+    slFlags := TStringList.Create;
+    slFlags.StrictDelimiter := True;
+    slFlags.Delimiter := ',';
+
+    try
+      element := NativeGetElementEx(_id, path);
+      if not Supports(element.Def, IwbEnumDef, enumDef) then
+        raise Exception.Create('Element does not have flags');
+      for i := 0 to Pred(enumDef.NameCount) do
+        slFlags.Add(enumDef.Names[i]);
+
+      // set output
+      resultStr := slFlags.DelimitedText;
+      len^ := Length(resultStr);
+      Result := True;
+    finally
+      slFlags.Free;
+    end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
