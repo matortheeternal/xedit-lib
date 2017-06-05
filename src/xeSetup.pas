@@ -200,7 +200,7 @@ end;
 function GetLoadOrder(len: PInteger): WordBool; cdecl;
 var
   slPlugins, slLoadOrder: TStringList;
-  sLoadPath, sPath: String;
+  sLoadPath: String;
 begin
   Result := False;
   try
@@ -218,7 +218,7 @@ begin
 
       // if GameMode is not Skyrim, SkyrimSE or Fallout 4 sort
       // by date modified
-      if not wbGameMode in [gmTES5, gmSSE, gmFO4] then begin
+      if not (wbGameMode in [gmTES5, gmSSE, gmFO4]) then begin
         GetPluginDates(slLoadOrder);
         slLoadOrder.CustomSort(PluginListCompare);
       end;
@@ -240,7 +240,7 @@ end;
 function GetActivePlugins(len: PInteger): WordBool; cdecl;
 var
   slPlugins: TStringList;
-  sLoadPath, sPath: String;
+  sLoadPath: String;
 begin
   Result := False;
   try

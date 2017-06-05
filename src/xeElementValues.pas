@@ -442,7 +442,6 @@ var
   element: IwbElement;
   enumDef: IwbEnumDef;
   i: Integer;
-  flagVal: Cardinal;
 begin
   Result := False;
   try
