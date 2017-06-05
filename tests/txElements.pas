@@ -497,7 +497,7 @@ begin
 
           It('Should be able to push a new element onto an array', procedure
             begin
-              ExpectSuccess(AddElement(keywords, '', @h));
+              ExpectSuccess(AddElement(keywords, '.', @h));
               Expect(h > 0, 'Handle should be greater than 0');
             end);
 
