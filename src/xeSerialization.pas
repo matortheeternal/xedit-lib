@@ -24,9 +24,14 @@ var
 
 function IsFlags(element: IwbElement): Boolean;
 var
+  def: IwbNamedDef;
+  subDef: IwbSubrecordDef;
   intDef: IwbIntegerDef;
 begin
-  Result := Supports(element.Def, IwbIntegerDef, intDef)
+  def := element.Def;
+  if Supports(def, IwbSubrecordDef, subDef) then
+    def := subDef.Value;
+  Result := Supports(def, IwbIntegerDef, intDef)
     and Supports(intDef.Formater[element], IwbFlagsDef);
 end;
 

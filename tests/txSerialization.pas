@@ -313,6 +313,9 @@ begin
                   ExpectSuccess(GetElement(rec, 'BODT\General Flags', @h));
                   ExpectSuccess(ElementToJson(h, @len, False));
                   ExpectEqual(grs(len), '{"General Flags":{}}', '');
+                  ExpectSuccess(GetElement(0, 'Update.esm\000223E7\FNAM', @h));
+                  ExpectSuccess(ElementToJson(h, @len, False));
+                  ExpectEqual(grs(len), '{"FNAM - Flags":{}}', '');
                 end);
 
               It('Should serialize arrays properly', procedure

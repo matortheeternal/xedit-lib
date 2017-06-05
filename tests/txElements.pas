@@ -17,7 +17,7 @@ uses
   txImports,
 {$ENDIF}
 {$IFNDEF USE_DLL}
-  xeFiles, xeElements, xeElementValues,
+  xeFiles, xeElements, xeElementValues, xeRecordValues,
 {$ENDIF}
   txMeta;
 
