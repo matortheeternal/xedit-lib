@@ -106,7 +106,7 @@ begin
     try
       sl.Text := string(masters);
       for i := 0 to Pred(sl.Count) do
-        sl.Objects[i] := NativeFileByName(sl[i]);
+        sl.Objects[i] := Pointer(NativeFileByNameEx(sl[i]));
       NativeAddMasters(_file, sl);
     finally
       sl.Free;
