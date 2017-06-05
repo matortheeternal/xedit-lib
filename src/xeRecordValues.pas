@@ -24,11 +24,11 @@ var
 begin
   Result := False;
   try
-    if Supports(Resolve(_id), IwbMainRecord, rec) then begin
-      resultStr := rec.EditorID;
-      len^ := Length(resultStr);
-      Result := True;
-    end;
+    if not Supports(Resolve(_id), IwbMainRecord, rec) then
+      raise Exception.Create('Interface must be a main record.');
+    resultStr := rec.EditorID;
+    len^ := Length(resultStr);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
