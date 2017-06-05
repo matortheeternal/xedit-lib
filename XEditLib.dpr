@@ -50,12 +50,12 @@ exports
   GetMessagesLength, GetMessages, ClearMessages, GetExceptionMessageLength,
   GetExceptionMessage,
   // LOADING AND SET UP METHODS
-  SetGameMode, GetLoadOrder, LoadPlugins, GetLoaderDone, GetGamePath,
+  SetGameMode, GetLoadOrder, GetActivePlugins, LoadPlugins, GetLoaderDone,
+  GetGamePath,
   // FILE HANDLING METHODS
   AddFile, FileByIndex, FileByLoadOrder, FileByName, FileByAuthor, SaveFile,
   // MASTER HANDLING METHODS
-  CleanMasters, SortMasters, AddMaster, AddMasters, GetMaster, GetMasters,
-  GetRequiredBy,
+  CleanMasters, SortMasters, AddMaster, AddMasters, GetMasters, GetRequiredBy,
   // FILE VALUE METHODS
   GetFileHeader, GetNextObjectId, SetNextObjectID, GetFileName, GetAuthor,
   SetAuthor, GetDescription, SetDescription, OverrideRecordCount, GetIsESM,
@@ -68,11 +68,11 @@ exports
   // ERROR CHECKING METHODS
   CheckForErrors, GetErrorThreadDone, GetErrors, GetErrorString,
   // SERIALIZATION METHODS
-  ElementToJson, {ElementFromJson,}
+  ElementToJson, {SetElementFromJson, AddElementFromJson,}
   // ELEMENT VALUE METHODS
   Name, LongName, DisplayName, Path, Signature, GetValue, SetValue, GetIntValue,
   SetIntValue, GetUIntValue, SetUIntValue, GetFloatValue, SetFloatValue,
-  SetFlag, GetFlag, ToggleFlag, GetAllFlags, GetEnabledFlags, SignatureFromName,
+  GetFlag, SetFlag, ToggleFlag, GetAllFlags, GetEnabledFlags, SignatureFromName,
   NameFromSignature, GetSignatureNameMap,
   // GROUP HANDLING METHODS
   HasGroup, AddGroup, GetChildGroup,
