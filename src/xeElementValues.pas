@@ -377,12 +377,24 @@ begin
     for i := 0 to Pred(flagsDef.FlagCount) do
       if flagsDef.Flags[i] = name then begin
         enabled^ := element.NativeValue and (1 shl i);
-        break;
+        Result := True;
+        exit;
       end;
-    Result := True;
+    raise Exception.Create('Flag "' + name + '" not found.');
   except
     on x: Exception do ExceptionHandler(x);
   end;
+end;
+
+procedure NativeSetFlag(element: IwbElement; index: Integer; enabled: WordBool);
+var
+  flagVal: Cardinal;
+begin
+  flagVal := 1 shl index;
+  if enabled then
+    element.NativeValue := element.NativeValue or flagVal
+  else
+    element.NativeValue := element.NativeValue and not flagVal;
 end;
 
 function SetFlag(_id: Cardinal; path, name: PWideChar; enabled: WordBool): WordBool; cdecl;
@@ -390,7 +402,6 @@ var
   element: IwbElement;
   flagsDef: IwbFlagsDef;
   i: Integer;
-  flagVal: Cardinal;
 begin
   Result := False;
   try
@@ -399,15 +410,25 @@ begin
       raise Exception.Create('Element does not have flags');
     for i := 0 to Pred(flagsDef.FlagCount) do
       if flagsDef.Flags[i] = name then begin
-        flagVal := 1 shl i;
-        if enabled then
-          element.NativeValue := element.NativeValue or flagVal
-        else
-          element.NativeValue := element.NativeValue and not flagVal;
+        NativeSetFlag(element, i, enabled);
+        Result := True;
+        break;
       end;
+    raise Exception.Create('Flag "' + name + '" not found.');
   except
     on x: Exception do ExceptionHandler(x);
   end;
+end;
+
+procedure NativeToggleFlag(element: IwbElement; index: Integer);
+var
+  flagVal: Cardinal;
+begin
+  flagVal := 1 shl index;
+  if element.NativeValue and flagVal then
+    element.NativeValue := element.NativeValue and not flagVal
+  else
+    element.NativeValue := element.NativeValue or flagVal;
 end;
 
 function ToggleFlag(_id: Cardinal; path, name: PWideChar): WordBool; cdecl;
@@ -415,7 +436,6 @@ var
   element: IwbElement;
   flagsDef: IwbFlagsDef;
   i: Integer;
-  flagVal: Cardinal;
 begin
   Result := False;
   try
@@ -424,13 +444,11 @@ begin
       raise Exception.Create('Element does not have flags');
     for i := 0 to Pred(flagsDef.FlagCount) do
       if flagsDef.Flags[i] = name then begin
-        flagVal := 1 shl i;
-        if element.NativeValue and flagVal then
-          element.NativeValue := element.NativeValue and not flagVal
-        else
-          element.NativeValue := element.NativeValue or flagVal;
+        NativeToggleFlag(element, i);
+        Result := True;
+        break;
       end;
-    Result := True;
+    raise Exception.Create('Flag "' + name + '" not found.');
   except
     on x: Exception do ExceptionHandler(x);
   end;
