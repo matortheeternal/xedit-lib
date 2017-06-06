@@ -20,7 +20,6 @@ uses
   function SetFloatValue(_id: Cardinal; path: PWideChar; value: Double): WordBool; cdecl;
   function GetFlag(_id: Cardinal; path, name: PWideChar; enabled: PWordBool): WordBool; cdecl;
   function SetFlag(_id: Cardinal; path, name: PWideChar; enabled: WordBool): WordBool; cdecl;
-  function ToggleFlag(_id: Cardinal; path, name: PWideChar): WordBool; cdecl;
   function GetAllFlags(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
   function GetEnabledFlags(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
   function SignatureFromName(name: PWideChar; len: PInteger): WordBool; cdecl;
@@ -411,40 +410,6 @@ begin
     for i := 0 to Pred(flagsDef.FlagCount) do
       if flagsDef.Flags[i] = name then begin
         NativeSetFlag(element, i, enabled);
-        Result := True;
-        break;
-      end;
-    raise Exception.Create('Flag "' + name + '" not found.');
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-procedure NativeToggleFlag(element: IwbElement; index: Integer);
-var
-  flagVal: Cardinal;
-begin
-  flagVal := 1 shl index;
-  if element.NativeValue and flagVal then
-    element.NativeValue := element.NativeValue and not flagVal
-  else
-    element.NativeValue := element.NativeValue or flagVal;
-end;
-
-function ToggleFlag(_id: Cardinal; path, name: PWideChar): WordBool; cdecl;
-var
-  element: IwbElement;
-  flagsDef: IwbFlagsDef;
-  i: Integer;
-begin
-  Result := False;
-  try
-    element := NativeGetElementEx(_id, path);
-    if not GetFlagsDef(element, flagsDef) then
-      raise Exception.Create('Element does not have flags');
-    for i := 0 to Pred(flagsDef.FlagCount) do
-      if flagsDef.Flags[i] = name then begin
-        NativeToggleFlag(element, i);
         Result := True;
         break;
       end;
