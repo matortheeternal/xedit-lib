@@ -35,6 +35,7 @@ type
   function SmashType(_id: Cardinal; enum: PByte): WordBool; cdecl;
 
   // native functions
+  function ParseFormID(key: String; var formID: Cardinal): Boolean;
   function ResolveFromGroup(group: IwbGroupRecord; path: String): IInterface;
   function ResolveElement(e: IInterface; path: String): IInterface;
   function NativeGetElement(_id: Cardinal; key: PWideChar): IInterface;
