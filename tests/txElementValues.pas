@@ -41,6 +41,15 @@ begin
   ExpectEqual(b, expectedValue);
 end;
 
+procedure TestSetFlag(h: Cardinal; path, flag: PWideChar; enable: WordBool);
+var
+  b: WordBool;
+begin
+  ExpectSuccess(SetFlag(h, path, flag, enable));
+  ExpectSuccess(GetFlag(h, path, flag, @b));
+  ExpectEqual(b, enable);
+end;
+
 procedure BuildElementValueTests;
 var
   xt2, fileFlags, block, subBlock, childGroup, persistentGroup, refr, armo, rec,
@@ -429,6 +438,39 @@ begin
               ExpectFailure(GetFlag(xt2, 'File Header', 'ESM', @b));
               ExpectFailure(GetFlag(refr, '', 'Deleted', @b));
               ExpectFailure(GetFlag(refr, 'Record Header', 'Deleted', @b));
+            end);
+        end);
+
+      Describe('SetFlag', procedure
+        begin
+          It('Should enable disabled flags', procedure
+            begin
+              TestSetFlag(fileFlags, '', 'Localized', true);
+              TestSetFlag(refrFlags, '', 'Deleted', true);
+              TestSetFlag(refrFlags, '', 'Ignored', true);
+              TestSetFlag(rec, 'BODT\First Person Flags', '32 - Body', true);
+            end);
+
+          It('Should disable enabled flags', procedure
+            begin
+              TestSetFlag(fileFlags, '', 'Localized', false);
+              TestSetFlag(refrFlags, '', 'Deleted', false);
+              TestSetFlag(refrFlags, '', 'Ignored', false);
+              TestSetFlag(rec, 'BODT\First Person Flags', '32 - Body', false);
+            end);
+
+          It('Should fail if flag is not found', procedure
+            begin
+              ExpectFailure(SetFlag(refrFlags, '', 'Temporary', true));
+              ExpectFailure(SetFlag(refrFlags, '', 'Unknown 5', false));
+            end);
+
+          It('Should fail on non-flag elements', procedure
+            begin
+              ExpectFailure(SetFlag(xt2, '', 'ESM', true));
+              ExpectFailure(SetFlag(xt2, 'File Header', 'ESM', true));
+              ExpectFailure(SetFlag(refr, '', 'Deleted', true));
+              ExpectFailure(SetFlag(refr, 'Record Header', 'Deleted', true));
             end);
         end);
 
