@@ -510,6 +510,12 @@ begin
               ExpectEqual(len, 5);
               TestNames(gra(len), 'Keyword', 'Keyword');
             end);
+
+          It('Should resolve paths', procedure
+            begin
+              ExpectSuccess(GetElements(ar2, 'KWDA', @len));
+              ExpectEqual(len, 5);
+            end);
         end);
 
       Describe('GetElementFile', procedure
