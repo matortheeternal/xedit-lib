@@ -16,7 +16,7 @@ type
   TSmashTypes = set of TSmashType;
 
   function GetElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
-  function GetElements(_id: Cardinal; len: PInteger): WordBool; cdecl;
+  function GetElements(_id: Cardinal; key: PWideChar; len: PInteger): WordBool; cdecl;
   function GetElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function GetContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function AddElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
@@ -288,7 +288,7 @@ begin
   end;
 end;
 
-function GetFiles(len: PInteger): WordBool;
+procedure GetFiles(len: PInteger);
 var
   i: Integer;
 begin
@@ -296,33 +296,37 @@ begin
   SetLength(resultArray, len^);
   for i := 0 to High(xFiles) do
     resultArray[i] := Store(xFiles[i]);
-  Result := True;
 end;
 
-function GetChildrenElements(_id: Cardinal; len: PInteger): WordBool;
+procedure GetContainerElements(container: IwbContainerElementRef; len: PInteger);
 var
   i: Integer;
+begin
+  len^ := container.ElementCount;
+  SetLength(resultArray, len^);
+  for i := 0 to Pred(container.ElementCount) do
+    resultArray[i] := Store(container.Elements[i]);
+end;
+
+procedure GetChildrenElements(element: IInterface; len: PInteger);
+var
   container: IwbContainerElementRef;
 begin
-  Result := False;
-  if Supports(Resolve(_id), IwbContainerElementRef, container) then begin
-    len^ := container.ElementCount;
-    SetLength(resultArray, len^);
-    for i := 0 to Pred(container.ElementCount) do
-      resultArray[i] := Store(container.Elements[i]);
-    Result := True;
-  end;
+  if not Supports(element, IwbContainerElementRef, container) then
+    raise Exception.Create('Interface must be a container.');
+  GetContainerElements(container, len);
 end;
 
 // returns an array of handles for the elements in a container
-function GetElements(_id: Cardinal; len: PInteger): WordBool; cdecl;
+function GetElements(_id: Cardinal; key: PWideChar; len: PInteger): WordBool; cdecl;
 begin
   Result := False;
   try
-    if _id = 0 then
-      Result := GetFiles(len)
+    if (_id = 0) and (key = '') then
+      GetFiles(len)
     else
-      Result := GetChildrenElements(_id, len);
+      GetChildrenElements(NativeGetElementEx(_id, key), len);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
