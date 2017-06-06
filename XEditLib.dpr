@@ -72,7 +72,7 @@ exports
   // ELEMENT VALUE METHODS
   Name, LongName, DisplayName, Path, Signature, GetValue, SetValue, GetIntValue,
   SetIntValue, GetUIntValue, SetUIntValue, GetFloatValue, SetFloatValue,
-  GetFlag, SetFlag, GetAllFlags, GetEnabledFlags, SetEnabledFlags,
+  GetFlag, SetFlag, GetEnabledFlags, SetEnabledFlags, GetAllFlags,
   SignatureFromName, NameFromSignature, GetSignatureNameMap,
   // GROUP HANDLING METHODS
   HasGroup, AddGroup, GetChildGroup,

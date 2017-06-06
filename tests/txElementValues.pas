@@ -420,7 +420,8 @@ begin
 
           It('Should return true for enabled flags', procedure
             begin
-              TestGetFlag(0, 'xtest-1.esp\File Header\Record Header\Record Flags', 'ESM', true);
+              TestGetFlag(0, 'xtest-1.esp\File Header\Record Header\' +
+                'Record Flags', 'ESM', true);
               TestGetFlag(rec, 'BODT\First Person Flags', '33 - Hands', true);
               TestGetFlag(refrFlags, '', 'Persistent', true);
               TestGetFlag(refrFlags, '', 'Initially Disabled', true);
@@ -432,7 +433,7 @@ begin
               ExpectFailure(GetFlag(refrFlags, '', 'Unknown 5', @b));
             end);
 
-          It('Should fail on non-flag elements', procedure
+          It('Should fail on elements that do not have flags', procedure
             begin
               ExpectFailure(GetFlag(xt2, '', 'ESM', @b));
               ExpectFailure(GetFlag(xt2, 'File Header', 'ESM', @b));
@@ -465,12 +466,40 @@ begin
               ExpectFailure(SetFlag(refrFlags, '', 'Unknown 5', false));
             end);
 
-          It('Should fail on non-flag elements', procedure
+          It('Should fail on elements that do not have flags', procedure
             begin
               ExpectFailure(SetFlag(xt2, '', 'ESM', true));
               ExpectFailure(SetFlag(xt2, 'File Header', 'ESM', true));
               ExpectFailure(SetFlag(refr, '', 'Deleted', true));
               ExpectFailure(SetFlag(refr, 'Record Header', 'Deleted', true));
+            end);
+        end);
+
+      Describe('GetEnabledFlags', procedure
+        begin
+          It('Should return an empty string if no flags are enabled', procedure
+            begin
+              ExpectSuccess(GetEnabledFlags(fileFlags, '', @len));
+              ExpectEqual(len, 0);
+            end);
+
+          It('Should return a comma separated string of flag names', procedure
+            begin
+              ExpectSuccess(GetEnabledFlags(0, 'xtest-1.esp\File Header\' +
+                'Record Header\Record Flags', @len));
+              ExpectEqual(grs(len), 'ESM');
+              ExpectSuccess(GetEnabledFlags(rec, 'BODT\First Person Flags', @len));
+              ExpectEqual(grs(len), '33 - Hands');
+              ExpectSuccess(GetEnabledFlags(refrFlags, '', @len));
+              ExpectEqual(grs(len), 'Persistent,Initially Disabled');
+            end);
+
+          It('Should fail on elements that do not have flags', procedure
+            begin
+              ExpectFailure(GetEnabledFlags(xt2, '', @len));
+              ExpectFailure(GetEnabledFlags(xt2, 'File Header', @len));
+              ExpectFailure(GetEnabledFlags(refr, '', @len));
+              ExpectFailure(GetEnabledFlags(refr, 'Record Header', @len));
             end);
         end);
 
