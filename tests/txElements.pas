@@ -21,6 +21,14 @@ uses
 {$ENDIF}
   txMeta;
 
+procedure TestElementMatches(h: Cardinal; path, value: PWideChar; expectedValue: WordBool);
+var
+  b: WordBool;
+begin
+  ExpectSuccess(ElementMatches(h, path, value, @b));
+  ExpectEqual(b, expectedValue);
+end;
+
 procedure TestNames(a: CardinalArray; firstName, secondName: String);
 var
   len: Integer;
@@ -338,6 +346,84 @@ begin
           It('Should return false if null handle passed', procedure
             begin
               ExpectFailure(ElementEquals(0, 0, @b));
+            end);
+        end);
+
+      Describe('ElementMatches', procedure
+        begin
+          Describe('Edit Value Matching', procedure
+            begin
+              It('Should work on NULL references', procedure
+                begin
+                  TestElementMatches(ar2, 'ZNAM', 'NULL - Null Reference ' +
+                    '[00000000]', true);
+                  TestElementMatches(ar2, 'ZNAM', '', false);
+                end);
+
+              It('Should work on string fields', procedure
+                begin
+                  TestElementMatches(ar2, 'EDID', 'ArmorIronGauntlets', true);
+                  TestElementMatches(ar2, 'EDID', 'Blarg', false);
+                end);
+
+              It('Should work on integer fields', procedure
+                begin
+                  TestElementMatches(ar2, 'OBND\Z1', '-1', true);
+                  TestElementMatches(ar2, 'OBND\Z1', '-69', false);
+                end);
+
+              It('Should work on float fields', procedure
+                begin
+                  TestElementMatches(ar2, 'DATA\Weight', '5.000000', true);
+                  TestElementMatches(ar2, 'DATA\Weight', '5.00000', false);
+                end);
+            end);
+
+          Describe('FormID matching', procedure
+            begin
+              It('Should return true if FormID matches', procedure
+                begin
+                  TestElementMatches(keywords, '[0]', '000424EF', true);
+                  TestElementMatches(ar2, 'ZNAM', '00000000', true);
+                  TestElementMatches(ar2, 'RNAM', '00000019', true);
+                end);
+
+              It('Should return false if formID does not match', procedure
+                begin
+                  TestElementMatches(keywords, '[0]', '000A82BB', false);
+                  TestElementMatches(ar2, 'RNAM', '00000029', false);
+                end);
+            end);
+
+          Describe('Editor ID matching', procedure
+            begin
+              It('Should return true if Editor ID matches', procedure
+                begin
+                  TestElementMatches(keywords, '[0]', 'PerkFistsIron', true);
+                  TestElementMatches(keywords, '[3]', 'ArmorGauntlets', true);
+                  TestElementMatches(ar2, 'RNAM', 'DefaultRace', true);
+                end);
+
+              It('Should return false if Editor ID does not match', procedure
+                begin
+                  TestElementMatches(keywords, '[0]', 'Vampire', false);
+                  TestElementMatches(keywords, '[1]', 'ArMorHeAvY', false);
+                end);
+            end);
+
+          Describe('FULL name matching', procedure
+            begin
+              It('Should return true if FULL name matches', procedure
+                begin
+                  TestElementMatches(ar2, 'RNAM', '"Default Race"', true);
+                  TestElementMatches(keywords, '[0]', '""', true);
+                end);
+
+              It('Should return false if FULL name does not match', procedure
+                begin
+                  TestElementMatches(ar2, 'RNAM', '"Default RacE"', false);
+                  TestElementMatches(ar2, 'ZNAM', '"Null Reference"', false);
+                end);
             end);
         end);
 
