@@ -344,35 +344,35 @@ begin
         begin
           It('Should resolve root children (files)', procedure
             begin
-              ExpectSuccess(GetElements(0, @len));
+              ExpectSuccess(GetElements(0, '', @len));
               ExpectEqual(len, 8);
               TestNames(gra(len), 'Skyrim.esm', 'xtest-5.esp');
             end);
 
           It('Should resolve file children (file header and groups)', procedure
             begin
-              ExpectSuccess(GetElements(skyrim, @len));
+              ExpectSuccess(GetElements(skyrim, '', @len));
               ExpectEqual(len, 118);
               TestNames(gra(len), 'File Header', 'Reverb Parameters');
             end);
 
           It('Should resolve group children (records)', procedure
             begin
-              ExpectSuccess(GetElements(armo1, @len));
+              ExpectSuccess(GetElements(armo1, '', @len));
               ExpectEqual(len, 2762);
               TestEdids(gra(len), 'DremoraBoots', 'SkinNaked');
             end);
 
           It('Should resolve record children (subrecords/elements)', procedure
             begin
-              ExpectSuccess(GetElements(ar1, @len));
+              ExpectSuccess(GetElements(ar1, '', @len));
               ExpectEqual(len, 13);
               TestNames(gra(len), 'Record Header', 'DNAM - Armor Rating');
             end);
 
           It('Should resolve element children', procedure
             begin
-              ExpectSuccess(GetElements(keywords, @len));
+              ExpectSuccess(GetElements(keywords, '', @len));
               ExpectEqual(len, 5);
               TestNames(gra(len), 'Keyword', 'Keyword');
             end);
