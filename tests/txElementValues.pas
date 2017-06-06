@@ -17,6 +17,23 @@ uses
 {$ENDIF}
   txMeta, txElements;
 
+procedure TestGetFlag(h: Cardinal; path, flag: PWideChar; expectedValue: WordBool);
+var
+  b: WordBool;
+begin
+  ExpectSuccess(GetFlag(h, path, flag, @b));
+  ExpectEqual(b, expectedValue);
+end;
+
+procedure TestSetEnabledFlags(h: Cardinal; path, flags: PWideChar);
+var
+  len: Integer;
+begin
+  ExpectSuccess(SetEnabledFlags(h, path, flags));
+  ExpectSuccess(GetEnabledFlags(h, path, @len));
+  ExpectEqual(grs(len), string(flags));
+end;
+
 procedure TestSignatureFromName(name: PWideChar; sig: String);
 var
   len: Integer;
@@ -31,14 +48,6 @@ var
 begin
   ExpectSuccess(NameFromSignature(sig, @len));
   ExpectEqual(grs(len), name);
-end;
-
-procedure TestGetFlag(h: Cardinal; path, flag: PWideChar; expectedValue: WordBool);
-var
-  b: WordBool;
-begin
-  ExpectSuccess(GetFlag(h, path, flag, @b));
-  ExpectEqual(b, expectedValue);
 end;
 
 procedure TestSetFlag(h: Cardinal; path, flag: PWideChar; enable: WordBool);
@@ -500,6 +509,34 @@ begin
               ExpectFailure(GetEnabledFlags(xt2, 'File Header', @len));
               ExpectFailure(GetEnabledFlags(refr, '', @len));
               ExpectFailure(GetEnabledFlags(refr, 'Record Header', @len));
+            end);
+        end);
+
+      Describe('SetEnabledFlags', procedure
+        begin
+          It('Should enable flags that are present', procedure
+            begin
+              TestSetEnabledFlags(fileFlags, '', 'ESM,Localized,Ignored');
+              TestSetEnabledFlags(refrFlags, '', 'Unknown 0,Unknown 1,' +
+                'Persistent,Initially Disabled,Ignored,Multibound');
+              TestSetEnabledFlags(rec, 'BODT\First Person Flags', '30 - Head,' +
+                '33 - Hands,40 - Tail,52 - Unnamed,61 - FX01');
+            end);
+
+          It('Should disable flags that are not present', procedure
+            begin
+              TestSetEnabledFlags(fileFlags, '', '');
+              TestSetEnabledFlags(refrFlags, '', 'Persistent,' +
+                'Initially Disabled');
+              TestSetEnabledFlags(rec, 'BODT\First Person Flags', '33 - Hands');
+            end);
+
+          It('Should fail on elements that do not have flags', procedure
+            begin
+              ExpectFailure(SetEnabledFlags(xt2, '', ''));
+              ExpectFailure(SetEnabledFlags(xt2, 'File Header', ''));
+              ExpectFailure(SetEnabledFlags(refr, '', ''));
+              ExpectFailure(SetEnabledFlags(refr, 'Record Header', ''));
             end);
         end);
 
