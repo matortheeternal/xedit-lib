@@ -27,10 +27,10 @@ type
   function ElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
   function ElementEquals(_id, _id2: Cardinal; bool: PWordBool): WordBool; cdecl;
   function ElementMatches(_id: Cardinal; path, value: PWideChar; bool: PWordBool): WordBool; cdecl;
-  function HasArrayElement(_id: Cardinal; path, subpath, value: PWideChar; bool: PWordBool): WordBool; cdecl;
-  function GetArrayElement(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
-  function AddArrayElement(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
-  function RemoveArrayElement(_id: Cardinal; path, subpath, value: PWideChar): WordBool; cdecl;
+  function HasArrayItem(_id: Cardinal; path, subpath, value: PWideChar; bool: PWordBool): WordBool; cdecl;
+  function GetArrayItem(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
+  function AddArrayItem(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
+  function RemoveArrayItem(_id: Cardinal; path, subpath, value: PWideChar): WordBool; cdecl;
   function CopyElement(_id, _id2: Cardinal; aAsNew, aDeepCopy: WordBool; _res: PCardinal): WordBool; cdecl;
   function MoveElementToIndex(_id: Cardinal; index: Integer): WordBool; cdecl;
   function GetExpectedSignatures(_id: Cardinal; len: PInteger): WordBool; cdecl;
@@ -789,7 +789,7 @@ begin
   end;
 end;
 
-function NativeGetArrayElement(container: IwbContainerElementRef; path, value: string): IwbElement;
+function NativeGetArrayItem(container: IwbContainerElementRef; path, value: string): IwbElement;
 var
   i: Integer;
 begin
@@ -801,14 +801,14 @@ begin
   Result := nil;
 end;
 
-function NativeGetArrayElementEx(container: IwbContainerElementRef; path, value: string): IwbElement;
+function NativeGetArrayItemEx(container: IwbContainerElementRef; path, value: string): IwbElement;
 begin
-  Result := NativeGetArrayElement(container, path, value);
+  Result := NativeGetArrayItem(container, path, value);
   if not Assigned(Result) then
     raise Exception.Create('Could not find matching array element.');
 end;
 
-function HasArrayElement(_id: Cardinal; path, subpath, value: PWideChar; bool: PWordBool): WordBool; cdecl;
+function HasArrayItem(_id: Cardinal; path, subpath, value: PWideChar; bool: PWordBool): WordBool; cdecl;
 var
   element: IwbElement;
   container: IwbContainerElementRef;
@@ -819,14 +819,14 @@ begin
     if not Supports(element, IwbContainerElementRef, container)
     or not IsArray(container) then
       raise Exception.Create('Interface must be an array.');
-    bool^ := Assigned(NativeGetArrayElement(container, subpath, value));
+    bool^ := Assigned(NativeGetArrayItem(container, subpath, value));
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
 end;
 
-function GetArrayElement(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
+function GetArrayItem(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
   element: IwbElement;
   container: IwbContainerElementRef;
@@ -837,14 +837,14 @@ begin
     if not Supports(element, IwbContainerElementRef, container)
     or not IsArray(container) then
       raise Exception.Create('Interface must be an array.');
-    _res^ := Store(NativeGetArrayElementEx(container, subpath, value));
+    _res^ := Store(NativeGetArrayItemEx(container, subpath, value));
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
 end;
 
-function NativeAddArrayElement(container: IwbContainerElementRef; path, value: String): IwbElement;
+function NativeAddArrayItem(container: IwbContainerElementRef; path, value: String): IwbElement;
 var
   innerContainer: IwbContainerElementRef;
 begin
@@ -858,7 +858,7 @@ begin
   end;
 end;
 
-function AddArrayElement(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
+function AddArrayItem(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
   element: IwbElement;
   container: IwbContainerElementRef;
@@ -869,14 +869,14 @@ begin
     if not Supports(element, IwbContainerElementRef, container)
     or not IsArray(container) then
       raise Exception.Create('Interface must be an array.');
-    _res^ := Store(NativeAddArrayElement(container, subpath, value));
+    _res^ := Store(NativeAddArrayItem(container, subpath, value));
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
 end;
 
-procedure NativeRemoveArrayElement(container: IwbContainerElementRef; path, value: string);
+procedure NativeRemoveArrayItem(container: IwbContainerElementRef; path, value: string);
 var
   i: Integer;
 begin
@@ -887,7 +887,7 @@ begin
     end;
 end;
 
-function RemoveArrayElement(_id: Cardinal; path, subpath, value: PWideChar): WordBool; cdecl;
+function RemoveArrayItem(_id: Cardinal; path, subpath, value: PWideChar): WordBool; cdecl;
 var
   element: IwbElement;
   container: IwbContainerElementRef;
@@ -898,7 +898,7 @@ begin
     if not Supports(element, IwbContainerElementRef, container)
     or not IsArray(container) then
       raise Exception.Create('Interface must be an array.');
-    NativeRemoveArrayElement(container, subpath, value);
+    NativeRemoveArrayItem(container, subpath, value);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
