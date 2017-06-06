@@ -29,6 +29,14 @@ begin
   ExpectEqual(b, expectedValue);
 end;
 
+procedure TestHasArrayItem(h: Cardinal; path, subpath, value: PWideChar; expectedValue: WordBool);
+var
+  b: WordBool;
+begin
+  ExpectSuccess(HasArrayItem(h, path, subpath, value, @b));
+  ExpectEqual(b, expectedValue);
+end;
+
 procedure TestNames(a: CardinalArray; firstName, secondName: String);
 var
   len: Integer;
@@ -53,7 +61,7 @@ procedure BuildElementHandlingTests;
 var
   b: WordBool;
   h, skyrim, xt3, armo1, ar1, keywords, keyword, dnam, element, armo2,
-  ar2, ar3, refr: Cardinal;
+  ar2, ar3, refr, lvli, entries: Cardinal;
   len, i: Integer;
 begin
   Describe('Element Handling', procedure
@@ -71,6 +79,8 @@ begin
           ExpectSuccess(GetElement(xt3, 'ARMO', @armo2));
           ExpectSuccess(GetElement(armo2, '00012E46', @ar3));
           ExpectSuccess(GetElement(0, 'xtest-2.esp\000170F0', @refr));
+          ExpectSuccess(GetElement(0, 'xtest-2.esp\00013739', @lvli));
+          ExpectSuccess(GetElement(lvli, 'Leveled List Entries', @entries));
         end);
 
       Describe('GetElement', procedure
@@ -422,6 +432,44 @@ begin
                 begin
                   TestElementMatches(ar2, 'RNAM', '"Default RacE"', false);
                   TestElementMatches(ar2, 'ZNAM', '"Null Reference"', false);
+                end);
+            end);
+        end);
+
+      Describe('HasArrayItem', procedure
+        begin
+          Describe('Value arrays', procedure
+            begin
+              It('Should return true if array item is present', procedure
+                begin
+                  TestHasArrayItem(ar2, 'KWDA', '', 'PerkFistsIron', true);
+                  TestHasArrayItem(keywords, '', '', 'ArmorGauntlets', true);
+                  TestHasArrayItem(keywords, '', '', '0006BBE3', true);
+                  TestHasArrayItem(ar2, 'Armature', '', 'IronGlovesAA', true);
+                end);
+              It('Should return false if array item is not present', procedure
+                begin
+                  TestHasArrayItem(keywords, '', '', 'PerkFistsSteel', false);
+                  TestHasArrayItem(keywords, '', '', 'ArmorHelmet', false);
+                  TestHasArrayItem(keywords, '', '', '0006BBD4', false);
+                  TestHasArrayItem(ar2, 'Armature', '', 'IronHelmetAA', false);
+                end);
+            end);
+
+          Describe('Struct arrays', procedure
+            begin
+              It('Should return true if array item is present', procedure
+                begin
+                  TestHasArrayItem(entries, '', 'LVLO\Reference', 'ArmorIronGauntlets', true);
+                  TestHasArrayItem(entries, '', 'LVLO\Reference', '"Iron Armor"', true);
+                  TestHasArrayItem(entries, '', 'LVLO\Reference', '00012E4B', true);
+                  TestHasArrayItem(entries, '', 'LVLO\Reference', '"Iron Helmet"', true);
+                end);
+              It('Should return false if array item is not present', procedure
+                begin
+                  TestHasArrayItem(entries, '', 'LVLO\Reference', 'ArmorSteelHelmetA', false);
+                  TestHasArrayItem(entries, '', 'LVLO\Reference', '"Steel Helmet"', false);
+                  TestHasArrayItem(entries, '', 'LVLO\Reference', '00131954', false);
                 end);
             end);
         end);
