@@ -24,6 +24,7 @@ uses
   function GetEnabledFlags(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
   function SetEnabledFlags(_id: Cardinal; path, flags: PWideChar): WordBool; cdecl;
   function ElementMatches(_id: Cardinal; path, subpath, value: String; bool: PWordBool): WordBool; cdecl;
+  function HasArrayElement(_id: Cardinal; path, subpath, value: PWideChar; bool: PWordBool): WordBool; cdecl;
   function SignatureFromName(name: PWideChar; len: PInteger): WordBool; cdecl;
   function NameFromSignature(sig: PWideChar; len: PInteger): WordBool; cdecl;
   function GetSignatureNameMap(len: PInteger): WordBool; cdecl;
@@ -578,28 +579,39 @@ begin
   end;
 end;
 
-function NativeGetArrayValue(container: IwbContainerElementRef; value: PWideChar): IwbElement;
+function NativeGetArrayElement(container: IwbContainerElementRef; path, value: string): IwbElement;
 var
   i: Integer;
 begin
   for i := 0 to Pred(container.ElementCount) do begin
     Result := container.Elements[i];
-    if NativeElementMatches(Result, value) then
+    if NativeElementMatches(Result, path, value) then
       exit;
   end;
   Result := nil;
 end;
 
-function HasArrayValue(_id: Cardinal; value: PWideChar; bool: PWordBool): WordBool; cdecl;
+function NativeGetArrayElementEx(container: IwbContainerElementRef; path, value: string): IwbElement;
 var
+  i: Integer;
+begin
+  Result := NativeGetArrayElement(container, path, value);
+  if not Assigned(Result) then 
+    raise Exception.Create('Could not find matching array element.');
+end;
+
+function HasArrayElement(_id: Cardinal; path, subpath, value: PWideChar; bool: PWordBool): WordBool; cdecl;
+var
+  element: IwbElement;
   container: IwbContainerElementRef;
 begin
   Result := False;
   try
-    if not Supports(Resolve(_id), IwbContainerElementRef, container)
+    element := NativeGetElementEx(_id, path);
+    if not Supports(element, IwbContainerElementRef, container)
     or not IsArray(container) then
       raise Exception.Create('Interface must be an array.');
-    bool^ := Assigned(NativeGetArrayValue(container, value));
+    bool^ := Assigned(NativeGetArrayElement(container, subpath, value));
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
