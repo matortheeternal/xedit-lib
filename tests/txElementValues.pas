@@ -540,6 +540,50 @@ begin
             end);
         end);
 
+      Describe('GetAllFlags', procedure
+        begin
+          It('Should return a comma separated list of all flag names', procedure
+            begin
+              // FILE FLAGS
+              ExpectSuccess(GetAllFlags(fileFlags, '', @len));
+              str := grs(len);
+              Expect(Pos('ESM', str) = 1, 'ESM should be the first flag');
+              Expect(Pos(',,,,,,,', str) > 0, 'Should include empty flags');
+              Expect(Pos('Localized', str) > 0, 'Localized should be included');
+              Expect(Pos('Ignored', str) > 0, 'Ignored should be included');
+              // REFR FLAGS
+              ExpectSuccess(GetAllFlags(refrFlags, '', @len));
+              str := grs(len);
+              Expect(Pos('Unknown 0', str) = 1, 'Unknown 0 should be the ' +
+                'first flag');
+              // test is failing because record headers aren't pointing
+              // to records for some reason
+              Expect(Pos('Hidden From Local Map', str) > 0, 'Hidden From ' +
+                'Local Map should be included');
+              Expect(Pos('Visible when distant', str) > 0, 'Visible when  ' +
+                'distant should be included');
+              Expect(Pos('Multibound', str) > 0, 'Multibound should be ' +
+                'included');
+              // ARMO FIRST PERSON FLAGS
+              ExpectSuccess(GetAllFlags(rec, 'BODT\First Person Flags', @len));
+              str := grs(len);
+              Expect(Pos('30 - Head', str) = 1, '30 - Head should be the ' +
+                'first flag');
+              Expect(Pos('36 - Ring', str) > 0, '36 - Ring should be included');
+              Expect(Pos('44 - Unnamed', str) > 0, '44 - Unnamed should be ' +
+                'included');
+              Expect(Pos('61 - FX01', str) > 0, '61 - FX01 should be included');
+            end);
+
+          It('Should fail on elements that do not have flags', procedure
+            begin
+              ExpectFailure(GetAllFlags(xt2, '', @len));
+              ExpectFailure(GetAllFlags(xt2, 'File Header', @len));
+              ExpectFailure(GetAllFlags(refr, '', @len));
+              ExpectFailure(GetAllFlags(refr, 'Record Header', @len));
+            end);
+        end);
+
       Describe('SignatureFromName', procedure
         begin
           It('Should succeed for top level record names', procedure
