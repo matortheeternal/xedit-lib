@@ -355,8 +355,7 @@ begin
             begin
               It('Should work on NULL references', procedure
                 begin
-                  TestElementMatches(ar2, 'ZNAM', 'NULL - Null Reference ' +
-                    '[00000000]', true);
+                  TestElementMatches(ar2, 'ZNAM', 'NULL - Null Reference [00000000]', true);
                   TestElementMatches(ar2, 'ZNAM', '', false);
                 end);
 
@@ -651,8 +650,7 @@ begin
             end);
           It('Should return * if any signature is allowed', procedure
             begin
-              ExpectSuccess(GetElement(0, 'Update.esm\000E49CD\VMAD\Scripts\' +
-                '[0]\Properties\[0]\Value\Object Union\Object v2\FormID', @h));
+              ExpectSuccess(GetElement(0, 'Update.esm\000E49CD\VMAD\Scripts\[0]\Properties\[0]\Value\Object Union\Object v2\FormID', @h));
               ExpectSuccess(GetExpectedSignatures(h, @len));
               ExpectEqual(grs(len), '*');
             end);

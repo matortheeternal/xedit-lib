@@ -429,8 +429,7 @@ begin
 
           It('Should return true for enabled flags', procedure
             begin
-              TestGetFlag(0, 'xtest-1.esp\File Header\Record Header\' +
-                'Record Flags', 'ESM', true);
+              TestGetFlag(0, 'xtest-1.esp\File Header\Record Header\Record Flags', 'ESM', true);
               TestGetFlag(rec, 'BODT\First Person Flags', '33 - Hands', true);
               TestGetFlag(refrFlags, '', 'Persistent', true);
               TestGetFlag(refrFlags, '', 'Initially Disabled', true);
@@ -495,8 +494,7 @@ begin
 
           It('Should return a comma separated string of flag names', procedure
             begin
-              ExpectSuccess(GetEnabledFlags(0, 'xtest-1.esp\File Header\' +
-                'Record Header\Record Flags', @len));
+              ExpectSuccess(GetEnabledFlags(0, 'xtest-1.esp\File Header\Record Header\Record Flags', @len));
               ExpectEqual(grs(len), 'ESM');
               ExpectSuccess(GetEnabledFlags(rec, 'BODT\First Person Flags', @len));
               ExpectEqual(grs(len), '33 - Hands');
@@ -519,17 +517,14 @@ begin
             begin
               TestSetEnabledFlags(fileFlags, '', 'ESM,Localized,Ignored');
               // NOTE: the 0th Record Flag is disallowed except on the File Header
-              TestSetEnabledFlags(refrFlags, '', 'Unknown 1,Persistent,' +
-                'Initially Disabled,Ignored,Multibound');
-              TestSetEnabledFlags(rec, 'BODT\First Person Flags', '30 - Head,' +
-                '33 - Hands,40 - Tail,52 - Unnamed,61 - FX01');
+              TestSetEnabledFlags(refrFlags, '', 'Unknown 1,Persistent,Initially Disabled,Ignored,Multibound');
+              TestSetEnabledFlags(rec, 'BODT\First Person Flags', '30 - Head,33 - Hands,40 - Tail,52 - Unnamed,61 - FX01');
             end);
 
           It('Should disable flags that are not present', procedure
             begin
               TestSetEnabledFlags(fileFlags, '', '');
-              TestSetEnabledFlags(refrFlags, '', 'Persistent,' +
-                'Initially Disabled');
+              TestSetEnabledFlags(refrFlags, '', 'Persistent,Initially Disabled');
               TestSetEnabledFlags(rec, 'BODT\First Person Flags', '33 - Hands');
             end);
 
@@ -556,22 +551,16 @@ begin
               // REFR FLAGS
               ExpectSuccess(GetAllFlags(refrFlags, '', @len));
               str := grs(len);
-              Expect(Pos('Unknown 0', str) = 1, 'Unknown 0 should be the ' +
-                'first flag');
-              Expect(Pos('Hidden From Local Map', str) > 0, 'Hidden From ' +
-                'Local Map should be included');
-              Expect(Pos('Visible when distant', str) > 0, 'Visible when  ' +
-                'distant should be included');
-              Expect(Pos('Multibound', str) > 0, 'Multibound should be ' +
-                'included');
+              Expect(Pos('Unknown 0', str) = 1, 'Unknown 0 should be the first flag');
+              Expect(Pos('Hidden From Local Map', str) > 0, 'Hidden From Local Map should be included');
+              Expect(Pos('Visible when distant', str) > 0, 'Visible when  distant should be included');
+              Expect(Pos('Multibound', str) > 0, 'Multibound should be included');
               // ARMO FIRST PERSON FLAGS
               ExpectSuccess(GetAllFlags(rec, 'BODT\First Person Flags', @len));
               str := grs(len);
-              Expect(Pos('30 - Head', str) = 1, '30 - Head should be the ' +
-                'first flag');
+              Expect(Pos('30 - Head', str) = 1, '30 - Head should be the first flag');
               Expect(Pos('36 - Ring', str) > 0, '36 - Ring should be included');
-              Expect(Pos('44 - Unnamed', str) > 0, '44 - Unnamed should be ' +
-                'included');
+              Expect(Pos('44 - Unnamed', str) > 0, '44 - Unnamed should be included');
               Expect(Pos('61 - FX01', str) > 0, '61 - FX01 should be included');
             end);
 
@@ -681,8 +670,7 @@ begin
               Expect(Pos('REFR=Placed Object', str) > 0, 'Should contain REFR=Placed Object');
               Expect(Pos('PHZD=Placed Hazard', str) > 0, 'Should contain PHZD=Placed Hazard');
               Expect(Pos('PWAT=PWAT', str) > 0, 'Should contain PWAT=PWAT');
-              Expect(Pos('NPC_=Non-Player Character (Actor)', str) > 0,
-                'Should contain NPC_=Non-Player Character (Actor)');
+              Expect(Pos('NPC_=Non-Player Character (Actor)', str) > 0, 'Should contain NPC_=Non-Player Character (Actor)');
             end);
         end);
     end);
