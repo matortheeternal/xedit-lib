@@ -17,19 +17,19 @@ uses
 {$ENDIF}
   txMeta, txElements;
 
-procedure TestSignatureFromName(name, sig: String);
+procedure TestSignatureFromName(name: PWideChar; sig: String);
 var
   len: Integer;
 begin
-  ExpectSuccess(SignatureFromName(PWideChar(name), @len));
+  ExpectSuccess(SignatureFromName(name, @len));
   ExpectEqual(grs(len), sig);
 end;
 
-procedure TestNameFromSignature(sig, name: String);
+procedure TestNameFromSignature(sig: PWideChar; name: String);
 var
   len: Integer;
 begin
-  ExpectSuccess(NameFromSignature(PWideChar(sig), @len));
+  ExpectSuccess(NameFromSignature(sig, @len));
   ExpectEqual(grs(len), name);
 end;
 
