@@ -37,7 +37,7 @@ procedure BuildElementValueTests;
 var
   xt2, block, subBlock, childGroup, persistentGroup, refr, armo, rec,
   element, keyword, h, c: Cardinal;
-  expectedName: String;
+  expectedName, str: String;
   f: Double;
   len, i: Integer;
 begin
@@ -461,6 +461,30 @@ begin
               ExpectFailure(NameFromSignature('armo', @len));
               ExpectFailure(NameFromSignature('COBJ_', @len));
               ExpectFailure(NameFromSignature('NPC', @len));
+            end);
+        end);
+
+      Describe('GetSignatureNameMap', procedure
+        begin
+          It('Should succeed', procedure
+            begin
+              ExpectSuccess(GetSignatureNameMap(@len));
+            end, true);
+
+          It('Should yield a string', procedure
+            begin
+              str := string(grs(len));
+              Expect(Length(str) > 0, 'String should have length > 0');
+            end, true);
+
+          It('Should include signature name pairs', procedure
+            begin
+              Expect(Pos('ARMO=Armor', str) > 0, 'Should contain ARMO=Armor');
+              Expect(Pos('REFR=Placed Object', str) > 0, 'Should contain REFR=Placed Object');
+              Expect(Pos('PHZD=Placed Hazard', str) > 0, 'Should contain PHZD=Placed Hazard');
+              Expect(Pos('PWAT=PWAT', str) > 0, 'Should contain PWAT=PWAT');
+              Expect(Pos('NPC_=Non-Player Character (Actor)', str) > 0,
+                'Should contain NPC_=Non-Player Character (Actor)');
             end);
         end);
     end);
