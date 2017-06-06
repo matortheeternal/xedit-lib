@@ -23,6 +23,7 @@ uses
   function GetAllFlags(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
   function GetEnabledFlags(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
   function SetEnabledFlags(_id: Cardinal; path, flags: PWideChar): WordBool; cdecl;
+  function ElementMatches(_id: Cardinal; path, subpath, value: String; bool: PWordBool): WordBool; cdecl;
   function SignatureFromName(name: PWideChar; len: PInteger): WordBool; cdecl;
   function NameFromSignature(sig: PWideChar; len: PInteger): WordBool; cdecl;
   function GetSignatureNameMap(len: PInteger): WordBool; cdecl;
@@ -524,13 +525,57 @@ begin
   end;
 end;
 
-function NativeElementMatches(element: IwbElement; value: PWideChar): WordBool;
-var
-  rec: IwbMainRecord;
+function ParseFullName(value: String; var fullName: String): Boolean;
 begin
-  Result := string(value) = element.EditValue;
-  if not Result and Supports(element.LinksTo, IwbMainRecord, rec) then
-    Result := string(value) = NativeName(rec);
+  Result := (value[1] = '"') and (value[Length(value)] = '"');
+  if Result then
+    fullName := Copy(value, 2, Length(value) - 2);
+end;
+
+function NativeValueMatches(element: IwbElement; value: string): WordBool;
+var
+  formID: Cardinal;
+  rec: IwbMainRecord;
+  fullName: String;
+begin
+  if ParseFormID(value, formID) then
+    Result := element.NativeValue = formID
+  else if Supports(element.LinksTo, IwbMainRecord, rec) then begin
+    if ParseFullName(value, fullName) then
+      Result := rec.FullName = fullName
+    else
+      Result := rec.EditorID = value;
+  end
+  else
+    Result := element.EditValue = value;
+end;
+
+function NativeElementMatches(element: IwbElement; path, value: string): WordBool;
+var
+  container: IwbContainerElementRef;
+begin
+  if path = '' then
+    Result := NativeValueMatches(element, value)
+  else begin
+    if not Supports(element, IwbContainerElementRef, container) then
+      raise Exception.Create('Interface must be a container to resolve subpaths.');
+    Result := NativeValueMatches(container.ElementByPath[path], value);
+  end;
+end;
+
+function ElementMatches(_id: Cardinal; path, subpath, value: String; bool: PWordBool): WordBool; cdecl;
+var
+  element: IwbElement;
+  container: IwbContainerElementRef;
+begin
+  Result := False;
+  try
+    element := NativeGetElementEx(_id, path);
+    bool^ := NativeElementMatches(element, subpath, value);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
 end;
 
 function NativeGetArrayValue(container: IwbContainerElementRef; value: PWideChar): IwbElement;
