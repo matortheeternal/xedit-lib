@@ -18,8 +18,8 @@ uses
   function SetUIntValue(_id: Cardinal; path: PWideChar; value: Cardinal): WordBool; cdecl;
   function GetFloatValue(_id: Cardinal; path: PWideChar; value: PDouble): WordBool; cdecl;
   function SetFloatValue(_id: Cardinal; path: PWideChar; value: Double): WordBool; cdecl;
-  function SetFlag(_id: Cardinal; path, name: PWideChar; enabled: WordBool): WordBool; cdecl;
   function GetFlag(_id: Cardinal; path, name: PWideChar; enabled: PWordBool): WordBool; cdecl;
+  function SetFlag(_id: Cardinal; path, name: PWideChar; enabled: WordBool): WordBool; cdecl;
   function ToggleFlag(_id: Cardinal; path, name: PWideChar): WordBool; cdecl;
   function GetAllFlags(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
   function GetEnabledFlags(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
@@ -363,20 +363,42 @@ begin
   end;
 end;
 
+function GetFlag(_id: Cardinal; path, name: PWideChar; enabled: PWordBool): WordBool; cdecl;
+var
+  element: IwbElement;
+  flagsDef: IwbFlagsDef;
+  i: Integer;
+begin
+  Result := False;
+  try
+    element := NativeGetElementEx(_id, path);
+    if not GetFlagsDef(element, flagsDef) then
+      raise Exception.Create('Element does not have flags');
+    for i := 0 to Pred(flagsDef.FlagCount) do
+      if flagsDef.Flags[i] = name then begin
+        enabled^ := element.NativeValue and (1 shl i);
+        break;
+      end;
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
 function SetFlag(_id: Cardinal; path, name: PWideChar; enabled: WordBool): WordBool; cdecl;
 var
   element: IwbElement;
-  enumDef: IwbEnumDef;
+  flagsDef: IwbFlagsDef;
   i: Integer;
   flagVal: Cardinal;
 begin
   Result := False;
   try
     element := NativeGetElementEx(_id, path);
-    if not Supports(element.Def, IwbEnumDef, enumDef) then
+    if not GetFlagsDef(element, flagsDef) then
       raise Exception.Create('Element does not have flags');
-    for i := 0 to Pred(enumDef.NameCount) do
-      if SameText(enumDef.Names[i], String(name)) then begin
+    for i := 0 to Pred(flagsDef.FlagCount) do
+      if flagsDef.Flags[i] = name then begin
         flagVal := 1 shl i;
         if enabled then
           element.NativeValue := element.NativeValue or flagVal
@@ -388,42 +410,20 @@ begin
   end;
 end;
 
-function GetFlag(_id: Cardinal; path, name: PWideChar; enabled: PWordBool): WordBool; cdecl;
-var
-  element: IwbElement;
-  enumDef: IwbEnumDef;
-  i: Integer;
-begin
-  Result := False;
-  try
-    element := NativeGetElementEx(_id, path);
-    if not Supports(element.Def, IwbEnumDef, enumDef) then
-      raise Exception.Create('Element does not have flags');
-    for i := 0 to Pred(enumDef.NameCount) do
-      if SameText(enumDef.Names[i], name) then begin
-        enabled^ := element.NativeValue and (1 shl i);
-        exit;
-      end;
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
 function ToggleFlag(_id: Cardinal; path, name: PWideChar): WordBool; cdecl;
 var
   element: IwbElement;
-  enumDef: IwbEnumDef;
+  flagsDef: IwbFlagsDef;
   i: Integer;
   flagVal: Cardinal;
 begin
   Result := False;
   try
     element := NativeGetElementEx(_id, path);
-    if not Supports(element.Def, IwbEnumDef, enumDef) then
+    if not GetFlagsDef(element, flagsDef) then
       raise Exception.Create('Element does not have flags');
-    for i := 0 to Pred(enumDef.NameCount) do
-      if SameText(enumDef.Names[i], name) then begin
+    for i := 0 to Pred(flagsDef.FlagCount) do
+      if flagsDef.Flags[i] = name then begin
         flagVal := 1 shl i;
         if element.NativeValue and flagVal then
           element.NativeValue := element.NativeValue and not flagVal
@@ -440,7 +440,7 @@ function GetAllFlags(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; c
 var
   slFlags: TStringList;
   element: IwbElement;
-  enumDef: IwbEnumDef;
+  flagsDef: IwbFlagsDef;
   i: Integer;
 begin
   Result := False;
@@ -451,10 +451,10 @@ begin
 
     try
       element := NativeGetElementEx(_id, path);
-      if not Supports(element.Def, IwbEnumDef, enumDef) then
+      if not GetFlagsDef(element, flagsDef) then
         raise Exception.Create('Element does not have flags');
-      for i := 0 to Pred(enumDef.NameCount) do
-        slFlags.Add(enumDef.Names[i]);
+      for i := 0 to Pred(flagsDef.FlagCount) do
+        slFlags.Add(flagsDef.Flags[i]);
 
       // set output
       resultStr := slFlags.DelimitedText;
@@ -472,7 +472,7 @@ function GetEnabledFlags(_id: Cardinal; path: PWideChar; len: PInteger): WordBoo
 var
   slFlags: TStringList;
   element: IwbElement;
-  enumDef: IwbEnumDef;
+  flagsDef: IwbFlagsDef;
   i: Integer;
   flagVal: Cardinal;
 begin
@@ -484,12 +484,12 @@ begin
 
     try
       element := NativeGetElementEx(_id, path);
-      if not Supports(element.Def, IwbEnumDef, enumDef) then
+      if not GetFlagsDef(element, flagsDef) then
         raise Exception.Create('Element does not have flags');
-      for i := 0 to Pred(enumDef.NameCount) do begin
+      for i := 0 to Pred(flagsDef.FlagCount) do begin
         flagVal := 1 shl i;
         if element.NativeValue and flagVal then
-          slFlags.Add(enumDef.Names[i]);
+          slFlags.Add(flagsDef.Flags[i]);
       end;
 
       // set output
