@@ -757,6 +757,7 @@ begin
     else
       Result := rec.EditorID = value;
   end
+  // TODO: Support native value comparison for integers and floats?
   else
     Result := element.EditValue = value;
 end;
