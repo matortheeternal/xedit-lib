@@ -388,7 +388,7 @@ end;
 
 procedure NativeSetFlag(element: IwbElement; index: Integer; enabled: WordBool);
 var
-  flagVal: Cardinal;
+  flagVal: UInt64;
 begin
   flagVal := 1 shl index;
   if enabled then
@@ -458,7 +458,7 @@ var
   element: IwbElement;
   flagsDef: IwbFlagsDef;
   i: Integer;
-  flagVal: Cardinal;
+  flagVal: UInt64;
 begin
   Result := False;
   try
@@ -495,7 +495,7 @@ var
   flagsDef: IwbFlagsDef;
   i: Integer;
   enabled: Boolean;
-  flagVal: Cardinal;
+  flagVal: UInt64;
 begin
   Result := False;
   try
@@ -511,7 +511,7 @@ begin
       flagVal := 0;
       for i := Pred(flagsDef.FlagCount) downto 0 do begin
         enabled := slFlags.IndexOf(flagsDef.Flags[i]) > -1;
-        flagVal := flagVal shl 1 + Cardinal(Ord(enabled));
+        flagVal := flagVal shl 1 + UInt64(Ord(enabled));
       end;
       element.NativeValue := flagVal;
       Result := True;
