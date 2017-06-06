@@ -192,6 +192,7 @@ begin
   wbVWDAsQuestChildren := wbGameMode = gmFO4;
   wbArchiveExtension := IfThen(wbGameMode = gmFO4, '.ba2', '.bsa');
   wbLoadBSAs := wbGameMode in [gmFO4, gmSSE, gmTES5, gmTES4];
+  wbSimpleRecords := False;
   wbDisplayLoadOrderFormID := True;
   wbSortSubRecords := True;
   wbDisplayShorterNames := True;
