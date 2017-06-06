@@ -110,7 +110,7 @@ begin
                       ExpectExists(obj2, 'HEDR - Header');
                       obj3 := obj2.O['HEDR - Header'];
                       ExpectEqual(obj3.D['Version'], 1.7, '');
-                      ExpectEqual(obj3.I['Number of Records'], 11, '');
+                      ExpectEqual(obj3.I['Number of Records'], 13, '');
                       ExpectEqual(obj3.I['Next Object ID'], 2048, '');
                     end);
 
@@ -134,10 +134,11 @@ begin
 
                   It('Should have the correct groups', procedure
                     begin
-                      ExpectEqual(obj2.Count, 3, 'There should be 3 groups');
+                      ExpectEqual(obj2.Count, 4, 'There should be 4 groups');
                       ExpectExists(obj2, 'ACTI');
                       ExpectExists(obj2, 'ARMO');
                       ExpectExists(obj2, 'CELL');
+                      ExpectExists(obj2, 'LVLI');
                     end);
                 end);
             end);
