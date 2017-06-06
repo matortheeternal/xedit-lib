@@ -35,9 +35,10 @@ end;
 
 procedure BuildElementValueTests;
 var
-  xt2, block, subBlock, childGroup, persistentGroup, refr, armo, rec,
-  element, keyword, h, c: Cardinal;
+  xt2, fileFlags, block, subBlock, childGroup, persistentGroup, refr, armo, rec,
+  refrFlags, element, keyword, h, c: Cardinal;
   expectedName, str: String;
+  b: WordBool;
   f: Double;
   len, i: Integer;
 begin
@@ -45,16 +46,18 @@ begin
     begin
       BeforeAll(procedure
         begin
-          GetElement(0, 'xtest-2.esp', @xt2);
-          GetElement(xt2, 'ARMO', @armo);
-          GetElement(armo, '00012E46', @rec);
-          GetElement(rec, 'DNAM', @element);
-          GetElement(rec, 'KWDA\[1]', @keyword);
-          GetElement(xt2, '00027D1C\Child Group', @childGroup);
-          GetElement(xt2, 'CELL\[0]', @block);
-          GetElement(block, '[0]', @subBlock);
-          GetElement(childGroup, '[0]', @persistentGroup);
-          GetElement(xt2, '000170F0', @refr);
+          ExpectSuccess(GetElement(0, 'xtest-2.esp', @xt2));
+          ExpectSuccess(GetElement(xt2, 'File Header\Record Header\Record Flags', @fileFlags));
+          ExpectSuccess(GetElement(xt2, 'ARMO', @armo));
+          ExpectSuccess(GetElement(armo, '00012E46', @rec));
+          ExpectSuccess(GetElement(rec, 'DNAM', @element));
+          ExpectSuccess(GetElement(rec, 'KWDA\[1]', @keyword));
+          ExpectSuccess(GetElement(xt2, '00027D1C\Child Group', @childGroup));
+          ExpectSuccess(GetElement(xt2, 'CELL\[0]', @block));
+          ExpectSuccess(GetElement(block, '[0]', @subBlock));
+          ExpectSuccess(GetElement(childGroup, '[0]', @persistentGroup));
+          ExpectSuccess(GetElement(xt2, '000170F0', @refr));
+          ExpectSuccess(GetElement(refr, 'Record Header\Record Flags', @refrFlags));
         end);
         
       Describe('Name', procedure
@@ -383,6 +386,50 @@ begin
           It('Should fail if path does not exist', procedure
             begin
               ExpectFailure(SetFloatValue(rec, 'Non\Existent\Path', 1.23));
+            end);
+        end);
+
+      Describe('GetFlag', procedure
+        begin
+          It('Should return false for disabled flags', procedure
+            begin
+              ExpectSuccess(GetFlag(fileFlags, '', 'ESM', @b));
+              ExpectEqual(b, false);
+              ExpectSuccess(GetFlag(fileFlags, '', 'Localized', @b));
+              ExpectEqual(b, false);
+              ExpectSuccess(GetFlag(refrFlags, '', 'Deleted', @b));
+              ExpectEqual(b, false);
+              ExpectSuccess(GetFlag(refrFlags, '', 'Ignored', @b));
+              ExpectEqual(b, false);
+            end);
+
+          It('Should return false if flag is not found', procedure
+            begin
+              ExpectSuccess(GetFlag(refrFlags, '', 'Temporary', @b));
+              ExpectEqual(b, false);
+              ExpectSuccess(GetFlag(refrFlags, '', 'Unknown 5', @b));
+              ExpectEqual(b, false);
+            end);
+
+          It('Should return true for enabled flags', procedure
+            begin
+              ExpectSuccess(GetFlag(0, 'xtest-1.esp\File Header\Record Header\' +
+                'Record Flags', 'ESM', @b));
+              ExpectEqual(b, true);
+              ExpectSuccess(GetFlag(rec, 'BODT\First Person Flags', '33 - Hands', @b));
+              ExpectEqual(b, true);
+              ExpectSuccess(GetFlag(refrFlags, '', 'Persistent', @b));
+              ExpectEqual(b, true);
+              ExpectSuccess(GetFlag(refrFlags, '', 'Initially Disabled', @b));
+              ExpectEqual(b, true);
+            end);
+
+          It('Should fail on non-flag elements', procedure
+            begin
+              ExpectFailure(GetFlag(xt2, '', 'ESM', @b));
+              ExpectFailure(GetFlag(xt2, 'File Header', 'ESM', @b));
+              ExpectFailure(GetFlag(refr, '', 'Deleted', @b));
+              ExpectFailure(GetFlag(refr, 'Record Header', 'Deleted', @b));
             end);
         end);
 
