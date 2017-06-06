@@ -25,6 +25,14 @@ begin
   ExpectEqual(grs(len), sig);
 end;
 
+procedure TestNameFromSignature(sig, name: String);
+var
+  len: Integer;
+begin
+  ExpectSuccess(NameFromSignature(PWideChar(sig), @len));
+  ExpectEqual(grs(len), name);
+end;
+
 procedure BuildElementValueTests;
 var
   xt2, block, subBlock, childGroup, persistentGroup, refr, armo, rec,
@@ -414,6 +422,45 @@ begin
               ExpectFailure(SignatureFromName('ArMoR', @len));
               ExpectFailure(SignatureFromName('Constructible', @len));
               ExpectFailure(SignatureFromName('Explosion=', @len));
+            end);
+        end);
+
+      Describe('NameFromSignature', procedure
+        begin
+          It('Should succeed for top level record signatures', procedure
+            begin
+              TestNameFromSignature('ARMO', 'Armor');
+              TestNameFromSignature('WEAP', 'Weapon');
+              TestNameFromSignature('CELL', 'Cell');
+              TestNameFromSignature('NPC_', 'Non-Player Character (Actor)');
+              TestNameFromSignature('COBJ', 'Constructible Object');
+              TestNameFromSignature('EXPL', 'Explosion');
+              TestNameFromSignature('WOOP', 'Word of Power');
+            end);
+
+          It('Should succeed for other signatures', procedure
+            begin
+              TestNameFromSignature('REFR', 'Placed Object');
+              TestNameFromSignature('NAVM', 'Navigation Mesh');
+              TestNameFromSignature('ACHR', 'Placed NPC');
+              TestNameFromSignature('PGRE', 'Placed Projectile');
+              TestNameFromSignature('PMIS', 'Placed Missile');
+              TestNameFromSignature('PARW', 'Placed Arrow');
+              TestNameFromSignature('PBEA', 'Placed Beam');
+              TestNameFromSignature('PFLA', 'Placed Flame');
+              TestNameFromSignature('PCON', 'Placed Cone/Voice');
+              TestNameFromSignature('PBAR', 'Placed Barrier');
+              TestNameFromSignature('PHZD', 'Placed Hazard');
+              TestNameFromSignature('HAIR', 'HAIR');
+            end);
+
+          It('Should fail if signature does not correspond to a name', procedure
+            begin
+              ExpectFailure(NameFromSignature('', @len));
+              ExpectFailure(NameFromSignature('FAKE', @len));
+              ExpectFailure(NameFromSignature('armo', @len));
+              ExpectFailure(NameFromSignature('COBJ_', @len));
+              ExpectFailure(NameFromSignature('NPC', @len));
             end);
         end);
     end);
