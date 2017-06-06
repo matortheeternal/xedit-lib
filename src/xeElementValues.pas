@@ -25,6 +25,7 @@ uses
   function SetEnabledFlags(_id: Cardinal; path, flags: PWideChar): WordBool; cdecl;
   function ElementMatches(_id: Cardinal; path, subpath, value: String; bool: PWordBool): WordBool; cdecl;
   function HasArrayElement(_id: Cardinal; path, subpath, value: PWideChar; bool: PWordBool): WordBool; cdecl;
+  function GetArrayElement(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
   function SignatureFromName(name: PWideChar; len: PInteger): WordBool; cdecl;
   function NameFromSignature(sig: PWideChar; len: PInteger): WordBool; cdecl;
   function GetSignatureNameMap(len: PInteger): WordBool; cdecl;
@@ -618,9 +619,24 @@ begin
   end;
 end;
 
-function GetArrayValue(_id: Cardinal; value: PWideChar; _res: PCardinal): WordBool; cdecl;
+function GetArrayElement(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
-  element: IInterface;
+  element: IwbElement;
+  container: IwbContainerElementRef;
+begin
+  Result := False;
+  try
+    element := NativeGetElementEx(_id, path);
+    if not Supports(element, IwbContainerElementRef, container)
+    or not IsArray(container) then
+      raise Exception.Create('Interface must be an array.');
+    _res^ := Store(NativeGetArrayElementEx(container, subpath, value));
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
   container: IwbContainerElementRef;
 begin
   Result := False;
