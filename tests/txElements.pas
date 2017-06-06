@@ -45,7 +45,7 @@ procedure BuildElementHandlingTests;
 var
   b: WordBool;
   h, skyrim, xt3, armo1, ar1, keywords, keyword, dnam, element, armo2,
-  ar2, ar3: Cardinal;
+  ar2, ar3, refr: Cardinal;
   len, i: Integer;
 begin
   Describe('Element Handling', procedure
@@ -62,6 +62,7 @@ begin
           ExpectSuccess(GetElement(0, 'xtest-3.esp', @xt3));
           ExpectSuccess(GetElement(xt3, 'ARMO', @armo2));
           ExpectSuccess(GetElement(armo2, '00012E46', @ar3));
+          ExpectSuccess(GetElement(0, 'xtest-2.esp\000170F0', @refr));
         end);
 
       Describe('GetElement', procedure
@@ -423,6 +424,9 @@ begin
           It('Should return the record containing an element', procedure
             begin
               GetElement(ar1, 'EDID', @element);
+              ExpectSuccess(GetContainer(element, @h));
+              Expect(h > 0, 'Handle should be greater than 0');
+              GetElement(refr, 'Record Header', @element);
               ExpectSuccess(GetContainer(element, @h));
               Expect(h > 0, 'Handle should be greater than 0');
             end);
