@@ -36,6 +36,7 @@ uses
   Argo in 'lib\Argo\Argo.pas',
   Mahogany in 'lib\mahogany\Mahogany.pas';
 
+{$R XEditLib.RES}
 {$MAXSTACKSIZE 2097152}
 
 const

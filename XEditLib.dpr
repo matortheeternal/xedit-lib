@@ -63,9 +63,9 @@ exports
   // ELEMENT HANDLING METHODS
   GetElement, GetElements, GetElementFile, GetContainer, AddElement,
   RemoveElement, RemoveElementOrParent, ElementExists, ElementCount, GetLinksTo,
-  ElementEquals, ElementMatches, HasArrayElement, GetArrayElement,
-  AddArrayElement, RemoveArrayElement, CopyElement, MoveElementToIndex,
-  GetExpectedSignatures, SortKey, ElementType, DefType, SmashType,
+  ElementEquals, ElementMatches, HasArrayItem, GetArrayItem, AddArrayItem,
+  RemoveArrayItem, CopyElement, MoveElementToIndex, GetExpectedSignatures,
+  SortKey, ElementType, DefType, SmashType,
   // ERROR CHECKING METHODS
   CheckForErrors, GetErrorThreadDone, GetErrors, GetErrorString,
   // SERIALIZATION METHODS
