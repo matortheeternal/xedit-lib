@@ -640,8 +640,6 @@ end;
 initialization
 begin
   slSignatureNameMap := TFastStringList.Create;
-  slSignatureNameMap.Sorted := True;
-  slSignatureNameMap.Duplicates := dupIgnore;
   bSignatureNameMapBuilt := False;
 end;
 
