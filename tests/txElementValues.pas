@@ -33,6 +33,14 @@ begin
   ExpectEqual(grs(len), name);
 end;
 
+procedure TestGetFlag(h: Cardinal; path, flag: PWideChar; expectedValue: WordBool);
+var
+  b: WordBool;
+begin
+  ExpectSuccess(GetFlag(h, path, flag, @b));
+  ExpectEqual(b, expectedValue);
+end;
+
 procedure BuildElementValueTests;
 var
   xt2, fileFlags, block, subBlock, childGroup, persistentGroup, refr, armo, rec,
@@ -393,35 +401,26 @@ begin
         begin
           It('Should return false for disabled flags', procedure
             begin
-              ExpectSuccess(GetFlag(fileFlags, '', 'ESM', @b));
-              ExpectEqual(b, false);
-              ExpectSuccess(GetFlag(fileFlags, '', 'Localized', @b));
-              ExpectEqual(b, false);
-              ExpectSuccess(GetFlag(refrFlags, '', 'Deleted', @b));
-              ExpectEqual(b, false);
-              ExpectSuccess(GetFlag(refrFlags, '', 'Ignored', @b));
-              ExpectEqual(b, false);
-            end);
-
-          It('Should return false if flag is not found', procedure
-            begin
-              ExpectSuccess(GetFlag(refrFlags, '', 'Temporary', @b));
-              ExpectEqual(b, false);
-              ExpectSuccess(GetFlag(refrFlags, '', 'Unknown 5', @b));
-              ExpectEqual(b, false);
+              TestGetFlag(fileFlags, '', 'ESM', false);
+              TestGetFlag(fileFlags, '', 'Localized', false);
+              TestGetFlag(fileFlags, '', '', false);
+              TestGetFlag(refrFlags, '', 'Deleted', false);
+              TestGetFlag(refrFlags, '', 'Ignored', false);
+              TestGetFlag(refrFlags, '', 'Unknown 0', false);
             end);
 
           It('Should return true for enabled flags', procedure
             begin
-              ExpectSuccess(GetFlag(0, 'xtest-1.esp\File Header\Record Header\' +
-                'Record Flags', 'ESM', @b));
-              ExpectEqual(b, true);
-              ExpectSuccess(GetFlag(rec, 'BODT\First Person Flags', '33 - Hands', @b));
-              ExpectEqual(b, true);
-              ExpectSuccess(GetFlag(refrFlags, '', 'Persistent', @b));
-              ExpectEqual(b, true);
-              ExpectSuccess(GetFlag(refrFlags, '', 'Initially Disabled', @b));
-              ExpectEqual(b, true);
+              TestGetFlag(0, 'xtest-1.esp\File Header\Record Header\Record Flags', 'ESM', true);
+              TestGetFlag(rec, 'BODT\First Person Flags', '33 - Hands', true);
+              TestGetFlag(refrFlags, '', 'Persistent', true);
+              TestGetFlag(refrFlags, '', 'Initially Disabled', true);
+            end);
+
+          It('Should fail if flag is not found', procedure
+            begin
+              ExpectFailure(GetFlag(refrFlags, '', 'Temporary', @b));
+              ExpectFailure(GetFlag(refrFlags, '', 'Unknown 5', @b));
             end);
 
           It('Should fail on non-flag elements', procedure
