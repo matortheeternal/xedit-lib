@@ -451,7 +451,7 @@ begin
             end);
         end);
 
-      Describe('SetFlag', procedure
+      {Describe('SetFlag', procedure
         begin
           It('Should enable disabled flags', procedure
             begin
@@ -482,7 +482,7 @@ begin
               ExpectFailure(SetFlag(refr, '', 'Deleted', true));
               ExpectFailure(SetFlag(refr, 'Record Header', 'Deleted', true));
             end);
-        end);
+        end);}
 
       Describe('GetEnabledFlags', procedure
         begin
