@@ -556,8 +556,6 @@ begin
               str := grs(len);
               Expect(Pos('Unknown 0', str) = 1, 'Unknown 0 should be the ' +
                 'first flag');
-              // test is failing because record headers aren't pointing
-              // to records for some reason
               Expect(Pos('Hidden From Local Map', str) > 0, 'Hidden From ' +
                 'Local Map should be included');
               Expect(Pos('Visible when distant', str) > 0, 'Visible when  ' +
