@@ -26,6 +26,7 @@ uses
   function ElementMatches(_id: Cardinal; path, subpath, value: String; bool: PWordBool): WordBool; cdecl;
   function HasArrayElement(_id: Cardinal; path, subpath, value: PWideChar; bool: PWordBool): WordBool; cdecl;
   function GetArrayElement(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
+  function AddArrayElement(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
   function SignatureFromName(name: PWideChar; len: PInteger): WordBool; cdecl;
   function NameFromSignature(sig: PWideChar; len: PInteger): WordBool; cdecl;
   function GetSignatureNameMap(len: PInteger): WordBool; cdecl;
@@ -637,15 +638,33 @@ begin
   end;
 end;
 
+function NativeAddArrayElement(container: IwbContainerElementRef; path, value: String): IwbElement;
+var
+  innerContainer: IwbContainerElementRef;
+begin
+  Result := container.Assign(High(Integer), nil, False);
+  if path = '' then
+    Result.EditValue := value
+  else begin     
+    if not Supports(Result, IwbContainerElementRef, innerContainer) then
+      raise Exception.Create('Interface must be a container to resolve subpaths.');
+    innerContainer.ElementEditValues[path] := value;
+  end;
+end;
+
+function AddArrayElement(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
+var
+  element: IwbElement;
   container: IwbContainerElementRef;
 begin
   Result := False;
   try
-    if not Supports(Resolve(_id), IwbContainerElementRef, container)
+    element := NativeGetElementEx(_id, path);
+    if not Supports(element, IwbContainerElementRef, container)
     or not IsArray(container) then
       raise Exception.Create('Interface must be an array.');
-    element := NativeGetArrayValue(container, value);
-    StoreIfAssigned(element, _res, Result);
+    _res^ := Store(NativeAddArrayElement(container, subpath, value));
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
