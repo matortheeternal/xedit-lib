@@ -22,6 +22,7 @@ uses
   function SetFlag(_id: Cardinal; path, name: PWideChar; enabled: WordBool): WordBool; cdecl;
   function GetAllFlags(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
   function GetEnabledFlags(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
+  function SetEnabledFlags(_id: Cardinal; path, flags: PWideChar): WordBool; cdecl;
   function SignatureFromName(name: PWideChar; len: PInteger): WordBool; cdecl;
   function NameFromSignature(sig: PWideChar; len: PInteger): WordBool; cdecl;
   function GetSignatureNameMap(len: PInteger): WordBool; cdecl;
@@ -478,6 +479,41 @@ begin
       // set output
       resultStr := slFlags.DelimitedText;
       len^ := Length(resultStr);
+      Result := True;
+    finally
+      slFlags.Free;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function SetEnabledFlags(_id: Cardinal; path, flags: PWideChar): WordBool; cdecl;
+var
+  slFlags: TStringList;
+  element: IwbElement;
+  flagsDef: IwbFlagsDef;
+  i: Integer;
+  enabled: Boolean;
+  flagVal: Cardinal;
+begin
+  Result := False;
+  try
+    slFlags := TStringList.Create;
+    slFlags.StrictDelimiter := True;
+    slFlags.Delimiter := ',';
+    slFlags.DelimitedText := flags;
+
+    try
+      element := NativeGetElementEx(_id, path);
+      if not GetFlagsDef(element, flagsDef) then
+        raise Exception.Create('Element does not have flags');
+      flagVal := 0;
+      for i := Pred(flagsDef.FlagCount) downto 0 do begin
+        enabled := slFlags.IndexOf(flagsDef.Flags[i]) > -1;
+        flagVal := flagVal shl 1 + Cardinal(Ord(enabled));
+      end;
+      element.NativeValue := flagVal;
       Result := True;
     finally
       slFlags.Free;
