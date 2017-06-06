@@ -510,7 +510,8 @@ begin
         raise Exception.Create('Element does not have flags');
       flagVal := 0;
       for i := Pred(flagsDef.FlagCount) downto 0 do begin
-        enabled := slFlags.IndexOf(flagsDef.Flags[i]) > -1;
+        enabled := (flagsDef.Flags[i] <> '') and
+          (slFlags.IndexOf(flagsDef.Flags[i]) > -1);
         flagVal := flagVal shl 1 + UInt64(Ord(enabled));
       end;
       element.NativeValue := flagVal;
