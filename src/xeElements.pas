@@ -26,6 +26,11 @@ type
   function ElementExists(_id: Cardinal; key: PWideChar; bool: PWordBool): WordBool; cdecl;
   function ElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
   function ElementEquals(_id, _id2: Cardinal; bool: PWordBool): WordBool; cdecl;
+  function ElementMatches(_id: Cardinal; path, subpath, value: String; bool: PWordBool): WordBool; cdecl;
+  function HasArrayElement(_id: Cardinal; path, subpath, value: PWideChar; bool: PWordBool): WordBool; cdecl;
+  function GetArrayElement(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
+  function AddArrayElement(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
+  function RemoveArrayElement(_id: Cardinal; path, subpath, value: PWideChar): WordBool; cdecl;
   function CopyElement(_id, _id2: Cardinal; aAsNew, aDeepCopy: WordBool; _res: PCardinal): WordBool; cdecl;
   function MoveElementToIndex(_id: Cardinal; index: Integer): WordBool; cdecl;
   function GetExpectedSignatures(_id: Cardinal; len: PInteger): WordBool; cdecl;
@@ -35,7 +40,6 @@ type
   function SmashType(_id: Cardinal; enum: PByte): WordBool; cdecl;
 
   // native functions
-  function ParseFormID(key: String; var formID: Cardinal): Boolean;
   function ResolveFromGroup(group: IwbGroupRecord; path: String): IInterface;
   function ResolveElement(e: IInterface; path: String): IInterface;
   function NativeGetElement(_id: Cardinal; key: PWideChar): IInterface;
@@ -91,6 +95,13 @@ begin
   Result := (Length(key) = 8) and IsHexStr(key);
   if Result then
     formID := StrToInt('$' + key);
+end;
+
+function ParseFullName(value: String; var fullName: String): Boolean;
+begin
+  Result := (value[1] = '"') and (value[Length(value)] = '"');
+  if Result then
+    fullName := Copy(value, 2, Length(value) - 2);
 end;
 
 procedure SplitPath(path: String; var key, nextPath: String);
@@ -726,6 +737,170 @@ begin
     if not Supports(Resolve(_id2), IwbElement, element2) then
       raise Exception.Create('Second interface is not an element.');
     bool^ := element.Equals(element2);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function NativeValueMatches(element: IwbElement; value: string): WordBool;
+var
+  formID: Cardinal;
+  rec: IwbMainRecord;
+  fullName: String;
+begin
+  if ParseFormID(value, formID) then
+    Result := element.NativeValue = formID
+  else if Supports(element.LinksTo, IwbMainRecord, rec) then begin
+    if ParseFullName(value, fullName) then
+      Result := rec.FullName = fullName
+    else
+      Result := rec.EditorID = value;
+  end
+  else
+    Result := element.EditValue = value;
+end;
+
+function NativeElementMatches(element: IwbElement; path, value: string): WordBool;
+var
+  container: IwbContainerElementRef;
+begin
+  if path = '' then
+    Result := NativeValueMatches(element, value)
+  else begin
+    if not Supports(element, IwbContainerElementRef, container) then
+      raise Exception.Create('Interface must be a container to resolve subpaths.');
+    Result := NativeValueMatches(container.ElementByPath[path], value);
+  end;
+end;
+
+function ElementMatches(_id: Cardinal; path, subpath, value: String; bool: PWordBool): WordBool; cdecl;
+var
+  element: IwbElement;
+  container: IwbContainerElementRef;
+begin
+  Result := False;
+  try
+    element := NativeGetElementEx(_id, path);
+    bool^ := NativeElementMatches(element, subpath, value);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function NativeGetArrayElement(container: IwbContainerElementRef; path, value: string): IwbElement;
+var
+  i: Integer;
+begin
+  for i := 0 to Pred(container.ElementCount) do begin
+    Result := container.Elements[i];
+    if NativeElementMatches(Result, path, value) then
+      exit;
+  end;
+  Result := nil;
+end;
+
+function NativeGetArrayElementEx(container: IwbContainerElementRef; path, value: string): IwbElement;
+var
+  i: Integer;
+begin
+  Result := NativeGetArrayElement(container, path, value);
+  if not Assigned(Result) then
+    raise Exception.Create('Could not find matching array element.');
+end;
+
+function HasArrayElement(_id: Cardinal; path, subpath, value: PWideChar; bool: PWordBool): WordBool; cdecl;
+var
+  element: IwbElement;
+  container: IwbContainerElementRef;
+begin
+  Result := False;
+  try
+    element := NativeGetElementEx(_id, path);
+    if not Supports(element, IwbContainerElementRef, container)
+    or not IsArray(container) then
+      raise Exception.Create('Interface must be an array.');
+    bool^ := Assigned(NativeGetArrayElement(container, subpath, value));
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetArrayElement(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
+var
+  element: IwbElement;
+  container: IwbContainerElementRef;
+begin
+  Result := False;
+  try
+    element := NativeGetElementEx(_id, path);
+    if not Supports(element, IwbContainerElementRef, container)
+    or not IsArray(container) then
+      raise Exception.Create('Interface must be an array.');
+    _res^ := Store(NativeGetArrayElementEx(container, subpath, value));
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function NativeAddArrayElement(container: IwbContainerElementRef; path, value: String): IwbElement;
+var
+  innerContainer: IwbContainerElementRef;
+begin
+  Result := container.Assign(High(Integer), nil, False);
+  if path = '' then
+    Result.EditValue := value
+  else begin
+    if not Supports(Result, IwbContainerElementRef, innerContainer) then
+      raise Exception.Create('Interface must be a container to resolve subpaths.');
+    innerContainer.ElementEditValues[path] := value;
+  end;
+end;
+
+function AddArrayElement(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
+var
+  element: IwbElement;
+  container: IwbContainerElementRef;
+begin
+  Result := False;
+  try
+    element := NativeGetElementEx(_id, path);
+    if not Supports(element, IwbContainerElementRef, container)
+    or not IsArray(container) then
+      raise Exception.Create('Interface must be an array.');
+    _res^ := Store(NativeAddArrayElement(container, subpath, value));
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+procedure NativeRemoveArrayElement(container: IwbContainerElementRef; path, value: string);
+var
+  i: Integer;
+begin
+  for i := 0 to Pred(container.ElementCount) do
+    if NativeElementMatches(container.Elements[i], path, value) then begin
+      container.RemoveElement(i);
+      break;
+    end;
+end;
+
+function RemoveArrayElement(_id: Cardinal; path, subpath, value: PWideChar): WordBool; cdecl;
+var
+  element: IwbElement;
+  container: IwbContainerElementRef;
+begin
+  Result := False;
+  try
+    element := NativeGetElementEx(_id, path);
+    if not Supports(element, IwbContainerElementRef, container)
+    or not IsArray(container) then
+      raise Exception.Create('Interface must be an array.');
+    NativeRemoveArrayElement(container, subpath, value);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
