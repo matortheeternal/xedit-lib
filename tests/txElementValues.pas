@@ -17,6 +17,14 @@ uses
 {$ENDIF}
   txMeta, txElements;
 
+procedure TestSignatureFromName(name, sig: String);
+var
+  len: Integer;
+begin
+  ExpectSuccess(SignatureFromName(PWideChar(name), @len));
+  ExpectEqual(grs(len), sig);
+end;
+
 procedure BuildElementValueTests;
 var
   xt2, block, subBlock, childGroup, persistentGroup, refr, armo, rec,
@@ -367,6 +375,45 @@ begin
           It('Should fail if path does not exist', procedure
             begin
               ExpectFailure(SetFloatValue(rec, 'Non\Existent\Path', 1.23));
+            end);
+        end);
+
+      Describe('SignatureFromName', procedure
+        begin
+          It('Should succeed for top level record names', procedure
+            begin
+              TestSignatureFromName('Armor', 'ARMO');
+              TestSignatureFromName('Weapon', 'WEAP');
+              TestSignatureFromName('Cell', 'CELL');
+              TestSignatureFromName('Non-Player Character (Actor)', 'NPC_');
+              TestSignatureFromName('Constructible Object', 'COBJ');
+              TestSignatureFromName('Explosion', 'EXPL');
+              TestSignatureFromName('Word of Power', 'WOOP');
+            end);
+
+          It('Should succeed for other names', procedure
+            begin
+              TestSignatureFromName('Placed Object', 'REFR');
+              TestSignatureFromName('Navigation Mesh', 'NAVM');
+              TestSignatureFromName('Placed NPC', 'ACHR');
+              TestSignatureFromName('Placed Projectile', 'PGRE');
+              TestSignatureFromName('Placed Missile', 'PMIS');
+              TestSignatureFromName('Placed Arrow', 'PARW');
+              TestSignatureFromName('Placed Beam', 'PBEA');
+              TestSignatureFromName('Placed Flame', 'PFLA');
+              TestSignatureFromName('Placed Cone/Voice', 'PCON');
+              TestSignatureFromName('Placed Barrier', 'PBAR');
+              TestSignatureFromName('Placed Hazard', 'PHZD');
+              TestSignatureFromName('HAIR', 'HAIR');
+            end);
+
+          It('Should fail if name does not correspond to a signature', procedure
+            begin
+              ExpectFailure(SignatureFromName('', @len));
+              ExpectFailure(SignatureFromName('This is fake', @len));
+              ExpectFailure(SignatureFromName('ArMoR', @len));
+              ExpectFailure(SignatureFromName('Constructible', @len));
+              ExpectFailure(SignatureFromName('Explosion=', @len));
             end);
         end);
     end);
