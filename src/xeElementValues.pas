@@ -27,6 +27,7 @@ uses
   function HasArrayElement(_id: Cardinal; path, subpath, value: PWideChar; bool: PWordBool): WordBool; cdecl;
   function GetArrayElement(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
   function AddArrayElement(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
+  function RemoveArrayElement(_id: Cardinal; path, subpath, value: PWideChar): WordBool; cdecl;
   function SignatureFromName(name: PWideChar; len: PInteger): WordBool; cdecl;
   function NameFromSignature(sig: PWideChar; len: PInteger): WordBool; cdecl;
   function GetSignatureNameMap(len: PInteger): WordBool; cdecl;
@@ -670,10 +671,34 @@ begin
   end;
 end;
 
-{function DeleteArrayValue(_id: Cardinal; value: PWideChar): WordBool; cdecl;
+procedure NativeRemoveArrayElement(container: IwbContainerElementRef; path, value: string);
+var
+  i: Integer;
 begin
+  for i := 0 to Pred(container.ElementCount) do
+    if NativeElementMatches(container.Elements[i], path, value) then begin
+      container.RemoveElement(i);
+      break;
+    end;
+end;
 
-end;}
+function RemoveArrayElement(_id: Cardinal; path, subpath, value: PWideChar): WordBool; cdecl;
+var
+  element: IwbElement;
+  container: IwbContainerElementRef;
+begin
+  Result := False;
+  try
+    element := NativeGetElementEx(_id, path);
+    if not Supports(element, IwbContainerElementRef, container)
+    or not IsArray(container) then
+      raise Exception.Create('Interface must be an array.');
+    NativeRemoveArrayElement(container, subpath, value);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
 
 function NativeSignatureFromName(name: String): String;
 var
