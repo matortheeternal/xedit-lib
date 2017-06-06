@@ -209,6 +209,8 @@ begin
     Result := ResolveByIndex(_file as IwbContainerElementRef, index, nextPath)
   else if ParseFormID(key, formID) then
     Result := ResolveRecord(_file, formID, nextPath)
+  else if key = 'File Header' then
+    Result := ResolveFromRecord(_file.Header, nextPath)
   else 
     Result := ResolveGroup(_file, key, nextPath);
 end;
@@ -543,6 +545,8 @@ begin
     Result := CreateByIndex(_file as IwbContainerElementRef, index, nextPath)
   else if ParseFormID(key, formID) then
     Result := CreateFromRecord(_file.RecordByFormID[formID, false], nextPath)
+  else if key = 'File Header' then
+    Result := CreateFromRecord(_file.Header, nextPath)
   else
     Result := CreateGroup(_file, key, nextPath);
 end;
