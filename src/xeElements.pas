@@ -26,7 +26,7 @@ type
   function ElementExists(_id: Cardinal; key: PWideChar; bool: PWordBool): WordBool; cdecl;
   function ElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
   function ElementEquals(_id, _id2: Cardinal; bool: PWordBool): WordBool; cdecl;
-  function ElementMatches(_id: Cardinal; path, subpath, value: String; bool: PWordBool): WordBool; cdecl;
+  function ElementMatches(_id: Cardinal; path, subpath, value: PWideChar; bool: PWordBool): WordBool; cdecl;
   function HasArrayElement(_id: Cardinal; path, subpath, value: PWideChar; bool: PWordBool): WordBool; cdecl;
   function GetArrayElement(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
   function AddArrayElement(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
@@ -774,10 +774,9 @@ begin
   end;
 end;
 
-function ElementMatches(_id: Cardinal; path, subpath, value: String; bool: PWordBool): WordBool; cdecl;
+function ElementMatches(_id: Cardinal; path, subpath, value: PWideChar; bool: PWordBool): WordBool; cdecl;
 var
   element: IwbElement;
-  container: IwbContainerElementRef;
 begin
   Result := False;
   try
@@ -802,8 +801,6 @@ begin
 end;
 
 function NativeGetArrayElementEx(container: IwbContainerElementRef; path, value: string): IwbElement;
-var
-  i: Integer;
 begin
   Result := NativeGetArrayElement(container, path, value);
   if not Assigned(Result) then
