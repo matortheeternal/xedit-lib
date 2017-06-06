@@ -4,7 +4,7 @@
 			<MainSource>XEditLibTests.dpr</MainSource>
 			<ProjectVersion>12.3</ProjectVersion>
 			<Base>True</Base>
-			<Config Condition="'$(Config)'==''">Release</Config>
+			<Config Condition="'$(Config)'==''">Debug</Config>
 			<Platform>Win32</Platform>
 			<AppType>Console</AppType>
 			<FrameworkType>None</FrameworkType>
@@ -51,7 +51,18 @@
 			<DelphiCompile Include="XEditLibTests.dpr">
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
-			<DCCReference Include="tests\txImports.pas"/>
+			<DCCReference Include="src\xeElements.pas"/>
+			<DCCReference Include="src\xeElementValues.pas"/>
+			<DCCReference Include="src\xeErrors.pas"/>
+			<DCCReference Include="src\xeFiles.pas"/>
+			<DCCReference Include="src\xeFileValues.pas"/>
+			<DCCReference Include="src\xeGroups.pas"/>
+			<DCCReference Include="src\xeMasters.pas"/>
+			<DCCReference Include="src\xeMeta.pas"/>
+			<DCCReference Include="src\xeRecords.pas"/>
+			<DCCReference Include="src\xeRecordValues.pas"/>
+			<DCCReference Include="src\xeSerialization.pas"/>
+			<DCCReference Include="src\xeSetup.pas"/>
 			<DCCReference Include="tests\txMeta.pas"/>
 			<DCCReference Include="tests\txSetup.pas"/>
 			<DCCReference Include="tests\txFiles.pas"/>
