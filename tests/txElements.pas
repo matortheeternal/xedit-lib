@@ -85,7 +85,7 @@ begin
   end;
 end;
 
-procedure TestElementMatches(h: Cardinal; path, value: PWideChar; expectedValue: WordBool);
+procedure TestElementMatches(h: Cardinal; path, value: PWideChar; expectedValue: WordBool = True);
 var
   b: WordBool;
 begin
@@ -93,7 +93,7 @@ begin
   ExpectEqual(b, expectedValue);
 end;
 
-procedure TestHasArrayItem(h: Cardinal; path, subpath, value: PWideChar; expectedValue: WordBool);
+procedure TestHasArrayItem(h: Cardinal; path, subpath, value: PWideChar; expectedValue: WordBool = True);
 var
   b: WordBool;
 begin
@@ -697,9 +697,9 @@ begin
             begin
               It('Should return true if Editor ID matches', procedure
                 begin
-                  TestElementMatches(keywords, '[0]', 'PerkFistsIron', true);
-                  TestElementMatches(keywords, '[3]', 'ArmorGauntlets', true);
-                  TestElementMatches(ar2, 'RNAM', 'DefaultRace', true);
+                  TestElementMatches(keywords, '[0]', 'PerkFistsIron');
+                  TestElementMatches(keywords, '[3]', 'ArmorGauntlets');
+                  TestElementMatches(ar2, 'RNAM', 'DefaultRace');
                 end);
 
               It('Should return false if Editor ID does not match', procedure
@@ -713,8 +713,8 @@ begin
             begin
               It('Should return true if FULL name matches', procedure
                 begin
-                  TestElementMatches(ar2, 'RNAM', '"Default Race"', true);
-                  TestElementMatches(keywords, '[0]', '""', true);
+                  TestElementMatches(ar2, 'RNAM', '"Default Race"');
+                  TestElementMatches(keywords, '[0]', '""');
                 end);
 
               It('Should return false if FULL name does not match', procedure
@@ -731,11 +731,12 @@ begin
             begin
               It('Should return true if array item is present', procedure
                 begin
-                  TestHasArrayItem(ar2, 'KWDA', '', 'PerkFistsIron', true);
-                  TestHasArrayItem(keywords, '', '', 'ArmorGauntlets', true);
-                  TestHasArrayItem(keywords, '', '', '0006BBE3', true);
-                  TestHasArrayItem(ar2, 'Armature', '', 'IronGlovesAA', true);
+                  TestHasArrayItem(ar2, 'KWDA', '', 'PerkFistsIron');
+                  TestHasArrayItem(keywords, '', '', 'ArmorGauntlets');
+                  TestHasArrayItem(keywords, '', '', '0006BBE3');
+                  TestHasArrayItem(ar2, 'Armature', '', 'IronGlovesAA');
                 end);
+
               It('Should return false if array item is not present', procedure
                 begin
                   TestHasArrayItem(keywords, '', '', 'PerkFistsSteel', false);
@@ -749,11 +750,12 @@ begin
             begin
               It('Should return true if array item is present', procedure
                 begin
-                  TestHasArrayItem(entries, '', 'LVLO\Reference', 'ArmorIronGauntlets', true);
-                  TestHasArrayItem(entries, '', 'LVLO\Reference', '"Iron Armor"', true);
-                  TestHasArrayItem(entries, '', 'LVLO\Reference', '00012E4B', true);
-                  TestHasArrayItem(entries, '', 'LVLO\Reference', '"Iron Helmet"', true);
+                  TestHasArrayItem(entries, '', 'LVLO\Reference', 'ArmorIronGauntlets');
+                  TestHasArrayItem(entries, '', 'LVLO\Reference', '"Iron Armor"');
+                  TestHasArrayItem(entries, '', 'LVLO\Reference', '00012E4B');
+                  TestHasArrayItem(entries, '', 'LVLO\Reference', '"Iron Helmet"');
                 end);
+
               It('Should return false if array item is not present', procedure
                 begin
                   TestHasArrayItem(entries, '', 'LVLO\Reference', 'ArmorSteelHelmetA', false);
