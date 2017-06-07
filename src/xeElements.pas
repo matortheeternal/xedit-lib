@@ -15,15 +15,15 @@ type
     stSortedStructArray, stByteArray, stUnion );
   TSmashTypes = set of TSmashType;
 
+  function HasElement(_id: Cardinal; key: PWideChar; bool: PWordBool): WordBool; cdecl;
   function GetElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
-  function GetElements(_id: Cardinal; key: PWideChar; len: PInteger): WordBool; cdecl;
-  function GetElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
-  function GetContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function AddElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
   function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; cdecl;
   function RemoveElementOrParent(_id: Cardinal): WordBool; cdecl;
+  function GetElements(_id: Cardinal; key: PWideChar; len: PInteger): WordBool; cdecl;
   function GetLinksTo(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
-  function ElementExists(_id: Cardinal; key: PWideChar; bool: PWordBool): WordBool; cdecl;
+  function GetContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
+  function GetElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function ElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
   function ElementEquals(_id, _id2: Cardinal; bool: PWordBool): WordBool; cdecl;
   function ElementMatches(_id: Cardinal; path, value: PWideChar; bool: PWordBool): WordBool; cdecl;
@@ -295,9 +295,23 @@ begin
     raise Exception.Create('Failed to resolve element at path: ' + string(key));
 end;
 
-// Has the functionality of ElementByName, ElementByPath, ElementByIndex,
-// ElementBySignature, GroupBySignature, FileByName, FileByIndex, RecordByFormID,
-// RecordByIndex, and supports indexed paths.
+function HasElement(_id: Cardinal; key: PWideChar; bool: PWordBool): WordBool; cdecl;
+var
+  e: IInterface;
+begin
+  Result := False;
+  try
+    e := NativeGetElement(_id, key);
+    bool^ := Assigned(e);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+// Has the functionality of FileByName, FileByIndex, GetFileHeader, GroupBySignature,
+// GroupByName, RecordByFormID, RecordByEditorID, RecordByName, RecordByIndex,
+// GetChildGroup, ElementByName, ElementByPath, ElementByIndex, and ElementBySignature.
 function GetElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
   element: IwbElement;
@@ -306,111 +320,6 @@ begin
   try
     element := NativeGetElementEx(_id, key);
     _res^ := Store(element as IInterface);
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-procedure GetFiles(len: PInteger);
-var
-  i: Integer;
-begin
-  len^ := High(xFiles) + 1;
-  SetLength(resultArray, len^);
-  for i := 0 to High(xFiles) do
-    resultArray[i] := Store(xFiles[i]);
-end;
-
-procedure GetContainerElements(container: IwbContainerElementRef; len: PInteger);
-var
-  i: Integer;
-begin
-  len^ := container.ElementCount;
-  SetLength(resultArray, len^);
-  for i := 0 to Pred(container.ElementCount) do
-    resultArray[i] := Store(container.Elements[i]);
-end;
-
-procedure GetChildrenElements(element: IInterface; len: PInteger);
-var
-  container: IwbContainerElementRef;
-begin
-  if not Supports(element, IwbContainerElementRef, container) then
-    raise Exception.Create('Interface must be a container.');
-  GetContainerElements(container, len);
-end;
-
-// returns an array of handles for the elements in a container
-function GetElements(_id: Cardinal; key: PWideChar; len: PInteger): WordBool; cdecl;
-begin
-  Result := False;
-  try
-    if (_id = 0) and (key = '') then
-      GetFiles(len)
-    else
-      GetChildrenElements(NativeGetElementEx(_id, key), len);
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function GetElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
-var
-  element: IwbElement;
-begin
-  Result := False;
-  try
-    if not Supports(Resolve(_id), IwbElement, element) then
-      raise Exception.Create('Interface is not an element.');
-    _res^ := Store(element._File);
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-procedure NativeMoveElementToIndex(element: IwbElement; index: Integer);
-var
-  container: IwbContainerElementRef;
-begin
-  container := element.Container as IwbContainerElementRef;
-  if not IsArray(container) then
-    raise Exception.Create('Cannot move elements in non-array containers.');
-  if IsSorted(container) then
-    raise Exception.Create('Cannot move elements in sorted arrays.');
-  if index > container.IndexOf(element) then
-    Dec(index);
-  element.Remove;
-  container.InsertElement(index, element);
-end;
-
-function NativeContainer(element: IwbElement): IwbContainer;
-var
-  group: IwbGroupRecord;
-begin
-  if Supports(element, IwbGroupRecord, group) and IsChildGroup(group) then
-    Result := group.ChildrenOf as IwbContainer
-  else
-    Result := element.Container;
-  if not Assigned(Result) then
-    raise Exception.Create('Could not find container for ' + element.Name);
-end;
-
-function GetContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
-var
-  e: IInterface;
-  element: IwbElement;
-begin
-  Result := False;
-  try
-    e := Resolve(_id);
-    if Supports(e, IwbFile) then
-      raise Exception.Create('Cannot call GetContainer on files.');
-    if not Supports(e, IwbElement, element) then
-      raise Exception.Create('Interface is not an element.');
-    _res^ := Store(NativeContainer(element));
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
@@ -688,6 +597,50 @@ begin
   end;
 end;
 
+procedure GetFiles(len: PInteger);
+var
+  i: Integer;
+begin
+  len^ := High(xFiles) + 1;
+  SetLength(resultArray, len^);
+  for i := 0 to High(xFiles) do
+    resultArray[i] := Store(xFiles[i]);
+end;
+
+procedure GetContainerElements(container: IwbContainerElementRef; len: PInteger);
+var
+  i: Integer;
+begin
+  len^ := container.ElementCount;
+  SetLength(resultArray, len^);
+  for i := 0 to Pred(container.ElementCount) do
+    resultArray[i] := Store(container.Elements[i]);
+end;
+
+procedure GetChildrenElements(element: IInterface; len: PInteger);
+var
+  container: IwbContainerElementRef;
+begin
+  if not Supports(element, IwbContainerElementRef, container) then
+    raise Exception.Create('Interface must be a container.');
+  GetContainerElements(container, len);
+end;
+
+// returns an array of handles for the elements in a container
+function GetElements(_id: Cardinal; key: PWideChar; len: PInteger): WordBool; cdecl;
+begin
+  Result := False;
+  try
+    if (_id = 0) and (key = '') then
+      GetFiles(len)
+    else
+      GetChildrenElements(NativeGetElementEx(_id, key), len);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
 function GetLinksTo(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
   element, linkedElement: IwbElement;
@@ -705,14 +658,46 @@ begin
   end;
 end;
 
-function ElementExists(_id: Cardinal; key: PWideChar; bool: PWordBool): WordBool; cdecl;
+function NativeContainer(element: IwbElement): IwbContainer;
+var
+  group: IwbGroupRecord;
+begin
+  if Supports(element, IwbGroupRecord, group) and IsChildGroup(group) then
+    Result := group.ChildrenOf as IwbContainer
+  else
+    Result := element.Container;
+  if not Assigned(Result) then
+    raise Exception.Create('Could not find container for ' + element.Name);
+end;
+
+function GetContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 var
   e: IInterface;
+  element: IwbElement;
 begin
   Result := False;
   try
-    e := NativeGetElement(_id, key);
-    bool^ := Assigned(e);
+    e := Resolve(_id);
+    if Supports(e, IwbFile) then
+      raise Exception.Create('Cannot call GetContainer on files.');
+    if not Supports(e, IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    _res^ := Store(NativeContainer(element));
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
+var
+  element: IwbElement;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    _res^ := Store(element._File);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
@@ -938,7 +923,22 @@ begin
   end;
 end;
 
-function MoveElementToIndex(_id: Cardinal; index: Integer): WordBool; cdecl;
+procedure NativeMoveElementToIndex(element: IwbElement; index: Integer);
+var
+  container: IwbContainerElementRef;
+begin
+  container := element.Container as IwbContainerElementRef;
+  if not IsArray(container) then
+    raise Exception.Create('Cannot move elements in non-array containers.');
+  if IsSorted(container) then
+    raise Exception.Create('Cannot move elements in sorted arrays.');
+  if index > container.IndexOf(element) then
+    Dec(index);
+  element.Remove;
+  container.InsertElement(index, element);
+end;
+
+function MoveElement(_id: Cardinal; index: Integer): WordBool; cdecl;
 var
   element: IwbElement;
 begin
