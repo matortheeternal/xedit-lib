@@ -21,6 +21,70 @@ uses
 {$ENDIF}
   txMeta;
 
+procedure TestHasElement(h: Cardinal; path: PWideChar; expectedValue: WordBool = True);
+var
+  b: WordBool;
+begin
+  ExpectSuccess(HasElement(h, path, @b));
+  ExpectEqual(b, expectedValue);
+end;
+
+procedure TestGetElement(h: Cardinal; path: PWideChar);
+var
+  element: Cardinal;
+begin
+  ExpectSuccess(GetElement(h, path, @element));
+  Expect(element > 0, 'Handle should be greater than 0');
+end;
+  
+procedure TestAddElement(h: Cardinal; path: PWideChar; testExistence: Boolean = True);
+var
+  element: Cardinal;
+  b: WordBool;
+begin
+  ExpectSuccess(AddElement(h, path, @element));
+  if testExistence then begin
+    ExpectSuccess(HasElement(h, path, @b));
+    Expect(b, 'The element should be present');
+  end;
+  Expect(element > 0, 'Handle should be greater than 0');
+end;
+
+procedure TestElementCount(h: Cardinal; expectedCount: Integer);
+var
+  count: Integer;
+begin
+  ExpectSuccess(ElementCount(h, @count));
+  ExpectEqual(count, expectedCount);
+end;
+
+procedure TestElementEquals(e1, e2: Cardinal; expectedValue: WordBool = True); overload;
+var
+  b: WordBool;
+begin
+  ExpectSuccess(ElementEquals(e1, e2, @b));
+  ExpectEqual(b, expectedValue);
+end;
+
+procedure TestElementEquals(e1, container: Cardinal; path: PWideChar; expectedValue: WordBool = True); overload;
+var
+  e2: Cardinal;
+begin
+  ExpectSuccess(GetElement(container, path, @e2));
+  TestElementEquals(e1, e2, expectedValue);
+end;
+
+procedure TestRemoveElement(h: Cardinal; path: PWideChar; testPresence: Boolean = True);
+var
+  b: WordBool;
+begin
+  ExpectSuccess(RemoveElement(h, path));
+  if testPresence then begin
+    ExpectSuccess(HasElement(h, path, @b));
+    Expect(not b, 'The element should not longer be present');
+  end;
+end;
+
 procedure TestElementMatches(h: Cardinal; path, value: PWideChar; expectedValue: WordBool);
 var
   b: WordBool;
@@ -57,12 +121,46 @@ begin
   ExpectEqual(grs(len), secondEdid);
 end;
 
+procedure TestGetContainer(h: Cardinal; path: PWideChar);
+var
+  element, container: Cardinal;
+begin
+  if path <> '' then
+    ExpectSuccess(GetElement(h, path, @element))
+  else
+    element := h;
+  ExpectSuccess(GetContainer(element, @container));
+  Expect(container > 0, 'Handle should be greater than 0');
+end;
+
+procedure TestGetElementFile(h: Cardinal; expectedFileName: String);
+var
+  _file: Cardinal;
+  len: Integer;
+begin
+  ExpectSuccess(GetElementFile(h, @_file));
+  Expect(_file > 0, 'Handle should be greater than 0');
+  ExpectSuccess(Name(_file, @len));
+  ExpectEqual(grs(len), expectedFileName);
+end;
+
+procedure TestGetLinksTo(h: Cardinal; path: PWideChar; expectedRecordName: String);
+var
+  rec: Cardinal;
+  len: Integer;
+begin
+  ExpectSuccess(GetLinksTo(h, path, @rec));
+  Expect(rec > 0, 'Handle should be greater than 0');
+  ExpectSuccess(Name(rec, @len));
+  ExpectEqual(grs(len), expectedRecordName);
+end;
+
 procedure BuildElementHandlingTests;
 var
   b: WordBool;
   h, skyrim, xt3, armo1, ar1, keywords, keyword, dnam, element, armo2,
-  ar2, ar3, refr, lvli, entries: Cardinal;
-  len, i: Integer;
+  ar2, ar3, refr, lvli, entries, armature: Cardinal;
+  len: Integer;
 begin
   Describe('Element Handling', procedure
     begin
@@ -75,6 +173,7 @@ begin
           ExpectSuccess(GetElement(keywords, '[0]', @keyword));
           ExpectSuccess(GetElement(ar1, 'DNAM', @dnam));
           ExpectSuccess(GetElement(0, 'xtest-2.esp\00012E46', @ar2));
+          ExpectSuccess(GetElement(ar2, 'Armature', @armature));
           ExpectSuccess(GetElement(0, 'xtest-3.esp', @xt3));
           ExpectSuccess(GetElement(xt3, 'ARMO', @armo2));
           ExpectSuccess(GetElement(armo2, '00012E46', @ar3));
@@ -83,19 +182,51 @@ begin
           ExpectSuccess(GetElement(lvli, 'Leveled List Entries', @entries));
         end);
 
+      Describe('HasElement', procedure
+        begin
+          It('Should return true for files that exist', procedure
+            begin
+              TestHasElement(0, 'Skyrim.esm');
+            end);
+
+          It('Should return true for elements that exist', procedure
+            begin
+              TestHasElement(ar1, 'Male world model');
+            end);
+
+          It('Should return true for handles that are assigned', procedure
+            begin
+              TestHasElement(ar1, '');
+            end);
+
+          It('Should return false for files that do not exist', procedure
+            begin
+              TestHasElement(0, 'NonExistingFile.esp', False);
+            end);
+
+          It('Should return false for elements that do not exist', procedure
+            begin
+              TestHasElement(ar1, 'KWDA\[5]', False);
+            end);
+
+          It('Should fail if the handle is not assigned', procedure
+            begin
+              ExpectFailure(HasElement($FFFFFF, '', @b));
+            end);
+        end);
+
       Describe('GetElement', procedure
         begin
           Describe('File resolution by index', procedure
             begin
               It('Should return a handle if the index is in bounds', procedure
                 begin
-                  ExpectSuccess(GetElement(0, '[0]', @h));
-                  Expect(h > 0, 'Handle should be greater than 0');
+                  TestGetElement(0, '[0]');
                 end);
 
               It('Should fail if index is out of bounds', procedure
                 begin
-                  ExpectFailure(GetElement(0, '[-1]', @h));
+                  ExpectFailure(GetElement(0, '[-9]', @h));
                 end);
             end);
 
@@ -103,8 +234,7 @@ begin
             begin
               It('Should return a handle if a matching file is loaded', procedure
                 begin
-                  ExpectSuccess(GetElement(0, 'Skyrim.esm', @h));
-                  Expect(h > 0, 'Handle should be greater than 0');
+                  TestGetElement(0, 'Skyrim.esm');
                 end);
 
               It('Should fail if a matching file is not loaded', procedure
@@ -117,13 +247,12 @@ begin
             begin
               It('Should return a handle if the index is in bounds', procedure
                 begin
-                  ExpectSuccess(GetElement(skyrim, '[0]', @h));
-                  Expect(h > 0, 'Handle should be greater than 0');
+                  TestGetElement(skyrim, '[0]');
                 end);
 
               It('Should fail if index is out of bounds', procedure
                 begin
-                  ExpectFailure(GetElement(skyrim, '[-1]', @h));
+                  ExpectFailure(GetElement(skyrim, '[-9]', @h));
                 end);
             end);
 
@@ -131,8 +260,7 @@ begin
             begin
               It('Should return a handle if the group exists', procedure
                 begin
-                  ExpectSuccess(GetElement(skyrim, 'ARMO', @h));
-                  Expect(h > 0, 'Handle should be greater than 0');
+                  TestGetElement(skyrim, 'ARMO');
                 end);
 
               It('Should fail if the group does not exist', procedure
@@ -145,13 +273,13 @@ begin
             begin
               It('Should return a handle if the index is in bounds', procedure
                 begin
-                  ExpectSuccess(GetElement(armo1, '[0]', @h));
-                  Expect(h > 0, 'Handle should be greater than 0');
+                  TestGetElement(armo1, '[0]');
                 end);
 
               It('Should fail if index is out of bounds', procedure
                 begin
-                  ExpectFailure(GetElement(armo1, '[-1]', @h));
+                  ExpectFailure(GetElement(armo1, '[-9]', @h));
+                  ExpectFailure(GetElement(armo1, '[99999]', @h));
                 end);
             end);
 
@@ -159,8 +287,7 @@ begin
             begin
               It('Should return a handle if the record exists', procedure
                 begin
-                  ExpectSuccess(GetElement(armo1, '00012E46', @h));
-                  Expect(h > 0, 'Handle should be greater than 0');
+                  TestGetElement(armo1, '00012E46');
                 end);
 
               It('Should fail if the record does not exist', procedure
@@ -172,14 +299,14 @@ begin
           Describe('Record element resolution by index', procedure
             begin
               It('Should return a handle if the index is in bounds', procedure
-                 begin
-                   ExpectSuccess(GetElement(ar1, '[0]', @h));
-                   Expect(h > 0, 'Handle should be greater than 0');
-                 end);
+                begin
+                  TestGetElement(ar1, '[0]');
+                end);
 
               It('Should fail if index is out of bounds', procedure
                 begin
-                  ExpectFailure(GetElement(ar1, '[-1]', @h));
+                  ExpectFailure(GetElement(ar1, '[-9]', @h));
+                  ExpectFailure(GetElement(ar1, '[99999]', @h));
                 end);
             end);
 
@@ -187,8 +314,7 @@ begin
             begin
               It('Should return a handle if the element exists', procedure
                 begin
-                  ExpectSuccess(GetElement(ar1, 'FULL', @h));
-                  Expect(h > 0, 'Handle should be greater than 0');
+                  TestGetElement(ar1, 'FULL');
                 end);
 
               It('Should fail if the element does not exist', procedure
@@ -201,8 +327,8 @@ begin
             begin
               It('Should return a handle if the element exists', procedure
                 begin
-                  ExpectSuccess(GetElement(ar1, 'Male world model', @h));
-                  Expect(h > 0, 'Handle should be greater than 0');
+                  TestGetElement(ar1, 'Male world model');
+                  TestGetElement(ar1, 'BODT - Body Template');
                 end);
 
               It('Should fail if the element does not exist', procedure
@@ -211,21 +337,11 @@ begin
                 end);
             end);
 
-          Describe('Record element resolution by path', procedure
-            begin
-              It('Should return a handle if the element exists', procedure
-                begin
-                  ExpectSuccess(GetElement(ar1, 'BODT - Body Template', @h));
-                  Expect(h > 0, 'Handle should be greater than 0');
-                end);
-            end);
-
           Describe('Nested resolution', procedure
             begin
               It('Should resolve nested indexes correctly if the indexes are all in bounds', procedure
                 begin
-                  ExpectSuccess(GetElement(0, '[0]\[1]\[2]\[1]', @h));
-                  Expect(h > 0, 'Handle should be greater than 0');
+                  TestGetElement(0, '[0]\[1]\[2]\[1]');
                 end);
 
               It('Should fail if any index is out of bounds', procedure
@@ -235,8 +351,7 @@ begin
 
               It('Should resolve paths correctly if valid', procedure
                 begin
-                  ExpectSuccess(GetElement(0, 'Skyrim.esm\ARMO\00012E46\KWDA\[0]', @h));
-                  Expect(h > 0, 'Handle should be greater than 0');
+                  TestGetElement(0, 'Skyrim.esm\ARMO\00012E46\KWDA\[0]');
                 end);
 
               It('Should fail if any subpath is invalid', procedure
@@ -246,41 +361,226 @@ begin
             end);
         end);
 
-      Describe('ElementExists', procedure
+      Describe('AddElement', procedure
         begin
-          It('Should return true for files that exist', procedure
+          It('Should create a new file if no handle given', procedure
             begin
-              ExpectSuccess(ElementExists(0, 'Skyrim.esm', @b));
-              Expect(b, 'Result should be true');
+              TestAddElement(0, 'NewFile-1.esp');
             end);
 
-          It('Should return true for elements that exist', procedure
+          It('Should be able to add groups to files', procedure
             begin
-              ExpectSuccess(ElementExists(ar1, 'Male world model', @b));
-              Expect(b, 'Result should be true');
+              TestAddElement(xt3, 'ARMO');
+              TestAddElement(xt3, 'CELL');
             end);
 
-          It('Should return true for handles that are assigned', procedure
+          It('Should be able to add records to groups', procedure
             begin
-              ExpectSuccess(ElementExists(ar1, '', @b));
-              Expect(b, 'Result should be true');
+              TestAddElement(armo2, 'ARMO', False);
+              TestElementCount(armo2, 2);
             end);
 
-          It('Should return false for files that do not exist', procedure
+          It('Should be able to create a new element on a record', procedure
             begin
-              ExpectSuccess(ElementExists(0, 'NonExistingFile.esp', @b));
-              Expect(not b, 'Result should be false');
+              TestAddElement(ar2, 'Destructable');
             end);
 
-          It('Should return false for elements that do not exist', procedure
+          It('Should be able to push a new element onto an array', procedure
             begin
-              ExpectSuccess(ElementExists(ar1, 'KWDA\[5]', @b));
-              Expect(not b, 'Result should be false');
+              TestAddElement(keywords, '.', False);
+              TestElementCount(keywords, 6);
+              TestAddElement(armature, '.', False);
+              TestElementCount(armature, 2);
             end);
 
-          It('Should fail if the handle is not assigned', procedure
+          It('Should be able to insert an element at an index in an array', procedure
             begin
-              ExpectFailure(ElementExists($FFFFFF, '', @b));
+              TestAddElement(armature, '^0', False);
+              TestElementCount(armature, 3);
+            end);
+
+          It('Should fail if interface is not a container', procedure
+            begin
+              ExpectSuccess(GetElement(ar2, 'FULL', @element));
+              ExpectFailure(AddElement(element, '', @h));
+            end);
+        end);
+
+      Describe('RemoveElement', procedure
+        begin
+          It('Should not be able to remove files', procedure
+            begin
+              ExpectFailure(RemoveElement(0, 'NewFile-1.esp'));
+            end);
+
+          It('Should be able to remove groups from files', procedure
+            begin
+              TestRemoveElement(xt3, 'CELL');
+            end);
+
+          It('Should be able to remove records from groups', procedure
+            begin
+              TestRemoveElement(armo2, '[1]');
+            end);
+
+          It('Should be able to remove elements from records', procedure
+            begin
+              TestRemoveElement(ar2, 'Destructable');
+            end);
+
+          It('Should be able to remove an element from an array', procedure
+            begin
+              TestRemoveElement(keywords, '[0]', False);
+              TestElementCount(keywords, 5);
+              TestRemoveElement(armature, '[0]', False);
+              TestElementCount(armature, 2);
+            end);
+
+          It('Should be able to remove an element from the end of an array', procedure
+            begin
+              TestRemoveElement(armature, '[-1]', False);
+              TestElementCount(armature, 1);
+            end);
+
+          It('Should remove the element passed if no path is given', procedure
+            begin
+              // TODO
+            end);
+
+          It('Should fail if a null handle is passed', procedure
+            begin
+              ExpectFailure(RemoveElement(0, ''));
+            end);
+
+          It('Should fail if no element exists at the given path', procedure
+            begin
+              ExpectFailure(RemoveElement(ar3, 'YNAM'));
+            end);
+        end);
+      
+      Describe('GetElements', procedure
+        begin
+          It('Should resolve root children (files)', procedure
+            begin
+              ExpectSuccess(GetElements(0, '', @len));
+              ExpectEqual(len, 9);
+              TestNames(gra(len), 'Skyrim.esm', 'NewFile-1.esp');
+            end);
+
+          It('Should resolve file children (file header and groups)', procedure
+            begin
+              ExpectSuccess(GetElements(skyrim, '', @len));
+              ExpectEqual(len, 118);
+              TestNames(gra(len), 'File Header', 'Reverb Parameters');
+            end);
+
+          It('Should resolve group children (records)', procedure
+            begin
+              ExpectSuccess(GetElements(armo1, '', @len));
+              ExpectEqual(len, 2762);
+              TestEdids(gra(len), 'DremoraBoots', 'SkinNaked');
+            end);
+
+          It('Should resolve record children (subrecords/elements)', procedure
+            begin
+              ExpectSuccess(GetElements(ar1, '', @len));
+              ExpectEqual(len, 13);
+              TestNames(gra(len), 'Record Header', 'DNAM - Armor Rating');
+            end);
+
+          It('Should resolve element children', procedure
+            begin
+              ExpectSuccess(GetElements(keywords, '', @len));
+              ExpectEqual(len, 5);
+              TestNames(gra(len), 'Keyword', 'Keyword');
+            end);
+
+          It('Should resolve paths', procedure
+            begin
+              ExpectSuccess(GetElements(ar2, 'KWDA', @len));
+              ExpectEqual(len, 5);
+            end);
+        end);
+      
+      Describe('GetContainer', procedure
+        begin
+          It('Should return the file containing a group', procedure
+            begin
+              TestGetContainer(armo1, '');
+            end);
+
+          It('Should return the group containing a record', procedure
+            begin
+              TestGetContainer(ar1, '');
+            end);
+
+          It('Should return the record containing an element', procedure
+            begin
+              TestGetContainer(ar1, 'EDID');
+              TestGetContainer(refr, 'Record Header');;
+            end);
+
+          It('Should return the parent element containing a child element', procedure
+            begin
+              TestGetContainer(ar1, 'BODT\Armor Type');
+            end);
+
+          It('Should fail if called on a file', procedure
+            begin
+              ExpectFailure(GetContainer(skyrim, @h));
+            end);
+        end);
+
+      Describe('GetFile', procedure
+        begin
+          It('Should return the input if the input is a file', procedure
+            begin
+              TestGetElementFile(skyrim, 'Skyrim.esm');
+            end);
+
+          It('Should return the file containing a group', procedure
+            begin
+              TestGetElementFile(armo1, 'Skyrim.esm');
+            end);
+
+          It('Should return the file containing a record', procedure
+            begin
+              TestGetElementFile(ar1, 'Skyrim.esm');
+              TestGetElementFile(ar2, 'xtest-2.esp');
+              TestGetElementFile(ar3, 'xtest-3.esp');
+            end);
+
+          It('Should return the file containing an element', procedure
+            begin
+              TestGetElementFile(keywords, 'Skyrim.esm');
+              TestGetElementFile(entries, 'xtest-2.esp');
+            end);
+        end);
+
+      Describe('GetLinksTo', procedure
+        begin
+          It('Should return the referenced record', procedure
+            begin
+              TestGetLinksTo(keyword, '', 'PerkFistsIron');
+              TestGetLinksTo(ar1, 'RNAM', 'Default Race');
+            end);
+
+          It('Should fail if called on a NULL reference', procedure
+            begin
+              ExpectFailure(GetLinksTo(armo2, 'ZNAM', @h));
+            end);
+
+          It('Should fail if path is invalid', procedure
+            begin
+              ExpectFailure(GetLinksTo(keywords, '[99]', @h));
+            end);
+
+          It('Should fail on elements that cannot store a reference', procedure
+            begin
+              ExpectFailure(GetLinksTo(0, '', @h));
+              ExpectFailure(GetLinksTo(skyrim, '', @h));
+              ExpectFailure(GetLinksTo(ar1, '', @h));
+              ExpectFailure(GetLinksTo(dnam, '', @h));
             end);
         end);
 
@@ -288,38 +588,32 @@ begin
         begin
           It('Should return number of files if null handle is passed', procedure
             begin
-              ExpectSuccess(ElementCount(0, @i));
-              ExpectEqual(i, 8, '');
+              TestElementCount(0, 9);
             end);
 
           It('Should return number of elements in a file', procedure
             begin
-              ExpectSuccess(ElementCount(skyrim, @i));
-              ExpectEqual(i, 118, '');
+              TestElementCount(skyrim, 118);
             end);
 
           It('Should return the number of elements in a group', procedure
             begin
-              ExpectSuccess(ElementCount(armo1, @i));
-              ExpectEqual(i, 2762, '');
+              TestElementCount(armo1, 2762);
             end);
 
           It('Should return the number of elements in a record', procedure
             begin
-              ExpectSuccess(ElementCount(ar1, @i));
-              ExpectEqual(i, 13, '');
+              TestElementCount(ar1, 13);
             end);
 
           It('Should return the number of elements in a subrecord', procedure
             begin
-              ExpectSuccess(ElementCount(keywords, @i));
-              ExpectEqual(i, 5, '');
+              TestElementCount(keywords, 5);
             end);
 
           It('Should return 0 if there are no children', procedure
             begin
-              ExpectSuccess(ElementCount(dnam, @i));
-              ExpectEqual(i, 0, '');
+              TestElementCount(dnam, 0);
             end);
         end);
 
@@ -327,30 +621,25 @@ begin
         begin
           It('Should return true for same element', procedure
             begin
-              ExpectSuccess(ElementEquals(skyrim, skyrim, @b));
-              ExpectSuccess(ElementEquals(armo1, armo1, @b));
-              ExpectSuccess(ElementEquals(ar1, ar1, @b));
-              ExpectSuccess(ElementEquals(keywords, keywords, @b));
-              ExpectSuccess(ElementEquals(dnam, dnam, @b));
+              TestElementEquals(skyrim, 0, 'Skyrim.esm');
+              TestElementEquals(armo1, skyrim, 'ARMO');
+              TestElementEquals(ar1, armo1, '00012E46');
+              TestElementEquals(keywords, ar1, 'KWDA');
+              TestElementEquals(dnam, ar1, 'DNAM');
             end);
 
-          It('Should return false for identical but different elements', procedure
+          It('Should return false for different elements holding the same value', procedure
             begin
-              ExpectSuccess(GetElement(ar2, 'DNAM', @h));
-              ExpectSuccess(ElementEquals(dnam, h, @b));
-              Expect(not b, 'Result should be false');
+              TestElementEquals(dnam, ar2, 'DNAM', False);
+              TestElementEquals(keywords, ar2, 'KWDA', False);
             end);
 
           It('Should return false for different elements', procedure
             begin
-              ExpectSuccess(ElementEquals(skyrim, armo1, @b));
-              Expect(not b, 'Result should be false');
-              ExpectSuccess(ElementEquals(armo1, ar1, @b));
-              Expect(not b, 'Result should be false');
-              ExpectSuccess(ElementEquals(ar1, keywords, @b));
-              Expect(not b, 'Result should be false');
-              ExpectSuccess(ElementEquals(keywords, dnam, @b));
-              Expect(not b, 'Result should be false');
+              TestElementEquals(skyrim, armo1, False);
+              TestElementEquals(armo1, ar1, False);
+              TestElementEquals(ar1, keywords, False);
+              TestElementEquals(keywords, dnam, False);
             end);
 
           It('Should return false if null handle passed', procedure
@@ -415,8 +704,8 @@ begin
 
               It('Should return false if Editor ID does not match', procedure
                 begin
-                  TestElementMatches(keywords, '[0]', 'Vampire', false);
-                  TestElementMatches(keywords, '[1]', 'ArMorHeAvY', false);
+                  TestElementMatches(keywords, '[0]', '"Vampire"', false);
+                  TestElementMatches(keywords, '[1]', '"ArMorHeAvY"', false);
                 end);
             end);
 
@@ -474,224 +763,31 @@ begin
             end);
         end);
 
-      Describe('GetElements', procedure
+      Describe('GetArrayItem', procedure
         begin
-          It('Should resolve root children (files)', procedure
-            begin
-              ExpectSuccess(GetElements(0, '', @len));
-              ExpectEqual(len, 8);
-              TestNames(gra(len), 'Skyrim.esm', 'xtest-5.esp');
-            end);
-
-          It('Should resolve file children (file header and groups)', procedure
-            begin
-              ExpectSuccess(GetElements(skyrim, '', @len));
-              ExpectEqual(len, 118);
-              TestNames(gra(len), 'File Header', 'Reverb Parameters');
-            end);
-
-          It('Should resolve group children (records)', procedure
-            begin
-              ExpectSuccess(GetElements(armo1, '', @len));
-              ExpectEqual(len, 2762);
-              TestEdids(gra(len), 'DremoraBoots', 'SkinNaked');
-            end);
-
-          It('Should resolve record children (subrecords/elements)', procedure
-            begin
-              ExpectSuccess(GetElements(ar1, '', @len));
-              ExpectEqual(len, 13);
-              TestNames(gra(len), 'Record Header', 'DNAM - Armor Rating');
-            end);
-
-          It('Should resolve element children', procedure
-            begin
-              ExpectSuccess(GetElements(keywords, '', @len));
-              ExpectEqual(len, 5);
-              TestNames(gra(len), 'Keyword', 'Keyword');
-            end);
-
-          It('Should resolve paths', procedure
-            begin
-              ExpectSuccess(GetElements(ar2, 'KWDA', @len));
-              ExpectEqual(len, 5);
-            end);
+          // TODO
         end);
 
-      Describe('GetElementFile', procedure
+      Describe('AddArrayItem', procedure
         begin
-          It('Should return the input if the input is a file', procedure
-            begin
-              ExpectSuccess(GetElementFile(skyrim, @h));
-              Expect(h > 0, 'Handle should be greater than 0')
-            end);
-
-          It('Should return the file containing a group', procedure
-            begin
-              ExpectSuccess(GetElementFile(armo1, @h));
-              Expect(h > 0, 'Handle should be greater than 0');
-            end);
-
-          It('Should return the file containing a record', procedure
-            begin
-              ExpectSuccess(GetElementFile(ar1, @h));
-              Expect(h > 0, 'Handle should be greater than 0');
-            end);
-
-          It('Should return the file containing an element', procedure
-            begin
-              GetElement(ar1, 'DATA\Value', @element);
-              ExpectSuccess(GetElementFile(element, @h));
-              Expect(h > 0, 'Handle should be greater than 0');
-            end);
+          // TODO
         end);
 
-      Describe('GetContainer', procedure
+      Describe('RemoveArrayItem', procedure
         begin
-          It('Should return the file containing a group', procedure
-            begin
-              ExpectSuccess(GetContainer(armo1, @h));
-              Expect(h > 0, 'Handle should be greater than 0');
-            end);
-
-          It('Should return the group containing a record', procedure
-            begin
-              ExpectSuccess(GetContainer(ar1, @h));
-              Expect(h > 0, 'Handle should be greater than 0');
-            end);
-
-          It('Should return the record containing an element', procedure
-            begin
-              GetElement(ar1, 'EDID', @element);
-              ExpectSuccess(GetContainer(element, @h));
-              Expect(h > 0, 'Handle should be greater than 0');
-              GetElement(refr, 'Record Header', @element);
-              ExpectSuccess(GetContainer(element, @h));
-              Expect(h > 0, 'Handle should be greater than 0');
-            end);
-
-          It('Should return the parent element containing a child element', procedure
-            begin
-              GetElement(ar1, 'BODT\Armor Type', @element);
-              ExpectSuccess(GetContainer(element, @h));
-              Expect(h > 0, 'Handle should be greater than 0');
-            end);
-
-          It('Should fail if called on a file', procedure
-            begin
-              ExpectFailure(GetContainer(skyrim, @h));
-            end);
+          // TODO
         end);
 
-      Describe('GetLinksTo', procedure
+      Describe('CopyElement', procedure
         begin
-          It('Should return the referenced record', procedure
-            begin
-              ExpectSuccess(GetLinksTo(keyword, '', @h));
-              Expect(h > 0, 'Handle should be greater than 0');
-              ExpectSuccess(GetLinksTo(ar1, 'RNAM', @h));
-              Expect(h > 0, 'Handle should be greater than 0');
-            end);
-
-          It('Should fail if called on a NULL reference', procedure
-            begin
-              ExpectFailure(GetLinksTo(armo2, 'ZNAM', @h));
-            end);
-
-          It('Should fail if path is invalid', procedure
-            begin
-              ExpectFailure(GetLinksTo(keywords, '[7]', @h));
-            end);
-
-          It('Should fail if called on an element that does not store a reference', procedure
-            begin
-              ExpectFailure(GetLinksTo(0, '', @h));
-              ExpectFailure(GetLinksTo(skyrim, '', @h));
-              ExpectFailure(GetLinksTo(ar1, '', @h));
-              ExpectFailure(GetLinksTo(dnam, '', @h));
-            end);
+          // TODO
         end);
-
-      Describe('AddElement', procedure
+        
+      Describe('MoveElement', procedure
         begin
-          It('Should create a new file if no handle given', procedure
-            begin
-              ExpectSuccess(AddElement(0, 'NewFile-1.esp', @h));
-              Expect(h > 0, 'Handle should be greater than 0');
-            end);
-
-          It('Should be able to add groups to files', procedure
-            begin
-              ExpectSuccess(AddElement(xt3, 'ARMO', @h));
-              Expect(h > 0, 'Handle should be greater than 0');
-            end);
-
-          It('Should be able to add records to groups', procedure
-            begin
-              ExpectSuccess(AddElement(armo2, 'ARMO', @h));
-              Expect(h > 0, 'Handle should be greater than 0');
-            end);
-
-          It('Should be able to create a new element on a record', procedure
-            begin
-              ExpectSuccess(AddElement(ar2, 'Destructable', @h));
-              Expect(h > 0, 'Handle should be greater than 0');
-            end);
-
-          It('Should be able to push a new element onto an array', procedure
-            begin
-              ExpectSuccess(AddElement(keywords, '.', @h));
-              Expect(h > 0, 'Handle should be greater than 0');
-            end);
-
-          It('Should be able to assign an element at an index in an array', procedure
-            begin
-              ExpectSuccess(AddElement(keywords, '[1]', @h));
-              Expect(h > 0, 'Handle should be greater than 0');
-            end);
-
-          It('Should fail if parent element is not a container', procedure
-            begin
-              GetElement(ar2, 'FULL', @element);
-              ExpectFailure(AddElement(element, '', @h));
-            end);
+          // TODO
         end);
-
-      Describe('RemoveElement', procedure
-        begin
-          It('Should remove the element at the given path', procedure
-            begin
-              ExpectSuccess(RemoveElement(ar3, 'Female world model'));
-              ExpectSuccess(ElementExists(ar3, 'Female world model', @b));
-              Expect(not b, 'The element should no longer be present');
-            end);
-
-          It('Should remove the element at the given indexed path', procedure
-            begin
-              ExpectSuccess(RemoveElement(ar3, 'KWDA\[4]'));
-              ExpectSuccess(ElementExists(ar3, 'KWDA\[4]', @b));
-              Expect(not b, 'The element should no longer be present');
-            end);
-
-          It('Should remove the element passed if no path is given', procedure
-            begin
-              ExpectSuccess(GetElement(ar3, 'ZNAM', @element));
-              ExpectSuccess(RemoveElement(element, ''));
-              ExpectSuccess(ElementExists(ar3, 'ZNAM', @b));
-              Expect(not b, 'The element should no longer be present');
-            end);
-
-          It('Should fail if a null handle is passed', procedure
-            begin
-              ExpectFailure(RemoveElement(0, ''));
-            end);
-
-          It('Should fail if no element exists at the given path', procedure
-            begin
-              ExpectFailure(RemoveElement(ar3, 'YNAM'));
-            end);
-        end);
-
+        
       Describe('GetExpectedSignatures', procedure
         begin
           It('Should list allowed signatures', procedure
