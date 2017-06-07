@@ -31,6 +31,7 @@ uses
   function GetPath(element: IwbElement; full: WordBool = True; curPath: String = ''): String;
   function GetPathName(element: IwbElement): String;
   function NativeName(e: IwbElement; quoteFull: Boolean = False): String;
+  procedure SetElementValue(element: IwbElement; value: String);
   function NativeSignatureFromName(name: String): String;
   function NativeNameFromSignature(sig: String): String;
   procedure BuildSignatureNameMap;
@@ -48,7 +49,7 @@ uses
   // xedit modules
   wbImplementation,
   // xelib modules
-  xeElements, xeMessages, xeGroups, xeMeta;
+  xeMeta, xeMessages, xeElements, xeGroups, xeRecordValues;
 
 function FormString(rec: IwbMainRecord): String;
 begin
@@ -266,14 +267,27 @@ begin
   end;
 end;
 
+procedure SetElementValue(element: IwbElement; value: String);
+var
+  formID: Cardinal;
+begin
+  if Supports(element, IwbFormID) then begin
+    if ParseFormID(value, formID) then
+      element.NativeValue := formID
+    else
+      element.NativeValue := EditorIDToFormID(element._File, value);
+  end
+  else
+    element.EditValue := value;
+end;
+
 function SetValue(_id: Cardinal; path, value: PWideChar): WordBool; cdecl;
 var
   element: IwbElement;
 begin
   Result := False;
   try
-    element := NativeGetElementEx(_id, path);
-    element.EditValue := string(value);
+    SetElementValue(NativeGetElementEx(_id, path), string(value));
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
