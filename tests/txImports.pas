@@ -75,7 +75,7 @@ type
   function AddArrayItem(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
   function RemoveArrayItem(_id: Cardinal; path, subpath, value: PWideChar): WordBool; cdecl;
   function CopyElement(_id, _id2: Cardinal; aAsNew, aDeepCopy: WordBool; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function MoveElementToIndex(_id: Cardinal; index: Integer): WordBool; cdecl; external 'XEditLib.dll';
+  function MoveElement(_id: Cardinal; index: Integer): WordBool; cdecl; external 'XEditLib.dll';
   function GetExpectedSignatures(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function SortKey(_id: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function ElementType(_id: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';

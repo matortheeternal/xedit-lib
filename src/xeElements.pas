@@ -32,7 +32,7 @@ type
   function AddArrayItem(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
   function RemoveArrayItem(_id: Cardinal; path, subpath, value: PWideChar): WordBool; cdecl;
   function CopyElement(_id, _id2: Cardinal; aAsNew, aDeepCopy: WordBool; _res: PCardinal): WordBool; cdecl;
-  function MoveElementToIndex(_id: Cardinal; index: Integer): WordBool; cdecl;
+  function MoveElement(_id: Cardinal; index: Integer): WordBool; cdecl;
   function GetExpectedSignatures(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function SortKey(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function ElementType(_id: Cardinal; enum: PByte): WordBool; cdecl;
