@@ -2,10 +2,16 @@ unit xeRecordValues;
 
 interface
 
+uses
+  wbInterface;
+
   function EditorID(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function FullName(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function GetFormID(_id: Cardinal; formID: PCardinal): WordBool; cdecl;
   function SetFormID(_id: Cardinal; formID: Cardinal): WordBool; cdecl;
+
+  // native functions
+  function EditorIDToFormID(_file: IwbFile; editorID: String): Cardinal;
 
 implementation
 
@@ -14,9 +20,19 @@ uses
   // mte modules
   mteHelpers,
   // xedit modules
-  wbInterface, wbImplementation,
+  wbImplementation,
   // xelib modules
   xeMessages, xeMeta;
+
+function EditorIDToFormID(_file: IwbFile; editorID: String): Cardinal;
+var
+  rec: IwbMainRecord;
+begin
+  rec := _file.RecordByEditorID[editorID];
+  if not Assigned(rec) then
+    raise Exception.Create('Failed to find record with Editor ID: ' + editorID + ' in file ' + _file.FileName);
+  Result := rec.LoadOrderFormID;
+end;
 
 function EditorID(_id: Cardinal; len: PInteger): WordBool; cdecl;
 var
