@@ -80,6 +80,13 @@ begin
     index := StrToInt(Copy(key, 2, Length(key) - 2));
 end;
 
+function CheckIndex(maxIndex: Integer; var index: Integer): Boolean;
+begin
+  if index = -1 then
+    index := maxIndex;
+  Result := (index > -1) and (index <= maxIndex);
+end;
+
 function IsHexStr(key: String): Boolean;
 var
   i: Integer;
@@ -119,14 +126,16 @@ end;
 
 function ResolveByIndex(container: IwbContainerElementRef; index: Integer; nextPath: String): IInterface;
 begin
+  Result := nil;
+
   // resolve element from container if container present
   // else resolve file at index
   if Assigned(container) then begin
-    if index < container.ElementCount then
+    if CheckIndex(container.ElementCount - 1, index) then
       Result := container.Elements[index];
   end
   else begin
-    if index <= High(xFiles) then
+    if CheckIndex(High(xFiles), index) then
       Result := NativeFileByIndex(index);
   end;
 
@@ -413,11 +422,11 @@ begin
   // resolve element from container if container present
   // else resolve file at index
   if Assigned(container) then begin
-    if index < container.ElementCount then
+    if CheckIndex(container.ElementCount - 1, index) then
       Result := container.Elements[index];
   end
   else begin
-    if index <= High(xFiles) then
+    if CheckIndex(High(xFiles), index) then
       Result := NativeFileByIndex(index);
   end;
 
