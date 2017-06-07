@@ -61,11 +61,11 @@ exports
   SetAuthor, GetDescription, SetDescription, OverrideRecordCount, GetIsESM,
   SetIsESM,
   // ELEMENT HANDLING METHODS
-  GetElement, GetElements, GetElementFile, GetContainer, AddElement,
-  RemoveElement, RemoveElementOrParent, ElementExists, ElementCount, GetLinksTo,
+  HasElement, GetElement, AddElement, RemoveElement, RemoveElementOrParent,
+  GetElements, GetContainer,  GetElementFile, GetLinksTo, ElementCount,
   ElementEquals, ElementMatches, HasArrayItem, GetArrayItem, AddArrayItem,
-  RemoveArrayItem, CopyElement, MoveElementToIndex, GetExpectedSignatures,
-  SortKey, ElementType, DefType, SmashType,
+  RemoveArrayItem, CopyElement, MoveElement, GetExpectedSignatures, SortKey,
+  ElementType, DefType, SmashType,
   // ERROR CHECKING METHODS
   CheckForErrors, GetErrorThreadDone, GetErrors, GetErrorString,
   // SERIALIZATION METHODS
