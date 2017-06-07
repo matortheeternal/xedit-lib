@@ -638,6 +638,8 @@ begin
   Result := False;
   try
     e := NativeGetElement(_id, key);
+    if Supports(e, IwbFile) then
+      raise Exception.Create('Cannot remove files.');
     if not Supports(e, IwbElement, element) then
       raise Exception.Create('Interface is not an element.');
     element.Remove;
