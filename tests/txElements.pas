@@ -101,6 +101,14 @@ begin
   ExpectEqual(b, expectedValue);
 end;
 
+procedure TestGetArrayItem(h: Cardinal; path, subpath, value: PWideChar);
+var
+  item: Cardinal;
+begin
+  ExpectSuccess(GetArrayItem(h, path, subpath, value, @item));
+  Expect(item > 0, 'Handle should be greater than 0');
+end;
+
 procedure TestNames(a: CardinalArray; firstName, secondName: String);
 var
   len: Integer;
@@ -767,7 +775,42 @@ begin
 
       Describe('GetArrayItem', procedure
         begin
-          // TODO
+          Describe('Value arrays', procedure
+            begin
+              It('Should succeed if array item is present', procedure
+                begin
+                  TestGetArrayItem(ar2, 'KWDA', '', 'PerkFistsIron');
+                  TestGetArrayItem(keywords, '', '', 'ArmorGauntlets');
+                  TestGetArrayItem(keywords, '', '', '0006BBE3');
+                  TestGetArrayItem(ar2, 'Armature', '', 'IronGlovesAA');
+                end);
+
+              It('Should fail if array item is not present', procedure
+                begin
+                  ExpectFailure(GetArrayItem(keywords, '', '', 'PerkFistsSteel', @h));
+                  ExpectFailure(GetArrayItem(keywords, '', '', 'ArmorHelmet', @h));
+                  ExpectFailure(GetArrayItem(keywords, '', '', '0006BBD4', @h));
+                  ExpectFailure(GetArrayItem(ar2, 'Armature', '', 'IronHelmetAA', @h));
+                end);
+            end);
+
+          Describe('Struct arrays', procedure
+            begin
+              It('Should succeed if array item is present', procedure
+                begin
+                  TestGetArrayItem(entries, '', 'LVLO\Reference', 'ArmorIronGauntlets');
+                  TestGetArrayItem(entries, '', 'LVLO\Reference', '"Iron Armor"');
+                  TestGetArrayItem(entries, '', 'LVLO\Reference', '00012E4B');
+                  TestGetArrayItem(entries, '', 'LVLO\Reference', '"Iron Helmet"');
+                end);
+
+              It('Should fail if array item is not present', procedure
+                begin
+                  ExpectFailure(GetArrayItem(entries, '', 'LVLO\Reference', 'ArmorSteelHelmetA', @h));
+                  ExpectFailure(GetArrayItem(entries, '', 'LVLO\Reference', '"Steel Helmet"', @h));
+                  ExpectFailure(GetArrayItem(entries, '', 'LVLO\Reference', '00131954', @h));
+                end);
+            end);
         end);
 
       Describe('AddArrayItem', procedure
