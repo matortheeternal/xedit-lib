@@ -4232,6 +4232,7 @@ begin
         IntToStr(Length(cntElements)-1));
     Result := nil
   end else begin
+    if aIndex = -1 then aIndex := Length(cntElements) - 1;
     if Length(cntElementsMap) = Length(cntElements) then
       aIndex := cntElementsMap[aIndex];
     Result := IInterface(cntElements[aIndex]) as IwbElement;
