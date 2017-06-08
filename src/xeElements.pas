@@ -51,6 +51,7 @@ type
   function NativeAddElement(_id: Cardinal; key: string): IInterface;
   function IsSorted(e: IwbElement): Boolean;
   function IsArray(element: IwbElement): Boolean;
+  function IsFormID(element: IwbElement): Boolean;
   function GetFlagsDef(element: IwbElement; var flagsDef: IwbFlagsDef): Boolean;
   function GetDefType(element: IwbElement): TwbDefType;
   function GetSmashType(element: IwbElement): TSmashType;
@@ -1062,6 +1063,14 @@ end;
 function IsArray(element: IwbElement): Boolean;
 begin
   Result := GetDefType(element) in [dtSubRecordArray, dtArray];
+end;
+
+function IsFormID(element: IwbElement): Boolean;
+var
+  intDef: IwbIntegerDef;
+begin
+  Result := Supports(element.ValueDef, IwbIntegerDef, intDef)
+    and Supports(intDef.Formater[element], IwbFormID);
 end;
 
 function GetFlagsDef(element: IwbElement; var flagsDef: IwbFlagsDef): Boolean;
