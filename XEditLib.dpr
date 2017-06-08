@@ -2,6 +2,7 @@ library XEditLib;
 
 uses
   ShareMem,
+  xeTypes in 'src\xeTypes.pas',
   xeMessages in 'src\xeMessages.pas',
   xeConfiguration in 'src\xeConfiguration.pas',
   xeMeta in 'src\xeMeta.pas',

@@ -3,7 +3,8 @@ unit xeElementValues;
 interface
 
 uses
-  ArgoTypes, wbInterface;
+  wbInterface,
+  xeTypes;
 
   function Name(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function LongName(_id: Cardinal; len: PInteger): WordBool; cdecl;

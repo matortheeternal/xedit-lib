@@ -56,6 +56,7 @@
 			<DelphiCompile Include="XEditLib.dpr">
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
+			<DCCReference Include="src\xeTypes.pas"/>
 			<DCCReference Include="src\xeMessages.pas"/>
 			<DCCReference Include="src\xeConfiguration.pas"/>
 			<DCCReference Include="src\xeMeta.pas"/>
