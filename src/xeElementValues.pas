@@ -32,6 +32,7 @@ uses
   function GetPath(element: IwbElement; full: WordBool = True; curPath: String = ''): String;
   function GetPathName(element: IwbElement): String;
   function NativeName(e: IwbElement; quoteFull: Boolean = False): String;
+  function ParseFormIDValue(value: String; var formID: Int64): Boolean;
   procedure SetElementValue(element: IwbElement; value: String);
   function NativeSignatureFromName(name: String): String;
   function NativeNameFromSignature(sig: String): String;
@@ -266,6 +267,37 @@ begin
   except
     on x: Exception do ExceptionHandler(x);
   end;
+end;
+
+function ParseFormIDValue(value: String; var formID: Int64): Boolean;
+var
+  n, len, open: Integer;
+begin
+  Result := True;
+  open := 0;
+  n := 1;
+  len := Length(value);
+  // attempt to parse formID via a string in format [SIGN:12345678] or [12345678]
+  // stops parsing early if valid string cannot fit in remaining buffer
+  while n <= len do begin
+    if (open = 0) and (len - n < 9) then
+      break;
+    case value[n] of
+      '[': open := n;
+      ':':
+        if n - open = 5 then
+          open := n
+        else
+          open := 0;
+      ']':
+        if (open <> 0) and (n - open = 9)
+        and TryStrToInt64('$' + Copy(value, open + 1, 8), formID) then
+          exit;
+    end;
+    Inc(n);
+  end;
+  // attempts to convert entire key to integer
+  Result := TryStrToInt64('$' + value, formID);
 end;
 
 procedure SetElementValue(element: IwbElement; value: String);
