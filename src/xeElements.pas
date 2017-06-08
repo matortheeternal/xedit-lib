@@ -846,12 +846,13 @@ var
   innerContainer: IwbContainerElementRef;
 begin
   Result := container.Assign(High(Integer), nil, False);
+  if value = '' then exit;
   if path = '' then
-    Result.EditValue := value
+    SetElementValue(Result, value)
   else begin
     if not Supports(Result, IwbContainerElementRef, innerContainer) then
       raise Exception.Create('Interface must be a container to resolve subpaths.');
-    innerContainer.ElementEditValues[path] := value;
+    SetElementValue(innerContainer.ElementByPath[path], value);
   end;
 end;
 
