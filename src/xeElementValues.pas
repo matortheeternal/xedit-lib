@@ -302,10 +302,13 @@ end;
 
 procedure SetElementValue(element: IwbElement; value: String);
 var
-  formID: Cardinal;
+  intDef: IwbIntegerDef;
+  formID: Int64;
 begin
-  if Supports(element, IwbFormID) then begin
-    if ParseFormID(value, formID) then
+  if IsFormID(element) then begin
+    if value = '' then
+      element.NativeValue := 0
+    else if ParseFormIDValue(value, formID) then
       element.NativeValue := formID
     else
       element.NativeValue := EditorIDToFormID(element._File, value);
@@ -315,8 +318,6 @@ begin
 end;
 
 function SetValue(_id: Cardinal; path, value: PWideChar): WordBool; cdecl;
-var
-  element: IwbElement;
 begin
   Result := False;
   try
