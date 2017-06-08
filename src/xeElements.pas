@@ -742,17 +742,19 @@ end;
 
 function NativeValueMatches(element: IwbElement; value: string): WordBool;
 var
-  formID: Cardinal;
+  formID: Int64;
   rec: IwbMainRecord;
   fullName: String;
 begin
-  if ParseFormID(value, formID) then
-    Result := element.NativeValue = formID
-  else if Supports(element.LinksTo, IwbMainRecord, rec) then begin
-    if ParseFullName(value, fullName) then
-      Result := rec.FullName = fullName
-    else
-      Result := rec.EditorID = value;
+  if IsFormID(element) then begin
+    if ParseFormIDValue(value, formID) then
+      Result := element.NativeValue = formID
+    else if Supports(element.LinksTo, IwbMainRecord, rec) then begin
+      if ParseFullName(value, fullName) then
+        Result := rec.FullName = fullName
+      else
+        Result := rec.EditorID = value;
+    end
   end
   // TODO: Support native value comparison for integers and floats?
   else
