@@ -680,8 +680,11 @@ begin
 
               It('Should work on float fields', procedure
                 begin
-                  TestElementMatches(ar2, 'DATA\Weight', '5.000000', true);
-                  TestElementMatches(ar2, 'DATA\Weight', '5.00000', false);
+                  TestElementMatches(ar2, 'DATA\Weight', '5.0', true);
+                  TestElementMatches(ar2, 'DATA\Weight', '5.01', false);
+                  TestElementMatches(ar2, 'DATA\Weight', '5', true);
+                  TestElementMatches(ar2, 'DNAM', '10.0', true);
+                  TestElementMatches(ar2, 'DNAM', '10', true);
                 end);
             end);
 
