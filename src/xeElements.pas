@@ -740,11 +740,12 @@ begin
   end;
 end;
 
-function NativeValueMatches(element: IwbElement; value: string): WordBool;
+function ElementValueMatches(element: IwbElement; value: string): WordBool;
 var
   formID: Int64;
   rec: IwbMainRecord;
-  fullName: String;
+  fullName, v: String;
+  e1, e2: Extended;
 begin
   if IsFormID(element) then begin
     if ParseFormIDValue(value, formID) then
@@ -756,9 +757,10 @@ begin
         Result := rec.EditorID = value;
     end
   end
-  // TODO: Support native value comparison for integers and floats?
-  else
-    Result := element.EditValue = value;
+  else begin
+    v := element.EditValue;
+    Result := (TryStrToFloat(value, e1) and TryStrToFloat(v, e2) and (e1 = e2)) or (v = value);
+  end;
 end;
 
 function NativeElementMatches(element: IwbElement; path, value: string): WordBool;
@@ -766,11 +768,11 @@ var
   container: IwbContainerElementRef;
 begin
   if path = '' then
-    Result := NativeValueMatches(element, value)
+    Result := ElementValueMatches(element, value)
   else begin
     if not Supports(element, IwbContainerElementRef, container) then
       raise Exception.Create('Interface must be a container to resolve subpaths.');
-    Result := NativeValueMatches(container.ElementByPath[path], value);
+    Result := ElementValueMatches(container.ElementByPath[path], value);
   end;
 end;
 
