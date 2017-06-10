@@ -277,6 +277,13 @@ begin
     Result := ResolveFromContainer(container, path);
 end;
 
+function ResolveElementEx(e: IInterface; path: String): IInterface;
+begin
+  Result := ResolveElement(e, path);
+  if not Assigned(Result) then
+    raise Exception.Create('Failed to resolve element at path: ' + path);
+end;
+
 function NativeGetElement(_id: Cardinal; key: PWideChar): IInterface;
 begin
   if string(key) = '' then
@@ -848,16 +855,15 @@ end;
 
 function NativeAddArrayItem(container: IwbContainerElementRef; path, value: String): IwbElement;
 var
-  innerContainer: IwbContainerElementRef;
+  e: IInterface;
 begin
   Result := container.Assign(High(Integer), nil, False);
   if value = '' then exit;
   if path = '' then
     SetElementValue(Result, value)
   else begin
-    if not Supports(Result, IwbContainerElementRef, innerContainer) then
-      raise Exception.Create('Interface must be a container to resolve subpaths.');
-    SetElementValue(innerContainer.ElementByPath[path], value);
+    e := ResolveElementEx(Result as IInterface, path);
+    SetElementValue(e as IwbElement, value);
   end;
 end;
 
