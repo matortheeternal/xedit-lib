@@ -569,7 +569,10 @@ begin
     if not Supports(e, IwbElement, element) then
       raise Exception.Create('Interface is not an element.');
     element.Remove;
-    Result := True;
+    if key = '' then
+      Result := Release(_id)
+    else
+      Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -599,7 +602,7 @@ begin
       container := element.Container;
     end;
     container.RemoveElement(container.IndexOf(element));
-    Result := True;
+    Result := Release(_id);
   except
     on x: Exception do ExceptionHandler(x);
   end;
