@@ -73,6 +73,8 @@ var
   wbResolveAlias           : Boolean  = True;
   wbActorTemplateHide      : Boolean  = True;
   wbClampFormID            : Boolean  = True;
+  wbAllowSlowSearching     : Boolean  = False;
+  wbSortOnDemand           : Boolean  = True;
   wbDoNotBuildRefsFor      : TStringList;
   wbCopyIsRunning          : Integer  = 0;
 
@@ -757,6 +759,9 @@ type
   TwbFileStates = set of TwbFileState;
   TwbPluginExtensions = TDynStrings;
 
+  TDynMainRecords = array of IwbMainRecord;
+  TConditionFunc = reference to function(rec: IwbMainRecord): Boolean;
+
   IwbFile = interface(IwbContainer)
     ['{38AA15A6-F652-45C7-B875-9CB502E5DA92}']
     function GetFileName: string;
@@ -765,6 +770,7 @@ type
     function GetMasterCount: Integer;
     function GetRecordByFormID(aFormID: Cardinal; aAllowInjected: Boolean): IwbMainRecord;
     function GetRecordByEditorID(const aEditorID: string): IwbMainRecord;
+    function GetRecordByName(const aName: string): IwbMainRecord;
     function GetLoadOrder: Integer;
     procedure ForceLoadOrder(aValue: Integer);
     function GetGroupBySignature(const aSignature: TwbSignature): IwbGroupRecord;
@@ -802,6 +808,14 @@ type
     function GetHasNoFormID: Boolean;
     procedure SetHasNoFormID(Value: Boolean);
 
+    procedure RecordsBySignature(var aList: TDynMainRecords; aSignature: String; var len: Integer; aCondition: TConditionFunc = nil);
+
+    procedure SortEditorIDs(aSignature: String);
+    function EditorIDSorted(aSignature: String): Boolean;
+
+    procedure SortNames(aSignature: String);
+    function NamesSorted(aSignature: String): Boolean;
+
     property FileName: string
       read GetFileName;
     property UnsavedSince: TDateTime
@@ -817,6 +831,8 @@ type
       read GetRecordByFormID;
     property RecordByEditorID[const aEditorID: string]: IwbMainRecord
       read GetRecordByEditorID;
+    property RecordByName[const aName: string]: IwbMainRecord
+      read GetRecordByName;
      property GroupBySignature[const aSignature: TwbSignature]: IwbGroupRecord
       read GetGroupBySignature;
 
@@ -933,8 +949,6 @@ type
   TwbGridCell = record
     x, y: Integer;
   end;
-
-  TDynMainRecords = array of IwbMainRecord;
 
   IwbMainRecord = interface(IwbRecord)
     ['{F06FD5E2-621D-4422-BA00-CB3CA72B3691}']
@@ -1162,6 +1176,7 @@ type
     function FindChildGroup(aType: Integer; aMainRecord: IwbMainRecord): IwbGroupRecord;
 
     function GetMainRecordByEditorID(const aEditorID: string): IwbMainRecord;
+    function GetMainRecordByName(const aName: string): IwbMainRecord;
     function GetMainRecordByFormID(const aFormID: Cardinal): IwbMainRecord;
 
     procedure AddElement(const aElement: IwbElement);
@@ -1177,6 +1192,8 @@ type
 
     property MainRecordByEditorID[const aEditorID: string]: IwbMainRecord
       read GetMainRecordByEditorID;
+    property MainRecordByName[const aName: string]: IwbMainRecord
+      read GetMainRecordByName;
     property MainRecordByFormID[const aFormID: Cardinal]: IwbMainRecord
       read GetMainRecordByFormID;
   end;
