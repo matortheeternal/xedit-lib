@@ -351,7 +351,7 @@ begin
       if NativeFileHasMaster(xFiles[i], _file) then
         raise Exception.Create(Format('Cannot unload plugin %s, it is required by %s.', [_file.FileName, xFiles[i].FileName]));
     ForceClose(_file);
-    Result := True;
+    Result := Release(_id);
   except
     on x: Exception do ExceptionHandler(x);
   end;
