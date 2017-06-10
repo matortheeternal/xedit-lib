@@ -302,7 +302,6 @@ end;
 
 procedure SetElementValue(element: IwbElement; value: String);
 var
-  intDef: IwbIntegerDef;
   formID: Int64;
 begin
   if IsFormID(element) then begin

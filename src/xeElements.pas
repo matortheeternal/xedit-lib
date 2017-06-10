@@ -747,6 +747,7 @@ var
   fullName, v: String;
   e1, e2: Extended;
 begin
+  Result := False;
   if IsFormID(element) then begin
     if ParseFormIDValue(value, formID) then
       Result := element.NativeValue = formID
