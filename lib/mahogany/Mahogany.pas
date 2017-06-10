@@ -50,6 +50,7 @@ type
 
     constructor Create(context: TTest; exception: Exception);
     procedure MarkContextFailed;
+    function ToString: String;
   end;
 
   // PUBLIC API
@@ -219,8 +220,12 @@ end;
 procedure ReportResults(messageProc: TMessageProc);
 const
   ReportMessage = '%d specs, %d failures';
+var
+  i: Integer;
 begin
   messageProc(Format(ReportMessage, [GetSpecsCount, Failures.Count]));
+  for i := 0 to Pred(Failures.Count) do
+    messageProc('  ' + TFailure(Failures[i]).ToString);
 end;
 
 
@@ -455,19 +460,33 @@ var
   currentContext: TTest;
   i: Integer;
 begin
-  // prepare to loop 
+  // prepare to loop
   currentContext := self.context;
   i := 1;
 
   // loop from the failure's context up the stack
   while Assigned(currentContext) do begin
     currentContext.passed := false;
-    // recurse until we've gone up the maximum test depth 
+    // recurse until we've gone up the maximum test depth
     // this saves us from an infinite loop if there is a recursive context
-    currentContext := currentContext.context;  
+    currentContext := currentContext.context;
     if (i = maxTestDepth) then 
       raise Exception.Create(MaxTestDepthError);
     Inc(i);
+  end;
+end;
+
+function TFailure.ToString: String;
+var
+  currentContext: TTest;
+begin
+  Result := exception.Message;
+  if Result = '' then
+    Result := 'FAILED';
+  currentContext := self.context;
+  while Assigned(currentContext) do begin
+    Result := currentContext.description + ' > ' + Result;
+    currentContext := currentContext.context;
   end;
 end;
 
