@@ -46,7 +46,7 @@ type
   TFailure = class(TObject)
   public
     context: TTest;
-    exception: Exception;
+    message: String;
 
     constructor Create(context: TTest; exception: Exception);
     procedure MarkContextFailed;
@@ -287,15 +287,15 @@ constructor TSuite.Create(description: String; callback: TProc);
 begin
   // default to a to-level suite
   context := nil;
-  depth := 0;  
+  depth := 0;
 
   // suites can be nested inside of each other
   if Assigned(ActiveSuite) then begin
     context := TTest(ActiveSuite);
     depth := ActiveSuite.depth + 1;
     ActiveSuite.AddChild(TTest(self));
-  end; 
-  
+  end;
+
   // set input properties
   self.description := description;
   children := TList.Create;
@@ -410,10 +410,10 @@ end;
 
 { TSpec }
 constructor TSpec.Create(description: String; callback: TProc; failAll: Boolean);
-begin                
+begin
   // enumerate the spec in the active suite's children
   context := ActiveSuite as TTest;
-  depth := ActiveSuite.depth + 1;  
+  depth := ActiveSuite.depth + 1;
   ActiveSuite.AddChild(self as TTest);
   // set input properties
   self.description := description;
@@ -447,7 +447,7 @@ begin
     LogMessage(spacing + 'FAILED: ' + exception.message);
   end;
   self.context := context;
-  self.exception := exception; 
+  self.message := exception.message;
   MarkContextFailed;
   Failures.Add(self);
 end;
@@ -470,7 +470,7 @@ begin
     // recurse until we've gone up the maximum test depth
     // this saves us from an infinite loop if there is a recursive context
     currentContext := currentContext.context;
-    if (i = maxTestDepth) then 
+    if (i = maxTestDepth) then
       raise Exception.Create(MaxTestDepthError);
     Inc(i);
   end;
@@ -480,7 +480,7 @@ function TFailure.ToString: String;
 var
   currentContext: TTest;
 begin
-  Result := exception.Message;
+  Result := self.message;
   if Result = '' then
     Result := 'FAILED';
   currentContext := self.context;
