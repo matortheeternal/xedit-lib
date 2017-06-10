@@ -3,7 +3,7 @@ unit mteHelpers;
 interface
 
 uses
-  Windows, SysUtils, Forms, Classes, ComCtrls, Grids, StdCtrls, Types;
+  Windows, SysUtils, Vcl.Forms, Classes, Vcl.ComCtrls, Vcl.Grids, Vcl.StdCtrls, Types;
 
 type
   TCallback = procedure of object;
@@ -93,7 +93,7 @@ var
 implementation
 
 uses
-  Controls, Masks, Dialogs, StrUtils, FileCtrl, ShellApi,
+  Vcl.Controls, Masks, Vcl.Dialogs, StrUtils, Vcl.FileCtrl, ShellApi,
   Messages, CommCtrl, DateUtils, shlObj, IOUtils, Registry;
 
 

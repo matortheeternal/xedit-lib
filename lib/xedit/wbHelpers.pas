@@ -22,7 +22,7 @@ uses
   Classes,
   Windows,
   SysUtils,
-  Graphics,
+  Vcl.Graphics,
   ShellAPI,
   ShlObj,
   IniFiles,

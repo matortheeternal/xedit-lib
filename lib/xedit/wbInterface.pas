@@ -21,7 +21,7 @@ interface
 uses
   Classes,
   SysUtils,
-  Graphics;
+  Vcl.Graphics;
 
 const
   VersionString  = '3.2.1';
