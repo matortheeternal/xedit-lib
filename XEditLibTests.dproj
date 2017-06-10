@@ -51,18 +51,38 @@
 			<DelphiCompile Include="XEditLibTests.dpr">
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
+			<DCCReference Include="src\xeTypes.pas"/>
+			<DCCReference Include="src\xeMessages.pas"/>
+			<DCCReference Include="src\xeConfiguration.pas"/>
+			<DCCReference Include="src\xeMeta.pas"/>
+			<DCCReference Include="src\xeSetup.pas"/>
+			<DCCReference Include="src\xeFiles.pas"/>
+			<DCCReference Include="src\xeMasters.pas"/>
+			<DCCReference Include="src\xeFileValues.pas"/>
 			<DCCReference Include="src\xeElements.pas"/>
 			<DCCReference Include="src\xeElementValues.pas"/>
 			<DCCReference Include="src\xeErrors.pas"/>
-			<DCCReference Include="src\xeFiles.pas"/>
-			<DCCReference Include="src\xeFileValues.pas"/>
-			<DCCReference Include="src\xeGroups.pas"/>
-			<DCCReference Include="src\xeMasters.pas"/>
-			<DCCReference Include="src\xeMeta.pas"/>
 			<DCCReference Include="src\xeRecords.pas"/>
 			<DCCReference Include="src\xeRecordValues.pas"/>
+			<DCCReference Include="src\xeGroups.pas"/>
 			<DCCReference Include="src\xeSerialization.pas"/>
-			<DCCReference Include="src\xeSetup.pas"/>
+			<DCCReference Include="lib\mte\mteHelpers.pas"/>
+			<DCCReference Include="lib\mte\mteConflict.pas"/>
+			<DCCReference Include="lib\mte\CRC32.pas"/>
+			<DCCReference Include="lib\mte\RttiIni.pas"/>
+			<DCCReference Include="lib\xedit\wbImplementation.pas"/>
+			<DCCReference Include="lib\xedit\wbInterface.pas"/>
+			<DCCReference Include="lib\xedit\wbBSA.pas"/>
+			<DCCReference Include="lib\xedit\wbSort.pas"/>
+			<DCCReference Include="lib\xedit\wbDefinitionsFNV.pas"/>
+			<DCCReference Include="lib\xedit\wbDefinitionsFO3.pas"/>
+			<DCCReference Include="lib\xedit\wbDefinitionsFO4.pas"/>
+			<DCCReference Include="lib\xedit\wbDefinitionsTES3.pas"/>
+			<DCCReference Include="lib\xedit\wbDefinitionsTES4.pas"/>
+			<DCCReference Include="lib\xedit\wbDefinitionsTES5.pas"/>
+			<DCCReference Include="lib\xedit\wbHelpers.pas"/>
+			<DCCReference Include="lib\xedit\wbLocalization.pas"/>
+			<DCCReference Include="lib\xedit\wbStreams.pas"/>
 			<DCCReference Include="tests\txMeta.pas"/>
 			<DCCReference Include="tests\txSetup.pas"/>
 			<DCCReference Include="tests\txFiles.pas"/>
@@ -76,6 +96,7 @@
 			<DCCReference Include="tests\txRecordValues.pas"/>
 			<DCCReference Include="tests\txErrors.pas"/>
 			<DCCReference Include="lib\Argo\Argo.pas"/>
+			<DCCReference Include="lib\Argo\ArgoTypes.pas"/>
 			<DCCReference Include="lib\mahogany\Mahogany.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
