@@ -97,6 +97,8 @@ begin
 
       {$IF false}
       Describe('AddFile', procedure
+        var
+          i: Integer;
         begin
           It('Should return true if it succeeds', procedure
             begin
