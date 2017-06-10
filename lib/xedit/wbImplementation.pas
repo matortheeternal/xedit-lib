@@ -48,7 +48,8 @@ procedure wbMastersForFile(const aFileName: string; aMasters: TStrings);
 function wbFile(const aFileName: string; aLoadOrder: Integer = -1; aCompareTo: string = '';
   IsTemporary: Boolean = False; aOnlyHeader: Boolean = False): IwbFile;
 function wbNewFile(const aFileName: string; aLoadOrder: Integer): IwbFile;
-procedure wbFileForceClosed;
+procedure wbFileForceClosed; overload;
+procedure wbFileForceClosed(_File: IwbFile); overload;
 
 function StartsWith(const s, t: string): Boolean;
 
@@ -15108,6 +15109,29 @@ begin
     (Files[i] as IwbFileInternal).ForceClosed;
   Files := nil;
   FilesMap.Clear;
+end;
+
+function IndexOfFile(_File: IwbFile): Integer;
+begin
+  for Result := Low(Files) to High(Files) do
+    if Files[Result] = _File then exit;
+  Result := -1;
+end;
+
+procedure wbFileForceClosed(_File: IwbFile);
+var
+  fileName: String;
+  aLength, index, i: Integer;
+begin
+  fileName := _File.FileName;
+  index := IndexOfFile(_File);
+  aLength := Length(Files);
+  Assert(index > -1);
+  Assert(index < aLength);
+  (_File as IwbFileInternal).ForceClosed;
+  for i := index + 1 to Pred(aLength) do
+    Files[i - 1] := Files[i];
+  FilesMap.Delete(FilesMap.IndexOf(fileName));
 end;
 
 function wbExpandFileName(const aFileName: string): string;

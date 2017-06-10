@@ -183,18 +183,19 @@ var
 begin
   Result := False;
   try
-    if Supports(Resolve(_id), IwbFile, _file) then begin
-      len^ := 0;
-      SetLength(resultArray, High(xFiles) + 1);
-      for i := Low(xFiles) to High(xFiles) do begin
-        f := xFiles[i];
-        if NativeFileHasMaster(f, _file) then begin
-          resultArray[len^] := Store(f);
-          Inc(len^);
-        end;
+    if not Supports(Resolve(_id), IwbFile, _file) then
+      raise Exception.Create('Interface must be a file.');
+    len^ := 0;
+    SetLength(resultArray, High(xFiles) + 1);
+    for i := Low(xFiles) to High(xFiles) do begin
+      f := xFiles[i];
+      if NativeFileHasMaster(f, _file) then begin
+        resultArray[len^] := Store(f);
+        Inc(len^);
       end;
-      Result := True;
     end;
+    SetLength(resultArray, len^);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;

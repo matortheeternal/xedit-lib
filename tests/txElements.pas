@@ -109,6 +109,19 @@ begin
   Expect(item > 0, 'Handle should be greater than 0');
 end;
 
+procedure TestAddArrayItem(h: Cardinal; path, subpath, value: PWideChar; expectedValue: String = '');
+var
+  item: Cardinal;
+  len: Integer;
+begin
+  ExpectSuccess(AddArrayItem(h, path, subpath, value, @item));
+  Expect(item > 0, 'Handle should be greater than 0');
+  if expectedValue <> '' then begin
+    ExpectSuccess(GetValue(item, subpath, @len));
+    ExpectEqual(grs(len), expectedValue);
+  end;
+end;
+
 procedure TestNames(a: CardinalArray; firstName, secondName: String);
 var
   len: Integer;
@@ -812,7 +825,51 @@ begin
 
       Describe('AddArrayItem', procedure
         begin
-          // TODO
+          Describe('Adding references', procedure
+            begin
+              It('Should add an array item', procedure
+                begin
+                  TestAddArrayItem(keywords, '', '', '');
+                  TestElementCount(keywords, 6);
+                end);
+
+              It('Should be able to set reference with FormID', procedure
+                begin
+                  TestAddArrayItem(keywords, '', '', '0006BBD4', 'ArmorMaterialDaedric [KYWD:0006BBD4]');
+                  TestElementCount(keywords, 7);
+                end);
+
+              It('Should be able to add reference with edit value', procedure
+                begin
+                  TestAddArrayItem(keywords, '', '', 'ArmorLight [KYWD:0006BBD3]', 'ArmorLight [KYWD:0006BBD3]');
+                  TestElementCount(keywords, 8);
+                end);
+            end);
+
+          Describe('Struct arrays', procedure
+            begin
+              It('Should add an array item', procedure
+                begin
+                  TestAddArrayItem(entries, '', '', '');
+                  TestElementCount(entries, 5);
+                end);
+
+              It('Should be able to set value at subpath', procedure
+                begin
+                  TestAddArrayItem(entries, '', 'LVLO\Reference', 'ArmorLeatherBoots "Leather Boots" [ARMO:00013920]');
+                  TestElementCount(entries, 6);
+                end);
+
+              It('Should fail if subpath is invalid', procedure
+                begin
+                  ExpectFailure(AddArrayItem(entries, '', 'Fake\Path', 'ArmorLeatherCuirass "Leather Armor" [ARMO:0003619E]', @h));
+                end);
+            end);
+
+          It('Should fail if element is not an array', procedure
+            begin
+              ExpectFailure(AddArrayItem(ar1, '', '', '', @h));
+            end);
         end);
 
       Describe('RemoveArrayItem', procedure

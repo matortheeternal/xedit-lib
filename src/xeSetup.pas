@@ -17,6 +17,8 @@ type
   function GetLoadOrder(len: PInteger): WordBool; cdecl;
   function GetActivePlugins(len: PInteger): WordBool; cdecl;
   function LoadPlugins(loadOrder: PWideChar): WordBool; cdecl;
+  function LoadPlugin(filename: PWideChar): WordBool; cdecl;
+  function UnloadPlugin(_id: Cardinal): WordBool; cdecl;
   function GetLoaderDone: WordBool; cdecl;
   function GetGamePath(mode: Integer; len: PInteger): WordBool; cdecl;
 
@@ -35,6 +37,7 @@ var
   xFiles: array of IwbFile;
   slLoadOrder: TStringList;
   LoaderThread: TLoaderThread;
+  BaseFileIndex: Integer;
 
 implementation
 
@@ -43,7 +46,7 @@ uses
   // mte units
   mteHelpers,
   // xelib units
-  xeMeta, xeConfiguration, xeMessages;
+  xeMeta, xeConfiguration, xeMessages, xeMasters;
 
 
 {******************************************************************************}
@@ -77,13 +80,14 @@ var
   i: Integer;
   sFileName: String;
 begin
+  BaseFileIndex := Length(xFiles);
   for i := 0 to Pred(slLoadOrder.Count) do begin
     sFileName := slLoadOrder[i];
     AddMessage(Format('Loading %s (%d/%d)', [sFileName, i + 1, slLoadOrder.Count]));
 
     // load plugin
     try
-      LoadFile(wbDataPath + sFileName, i);
+      LoadFile(wbDataPath + sFileName, BaseFileIndex + i);
     except
       on x: Exception do begin
         AddMessage('Exception loading ' + sFileName);
@@ -93,7 +97,7 @@ begin
     end;
 
     // load hardcoded dat
-    if i = 0 then try
+    if (i = 0) and (sFileName = wbGameName + '.esm') then try
       LoadHardCodedDat;
     except
       on x: Exception do begin
@@ -140,10 +144,12 @@ begin
   try
     slErrors := TStringList.Create;
     try
-      FindBSAs(wbTheGameIniFileName, wbDataPath, slBSAFileNames, slErrors);
-      LoadBSAs(slBSAFileNames, slErrors);
+      if BaseFileIndex = 0 then begin
+        FindBSAs(wbTheGameIniFileName, wbDataPath, slBSAFileNames, slErrors);
+        LoadBSAs(slBSAFileNames, slErrors);
+      end;
 
-      for i := Low(xFiles) to High(xFiles) do begin
+      for i := BaseFileIndex to High(xFiles) do begin
         slBSAFileNames.Clear;
         slErrors.Clear;
         modName := ChangeFileExt(xFiles[i].GetFileName, '');
@@ -161,6 +167,7 @@ end;
 procedure TLoaderThread.Execute;
 begin
   try
+    ProgramStatus.bLoaderDone := False;
     LoadPluginFiles;
     LoadResources;
 
@@ -269,7 +276,8 @@ begin
   Result := False;
   try
     // exit if we have already started loading plugins
-    if Assigned(slLoadOrder) then exit;
+    if Assigned(slLoadOrder) then
+      raise Exception.Create('Already loading plugins.');
     
     // store load order we're going to use in slLoadOrder
     slLoadOrder := TStringList.Create;
@@ -281,6 +289,69 @@ begin
     // start loader thread
     LoaderThread := TLoaderThread.Create;
     Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function LoadPlugin(filename: PWideChar): WordBool; cdecl;
+begin
+  Result := False;
+  try
+    // update load order
+    ProgramStatus.bLoaderDone := False;
+    slLoadOrder := TStringList.Create;
+    slLoadOrder.Add(fileName);
+
+    // update filecount global
+    Globals.Values['FileCount'] := IntToStr(Length(xFiles) + 1);
+
+    // start loader thread
+    LoaderThread := TLoaderThread.Create;
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function IndexOfFile(_file: IwbFile): Integer;
+begin
+  for Result := Low(xFiles) to High(xFiles) do
+    if xFiles[Result] = _file then exit;
+  Result := -1;
+end;
+
+procedure ForceClose(_file: IwbFile);
+var
+  i, index, len: Integer;
+begin
+  index := IndexOfFile(_file);
+  len := Length(xFiles);
+  Assert(index > -1);
+  Assert(index < len);
+  for i := index + 1 to Pred(len) do
+    xFiles[i - 1] := xFiles[i];
+  wbFileForceClosed(_file);
+end;
+
+function UnloadPlugin(_id: Cardinal): WordBool; cdecl;
+var
+  _file: IwbFile;
+  container: IwbContainer;
+  i: Integer;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbFile, _file)
+    or not Supports(_file, IwbContainer, container) then
+      raise Exception.Create('Interface must be a file.');
+    if csRefsBuild in container.GetContainerStates then
+      raise Exception.Create('Cannot unload plugin which has had refs built.');
+    for i := Low(xFiles) to High(xFiles) do
+      if NativeFileHasMaster(xFiles[i], _file) then
+        raise Exception.Create(Format('Cannot unload plugin %s, it is required by %s.', [_file.FileName, xFiles[i].FileName]));
+    ForceClose(_file);
+    Result := Release(_id);
   except
     on x: Exception do ExceptionHandler(x);
   end;
