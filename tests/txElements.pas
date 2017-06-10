@@ -444,12 +444,6 @@ begin
               TestElementCount(armature, 2);
             end);
 
-          It('Should be able to remove an element from the end of an array', procedure
-            begin
-              TestRemoveElement(armature, '[-1]', False);
-              TestElementCount(armature, 1);
-            end);
-
           It('Should remove the element passed if no path is given', procedure
             begin
               // TODO
