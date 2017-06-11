@@ -417,7 +417,7 @@ begin
   Result := wbCopyElementToFile(rec, targetFile, false, true, '', '', '') as IwbMainRecord;
 end;
 
-function CreateRecord(group: IwbGroupRecord; formID: Cardinal; nextPath: String): IwbMainRecord; overload;
+function CreateRecord(group: IwbGroupRecord; formID: Cardinal; nextPath: String): IInterface; overload;
 var
   sig: TwbSignature;
 begin
@@ -425,20 +425,20 @@ begin
   Result := group._File.RecordByFormID[formID, true];
   if not Assigned(Result) then
     Result := OverrideRecord(group._File, formID);
-  if Assigned(Result) and (Result.Signature <> sig) then
+  if Assigned(Result) and ((Result as IwbMainRecord).Signature <> sig) then
     raise Exception.Create(Format('Found record %s does not match expected ' +
-      'signature %s.', [Result.Name, string(sig)]));
+      'signature %s.', [(Result as IwbMainRecord).Name, string(sig)]));
   if Assigned(Result) and (nextPath <> '') then
-    Result := CreateFromRecord(Result, nextPath);
+    Result := CreateFromRecord(Result as IwbMainRecord, nextPath);
 end;
 
-function CreateRecord(group: IwbGroupRecord; key, nextPath: String): IwbMainRecord; overload;
+function CreateRecord(group: IwbGroupRecord; key, nextPath: String): IInterface; overload;
 begin
   if key = '.' then
     key := String(AnsiString(group.GroupLabel));
   Result := group.Add(key) as IwbMainRecord;
   if Assigned(Result) and (nextPath <> '') then
-    Result := CreateFromRecord(Result, nextPath) as IwbMainRecord;
+    Result := CreateFromRecord(Result as IwbMainRecord, nextPath);
 end;
 
 function CreateFromGroup(group: IwbGroupRecord; path: String): IInterface;
@@ -465,13 +465,13 @@ begin
     Result := CreateFromGroup(Result as IwbGroupRecord, nextPath);
 end;
 
-function CreateRecord(_file: IwbFile; formID: Cardinal; nextPath: String): IwbMainRecord; overload;
+function CreateRecord(_file: IwbFile; formID: Cardinal; nextPath: String): IInterface; overload;
 begin
   Result := _file.RecordByFormID[formID, true];
   if not Assigned(Result) then
     Result := OverrideRecord(_file, formID);
   if Assigned(Result) and (nextPath <> '') then
-    Result := CreateFromRecord(Result, nextPath);
+    Result := CreateFromRecord(Result as IwbMainRecord, nextPath);
 end;
 
 function CreateFromFile(_file: IwbFile; path: String): IInterface;
