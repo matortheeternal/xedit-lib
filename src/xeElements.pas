@@ -900,12 +900,16 @@ end;
 function GetElementIndex(_id: Cardinal; index: PInteger): WordBool; cdecl;
 var
   element: IwbElement;
+  _file: IwbFile;
 begin
   Result := False;
   try
     if not Supports(Resolve(_id), IwbElement, element) then
       raise Exception.Create('Interface is not an element.');
-    index^ := NativeContainer(element).IndexOf(element);
+    if Supports(element, IwbFile, _file) then
+      index^ := IndexOfFile(_file)
+    else
+      index^ := NativeContainer(element).IndexOf(element);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
@@ -972,7 +976,7 @@ begin
   Result := False;
   try
     if _id = 0 then
-      count^ := High(xFiles) + 1
+      count^ := Length(xFiles)
     else if Supports(Resolve(_id), IwbContainerElementRef, container) then
       count^ := container.ElementCount
     else

@@ -6,12 +6,13 @@ uses
   Classes, wbInterface;
 
   {$region 'Native functions'}
-  function CompareLoadOrder(List: TStringList; Index1, Index2: Integer): Integer;
   function NativeAddFile(filename: string): IwbFile;
   function NativeFileByIndex(index: Integer): IwbFile;
   function NativeFileByLoadOrder(loadOrder: Integer): IwbFile;
   function NativeFileByName(name: String): IwbFile;
   function NativeFileByNameEx(name: String): IwbFile;
+  function IndexOfFile(_file: IWbFile): Integer;
+  function CompareLoadOrder(List: TStringList; Index1, Index2: Integer): Integer;
   {$endregion}
 
   {$region 'API functions'}
@@ -112,6 +113,14 @@ begin
       exit;
   end;
   raise Exception.Create('Failed to find file with author: ' + author);
+end;
+
+function IndexOfFile(_file: IwbFile): Integer;
+begin
+  for Result := Low(xFiles) to High(xFiles) do
+    if xFiles[Result].Equals(_file) then
+      exit;
+  Result := -1;
 end;
 
 function CompareLoadOrder(List: TStringList; Index1, Index2: Integer): Integer;
