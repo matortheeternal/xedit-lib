@@ -41,6 +41,7 @@ type
   function RemoveElementOrParent(_id: Cardinal): WordBool; cdecl;
   function GetElements(_id: Cardinal; key: PWideChar; len: PInteger): WordBool; cdecl;
   function GetLinksTo(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
+  function GetElementIndex(_id: Cardinal; index: PInteger): WordBool; cdecl;
   function GetContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function GetElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function ElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
@@ -69,7 +70,6 @@ uses
   wbImplementation,
   // xelib units
   xeMessages, xeFiles, xeMasters, xeGroups, xeRecords, xeElementValues, xeSetup;
-
 
 {$region 'Native functions'}
 {$region 'Path parsing'}
@@ -890,6 +890,21 @@ begin
     if not Assigned(linkedElement) then
       raise Exception.Create('Failed to resolve linked element.');
     _res^ := Store(linkedElement);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetElementIndex(_id: Cardinal; index: PInteger): WordBool; cdecl;
+var
+  element: IwbElement;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    index^ := element.Container.IndexOf(element);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
