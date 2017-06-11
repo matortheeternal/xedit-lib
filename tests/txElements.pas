@@ -176,6 +176,14 @@ begin
   ExpectEqual(grs(len), expectedRecordName);
 end;
 
+procedure TestGetSignatureAllowed(h: Cardinal; sig: PWideChar; expectedResult: WordBool);
+var
+  b: WordBool;
+begin
+  ExpectSuccess(GetSignatureAllowed(h, sig, @b));
+  ExpectEqual(b, expectedResult);
+end;
+
 procedure BuildElementHandlingTests;
 var
   b: WordBool;
@@ -872,6 +880,11 @@ begin
             end);
         end);
 
+      Describe('MoveArrayItem', procedure
+        begin
+          // TODO
+        end);
+
       Describe('RemoveArrayItem', procedure
         begin
           // TODO
@@ -882,41 +895,41 @@ begin
           // TODO
         end);
         
-      Describe('MoveElement', procedure
+      Describe('GetSignatureAllowed', procedure
         begin
-          // TODO
-        end);
-        
-      Describe('GetExpectedSignatures', procedure
-        begin
-          It('Should list allowed signatures', procedure
+          It('Should return true if signature is allowed', procedure
             begin
-              ExpectSuccess(GetExpectedSignatures(keyword, @len));
-              ExpectEqual(grs(len), 'KYWD,NULL');
+              TestGetSignatureAllowed(keyword, 'KYWD', true);
+              TestGetSignatureAllowed(keyword, 'NULL', true);
               ExpectSuccess(GetElement(ar2, 'ZNAM', @h));
-              ExpectSuccess(GetExpectedSignatures(h, @len));
-              ExpectEqual(grs(len), 'SNDR');
-            end);
-          It('Should return * if any signature is allowed', procedure
-            begin
+              TestGetSignatureAllowed(h, 'SNDR', true);
               ExpectSuccess(GetElement(0, 'Update.esm\000E49CD\VMAD\Scripts\[0]\Properties\[0]\Value\Object Union\Object v2\FormID', @h));
-              ExpectSuccess(GetExpectedSignatures(h, @len));
-              ExpectEqual(grs(len), '*');
+              TestGetSignatureAllowed(h, 'NULL', true);
+              TestGetSignatureAllowed(h, 'ARMO', true);
+              TestGetSignatureAllowed(h, 'WEAP', true);
+              TestGetSignatureAllowed(h, 'COBJ', true);
+            end);
+          It('Should return false if signature is not allowed', procedure
+            begin
+              TestGetSignatureAllowed(keyword, 'ARMO', false);
+              TestGetSignatureAllowed(keyword, 'NPC_', false);
+              ExpectSuccess(GetElement(ar2, 'ZNAM', @h));
+              TestGetSignatureAllowed(h, 'NULL', false);
             end);
           It('Should raise an exception if a null handle is passed', procedure
             begin
-              ExpectFailure(GetExpectedSignatures(0, @len));
+              ExpectFailure(GetSignatureAllowed(0, 'TES4', @b));
             end);
           It('Should raise an exception if element isn''t an integer', procedure
             begin
-              ExpectFailure(GetExpectedSignatures(skyrim, @len));
-              ExpectFailure(GetExpectedSignatures(armo1, @len));
-              ExpectFailure(GetExpectedSignatures(ar1, @len));
-              ExpectFailure(GetExpectedSignatures(keywords, @len));
+              ExpectFailure(GetSignatureAllowed(skyrim, 'TES4', @b));
+              ExpectFailure(GetSignatureAllowed(armo1, 'ARMO', @b));
+              ExpectFailure(GetSignatureAllowed(ar1, 'BODT', @b));
+              ExpectFailure(GetSignatureAllowed(keywords, 'KYWD', @b));
             end);
           It('Should raise an exception if element can''t hold formIDs', procedure
             begin
-              ExpectFailure(GetExpectedSignatures(dnam, @len));
+              ExpectFailure(GetSignatureAllowed(dnam, 'ARMO', @b));
             end);
         end);
     end);
