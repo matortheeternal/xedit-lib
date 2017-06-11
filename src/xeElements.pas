@@ -213,7 +213,6 @@ function ResolveGroupOrRecord(_file: IwbFile; key: String; nextPath: String): II
 var
   formID: Cardinal;
   name: String;
-  index: Integer;
   sig: TwbSignature;
   rec: IwbMainRecord;
   group: IwbGroupRecord;
@@ -242,7 +241,6 @@ function ResolveFromFile(_file: IwbFile; path: String): IInterface;
 var
   key, nextPath: String;
   index: Integer;
-  formID: Cardinal;
 begin
   SplitPath(path, key, nextPath);
   // resolve group by index if key is an index
@@ -352,24 +350,6 @@ begin
   end;
 end;
 
-function CreateByIndex(container: IwbContainerElementRef; index: Integer; nextPath: String): IInterface;
-begin
-  // resolve element from container if container present
-  // else resolve file at index
-  if Assigned(container) then begin
-    if CheckIndex(container.ElementCount - 1, index) then
-      Result := container.Elements[index];
-  end
-  else begin
-    if CheckIndex(High(xFiles), index) then
-      Result := NativeFileByIndex(index);
-  end;
-
-  // create next element if nextPath is present
-  if Assigned(Result) and (nextPath <> '') then
-    Result := CreateElement(Result, nextPath);
-end;
-
 function CreateFromContainer(container: IwbContainerElementRef; path: String): IInterface;
 var
   key, nextPath: String;
@@ -454,6 +434,8 @@ end;
 
 function CreateRecord(group: IwbGroupRecord; key, nextPath: String): IwbMainRecord; overload;
 begin
+  if key = '.' then
+    key := String(AnsiString(group.GroupLabel));
   Result := group.Add(key) as IwbMainRecord;
   if Assigned(Result) and (nextPath <> '') then
     Result := CreateFromRecord(Result, nextPath) as IwbMainRecord;
@@ -466,14 +448,9 @@ var
   formID: Cardinal;
 begin
   SplitPath(path, key, nextPath);
-  if key = '.' then
-    key := String(AnsiString(group.GroupLabel));
-  // resolve record by index if key is an index
-  // else resolve record by formID
+  // resolve/override record by formID
   // else create new record by signature
-  if ParseIndex(key, index) then
-    Result := CreateByIndex(group as IwbContainerElementRef, index, nextPath)
-  else if ParseFormID(key, formID) then
+  if ParseFormID(key, formID) then
     Result := CreateRecord(group, formID, nextPath)
   else
     Result := CreateRecord(group, key, nextPath);
@@ -495,14 +472,8 @@ var
   formID: Cardinal;
 begin
   SplitPath(path, key, nextPath);
-  // resolve group by index if key is an index
-  // else resolve record by formID if key is a formID
-  // else resolve by group signature
-  if ParseIndex(key, index) then
-    Result := CreateByIndex(_file as IwbContainerElementRef, index, nextPath)
-  else if ParseFormID(key, formID) then
-    Result := CreateFromRecord(_file.RecordByFormID[formID, false], nextPath)
-  else if key = 'File Header' then
+  // resolve file header or group
+  if key = 'File Header' then
     Result := CreateFromRecord(_file.Header, nextPath)
   else
     Result := CreateGroup(_file, key, nextPath);
@@ -523,12 +494,7 @@ var
   index: Integer;
 begin
   SplitPath(path, key, nextPath);
-  // resolve file by index if key is an index
-  // else resolve by file name
-  if ParseIndex(key, index) then
-    Result := CreateByIndex(nil, index, nextPath)
-  else
-    Result := CreateFile(key, nextPath);
+  Result := CreateFile(key, nextPath);
 end;
 
 function CreateElement(e: IInterface; path: String): IInterface;
@@ -557,7 +523,6 @@ begin
     Result := CreateElement(Resolve(_id), key);
 end;
 
-// replaces ElementAssign, Add, AddElement, and InsertElement
 function AddElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
   element: IInterface;
