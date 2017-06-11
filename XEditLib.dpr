@@ -65,12 +65,12 @@ exports
   HasElement, GetElement, AddElement, RemoveElement, RemoveElementOrParent,
   GetElements, GetContainer,  GetElementFile, GetLinksTo, ElementCount,
   ElementEquals, ElementMatches, HasArrayItem, GetArrayItem, AddArrayItem,
-  RemoveArrayItem, CopyElement, MoveElement, GetExpectedSignatures, SortKey,
+  RemoveArrayItem, MoveArrayItem, CopyElement, GetSignatureAllowed, SortKey,
   ElementType, DefType, SmashType,
   // ERROR CHECKING METHODS
   CheckForErrors, GetErrorThreadDone, GetErrors, GetErrorString,
   // SERIALIZATION METHODS
-  ElementToJson, {SetElementFromJson, AddElementFromJson,}
+  ElementToJson, {ElementFromJson,}
   // ELEMENT VALUE METHODS
   Name, LongName, DisplayName, Path, Signature, GetValue, SetValue, GetIntValue,
   SetIntValue, GetUIntValue, SetUIntValue, GetFloatValue, SetFloatValue,

@@ -52,7 +52,7 @@ type
   function RemoveArrayItem(_id: Cardinal; path, subpath, value: PWideChar): WordBool; cdecl;
   function MoveArrayItem(_id: Cardinal; index: Integer): WordBool; cdecl;
   function CopyElement(_id, _id2: Cardinal; aAsNew, aDeepCopy: WordBool; _res: PCardinal): WordBool; cdecl;
-  function GetExpectedSignatures(_id: Cardinal; len: PInteger): WordBool; cdecl;
+  function GetSignatureAllowed(_id: Cardinal; sig: PWideChar; bool: PWordBool): WordBool; cdecl;
   function SortKey(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function ElementType(_id: Cardinal; enum: PByte): WordBool; cdecl;
   function DefType(_id: Cardinal; enum: PByte): WordBool; cdecl;
@@ -649,6 +649,18 @@ begin
 end;
 {$endregion}
 
+function NativeGetSignatureAllowed(formDef: IwbFormIDChecked; sig: TwbSignature): WordBool;
+var
+  i: Integer;
+begin
+  Result := False;
+  for i := 0 to Pred(formDef.SignatureCount) do
+    if formDef.Signatures[i] = sig then begin
+      Result := True;
+      exit;
+    end;
+end;
+
 {$region 'Def/type helpers'}
 { Returns true if @e is a sorted container }
 function IsSorted(e: IwbElement): Boolean;
@@ -1078,7 +1090,7 @@ begin
   end;
 end;
 
-function GetExpectedSignatures(_id: Cardinal; len: PInteger): WordBool; cdecl;
+function GetSignatureAllowed(_id: Cardinal; sig: PWideChar; bool: PWordBool): WordBool;
 var
   element: IwbElement;
   integerDef: IwbIntegerDef;
@@ -1092,10 +1104,9 @@ begin
     or not Supports(integerDef.Formater[element], IwbFormID) then
       raise Exception.Create('Interface must be able to hold a FormID value.');
     if Supports(integerDef.Formater[element], IwbFormIDChecked, formDef) then
-      resultStr := formDef.SignaturesText
+      bool^ := NativeGetSignatureAllowed(formDef, StrToSignature(string(sig)))
     else
-      resultStr := '*';
-    len^ := Length(resultStr);
+      bool^ := true;
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
