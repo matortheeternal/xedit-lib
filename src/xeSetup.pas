@@ -32,10 +32,11 @@ type
   procedure AddBaseMasters(var sl: TStringList);
   procedure FixLoadOrder(var sl: TStringList; filename: String; index: Integer);
   function PluginListCompare(List: TStringList; Index1, Index2: Integer): Integer;
+  procedure RenameSavedFiles;
 
 var
   xFiles: array of IwbFile;
-  slLoadOrder: TStringList;
+  slLoadOrder, slSavedFiles: TStringList;
   LoaderThread: TLoaderThread;
   BaseFileIndex: Integer;
 
@@ -575,5 +576,32 @@ begin
   else
     Result := 1;
 end;
+
+var
+  FileTimeStr: String;
+
+procedure RenameSavedFile(const path: String);
+var
+  newPath: String;
+begin
+  newPath := ChangeFileExt(path, '');
+  if FileExists(newPath) then
+    RenameFile(newPath, newPath + '.' + FileTimeStr + '.bak');
+  RenameFile(path, newPath);
+end;
+
+procedure RenameSavedFiles;
+var
+  i: Integer;
+begin
+  DateTimeToString(FileTimeStr, 'yymmdd_hhnnss', Now);
+  for i := 0 to Pred(slSavedFiles.Count) do
+    RenameSavedFile(slSavedFiles[i]);
+end;
+
+initialization
+  slSavedFiles := TStringList.Create;
+finalization
+  slSavedFiles.Free;
 
 end.

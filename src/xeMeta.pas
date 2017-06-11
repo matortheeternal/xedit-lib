@@ -63,6 +63,7 @@ end;
 
 procedure CloseXEdit; cdecl;
 begin
+  RenameSavedFiles;
   SaveMessages;
   settings.Free;
   _releasedIDs.Free;

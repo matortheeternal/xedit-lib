@@ -196,8 +196,8 @@ begin
       FileStream := TFileStream.Create(path, fmCreate);
       try
         _file.WritetoStream(FileStream, False);
+        slSavedFiles.Add(path);
         Result := True;
-        // TODO: Need to handle renaming when library is finalized
       finally
         FileStream.Free;
       end;
