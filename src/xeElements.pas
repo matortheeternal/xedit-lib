@@ -112,6 +112,16 @@ begin
     fullName := Copy(value, 2, Length(value) - 2);
 end;
 
+function GetSignatureFromName(name: String; var signature: TwbSignature): Boolean;
+var
+  index: Integer;
+begin
+  index := slSignatureNameMap.IndexOf(name);
+  Result := index > -1;
+  if Result then
+    signature := TwbSignature(slSignatureNameMap.Names[index])
+end;
+
 procedure SplitPath(path: String; var key, nextPath: String);
 var
   i: Integer;
@@ -170,52 +180,62 @@ begin
     Result := ResolveFromContainer(container, path);
 end;
 
-function ResolveRecord(_file: IwbFile; formID: Cardinal; nextPath: String): IInterface; overload;
-begin
-  Result := _file.RecordByFormID[formID, True];
-  if Assigned(Result) and (nextPath <> '') then
-    Result := ResolveElement(Result, nextPath);
-end;
-
 function ResolveRecord(group: IwbGroupRecord; key, nextPath: String): IInterface; overload;
 var
   name: String;
+  formID: Cardinal;
 begin
-  if (key[1] = '"') and (key[Length(key)] = '"') then begin
-    name := Copy(key, 2, Length(key) - 2);
-    Result := FindRecordByName(group, name);
-  end
+  if ParseFormID(key, formID) then
+    Result := group._File.RecordByFormID[formID, True]
+  else if ParseFullName(key, name) then
+    Result := group.MainRecordByName[key]
   else
-    Result := group._File.RecordByEditorID[key];
+    Result := group.MainRecordByEditorID[key];
   if Assigned(Result) and (nextPath <> '') then
-    ResolveFromRecord(Result as IwbMainRecord, nextPath);
+    Result := ResolveFromRecord(Result as IwbMainRecord, nextPath);
 end;
 
 function ResolveFromGroup(group: IwbGroupRecord; path: String): IInterface;
 var
   key, nextPath: String;
   index: Integer;
-  formID: Cardinal;
 begin
   SplitPath(path, key, nextPath);
-  // resolve record by index if key is an index
-  // else resolve record by formID
-  // TODO: resolve record by name/editorID
+  // resolve element by index if key is an index
+  // else resolve main record by FormID/EditorID/Name
   if ParseIndex(key, index) then
     Result := ResolveByIndex(group as IwbContainerElementRef, index, nextPath)
-  else if ParseFormID(key, formID) then
-    Result := ResolveRecord(group._File, formID, nextPath)
   else
     Result := ResolveRecord(group, key, nextPath);
 end;
 
-function ResolveGroup(_file: IwbFile; key: String; nextPath: String): IInterface;
+function ResolveGroupOrRecord(_file: IwbFile; key: String; nextPath: String): IInterface;
+var
+  formID: Cardinal;
+  name: String;
+  index: Integer;
+  sig: TwbSignature;
+  rec: IwbMainRecord;
+  group: IwbGroupRecord;
 begin
-  if Length(key) > 4 then
-    key := NativeSignatureFromName(key);
-  Result := _file.GroupBySignature[StrToSignature(key)];
-  if Assigned(Result) and (nextPath <> '') then
-    Result := ResolveFromGroup(Result as IwbGroupRecord, nextPath);
+  if ParseFormID(key, formID) then
+    Result := _file.RecordByFormID[formID, True]
+  else if ParseFullName(key, name) then
+    Result := _file.RecordByName[name]
+  else if Length(key) > 4 then begin
+    if GetSignatureFromName(key, sig) then
+      Result := _file.GroupBySignature[sig]
+    else
+      Result := _file.RecordByEditorID[key];
+  end
+  else
+    Result := _file.GroupBySignature[StrToSignature(key)];
+  if nextPath <> '' then begin
+    if Supports(Result, IwbMainRecord, rec) then
+      Result := ResolveFromRecord(rec, nextPath)
+    else if Supports(Result, IwbGroupRecord, group) then
+      Result := ResolveFromGroup(group, nextPath);
+  end;
 end;
 
 function ResolveFromFile(_file: IwbFile; path: String): IInterface;
@@ -230,12 +250,10 @@ begin
   // else resolve by group signature
   if ParseIndex(key, index) then
     Result := ResolveByIndex(_file as IwbContainerElementRef, index, nextPath)
-  else if ParseFormID(key, formID) then
-    Result := ResolveRecord(_file, formID, nextPath)
   else if key = 'File Header' then
     Result := ResolveFromRecord(_file.Header, nextPath)
   else 
-    Result := ResolveGroup(_file, key, nextPath);
+    Result := ResolveGroupOrRecord(_file, key, nextPath);
 end;
 
 function ResolveFile(fileName, nextPath: String): IInterface;
