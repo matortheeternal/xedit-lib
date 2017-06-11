@@ -51,8 +51,8 @@ exports
   GetMessagesLength, GetMessages, ClearMessages, GetExceptionMessageLength,
   GetExceptionMessage,
   // LOADING AND SET UP METHODS
-  SetGameMode, GetLoadOrder, GetActivePlugins, LoadPlugins, GetLoaderDone,
-  GetGamePath,
+  SetGameMode, GetLoadOrder, GetActivePlugins, LoadPlugins, LoadPlugin,
+  UnloadPlugin, GetLoaderDone, GetGamePath,
   // FILE HANDLING METHODS
   AddFile, FileByIndex, FileByLoadOrder, FileByName, FileByAuthor, SaveFile,
   // MASTER HANDLING METHODS
