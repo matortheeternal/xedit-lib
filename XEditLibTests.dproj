@@ -1,4 +1,4 @@
-﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
         <ProjectGuid>{C5C10C2F-4A4C-4863-B4D3-8F24CB78A70F}</ProjectGuid>
         <MainSource>XEditLibTests.dpr</MainSource>
