@@ -13,16 +13,7 @@ type
     procedure Execute; override;
   end;
 
-  function SetGameMode(mode: Integer): WordBool; cdecl;
-  function GetLoadOrder(len: PInteger): WordBool; cdecl;
-  function GetActivePlugins(len: PInteger): WordBool; cdecl;
-  function LoadPlugins(loadOrder: PWideChar): WordBool; cdecl;
-  function LoadPlugin(filename: PWideChar): WordBool; cdecl;
-  function UnloadPlugin(_id: Cardinal): WordBool; cdecl;
-  function GetLoaderDone: WordBool; cdecl;
-  function GetGamePath(mode: Integer; len: PInteger): WordBool; cdecl;
-
-  // LOAD ORDER HELPERS
+  {$region 'Native functions}
   procedure BuildPluginsList(sLoadPath: String; var sl: TStringList);
   procedure BuildLoadOrder(sLoadPath: String; var slLoadOrder, slPlugins: TStringList);
   procedure RemoveCommentsAndEmpty(var sl: TStringList);
@@ -33,6 +24,18 @@ type
   procedure FixLoadOrder(var sl: TStringList; filename: String; index: Integer);
   function PluginListCompare(List: TStringList; Index1, Index2: Integer): Integer;
   procedure RenameSavedFiles;
+  {$endregion}
+
+  {$region 'API functions'}
+  function SetGameMode(mode: Integer): WordBool; cdecl;
+  function GetGamePath(mode: Integer; len: PInteger): WordBool; cdecl;
+  function GetLoadOrder(len: PInteger): WordBool; cdecl;
+  function GetActivePlugins(len: PInteger): WordBool; cdecl;
+  function LoadPlugins(loadOrder: PWideChar): WordBool; cdecl;
+  function LoadPlugin(filename: PWideChar): WordBool; cdecl;
+  function UnloadPlugin(_id: Cardinal): WordBool; cdecl;
+  function GetLoaderDone: WordBool; cdecl;
+  {$endregion}
 
 var
   xFiles: array of IwbFile;
@@ -49,13 +52,8 @@ uses
   // xelib units
   xeMeta, xeConfiguration, xeMessages, xeMasters;
 
-
-{******************************************************************************}
-{ LOADIND AND SETUP METHODS
-  Methods for setting the xEdit game mode and loading files.
-}
-{******************************************************************************}
-
+{$region 'Native functions'}
+{$region 'File loading'}
 procedure LoadFile(filePath: String; loadOrder: Integer);
 var
   _file: IwbFile;
@@ -183,138 +181,6 @@ begin
   end;
 end;
 
-function SetGameMode(mode: Integer): WordBool; cdecl;
-begin
-  Result := False;
-  try
-    SetGame(mode);
-    // log message
-    AddMessage(Format('Game: %s, DataPath: %s', [wbGameName, wbDataPath]));
-    // set global values
-    Globals.Values['GameName'] := ProgramStatus.GameMode.gameName;
-    Globals.Values['AppName'] := ProgramStatus.GameMode.appName;
-    Globals.Values['LongGameName'] := ProgramStatus.GameMode.longName;
-    Globals.Values['DataPath'] := wbDataPath;
-    Globals.Values['AppDataPath'] := wbAppDataPath;
-    Globals.Values['MyGamesPath'] := wbMyGamesPath;
-    Globals.Values['GameIniPath'] := wbTheGameIniFileName;
-    // success
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function GetLoadOrder(len: PInteger): WordBool; cdecl;
-var
-  slPlugins, slLoadOrder: TStringList;
-  sLoadPath: String;
-begin
-  Result := False;
-  try
-    slPlugins := TStringList.Create;
-    slLoadOrder := TStringList.Create;
-
-    try
-      sLoadPath := Globals.Values['AppDataPath'];
-      BuildPluginsList(sLoadPath, slPlugins);
-      BuildLoadOrder(sLoadPath, slLoadOrder, slPlugins);
-
-      // add base masters if missing
-      AddBaseMasters(slPlugins);
-      AddBaseMasters(slLoadOrder);
-
-      // if GameMode is not Skyrim, SkyrimSE or Fallout 4 sort
-      // by date modified
-      if not (wbGameMode in [gmTES5, gmSSE, gmFO4]) then begin
-        GetPluginDates(slLoadOrder);
-        slLoadOrder.CustomSort(PluginListCompare);
-      end;
-
-      // SET RESULT STRING
-      resultStr := slLoadOrder.Text;
-      Delete(resultStr, Length(resultStr) - 1, 2);
-      len^ := Length(resultStr);
-      Result := True;
-    finally
-      slPlugins.Free;
-      slLoadOrder.Free;
-    end;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function GetActivePlugins(len: PInteger): WordBool; cdecl;
-var
-  slPlugins: TStringList;
-  sLoadPath: String;
-begin
-  Result := False;
-  try
-    slPlugins := TStringList.Create;
-
-    try
-      sLoadPath := Globals.Values['AppDataPath'];
-      BuildPluginsList(sLoadPath, slPlugins);
-      AddBaseMasters(slPlugins);
-
-      // SET RESULT STRING
-      resultStr := slPlugins.Text;
-      Delete(resultStr, Length(resultStr) - 1, 2);
-      len^ := Length(resultStr);
-      Result := True;
-    finally
-      slPlugins.Free;
-    end;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function LoadPlugins(loadOrder: PWideChar): WordBool; cdecl;
-begin
-  Result := False;
-  try
-    // exit if we have already started loading plugins
-    if Assigned(slLoadOrder) then
-      raise Exception.Create('Already loading plugins.');
-    
-    // store load order we're going to use in slLoadOrder
-    slLoadOrder := TStringList.Create;
-    slLoadOrder.Text := loadOrder;
-
-    // set filecount global
-    Globals.Values['FileCount'] := IntToStr(slLoadOrder.Count);
-
-    // start loader thread
-    LoaderThread := TLoaderThread.Create;
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function LoadPlugin(filename: PWideChar): WordBool; cdecl;
-begin
-  Result := False;
-  try
-    // update load order
-    ProgramStatus.bLoaderDone := False;
-    slLoadOrder := TStringList.Create;
-    slLoadOrder.Add(fileName);
-
-    // update filecount global
-    Globals.Values['FileCount'] := IntToStr(Length(xFiles) + 1);
-
-    // start loader thread
-    LoaderThread := TLoaderThread.Create;
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
 function IndexOfFile(_file: IwbFile): Integer;
 begin
   for Result := Low(xFiles) to High(xFiles) do
@@ -334,59 +200,9 @@ begin
     xFiles[i - 1] := xFiles[i];
   wbFileForceClosed(_file);
 end;
+{$endregion}
 
-function UnloadPlugin(_id: Cardinal): WordBool; cdecl;
-var
-  _file: IwbFile;
-  container: IwbContainer;
-  i: Integer;
-begin
-  Result := False;
-  try
-    if not Supports(Resolve(_id), IwbFile, _file)
-    or not Supports(_file, IwbContainer, container) then
-      raise Exception.Create('Interface must be a file.');
-    if csRefsBuild in container.GetContainerStates then
-      raise Exception.Create('Cannot unload plugin which has had refs built.');
-    for i := Low(xFiles) to High(xFiles) do
-      if NativeFileHasMaster(xFiles[i], _file) then
-        raise Exception.Create(Format('Cannot unload plugin %s, it is required by %s.', [_file.FileName, xFiles[i].FileName]));
-    ForceClose(_file);
-    Result := Release(_id);
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function GetLoaderDone: WordBool; cdecl;
-begin
-  Result := ProgramStatus.bLoaderDone;
-  if Result then begin
-    if Assigned(LoaderThread) then LoaderThread.Free;
-    if Assigned(slLoadOrder) then slLoadOrder.Free;
-  end;
-end;
-
-function GetGamePath(mode: Integer; len: PInteger): WordBool; cdecl;
-begin
-  Result := False;
-  try
-    resultStr := NativeGetGamePath(GameArray[mode]);
-    if resultStr <> '' then begin
-      len^ := Length(resultStr);
-      Result := True;
-    end;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-
-{******************************************************************************}
-{ LOAD ORDER HELPERS
-  Set of helper functions for building a working load order.
-{******************************************************************************}
-
+{$region 'Load order helpers'}
 procedure BuildPluginsList(sLoadPath: String; var sl: TStringList);
 var
   sPath: String;
@@ -576,7 +392,9 @@ begin
   else
     Result := 1;
 end;
+{$endregion}
 
+{$region 'Rename saved files'}
 var
   FileTimeStr: String;
 
@@ -598,6 +416,188 @@ begin
   for i := 0 to Pred(slSavedFiles.Count) do
     RenameSavedFile(slSavedFiles[i]);
 end;
+{$endregion}
+{$endregion}
+
+{$region 'API functions'}
+function SetGameMode(mode: Integer): WordBool; cdecl;
+begin
+  Result := False;
+  try
+    SetGame(mode);
+    // log message
+    AddMessage(Format('Game: %s, DataPath: %s', [wbGameName, wbDataPath]));
+    // set global values
+    Globals.Values['GameName'] := ProgramStatus.GameMode.gameName;
+    Globals.Values['AppName'] := ProgramStatus.GameMode.appName;
+    Globals.Values['LongGameName'] := ProgramStatus.GameMode.longName;
+    Globals.Values['DataPath'] := wbDataPath;
+    Globals.Values['AppDataPath'] := wbAppDataPath;
+    Globals.Values['MyGamesPath'] := wbMyGamesPath;
+    Globals.Values['GameIniPath'] := wbTheGameIniFileName;
+    // success
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetGamePath(mode: Integer; len: PInteger): WordBool; cdecl;
+begin
+  Result := False;
+  try
+    resultStr := NativeGetGamePath(GameArray[mode]);
+    if resultStr <> '' then begin
+      len^ := Length(resultStr);
+      Result := True;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetLoadOrder(len: PInteger): WordBool; cdecl;
+var
+  slPlugins, slLoadOrder: TStringList;
+  sLoadPath: String;
+begin
+  Result := False;
+  try
+    slPlugins := TStringList.Create;
+    slLoadOrder := TStringList.Create;
+
+    try
+      sLoadPath := Globals.Values['AppDataPath'];
+      BuildPluginsList(sLoadPath, slPlugins);
+      BuildLoadOrder(sLoadPath, slLoadOrder, slPlugins);
+
+      // add base masters if missing
+      AddBaseMasters(slPlugins);
+      AddBaseMasters(slLoadOrder);
+
+      // if GameMode is not Skyrim, SkyrimSE or Fallout 4 sort
+      // by date modified
+      if not (wbGameMode in [gmTES5, gmSSE, gmFO4]) then begin
+        GetPluginDates(slLoadOrder);
+        slLoadOrder.CustomSort(PluginListCompare);
+      end;
+
+      // SET RESULT STRING
+      resultStr := slLoadOrder.Text;
+      Delete(resultStr, Length(resultStr) - 1, 2);
+      len^ := Length(resultStr);
+      Result := True;
+    finally
+      slPlugins.Free;
+      slLoadOrder.Free;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetActivePlugins(len: PInteger): WordBool; cdecl;
+var
+  slPlugins: TStringList;
+  sLoadPath: String;
+begin
+  Result := False;
+  try
+    slPlugins := TStringList.Create;
+
+    try
+      sLoadPath := Globals.Values['AppDataPath'];
+      BuildPluginsList(sLoadPath, slPlugins);
+      AddBaseMasters(slPlugins);
+
+      // SET RESULT STRING
+      resultStr := slPlugins.Text;
+      Delete(resultStr, Length(resultStr) - 1, 2);
+      len^ := Length(resultStr);
+      Result := True;
+    finally
+      slPlugins.Free;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function LoadPlugins(loadOrder: PWideChar): WordBool; cdecl;
+begin
+  Result := False;
+  try
+    // exit if we have already started loading plugins
+    if Assigned(slLoadOrder) then
+      raise Exception.Create('Already loading plugins.');
+    
+    // store load order we're going to use in slLoadOrder
+    slLoadOrder := TStringList.Create;
+    slLoadOrder.Text := loadOrder;
+
+    // set filecount global
+    Globals.Values['FileCount'] := IntToStr(slLoadOrder.Count);
+
+    // start loader thread
+    LoaderThread := TLoaderThread.Create;
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function LoadPlugin(filename: PWideChar): WordBool; cdecl;
+begin
+  Result := False;
+  try
+    // update load order
+    ProgramStatus.bLoaderDone := False;
+    slLoadOrder := TStringList.Create;
+    slLoadOrder.Add(fileName);
+
+    // update filecount global
+    Globals.Values['FileCount'] := IntToStr(Length(xFiles) + 1);
+
+    // start loader thread
+    LoaderThread := TLoaderThread.Create;
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetLoaderDone: WordBool; cdecl;
+begin
+  Result := ProgramStatus.bLoaderDone;
+  if Result then begin
+    if Assigned(LoaderThread) then LoaderThread.Free;
+    if Assigned(slLoadOrder) then slLoadOrder.Free;
+  end;
+end;
+
+function UnloadPlugin(_id: Cardinal): WordBool; cdecl;
+var
+  _file: IwbFile;
+  container: IwbContainer;
+  i: Integer;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbFile, _file)
+    or not Supports(_file, IwbContainer, container) then
+      raise Exception.Create('Interface must be a file.');
+    if csRefsBuild in container.GetContainerStates then
+      raise Exception.Create('Cannot unload plugin which has had refs built.');
+    for i := Low(xFiles) to High(xFiles) do
+      if NativeFileHasMaster(xFiles[i], _file) then
+        raise Exception.Create(Format('Cannot unload plugin %s, it is required by %s.', [_file.FileName, xFiles[i].FileName]));
+    ForceClose(_file);
+    Result := Release(_id);
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+{$endregion}
 
 initialization
   slSavedFiles := TStringList.Create;

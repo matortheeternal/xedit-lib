@@ -5,21 +5,23 @@ interface
 uses
   Classes, wbInterface;
 
-  function AddFile(filename: PWideChar; _res: PCardinal): WordBool; cdecl;
-  function FileByIndex(index: Integer; _res: PCardinal): WordBool; cdecl;
-  function FileByLoadOrder(loadOrder: Integer; _res: PCardinal): WordBool; cdecl;
-  function FileByName(name: PWideChar; _res: PCardinal): WordBool; cdecl;
-  function FileByAuthor(author: PWideChar; _res: PCardinal): WordBool; cdecl;
-  function SaveFile(_id: Cardinal): WordBool; cdecl;
-
-  // native functions
+  {$region 'Native functions'}
   function CompareLoadOrder(List: TStringList; Index1, Index2: Integer): Integer;
   function NativeAddFile(filename: string): IwbFile;
   function NativeFileByIndex(index: Integer): IwbFile;
   function NativeFileByLoadOrder(loadOrder: Integer): IwbFile;
   function NativeFileByName(name: String): IwbFile;
   function NativeFileByNameEx(name: String): IwbFile;
-  function NativeFileByAuthor(author: String): IwbFile;
+  {$endregion}
+
+  {$region 'API functions'}
+  function AddFile(filename: PWideChar; _res: PCardinal): WordBool; cdecl;
+  function FileByIndex(index: Integer; _res: PCardinal): WordBool; cdecl;
+  function FileByLoadOrder(loadOrder: Integer; _res: PCardinal): WordBool; cdecl;
+  function FileByName(name: PWideChar; _res: PCardinal): WordBool; cdecl;
+  function FileByAuthor(author: PWideChar; _res: PCardinal): WordBool; cdecl;
+  function SaveFile(_id: Cardinal): WordBool; cdecl;
+  {$endregion}
 
 implementation
 
@@ -32,23 +34,7 @@ uses
   // xelib modules
   xeMessages, xeMeta, xeSetup;
 
-
-{******************************************************************************}
-{ FILE HANDLING
-  Methods for handling loaded files.
-}
-{******************************************************************************}
-
-function CompareLoadOrder(List: TStringList; Index1, Index2: Integer): Integer;
-begin
-  if Index1 = Index2 then
-    Result := 0
-  else
-    Result := CmpI32(
-      IwbFile(Pointer(List.Objects[Index1])).LoadOrder,
-      IwbFile(Pointer(List.Objects[Index2])).LoadOrder);
-end;
-
+{$region 'Native functions'}
 function NextLoadOrder: Integer;
 begin
   Result := 0;
@@ -80,31 +66,9 @@ begin
   Result := _file;
 end;
 
-function AddFile(filename: PWideChar; _res: PCardinal): WordBool; cdecl;
-begin
-  Result := False;
-  try
-    _res^ := Store(NativeAddFile(string(filename)));
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
 function NativeFileByIndex(index: Integer): IwbFile;
 begin
   Result := xFiles[index];
-end;
-
-function FileByIndex(index: Integer; _res: PCardinal): WordBool; cdecl;
-begin
-  Result := False;
-  try
-    _res^ := Store(NativeFileByIndex(index));
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
 end;
 
 function NativeFileByLoadOrder(loadOrder: Integer): IwbFile;
@@ -117,17 +81,6 @@ begin
       exit;
   end;
   raise Exception.Create('Failed to find file with load order: ' + IntToHex(loadOrder, 2));
-end;
-
-function FileByLoadOrder(loadOrder: Integer; _res: PCardinal): WordBool; cdecl;
-begin
-  Result := False;
-  try
-    _res^ := Store(NativeFileByLoadOrder(loadOrder));
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
 end;
 
 function NativeFileByName(name: String): IwbFile;
@@ -149,17 +102,6 @@ begin
     raise Exception.Create('Failed to find file with name: ' + name);
 end;
 
-function FileByName(name: PWideChar; _res: PCardinal): WordBool; cdecl;
-begin
-  Result := False;
-  try
-    _res^ := Store(NativeFileByNameEx(string(name)));
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
 function NativeFileByAuthor(author: String): IwbFile;
 var
   i: Integer;
@@ -170,6 +112,62 @@ begin
       exit;
   end;
   raise Exception.Create('Failed to find file with author: ' + author);
+end;
+
+function CompareLoadOrder(List: TStringList; Index1, Index2: Integer): Integer;
+begin
+  if Index1 = Index2 then
+    Result := 0
+  else
+    Result := CmpI32(
+      IwbFile(Pointer(List.Objects[Index1])).LoadOrder,
+      IwbFile(Pointer(List.Objects[Index2])).LoadOrder);
+end;
+{$endregion}
+
+{$region 'API functions'}
+function AddFile(filename: PWideChar; _res: PCardinal): WordBool; cdecl;
+begin
+  Result := False;
+  try
+    _res^ := Store(NativeAddFile(string(filename)));
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function FileByIndex(index: Integer; _res: PCardinal): WordBool; cdecl;
+begin
+  Result := False;
+  try
+    _res^ := Store(NativeFileByIndex(index));
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function FileByLoadOrder(loadOrder: Integer; _res: PCardinal): WordBool; cdecl;
+begin
+  Result := False;
+  try
+    _res^ := Store(NativeFileByLoadOrder(loadOrder));
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function FileByName(name: PWideChar; _res: PCardinal): WordBool; cdecl;
+begin
+  Result := False;
+  try
+    _res^ := Store(NativeFileByNameEx(string(name)));
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
 end;
 
 function FileByAuthor(author: PWideChar; _res: PCardinal): WordBool; cdecl;
@@ -206,5 +204,6 @@ begin
     on x: Exception do ExceptionHandler(x);
   end;
 end;
+{$endregion}
 
 end.

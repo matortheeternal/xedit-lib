@@ -5,13 +5,16 @@ interface
 uses
   wbInterface;
 
+  {$region 'Native functions'}
+  function IsChildGroup(group: IwbGroupRecord): Boolean;
+  function AddGroupIfMissing(_file: IwbFile; sig: string): IwbGroupRecord;
+  {$endregion}
+
+  {$region 'API functions'}
   function HasGroup(_id: Cardinal; sig: PWideChar; bool: PWordBool): WordBool; cdecl;
   function AddGroup(_id: Cardinal; sig: PWideChar; _res: PCardinal): WordBool; cdecl;
   function GetChildGroup(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
-
-  // native functions
-  function IsChildGroup(group: IwbGroupRecord): Boolean;
-  function AddGroupIfMissing(_file: IwbFile; sig: string): IwbGroupRecord;
+  {$endregion}
 
 implementation
 
@@ -24,18 +27,25 @@ uses
   // xelib modules
   xeMessages, xeMeta, xeSetup;
 
-
-{******************************************************************************}
-{ GROUP HANDLING
-  Methods for handling groups.
-}
-{******************************************************************************}
-
+{$region 'Native functions'}
 function IsChildGroup(group: IwbGroupRecord): Boolean;
 begin
   Result := group.GroupType in [1,6,7];
 end;
 
+function AddGroupIfMissing(_file: IwbFile; sig: String): IwbGroupRecord;
+var
+  _sig: TwbSignature;
+begin
+  _sig := TwbSignature(sig);
+  if _file.HasGroup(_sig) then
+    Result := _file.GroupBySignature[_sig]
+  else
+    Supports(_file.Add(sig), IwbGroupRecord, Result);
+end;
+{$endregion}
+
+{$region 'API functions'}
 function HasGroup(_id: Cardinal; sig: PWideChar; bool: PWordBool): WordBool; cdecl;
 var
   _file: IwbFile;
@@ -49,17 +59,6 @@ begin
   except
     on x: Exception do ExceptionHandler(x);
   end;
-end;
-
-function AddGroupIfMissing(_file: IwbFile; sig: String): IwbGroupRecord;
-var
-  _sig: TwbSignature;
-begin
-  _sig := TwbSignature(sig);
-  if _file.HasGroup(_sig) then
-    Result := _file.GroupBySignature[_sig]
-  else
-    Supports(_file.Add(sig), IwbGroupRecord, Result);
 end;
 
 function AddGroup(_id: Cardinal; sig: PWideChar; _res: PCardinal): WordBool; cdecl;
@@ -95,6 +94,7 @@ begin
     on x: Exception do ExceptionHandler(x);
   end;
 end;
+{$endregion}
 
 
 end.

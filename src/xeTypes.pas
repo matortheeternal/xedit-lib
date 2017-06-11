@@ -13,13 +13,12 @@ type
     function IndexOfValue(const Value: String): Integer;
   end;
 
-
 implementation
 
 uses
   SysUtils;
 
-{ TFastStringList }
+{$region 'TFastStringList'}
 function TFastStringList.CompareStrings(const S1, S2: string): Integer;
 begin
   Result := CompareStr(S1, S2);
@@ -38,5 +37,6 @@ begin
   end;
   Result := -1;
 end;
+{$endregion}
 
 end.

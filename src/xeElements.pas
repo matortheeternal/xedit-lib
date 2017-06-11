@@ -15,6 +15,25 @@ type
     stSortedStructArray, stByteArray, stUnion );
   TSmashTypes = set of TSmashType;
 
+  {$region 'Native functions'}
+  function ResolveFromGroup(group: IwbGroupRecord; path: String): IInterface;
+  function ResolveElement(e: IInterface; path: String): IInterface;
+  function NativeGetElement(_id: Cardinal; key: PWideChar): IInterface;
+  function NativeGetElementEx(_id: Cardinal; key: PWideChar): IwbElement;
+  procedure NativeMoveArrayItem(element: IwbElement; index: Integer);
+  function NativeContainer(element: IwbElement): IwbContainer;
+  function CreateFromGroup(group: IwbGroupRecord; path: String): IInterface;
+  function CreateElement(e: IInterface; path: String): IInterface;
+  function NativeAddElement(_id: Cardinal; key: string): IInterface;
+  function IsSorted(e: IwbElement): Boolean;
+  function IsArray(element: IwbElement): Boolean;
+  function IsFormID(element: IwbElement): Boolean;
+  function GetFlagsDef(element: IwbElement; var flagsDef: IwbFlagsDef): Boolean;
+  function GetDefType(element: IwbElement): TwbDefType;
+  function GetSmashType(element: IwbElement): TSmashType;
+  {$endregion}
+
+  {$region 'API functions'}
   function HasElement(_id: Cardinal; key: PWideChar; bool: PWordBool): WordBool; cdecl;
   function GetElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
   function AddElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
@@ -31,30 +50,14 @@ type
   function GetArrayItem(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
   function AddArrayItem(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
   function RemoveArrayItem(_id: Cardinal; path, subpath, value: PWideChar): WordBool; cdecl;
+  function MoveArrayItem(_id: Cardinal; index: Integer): WordBool; cdecl;
   function CopyElement(_id, _id2: Cardinal; aAsNew, aDeepCopy: WordBool; _res: PCardinal): WordBool; cdecl;
-  function MoveElement(_id: Cardinal; index: Integer): WordBool; cdecl;
   function GetExpectedSignatures(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function SortKey(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function ElementType(_id: Cardinal; enum: PByte): WordBool; cdecl;
   function DefType(_id: Cardinal; enum: PByte): WordBool; cdecl;
   function SmashType(_id: Cardinal; enum: PByte): WordBool; cdecl;
-
-  // native functions
-  function ResolveFromGroup(group: IwbGroupRecord; path: String): IInterface;
-  function ResolveElement(e: IInterface; path: String): IInterface;
-  function NativeGetElement(_id: Cardinal; key: PWideChar): IInterface;
-  function NativeGetElementEx(_id: Cardinal; key: PWideChar): IwbElement;
-  procedure NativeMoveElementToIndex(element: IwbElement; index: Integer);
-  function NativeContainer(element: IwbElement): IwbContainer;
-  function CreateFromGroup(group: IwbGroupRecord; path: String): IInterface;
-  function CreateElement(e: IInterface; path: String): IInterface;
-  function NativeAddElement(_id: Cardinal; key: string): IInterface;
-  function IsSorted(e: IwbElement): Boolean;
-  function IsArray(element: IwbElement): Boolean;
-  function IsFormID(element: IwbElement): Boolean;
-  function GetFlagsDef(element: IwbElement; var flagsDef: IwbFlagsDef): Boolean;
-  function GetDefType(element: IwbElement): TwbDefType;
-  function GetSmashType(element: IwbElement): TSmashType;
+  {$endregion}
 
 implementation
 
@@ -68,12 +71,8 @@ uses
   xeMessages, xeFiles, xeMasters, xeGroups, xeRecords, xeElementValues, xeSetup;
 
 
-{******************************************************************************}
-{ ELEMENT HANDLING
-  Methods for handling elements: groups, records, and subrecords.
-}
-{******************************************************************************}
-
+{$region 'Native functions'}
+{$region 'Path parsing'}
 function ParseIndex(key: string; var index: Integer): Boolean;
 begin
   Result := (key[1] = '[') and (key[Length(key)] = ']');
@@ -134,7 +133,9 @@ begin
   else
     key := path;
 end;
+{$endregion}
 
+{$region 'Element resolution'}
 function ResolveByIndex(container: IwbContainerElementRef; index: Integer; nextPath: String): IInterface;
 begin
   Result := nil;
@@ -318,38 +319,9 @@ begin
   if not Supports(e, IwbElement, Result) then
     raise Exception.Create('Failed to resolve element at path: ' + string(key));
 end;
+{$endregion}
 
-function HasElement(_id: Cardinal; key: PWideChar; bool: PWordBool): WordBool; cdecl;
-var
-  e: IInterface;
-begin
-  Result := False;
-  try
-    e := NativeGetElement(_id, key);
-    bool^ := Assigned(e);
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-// Has the functionality of FileByName, FileByIndex, GetFileHeader, GroupBySignature,
-// GroupByName, RecordByFormID, RecordByEditorID, RecordByName, RecordByIndex,
-// GetChildGroup, ElementByName, ElementByPath, ElementByIndex, and ElementBySignature.
-function GetElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
-var
-  element: IwbElement;
-begin
-  Result := False;
-  try
-    element := NativeGetElementEx(_id, key);
-    _res^ := Store(element as IInterface);
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
+{$region 'Element creation'}
 function CreateFromContainer(container: IwbContainerElementRef; path: String): IInterface;
 var
   key, nextPath: String;
@@ -365,7 +337,7 @@ begin
   else if key[1] = '^' then begin
     Result := container.Assign(High(Integer), nil, false);
     index := StrToInt(Copy(key, 2, Length(key) - 1));
-    NativeMoveElementToIndex(Result as IwbElement, index);
+    NativeMoveArrayItem(Result as IwbElement, index);
   end
   else begin
     Result := container.ElementByPath[key];
@@ -444,7 +416,6 @@ end;
 function CreateFromGroup(group: IwbGroupRecord; path: String): IInterface;
 var
   key, nextPath: String;
-  index: Integer;
   formID: Cardinal;
 begin
   SplitPath(path, key, nextPath);
@@ -477,7 +448,6 @@ end;
 function CreateFromFile(_file: IwbFile; path: String): IInterface;
 var
   key, nextPath: String;
-  index: Integer;
   formID: Cardinal;
 begin
   SplitPath(path, key, nextPath);
@@ -504,7 +474,6 @@ end;
 function CreateFromRoot(path: String): IInterface;
 var
   key, nextPath: String;
-  index: Integer;
 begin
   SplitPath(path, key, nextPath);
   Result := CreateFile(key, nextPath);
@@ -535,75 +504,9 @@ begin
   else
     Result := CreateElement(Resolve(_id), key);
 end;
+{$endregion}
 
-function AddElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
-var
-  element: IInterface;
-begin
-  Result := False;
-  try
-    element := NativeAddElement(_id, string(key));
-    if not Assigned(element) then
-      raise Exception.Create('Failed to add element at path: ' + string(key));
-    _res^ := Store(element);
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; cdecl;
-var
-  e: IInterface;
-  element: IwbElement;
-begin
-  Result := False;
-  try
-    e := NativeGetElement(_id, key);
-    if Supports(e, IwbFile) then
-      raise Exception.Create('Cannot remove files.');
-    if not Supports(e, IwbElement, element) then
-      raise Exception.Create('Interface is not an element.');
-    element.Remove;
-    if key = '' then
-      Result := Release(_id)
-    else
-      Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function RemoveElementOrParent(_id: Cardinal): WordBool; cdecl;
-var
-  e: IInterface;
-  element: IwbElement;
-  container: IwbContainer;
-begin
-  Result := False;
-  try
-    e := Resolve(_id);
-    if Supports(e, IwbFile) or Supports(e, IwbGroupRecord)
-    or Supports(e, IwbMainRecord) then
-      raise Exception.Create('Interface cannot be a file, group, or main record.');
-    if not Supports(e, IwbElement, element) then
-      raise Exception.Create('Interface is not an element.');
-    container := element.Container;
-    while not container.IsElementRemoveable(element) do begin
-      if Supports(container, IwbMainRecord) then
-        raise Exception.Create('Reached main record - could not remove.');
-      if container.IsElementRemoveable(element) then
-        break;
-      element := container as IwbElement;
-      container := element.Container;
-    end;
-    container.RemoveElement(container.IndexOf(element));
-    Result := Release(_id);
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
+{$region 'Multi-element resolution'}
 procedure GetFiles(len: PInteger);
 var
   i: Integer;
@@ -632,38 +535,7 @@ begin
     raise Exception.Create('Interface must be a container.');
   GetContainerElements(container, len);
 end;
-
-// returns an array of handles for the elements in a container
-function GetElements(_id: Cardinal; key: PWideChar; len: PInteger): WordBool; cdecl;
-begin
-  Result := False;
-  try
-    if (_id = 0) and (key = '') then
-      GetFiles(len)
-    else
-      GetChildrenElements(NativeGetElementEx(_id, key), len);
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function GetLinksTo(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
-var
-  element, linkedElement: IwbElement;
-begin
-  Result := False;
-  try
-    element := NativeGetElementEx(_id, key);
-    linkedElement := element.LinksTo;
-    if not Assigned(linkedElement) then
-      raise Exception.Create('Failed to resolve linked element.');
-    _res^ := Store(linkedElement);
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
+{$endregion}
 
 function NativeContainer(element: IwbElement): IwbContainer;
 var
@@ -677,75 +549,7 @@ begin
     raise Exception.Create('Could not find container for ' + element.Name);
 end;
 
-function GetContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
-var
-  e: IInterface;
-  element: IwbElement;
-begin
-  Result := False;
-  try
-    e := Resolve(_id);
-    if Supports(e, IwbFile) then
-      raise Exception.Create('Cannot call GetContainer on files.');
-    if not Supports(e, IwbElement, element) then
-      raise Exception.Create('Interface is not an element.');
-    _res^ := Store(NativeContainer(element));
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function GetElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
-var
-  element: IwbElement;
-begin
-  Result := False;
-  try
-    if not Supports(Resolve(_id), IwbElement, element) then
-      raise Exception.Create('Interface is not an element.');
-    _res^ := Store(element._File);
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function ElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
-var
-  container: IwbContainerElementRef;
-begin
-  Result := False;
-  try
-    if _id = 0 then
-      count^ := High(xFiles) + 1
-    else if Supports(Resolve(_id), IwbContainerElementRef, container) then
-      count^ := container.ElementCount
-    else
-      count^ := 0;
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function ElementEquals(_id, _id2: Cardinal; bool: PWordBool): WordBool; cdecl;
-var
-  element, element2: IwbElement;
-begin
-  Result := False;
-  try
-    if not Supports(Resolve(_id), IwbElement, element) then
-      raise Exception.Create('First interface is not an element.');
-    if not Supports(Resolve(_id2), IwbElement, element2) then
-      raise Exception.Create('Second interface is not an element.');
-    bool^ := element.Equals(element2);
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
+{$region 'Element matching'}
 function ElementValueMatches(element: IwbElement; value: string): WordBool;
 var
   formID: Int64;
@@ -782,21 +586,9 @@ begin
     Result := ElementValueMatches(container.ElementByPath[path], value);
   end;
 end;
+{$endregion}
 
-function ElementMatches(_id: Cardinal; path, value: PWideChar; bool: PWordBool): WordBool; cdecl;
-var
-  element: IwbElement;
-begin
-  Result := False;
-  try
-    element := NativeGetElementEx(_id, path);
-    bool^ := NativeElementMatches(element, '', value);
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
+{$region 'Array item handling'}
 function NativeGetArrayItem(container: IwbContainerElementRef; path, value: string): IwbElement;
 var
   i: Integer;
@@ -816,42 +608,6 @@ begin
     raise Exception.Create('Could not find matching array element.');
 end;
 
-function HasArrayItem(_id: Cardinal; path, subpath, value: PWideChar; bool: PWordBool): WordBool; cdecl;
-var
-  element: IwbElement;
-  container: IwbContainerElementRef;
-begin
-  Result := False;
-  try
-    element := NativeGetElementEx(_id, path);
-    if not Supports(element, IwbContainerElementRef, container)
-    or not IsArray(container) then
-      raise Exception.Create('Interface must be an array.');
-    bool^ := Assigned(NativeGetArrayItem(container, subpath, value));
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function GetArrayItem(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
-var
-  element: IwbElement;
-  container: IwbContainerElementRef;
-begin
-  Result := False;
-  try
-    element := NativeGetElementEx(_id, path);
-    if not Supports(element, IwbContainerElementRef, container)
-    or not IsArray(container) then
-      raise Exception.Create('Interface must be an array.');
-    _res^ := Store(NativeGetArrayItemEx(container, subpath, value));
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
 function NativeAddArrayItem(container: IwbContainerElementRef; path, value: String): IwbElement;
 var
   e: IInterface;
@@ -866,24 +622,6 @@ begin
   end;
 end;
 
-function AddArrayItem(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
-var
-  element: IwbElement;
-  container: IwbContainerElementRef;
-begin
-  Result := False;
-  try
-    element := NativeGetElementEx(_id, path);
-    if not Supports(element, IwbContainerElementRef, container)
-    or not IsArray(container) then
-      raise Exception.Create('Interface must be an array.');
-    _res^ := Store(NativeAddArrayItem(container, subpath, value));
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
 procedure NativeRemoveArrayItem(container: IwbContainerElementRef; path, value: string);
 var
   i: Integer;
@@ -895,47 +633,7 @@ begin
     end;
 end;
 
-function RemoveArrayItem(_id: Cardinal; path, subpath, value: PWideChar): WordBool; cdecl;
-var
-  element: IwbElement;
-  container: IwbContainerElementRef;
-begin
-  Result := False;
-  try
-    element := NativeGetElementEx(_id, path);
-    if not Supports(element, IwbContainerElementRef, container)
-    or not IsArray(container) then
-      raise Exception.Create('Interface must be an array.');
-    NativeRemoveArrayItem(container, subpath, value);
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function CopyElement(_id, _id2: Cardinal; aAsNew, aDeepCopy: WordBool; _res: PCardinal): WordBool; cdecl;
-var
-  _file: IwbFile;
-  rec: IwbMainRecord;
-  element: IwbElement;
-begin
-  Result := False;
-  try
-    if not Supports(Resolve(_id), IwbElement, element) then
-      raise Exception.Create('Interface is not an element.');
-    if Supports(Resolve(_id2), IwbFile, _file) then
-      _res^ := Store(wbCopyElementToFile(element, _file, aAsNew, aDeepCopy, '', '', ''))
-    else if Supports(Resolve(_id2), IwbMainRecord, rec) then
-      _res^ := Store(wbCopyElementToRecord(element, rec, aAsNew, aDeepCopy))
-    else
-      raise Exception.Create('Second interface must be a file or a main record.');
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-procedure NativeMoveElementToIndex(element: IwbElement; index: Integer);
+procedure NativeMoveArrayItem(element: IwbElement; index: Integer);
 var
   container: IwbContainerElementRef;
 begin
@@ -949,107 +647,9 @@ begin
   element.Remove;
   container.InsertElement(index, element);
 end;
+{$endregion}
 
-function MoveElement(_id: Cardinal; index: Integer): WordBool; cdecl;
-var
-  element: IwbElement;
-begin
-  Result := False;
-  try
-    if not Supports(Resolve(_id), IwbElement, element) then
-      raise Exception.Create('Interface is not an element.');
-    NativeMoveElementToIndex(element, index);
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function GetExpectedSignatures(_id: Cardinal; len: PInteger): WordBool; cdecl;
-var
-  element: IwbElement;
-  integerDef: IwbIntegerDef;
-  formDef: IwbFormIDChecked;
-begin
-  Result := False;
-  try
-    if not Supports(Resolve(_id), IwbElement, element) then
-      raise Exception.Create('Interface is not an element.');
-    if not Supports(element.ValueDef, IwbIntegerDef, integerDef)
-    or not Supports(integerDef.Formater[element], IwbFormID) then
-      raise Exception.Create('Interface must be able to hold a FormID value.');
-    if Supports(integerDef.Formater[element], IwbFormIDChecked, formDef) then
-      resultStr := formDef.SignaturesText
-    else
-      resultStr := '*';
-    len^ := Length(resultStr);
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function SortKey(_id: Cardinal; len: PInteger): WordBool; cdecl;
-var
-  element: IwbElement;
-begin
-  Result := False;
-  try
-    if not Supports(Resolve(_id), IwbElement, element) then
-      raise Exception.Create('Interface is not an element.');
-    resultStr := element.SortKey[False];
-    len^ := Length(resultStr);
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function ElementType(_id: Cardinal; enum: PByte): WordBool; cdecl;
-var
-  element: IwbElement;
-begin
-  Result := False;
-  try
-    if not Supports(Resolve(_id), IwbElement, element) then
-      raise Exception.Create('Interface is not an element.');
-    enum^ := Ord(element.ElementType);
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function DefType(_id: Cardinal; enum: PByte): WordBool; cdecl;
-var
-  element: IwbElement;
-begin
-  Result := False;
-  try
-    if not Supports(Resolve(_id), IwbElement, element) then
-      raise Exception.Create('Interface is not an element.');
-    enum^ := Ord(GetDefType(element));
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function SmashType(_id: Cardinal; enum: PByte): WordBool; cdecl;
-var
-  element: IwbElement;
-begin
-  Result := False;
-  try
-    if not Supports(Resolve(_id), IwbElement, element) then
-      raise Exception.Create('Interface is not an element.');
-    enum^ := Ord(GetSmashType(element));
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
+{$region 'Def/type helpers'}
 { Returns true if @e is a sorted container }
 function IsSorted(e: IwbElement): Boolean;
 var
@@ -1149,5 +749,419 @@ begin
     else Result := stUnknown;
   end;
 end;
+{$endregion}
+{$endregion}
+
+{$region 'API functions'}
+function HasElement(_id: Cardinal; key: PWideChar; bool: PWordBool): WordBool; cdecl;
+var
+  e: IInterface;
+begin
+  Result := False;
+  try
+    e := NativeGetElement(_id, key);
+    bool^ := Assigned(e);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+// Has the functionality of FileByName, FileByIndex, GetFileHeader, GroupBySignature,
+// GroupByName, RecordByFormID, RecordByEditorID, RecordByName, RecordByIndex,
+// GetChildGroup, ElementByName, ElementByPath, ElementByIndex, and ElementBySignature.
+function GetElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
+var
+  element: IwbElement;
+begin
+  Result := False;
+  try
+    element := NativeGetElementEx(_id, key);
+    _res^ := Store(element as IInterface);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function AddElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
+var
+  element: IInterface;
+begin
+  Result := False;
+  try
+    element := NativeAddElement(_id, string(key));
+    if not Assigned(element) then
+      raise Exception.Create('Failed to add element at path: ' + string(key));
+    _res^ := Store(element);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; cdecl;
+var
+  e: IInterface;
+  element: IwbElement;
+begin
+  Result := False;
+  try
+    e := NativeGetElement(_id, key);
+    if Supports(e, IwbFile) then
+      raise Exception.Create('Cannot remove files.');
+    if not Supports(e, IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    element.Remove;
+    if key = '' then
+      Result := Release(_id)
+    else
+      Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function RemoveElementOrParent(_id: Cardinal): WordBool; cdecl;
+var
+  e: IInterface;
+  element: IwbElement;
+  container: IwbContainer;
+begin
+  Result := False;
+  try
+    e := Resolve(_id);
+    if Supports(e, IwbFile) or Supports(e, IwbGroupRecord)
+    or Supports(e, IwbMainRecord) then
+      raise Exception.Create('Interface cannot be a file, group, or main record.');
+    if not Supports(e, IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    container := element.Container;
+    while not container.IsElementRemoveable(element) do begin
+      if Supports(container, IwbMainRecord) then
+        raise Exception.Create('Reached main record - could not remove.');
+      if container.IsElementRemoveable(element) then
+        break;
+      element := container as IwbElement;
+      container := element.Container;
+    end;
+    container.RemoveElement(container.IndexOf(element));
+    Result := Release(_id);
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+// returns an array of handles for the elements in a container
+function GetElements(_id: Cardinal; key: PWideChar; len: PInteger): WordBool; cdecl;
+begin
+  Result := False;
+  try
+    if (_id = 0) and (key = '') then
+      GetFiles(len)
+    else
+      GetChildrenElements(NativeGetElementEx(_id, key), len);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetLinksTo(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
+var
+  element, linkedElement: IwbElement;
+begin
+  Result := False;
+  try
+    element := NativeGetElementEx(_id, key);
+    linkedElement := element.LinksTo;
+    if not Assigned(linkedElement) then
+      raise Exception.Create('Failed to resolve linked element.');
+    _res^ := Store(linkedElement);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
+var
+  e: IInterface;
+  element: IwbElement;
+begin
+  Result := False;
+  try
+    e := Resolve(_id);
+    if Supports(e, IwbFile) then
+      raise Exception.Create('Cannot call GetContainer on files.');
+    if not Supports(e, IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    _res^ := Store(NativeContainer(element));
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
+var
+  element: IwbElement;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    _res^ := Store(element._File);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function ElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
+var
+  container: IwbContainerElementRef;
+begin
+  Result := False;
+  try
+    if _id = 0 then
+      count^ := High(xFiles) + 1
+    else if Supports(Resolve(_id), IwbContainerElementRef, container) then
+      count^ := container.ElementCount
+    else
+      count^ := 0;
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function ElementEquals(_id, _id2: Cardinal; bool: PWordBool): WordBool; cdecl;
+var
+  element, element2: IwbElement;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('First interface is not an element.');
+    if not Supports(Resolve(_id2), IwbElement, element2) then
+      raise Exception.Create('Second interface is not an element.');
+    bool^ := element.Equals(element2);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function ElementMatches(_id: Cardinal; path, value: PWideChar; bool: PWordBool): WordBool; cdecl;
+var
+  element: IwbElement;
+begin
+  Result := False;
+  try
+    element := NativeGetElementEx(_id, path);
+    bool^ := NativeElementMatches(element, '', value);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+{$region 'Array item handling'}
+function HasArrayItem(_id: Cardinal; path, subpath, value: PWideChar; bool: PWordBool): WordBool; cdecl;
+var
+  element: IwbElement;
+  container: IwbContainerElementRef;
+begin
+  Result := False;
+  try
+    element := NativeGetElementEx(_id, path);
+    if not Supports(element, IwbContainerElementRef, container)
+    or not IsArray(container) then
+      raise Exception.Create('Interface must be an array.');
+    bool^ := Assigned(NativeGetArrayItem(container, subpath, value));
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetArrayItem(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
+var
+  element: IwbElement;
+  container: IwbContainerElementRef;
+begin
+  Result := False;
+  try
+    element := NativeGetElementEx(_id, path);
+    if not Supports(element, IwbContainerElementRef, container)
+    or not IsArray(container) then
+      raise Exception.Create('Interface must be an array.');
+    _res^ := Store(NativeGetArrayItemEx(container, subpath, value));
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function AddArrayItem(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
+var
+  element: IwbElement;
+  container: IwbContainerElementRef;
+begin
+  Result := False;
+  try
+    element := NativeGetElementEx(_id, path);
+    if not Supports(element, IwbContainerElementRef, container)
+    or not IsArray(container) then
+      raise Exception.Create('Interface must be an array.');
+    _res^ := Store(NativeAddArrayItem(container, subpath, value));
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function RemoveArrayItem(_id: Cardinal; path, subpath, value: PWideChar): WordBool; cdecl;
+var
+  element: IwbElement;
+  container: IwbContainerElementRef;
+begin
+  Result := False;
+  try
+    element := NativeGetElementEx(_id, path);
+    if not Supports(element, IwbContainerElementRef, container)
+    or not IsArray(container) then
+      raise Exception.Create('Interface must be an array.');
+    NativeRemoveArrayItem(container, subpath, value);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function MoveArrayItem(_id: Cardinal; index: Integer): WordBool; cdecl;
+var
+  element: IwbElement;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    NativeMoveArrayItem(element, index);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+{$endregion}
+
+function CopyElement(_id, _id2: Cardinal; aAsNew, aDeepCopy: WordBool; _res: PCardinal): WordBool; cdecl;
+var
+  _file: IwbFile;
+  rec: IwbMainRecord;
+  element: IwbElement;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    if Supports(Resolve(_id2), IwbFile, _file) then
+      _res^ := Store(wbCopyElementToFile(element, _file, aAsNew, aDeepCopy, '', '', ''))
+    else if Supports(Resolve(_id2), IwbMainRecord, rec) then
+      _res^ := Store(wbCopyElementToRecord(element, rec, aAsNew, aDeepCopy))
+    else
+      raise Exception.Create('Second interface must be a file or a main record.');
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetExpectedSignatures(_id: Cardinal; len: PInteger): WordBool; cdecl;
+var
+  element: IwbElement;
+  integerDef: IwbIntegerDef;
+  formDef: IwbFormIDChecked;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    if not Supports(element.ValueDef, IwbIntegerDef, integerDef)
+    or not Supports(integerDef.Formater[element], IwbFormID) then
+      raise Exception.Create('Interface must be able to hold a FormID value.');
+    if Supports(integerDef.Formater[element], IwbFormIDChecked, formDef) then
+      resultStr := formDef.SignaturesText
+    else
+      resultStr := '*';
+    len^ := Length(resultStr);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function SortKey(_id: Cardinal; len: PInteger): WordBool; cdecl;
+var
+  element: IwbElement;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    resultStr := element.SortKey[False];
+    len^ := Length(resultStr);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function ElementType(_id: Cardinal; enum: PByte): WordBool; cdecl;
+var
+  element: IwbElement;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    enum^ := Ord(element.ElementType);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function DefType(_id: Cardinal; enum: PByte): WordBool; cdecl;
+var
+  element: IwbElement;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    enum^ := Ord(GetDefType(element));
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function SmashType(_id: Cardinal; enum: PByte): WordBool; cdecl;
+var
+  element: IwbElement;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    enum^ := Ord(GetSmashType(element));
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+{$endregion}
 
 end.

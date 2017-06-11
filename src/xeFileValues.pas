@@ -2,6 +2,7 @@ unit xeFileValues;
 
 interface
 
+  {$region 'API functions'}
   function GetFileHeader(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function GetNextObjectId(_id: Cardinal; nextObjectID: PCardinal): WordBool; cdecl;
   function SetNextObjectID(_id, nextObjectID: Cardinal): WordBool; cdecl;
@@ -13,6 +14,7 @@ interface
   function OverrideRecordCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
   function GetIsESM(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
   function SetIsESM(_id: Cardinal; bool: WordBool): WordBool; cdecl;
+  {$endregion}
 
 implementation
 
@@ -25,7 +27,7 @@ uses
   // xelib modules
   xeMessages, xeMeta;
 
-
+{$region 'API functions'}
 function GetFileHeader(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 var
   _file: IwbFile;
@@ -197,6 +199,7 @@ begin
     on x: Exception do ExceptionHandler(x);
   end;
 end;
+{$endregion}
 
 
 end.

@@ -6,6 +6,16 @@ uses
   wbInterface,
   xeMeta;
 
+  {$region 'Native functions'}
+  procedure StoreRecords(_file: IwbFile; len: PInteger); overload;
+  procedure StoreRecords(group: IwbGroupRecord; len: PInteger); overload;
+  procedure FindRecordsBySignature(group: IwbGroupRecord; sig: TwbSignature; len: PInteger); overload;
+  procedure FindRecordsBySignature(_file: IwbFile; sig: TwbSignature; len: PInteger); overload;
+  function FindRecordByName(_file: IwbFile; full: string): IwbMainRecord; overload;
+  function FindRecordByName(group: IwbGroupRecord; full: string): IwbMainRecord; overload;
+  {$endregion}
+
+  {$region 'API functions'}
   function AddRecord(_id: Cardinal; sig: PWideChar; _res: PCardinal): WordBool; cdecl;
   function GetRecords(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function RecordsBySignature(_id: Cardinal; sig: PWideChar; len: PInteger): WordBool; cdecl;
@@ -21,14 +31,7 @@ uses
   function IsWinningOverride(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
   function ConflictAll(_id: Cardinal; enum: PByte): WordBool; cdecl;
   function ConflictThis(_id: Cardinal; enum: PByte): WordBool; cdecl;
-
-  // NATIVE FUNCTIONS
-  procedure StoreRecords(_file: IwbFile; len: PInteger); overload;
-  procedure StoreRecords(group: IwbGroupRecord; len: PInteger); overload;
-  procedure FindRecordsBySignature(group: IwbGroupRecord; sig: TwbSignature; len: PInteger); overload;
-  procedure FindRecordsBySignature(_file: IwbFile; sig: TwbSignature; len: PInteger); overload;
-  function FindRecordByName(_file: IwbFile; full: string): IwbMainRecord; overload;
-  function FindRecordByName(group: IwbGroupRecord; full: string): IwbMainRecord; overload;
+  {$endregion}
 
 implementation
 
@@ -38,27 +41,7 @@ uses
   wbImplementation,
   xeGroups, xeMessages;
 
-function AddRecord(_id: Cardinal; sig: PWideChar; _res: PCardinal): WordBool; cdecl;
-var
-  e: IInterface;
-  _file: IwbFile;
-  group: IwbGroupRecord;
-  element: IwbElement;
-begin
-  Result := False;
-  try
-    e := Resolve(_id);
-    if Supports(e, IwbFile, _file) then
-      group := AddGroupIfMissing(_file, string(sig))
-    else if not Supports(e, IwbGroupRecord, group) then
-      raise Exception.Create('Interface must be a file or group');
-    element := group.Add(string(sig));
-    StoreIfAssigned(IInterface(element), _res, Result);
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
+{$region 'Native functions'}
 procedure StoreRecords(_file: IwbFile; len: PInteger);
 var
   i: Integer;
@@ -81,27 +64,6 @@ begin
       resultArray[len^] := Store(rec);
       Inc(len^);
     end;
-end;
-
-function GetRecords(_id: Cardinal; len: PInteger): WordBool; cdecl;
-var
-  e: IInterface;
-  _file: IwbFile;
-  group: IwbGroupRecord;
-begin
-  Result := False;
-  try
-    e := Resolve(_id);
-    if Supports(e, IwbFile, _file) then
-      StoreRecords(_file, len)
-    else if Supports(e, IwbGroupRecord, group) then
-      StoreRecords(group, len)
-    else
-      raise Exception.Create('Interface must be a file or group.');
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
 end;
 
 procedure StoreRecord(rec: IwbMainRecord; len: PInteger);
@@ -132,10 +94,10 @@ begin
         if rec.Signature = sig then
           StoreRecord(rec, len)
         else if Assigned(rec.ChildGroup) then
-          FindRecordsBySignature(rec.ChildGroup, sig, len);   
+          FindRecordsBySignature(rec.ChildGroup, sig, len);
       end
       else if Supports(element, IwbGroupRecord, subGroup) then
-        FindRecordsBySignature(subGroup, sig, len);   
+        FindRecordsBySignature(subGroup, sig, len);
     end;
 end;
 
@@ -150,6 +112,50 @@ begin
     for i := 0 to _file.ElementCount do
       if Supports(_file.Elements[i], IwbGroupRecord, group) then
         FindRecordsBySignature(group, sig, len);
+end;
+{$endregion}
+
+{$region 'API functions'}
+function AddRecord(_id: Cardinal; sig: PWideChar; _res: PCardinal): WordBool; cdecl;
+var
+  e: IInterface;
+  _file: IwbFile;
+  group: IwbGroupRecord;
+  element: IwbElement;
+begin
+  Result := False;
+  try
+    e := Resolve(_id);
+    if Supports(e, IwbFile, _file) then
+      group := AddGroupIfMissing(_file, string(sig))
+    else if not Supports(e, IwbGroupRecord, group) then
+      raise Exception.Create('Interface must be a file or group');
+    element := group.Add(string(sig));
+    StoreIfAssigned(IInterface(element), _res, Result);
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetRecords(_id: Cardinal; len: PInteger): WordBool; cdecl;
+var
+  e: IInterface;
+  _file: IwbFile;
+  group: IwbGroupRecord;
+begin
+  Result := False;
+  try
+    e := Resolve(_id);
+    if Supports(e, IwbFile, _file) then
+      StoreRecords(_file, len)
+    else if Supports(e, IwbGroupRecord, group) then
+      StoreRecords(group, len)
+    else
+      raise Exception.Create('Interface must be a file or group.');
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
 end;
 
 function RecordsBySignature(_id: Cardinal; sig: PWideChar; len: PInteger): WordBool; cdecl;
@@ -201,55 +207,40 @@ begin
   try
     e := Resolve(_id);
     if Supports(e, IwbGroupRecord, group) then
-      _file := group._File
-    else if not Supports(e, IwbFile, _file) then
+      rec := group.MainRecordByEditorID[string(edid)]
+    else if Supports(e, IwbFile, _file) then
+      rec := _file.RecordByEditorID[string(edid)]
+    else
       raise Exception.Create('Input interface must be a file or a group.');
-    rec := _file.RecordByEditorID[string(edid)];
-    StoreIfAssigned(IInterface(rec), _res, Result);
+    if not Assigned(rec) then
+      raise Exception.Create('Failed to find record with Editor ID: ' + edid);
+    _res^ := Store(rec);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
 end;
 
-function FindRecordByName(_file: IwbFile; full: string): IwbMainRecord; overload;
-var
-  i: Integer;
-begin
-  for i := 0 to Pred(_file.RecordCount) do
-    if Supports(_file.Records[i], IwbMainRecord, Result) then
-      if Result.ElementEditValues['FULL'] = full then exit;
-  Result := nil;
-end;
-
-function FindRecordByName(group: IwbGroupRecord; full: string): IwbMainRecord; overload;
-var
-  i: Integer;
-begin
-  for i := 0 to Pred(group.ElementCount) do
-    if Supports(group.Elements[i], IwbMainRecord, Result) then
-      if Result.ElementEditValues['FULL'] = full then exit;
-  Result := nil;
-end;
-
-function FindRecordByName(e: IInterface; full: string): IwbMainRecord; overload;
-var
-  _file: IwbFile;
-  group: IwbGroupRecord;
-begin
-  if Supports(e, IwbFile, _file) then
-    FindRecordByName(_file, full)
-  else if Supports(e, IwbGroupRecord, group) then
-    FindRecordByName(group, full);
-end;
-
 function RecordByName(_id: Cardinal; full: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
+  e: IInterface;
+  _file: IwbFile;
+  group: IwbGroupRecord;
   rec: IwbMainRecord;
 begin
   Result := False;
   try
-    rec := FindRecordByName(Resolve(_id), string(full));
-    StoreIfAssigned(IInterface(rec), _res, Result);
+    e := Resolve(_id);
+    if Supports(e, IwbFile, _file) then
+      rec := _file.RecordByName[string(full)]
+    else if Supports(e, IwbGroupRecord, group) then
+      rec := group.MainRecordByName[string(full)]
+    else
+      raise Exception.Create('Input interface must be a file or group.');
+    if not Assigned(rec) then
+      raise Exception.Create('Failed to find record with name: ' + full);
+    _res^ := Store(rec);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -394,5 +385,6 @@ begin
     on x: Exception do ExceptionHandler(x);
   end;
 end;
+{$endregion}
 
 end.

@@ -5,13 +5,16 @@ interface
 uses
   wbInterface;
 
+  {$region 'Native functions'}
+  function EditorIDToFormID(_file: IwbFile; editorID: String): Cardinal;
+  {$endregion}
+
+  {$region 'API functions'}
   function EditorID(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function FullName(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function GetFormID(_id: Cardinal; formID: PCardinal): WordBool; cdecl;
   function SetFormID(_id: Cardinal; formID: Cardinal): WordBool; cdecl;
-
-  // native functions
-  function EditorIDToFormID(_file: IwbFile; editorID: String): Cardinal;
+  {$endregion}
 
 implementation
 
@@ -24,6 +27,7 @@ uses
   // xelib modules
   xeMessages, xeMeta;
 
+{$region 'Native functions'}
 function EditorIDToFormID(_file: IwbFile; editorID: String): Cardinal;
 var
   rec: IwbMainRecord;
@@ -33,7 +37,9 @@ begin
     raise Exception.Create('Failed to find record with Editor ID: ' + editorID + ' in file ' + _file.FileName);
   Result := rec.LoadOrderFormID;
 end;
+{$endregion}
 
+{$region 'API functions'}
 function EditorID(_id: Cardinal; len: PInteger): WordBool; cdecl;
 var
   rec: IwbMainRecord;
@@ -83,7 +89,6 @@ begin
   end;
 end;
 
-// TODO: Fix references
 function SetFormID(_id: Cardinal; formID: Cardinal): WordBool; cdecl;
 var
   rec: IwbMainRecord;
@@ -92,13 +97,13 @@ begin
   try
     if not Supports(Resolve(_id), IwbMainRecord, rec) then
       raise Exception.Create('Interface must be a main record.');
+    // TODO: Fix references
     rec.LoadOrderFormID := formID;
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
 end;
-
-
+{$endregion}
 
 end.
