@@ -17,7 +17,7 @@ uses
   txImports;
 {$ENDIF}
 {$IFNDEF USE_DLL}
-  xeFiles;
+  xeMeta, xeFiles;
 {$ENDIF}
 
 procedure BuildFileHandlingTests;
@@ -95,7 +95,7 @@ begin
             end);
         end);
 
-      {$IF false}
+      {$IF true}
       Describe('AddFile', procedure
         var
           i: Integer;
@@ -112,10 +112,17 @@ begin
 
           {$IF false}
           It('Should return false if the load order is already full', procedure
+            var
+              i: Integer;
+              len: Integer;
+              fn: String;
             begin
-              for i := GetGlobal('FileCount') to 254 do
-                AddFile(Concat(IntToStr(i),'.esp', @h));
-              ExpectFailure(AddFile('255.esp', @h));
+              ExpectSuccess(GetGlobal('FileCount', @len));
+              for i := StrToInt(grs(len)) to 253 do begin
+                fn := IntToStr(i) + '.esp';
+                ExpectSuccess(AddFile(PWideChar(fn), @h));
+              end;
+              ExpectFailure(AddFile('254.esp', @h));
             end);
           {$IFEND}
         end);
