@@ -400,7 +400,7 @@ begin
     Result := CreateFromContainer(rec as IwbContainerElementRef, path);
 end;
 
-function OverrideRecord(targetFile: IwbFile; formID: Cardinal; sig: TwbSignature): IwbMainRecord;
+function OverrideRecord(targetFile: IwbFile; formID: Cardinal): IwbMainRecord;
 var
   f: IwbFile;
   rec: IwbMainRecord;
@@ -417,19 +417,19 @@ begin
   Result := wbCopyElementToFile(rec, targetFile, false, true, '', '', '') as IwbMainRecord;
 end;
 
-function CreateRecord(group: IwbGroupRecord; formID: Cardinal; nextPath: String): IInterface; overload;
+function CreateRecord(group: IwbGroupRecord; formID: Cardinal; nextPath: String): IwbMainRecord; overload;
 var
   sig: TwbSignature;
 begin
   sig := TwbSignature(group.GroupLabel);
   Result := group._File.RecordByFormID[formID, true];
   if not Assigned(Result) then
-    Result := OverrideRecord(group._File, formID, sig);
-  if Assigned(Result) and ((Result as IwbMainRecord).Signature <> sig) then
+    Result := OverrideRecord(group._File, formID);
+  if Assigned(Result) and (Result.Signature <> sig) then
     raise Exception.Create(Format('Found record %s does not match expected ' +
-      'signature %s.', [(Result as IwbMainRecord).Name, string(sig)]));
+      'signature %s.', [Result.Name, string(sig)]));
   if Assigned(Result) and (nextPath <> '') then
-    Result := CreateFromRecord(Result as IwbMainRecord, nextPath);
+    Result := CreateFromRecord(Result, nextPath);
 end;
 
 function CreateRecord(group: IwbGroupRecord; key, nextPath: String): IwbMainRecord; overload;
@@ -465,6 +465,15 @@ begin
     Result := CreateFromGroup(Result as IwbGroupRecord, nextPath);
 end;
 
+function CreateRecord(_file: IwbFile; formID: Cardinal; nextPath: String): IwbMainRecord; overload;
+begin
+  Result := _file.RecordByFormID[formID, true];
+  if not Assigned(Result) then
+    Result := OverrideRecord(_file, formID);
+  if Assigned(Result) and (nextPath <> '') then
+    Result := CreateFromRecord(Result, nextPath);
+end;
+
 function CreateFromFile(_file: IwbFile; path: String): IInterface;
 var
   key, nextPath: String;
@@ -472,8 +481,12 @@ var
   formID: Cardinal;
 begin
   SplitPath(path, key, nextPath);
-  // resolve file header or group
-  if key = 'File Header' then
+  // resolve record by formID if key is a formID
+  // else resolve file header
+  // else resolve by group signature
+  if ParseFormID(key, formID) then
+    Result := CreateRecord(_file, formID, nextPath)
+  else if key = 'File Header' then
     Result := CreateFromRecord(_file.Header, nextPath)
   else
     Result := CreateGroup(_file, key, nextPath);
