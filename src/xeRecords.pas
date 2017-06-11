@@ -11,8 +11,6 @@ uses
   procedure StoreRecords(group: IwbGroupRecord; len: PInteger); overload;
   procedure FindRecordsBySignature(group: IwbGroupRecord; sig: TwbSignature; len: PInteger); overload;
   procedure FindRecordsBySignature(_file: IwbFile; sig: TwbSignature; len: PInteger); overload;
-  function FindRecordByName(_file: IwbFile; full: string): IwbMainRecord; overload;
-  function FindRecordByName(group: IwbGroupRecord; full: string): IwbMainRecord; overload;
   {$endregion}
 
   {$region 'API functions'}

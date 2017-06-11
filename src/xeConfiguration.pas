@@ -50,8 +50,6 @@ type
   {$region 'Functions'}
   procedure SetGame(id: integer);
   function NativeGetGamePath(mode: TGameMode): string;
-  function SetGameAbbr(abbrName: string): boolean;
-  function SetGameParam(param: string): boolean;
   procedure LoadSettings;
   procedure SaveSettings;
   {$endregion}

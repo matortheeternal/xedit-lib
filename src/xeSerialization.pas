@@ -178,7 +178,7 @@ end;
 {$endregion}
 
 {$region 'ElementFromJSON helpers'}
-function AddElementIfMissing(container: IwbContainerElementRef; path: String): IwbElement;
+{function AddElementIfMissing(container: IwbContainerElementRef; path: String): IwbElement;
 begin
   Result := container.ElementByPath[path];
   if not Assigned(Result) then
@@ -393,7 +393,7 @@ begin
     Result := NativeAddElement(_id, string(path))
   else
     Result := Resolve(_id);
-end;
+end;}
 {$endregion}
 {$endregion}
 
