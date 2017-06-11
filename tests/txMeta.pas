@@ -129,6 +129,14 @@ begin
   Expect(not b, 'Function should return false');
 end;
 
+procedure TestGetGlobal(global: PWideChar);
+var
+  len: Integer;
+begin
+  ExpectSuccess(GetGlobal(global, @len));
+  Expect(Length(grs(len)) > 0, 'Should return a string');
+end;
+
 procedure BuildMetaTests;
 var
   h1, h2: Cardinal;
@@ -140,38 +148,37 @@ begin
         begin
           It('Should have the ProgramPath global', procedure
             begin
-              GetGlobal('ProgramPath', @len);
-              Expect(Length(grs(len)) > 0, 'Should return a string');
+              TestGetGlobal('ProgramPath');
             end);
 
           It('Should have the Version global', procedure
             begin
-              GetGlobal('Version', @len);
-              Expect(Length(grs(len)) > 0, 'Should return a string');
+              TestGetGlobal('Version');
             end);
 
           It('Should have the GameName global', procedure
             begin
-              GetGlobal('GameName', @len);
-              Expect(Length(grs(len)) > 0, 'Should return a string');
+              TestGetGlobal('GameName');
             end);
 
           It('Should have the AppName global', procedure
             begin
-              GetGlobal('AppName', @len);
-              Expect(Length(grs(len)) > 0, 'Should return a string');
+              TestGetGlobal('AppName');
             end);
 
           It('Should have the LongGameName global', procedure
             begin
-              GetGlobal('LongGameName', @len);
-              Expect(Length(grs(len)) > 0, 'Should return a string');
+              TestGetGlobal('LongGameName');
             end);
 
           It('Should have the DataPath global', procedure
             begin
-              GetGlobal('DataPath', @len);
-              Expect(Length(grs(len)) > 0, 'Should return a string');
+              TestGetGlobal('DataPath');
+            end);
+
+          It('Should have the FileCount global', procedure
+            begin
+              TestGetGlobal('FileCount');
             end);
 
           It('Should fail if global does not exist', procedure
@@ -198,7 +205,6 @@ begin
               ExpectSuccess(Release(h1));
               ExpectSuccess(FileByName('Skyrim.esm', @h2));
               Expect(h1 = h2, 'Next allocation should use the freed handle');
-              ExpectSuccess(Release(h2));
             end);
         end);
 
