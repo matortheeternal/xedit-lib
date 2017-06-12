@@ -98,13 +98,8 @@ type
   //function ElementFromJson(_id: Cardinal; path: PWideChar; json: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
 
   // RECORD HANDLING METHODS
-  function AddRecord(_id: Cardinal; sig: string; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function GetRecords(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function RecordsBySignature(_id: Cardinal; sig: string; _res: PCardinalArray): WordBool; cdecl; external 'XEditLib.dll';
-  function RecordByIndex(_id: Cardinal; index: Integer; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function RecordByFormID(_id, formID: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function RecordByEditorID(_id: Cardinal; edid: string; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function RecordByName(_id: Cardinal; full: string; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function GetOverrides(_id: Cardinal; count: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function IsMaster(_id: Cardinal; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
   function IsInjected(_id: Cardinal; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
@@ -112,8 +107,6 @@ type
   function IsWinningOverride(_id: Cardinal; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
 
   // RECORD VALUE METHODS
-  function EditorID(_id: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
-  function FullName(_id: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetFormID(_id: Cardinal; formID: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function SetFormID(_id: Cardinal; formID: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
 

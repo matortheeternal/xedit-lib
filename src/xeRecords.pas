@@ -7,6 +7,7 @@ uses
   xeMeta;
 
   {$region 'Native functions'}
+  function EditorIDToFormID(_file: IwbFile; editorID: String): Cardinal;
   procedure StoreRecords(_file: IwbFile; len: PInteger); overload;
   procedure StoreRecords(group: IwbGroupRecord; len: PInteger); overload;
   procedure FindRecordsBySignature(group: IwbGroupRecord; sig: TwbSignature; len: PInteger); overload;
@@ -14,12 +15,10 @@ uses
   {$endregion}
 
   {$region 'API functions'}
-  function AddRecord(_id: Cardinal; sig: PWideChar; _res: PCardinal): WordBool; cdecl;
+  function GetFormID(_id: Cardinal; formID: PCardinal): WordBool; cdecl;
+  function SetFormID(_id: Cardinal; formID: Cardinal): WordBool; cdecl;
   function GetRecords(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function RecordsBySignature(_id: Cardinal; sig: PWideChar; len: PInteger): WordBool; cdecl;
-  function RecordByFormID(_id, formID: Cardinal; _res: PCardinal): WordBool; cdecl;
-  function RecordByEditorID(_id: Cardinal; edid: PWideChar; _res: PCardinal): WordBool; cdecl;
-  function RecordByName(_id: Cardinal; full: PWideChar; _res: PCardinal): WordBool; cdecl;
   function GetOverrides(_id: Cardinal; count: PInteger): WordBool; cdecl;
   function ExchangeReferences(_id, oldFormID, newFormID: Cardinal): WordBool; cdecl;
   function GetReferences(_id: Cardinal; len: PInteger): WordBool; cdecl;
@@ -40,6 +39,16 @@ uses
   xeMessages, xeElements;
 
 {$region 'Native functions'}
+function EditorIDToFormID(_file: IwbFile; editorID: String): Cardinal;
+var
+  rec: IwbMainRecord;
+begin
+  rec := _file.RecordByEditorID[editorID];
+  if not Assigned(rec) then
+    raise Exception.Create('Failed to find record with Editor ID: ' + editorID + ' in file ' + _file.FileName);
+  Result := rec.LoadOrderFormID;
+end;
+
 procedure StoreRecords(_file: IwbFile; len: PInteger);
 var
   i: Integer;
@@ -114,22 +123,32 @@ end;
 {$endregion}
 
 {$region 'API functions'}
-function AddRecord(_id: Cardinal; sig: PWideChar; _res: PCardinal): WordBool; cdecl;
+function GetFormID(_id: Cardinal; formID: PCardinal): WordBool; cdecl;
 var
-  e: IInterface;
-  _file: IwbFile;
-  group: IwbGroupRecord;
-  element: IwbElement;
+  rec: IwbMainRecord;
 begin
   Result := False;
   try
-    e := Resolve(_id);
-    if Supports(e, IwbFile, _file) then
-      group := AddGroupIfMissing(_file, string(sig))
-    else if not Supports(e, IwbGroupRecord, group) then
-      raise Exception.Create('Interface must be a file or group');
-    element := group.Add(string(sig));
-    StoreIfAssigned(IInterface(element), _res, Result);
+    if not Supports(Resolve(_id), IwbMainRecord, rec) then
+      raise Exception.Create('Interface must be a main record.');
+    formID^ := rec.LoadOrderFormID;
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function SetFormID(_id: Cardinal; formID: Cardinal): WordBool; cdecl;
+var
+  rec: IwbMainRecord;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbMainRecord, rec) then
+      raise Exception.Create('Interface must be a main record.');
+    // TODO: Fix references
+    rec.LoadOrderFormID := formID;
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -172,72 +191,6 @@ begin
       FindRecordsBySignature(group, _sig, len)
     else
       raise Exception.Create('Interface must be a file or group.');
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function RecordByFormID(_id, formID: Cardinal; _res: PCardinal): WordBool; cdecl;
-var
-  _file: IwbFile;
-  rec: IwbMainRecord;
-begin
-  Result := False;
-  try
-    if not Supports(Resolve(_id), IwbFile, _file) then
-      raise Exception.Create('Interface must be a file.');
-    rec := _file.RecordByFormID[formID, True];
-    StoreIfAssigned(IInterface(rec), _res, Result);
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function RecordByEditorID(_id: Cardinal; edid: PWideChar; _res: PCardinal): WordBool; cdecl;
-var
-  e: IInterface;
-  _file: IwbFile;
-  rec: IwbMainRecord;
-  group: IwbGroupRecord;
-begin
-  Result := False;
-  try
-    e := Resolve(_id);
-    if Supports(e, IwbGroupRecord, group) then
-      rec := group.MainRecordByEditorID[string(edid)]
-    else if Supports(e, IwbFile, _file) then
-      rec := _file.RecordByEditorID[string(edid)]
-    else
-      raise Exception.Create('Input interface must be a file or a group.');
-    if not Assigned(rec) then
-      raise Exception.Create('Failed to find record with Editor ID: ' + edid);
-    _res^ := Store(rec);
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function RecordByName(_id: Cardinal; full: PWideChar; _res: PCardinal): WordBool; cdecl;
-var
-  e: IInterface;
-  _file: IwbFile;
-  group: IwbGroupRecord;
-  rec: IwbMainRecord;
-begin
-  Result := False;
-  try
-    e := Resolve(_id);
-    if Supports(e, IwbFile, _file) then
-      rec := _file.RecordByName[string(full)]
-    else if Supports(e, IwbGroupRecord, group) then
-      rec := group.MainRecordByName[string(full)]
-    else
-      raise Exception.Create('Input interface must be a file or group.');
-    if not Assigned(rec) then
-      raise Exception.Create('Failed to find record with name: ' + full);
-    _res^ := Store(rec);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
