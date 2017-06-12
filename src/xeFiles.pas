@@ -22,6 +22,7 @@ uses
   function FileByName(name: PWideChar; _res: PCardinal): WordBool; cdecl;
   function FileByAuthor(author: PWideChar; _res: PCardinal): WordBool; cdecl;
   function SaveFile(_id: Cardinal): WordBool; cdecl;
+  function OverrideRecordCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
   {$endregion}
 
 implementation
@@ -209,6 +210,25 @@ begin
         FileStream.Free;
       end;
     end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function OverrideRecordCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
+var
+  _file: IwbFile;
+  i: Integer;
+begin
+  Result := False;
+  try
+    if Supports(Resolve(_id), IwbFile, _file) then
+      raise Exception.Create('Interface must be a file.');
+    count^ := 0;
+    for i := 0 to Pred(_file.RecordCount) do
+      if not _file.Records[i].IsMaster then
+        Inc(count^);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;

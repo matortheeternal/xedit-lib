@@ -55,12 +55,9 @@ exports
   UnloadPlugin, GetLoaderDone, GetGamePath,
   // FILE HANDLING METHODS
   AddFile, FileByIndex, FileByLoadOrder, FileByName, FileByAuthor, SaveFile,
+  OverrideRecordCount,
   // MASTER HANDLING METHODS
   CleanMasters, SortMasters, AddMaster, AddMasters, GetMasters, GetRequiredBy,
-  // FILE VALUE METHODS
-  GetFileHeader, GetNextObjectId, SetNextObjectID, GetFileName, GetAuthor,
-  SetAuthor, GetDescription, SetDescription, OverrideRecordCount, GetIsESM,
-  SetIsESM,
   // ELEMENT HANDLING METHODS
   HasElement, GetElement, AddElement, RemoveElement, RemoveElementOrParent,
   GetElements, GetContainer,  GetElementFile, GetLinksTo, ElementCount,
