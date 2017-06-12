@@ -17,7 +17,7 @@ uses
   txImports,
 {$ENDIF}
 {$IFNDEF USE_DLL}
-  xeFiles, xeElements, xeElementValues, xeRecordValues,
+  xeFiles, xeElements, xeElementValues,
 {$ENDIF}
   txMeta;
 
@@ -136,9 +136,9 @@ procedure TestEdids(a: CardinalArray; firstEdid, secondEdid: String);
 var
   len: Integer;
 begin
-  ExpectSuccess(EditorID(a[Low(a)], @len));
+  ExpectSuccess(GetValue(a[Low(a)], 'EDID', @len));
   ExpectEqual(grs(len), firstEdid);
-  ExpectSuccess(EditorID(a[High(a)], @len));
+  ExpectSuccess(GetValue(a[High(a)], 'EDID', @len));
   ExpectEqual(grs(len), secondEdid);
 end;
 

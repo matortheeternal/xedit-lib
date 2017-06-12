@@ -222,7 +222,7 @@ var
 begin
   Result := False;
   try
-    if Supports(Resolve(_id), IwbFile, _file) then
+    if not Supports(Resolve(_id), IwbFile, _file) then
       raise Exception.Create('Interface must be a file.');
     count^ := 0;
     for i := 0 to Pred(_file.RecordCount) do
