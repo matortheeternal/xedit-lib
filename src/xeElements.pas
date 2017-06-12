@@ -25,6 +25,7 @@ type
   function CreateFromGroup(group: IwbGroupRecord; path: String): IInterface;
   function CreateElement(e: IInterface; path: String): IInterface;
   function NativeAddElement(_id: Cardinal; key: string): IInterface;
+  function IsChildGroup(group: IwbGroupRecord): Boolean;
   function IsSorted(e: IwbElement): Boolean;
   function IsArray(element: IwbElement): Boolean;
   function IsFormID(element: IwbElement): Boolean;
@@ -323,6 +324,17 @@ end;
 {$endregion}
 
 {$region 'Element creation'}
+function AddGroupIfMissing(_file: IwbFile; sig: String): IwbGroupRecord;
+var
+  _sig: TwbSignature;
+begin
+  _sig := TwbSignature(sig);
+  if _file.HasGroup(_sig) then
+    Result := _file.GroupBySignature[_sig]
+  else
+    Supports(_file.Add(sig), IwbGroupRecord, Result);
+end;
+
 function CreateFromContainer(container: IwbContainerElementRef; path: String): IInterface;
 var
   key, nextPath: String;
@@ -663,6 +675,11 @@ begin
 end;
 
 {$region 'Def/type helpers'}
+function IsChildGroup(group: IwbGroupRecord): Boolean;
+begin
+  Result := group.GroupType in [1,6,7];
+end;
+
 { Returns true if @e is a sorted container }
 function IsSorted(e: IwbElement): Boolean;
 var

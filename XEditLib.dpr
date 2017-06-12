@@ -73,8 +73,6 @@ exports
   SetIntValue, GetUIntValue, SetUIntValue, GetFloatValue, SetFloatValue,
   GetFlag, SetFlag, GetEnabledFlags, SetEnabledFlags, GetAllFlags,
   SignatureFromName, NameFromSignature, GetSignatureNameMap,
-  // GROUP HANDLING METHODS
-  HasGroup, AddGroup, GetChildGroup,
   // RECORD HANDLING METHODS
   AddRecord, GetRecords, RecordsBySignature, RecordByFormID, RecordByEditorID,
   RecordByName, GetOverrides, GetReferences, ExchangeReferences, IsMaster,
