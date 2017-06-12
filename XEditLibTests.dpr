@@ -15,13 +15,11 @@ uses
   xeSetup in 'src\xeSetup.pas',
   xeFiles in 'src\xeFiles.pas',
   xeMasters in 'src\xeMasters.pas',
-  xeFileValues in 'src\xeFileValues.pas',
   xeElements in 'src\xeElements.pas',
   xeElementValues in 'src\xeElementValues.pas',
   xeErrors in 'src\xeErrors.pas',
   xeRecords in 'src\xeRecords.pas',
   xeRecordValues in 'src\xeRecordValues.pas',
-  xeGroups in 'src\xeGroups.pas',
   xeSerialization in 'src\xeSerialization.pas',
   mteHelpers in 'lib\mte\mteHelpers.pas',
   mteConflict in 'lib\mte\mteConflict.pas',
@@ -44,7 +42,6 @@ uses
   txMeta in 'tests\txMeta.pas',
   txSetup in 'tests\txSetup.pas',
   txFiles in 'tests\txFiles.pas',
-  txFileValues in 'tests\txFileValues.pas',
   txMasters in 'tests\txMasters.pas',
   txElements in 'tests\txElements.pas',
   txElementValues in 'tests\txElementValues.pas',
@@ -67,7 +64,6 @@ procedure BuildXETests;
 begin
   BuildMetaTests;
   BuildFileHandlingTests;
-  BuildFileValueTests;
   BuildMasterHandlingTests;
   BuildElementHandlingTests;
   BuildElementValueTests;
