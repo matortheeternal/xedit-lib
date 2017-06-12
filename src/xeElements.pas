@@ -22,6 +22,7 @@ type
   function NativeGetElementEx(_id: Cardinal; key: PWideChar): IwbElement;
   procedure NativeMoveArrayItem(element: IwbElement; index: Integer);
   function NativeContainer(element: IwbElement): IwbContainer;
+  function AddGroupIfMissing(_file: IwbFile; sig: String): IwbGroupRecord;
   function CreateFromGroup(group: IwbGroupRecord; path: String): IInterface;
   function CreateElement(e: IInterface; path: String): IInterface;
   function NativeAddElement(_id: Cardinal; key: string): IInterface;
@@ -71,7 +72,7 @@ uses
   // xedit units
   wbImplementation,
   // xelib units
-  xeMessages, xeFiles, xeMasters, xeGroups, xeRecords, xeElementValues, xeSetup;
+  xeMessages, xeFiles, xeMasters, xeRecords, xeElementValues, xeSetup;
 
 {$region 'Native functions'}
 {$region 'Path parsing'}

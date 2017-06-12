@@ -54,7 +54,7 @@ uses
   // xedit modules
   wbImplementation,
   // xelib modules
-  xeMeta, xeMessages, xeElements, xeGroups, xeRecordValues;
+  xeMeta, xeMessages, xeElements, xeRecordValues;
 
 {$region 'Native functions'}
 {$region 'Name helpers'}

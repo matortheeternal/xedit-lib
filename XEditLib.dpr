@@ -15,7 +15,6 @@ uses
   xeErrors in 'src\xeErrors.pas',
   xeRecords in 'src\xeRecords.pas',
   xeRecordValues in 'src\xeRecordValues.pas',
-  xeGroups in 'src\xeGroups.pas',
   xeSerialization in 'src\xeSerialization.pas',
   mteHelpers in 'lib\mte\mteHelpers.pas',
   mteConflict in 'lib\mte\mteConflict.pas',

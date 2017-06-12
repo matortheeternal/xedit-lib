@@ -37,7 +37,7 @@ uses
   Classes, SysUtils,
   mteConflict,
   wbImplementation,
-  xeGroups, xeMessages;
+  xeMessages, xeElements;
 
 {$region 'Native functions'}
 procedure StoreRecords(_file: IwbFile; len: PInteger);

@@ -20,7 +20,7 @@ implementation
 
 uses
   Variants, SysUtils, StrUtils,
-  xeMeta, xeFiles, xeGroups, xeElements, xeElementValues, xeMessages;
+  xeMeta, xeFiles, xeElements, xeElementValues, xeMessages;
 
 var
   SerializeEditValues: Boolean;

@@ -44,19 +44,7 @@ type
   function FileByName(name: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function FileByAuthor(author: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function SaveFile(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
-
-  // FILE VALUE METHODS
-  function GetFileHeader(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function GetNextObjectId(_id: Cardinal; nextObjectID: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function SetNextObjectID(_id, nextObjectID: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function GetFileName(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
-  function GetAuthor(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
-  function SetAuthor(_id: Cardinal; author: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
-  function GetDescription(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
-  function SetDescription(_id: Cardinal; desc: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
   function OverrideRecordCount(_id: Cardinal; count: PInteger): WordBool; cdecl; external 'XEditLib.dll';
-  function GetIsESM(_id: Cardinal; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
-  function SetIsESM(_id: Cardinal; bool: WordBool): WordBool; cdecl; external 'XEditLib.dll';
 
   // ELEMENT HANDLING METHODS
   function HasElement(_id: Cardinal; key: PWideChar; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
@@ -108,11 +96,6 @@ type
   // SERIALIZATION METHODS
   function ElementToJson(_id: Cardinal; len: PInteger; editValues: WordBool): WordBool; cdecl; external 'XEditLib.dll';
   //function ElementFromJson(_id: Cardinal; path: PWideChar; json: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-
-  // GROUP HANDLING METHODS
-  function HasGroup(_id: Cardinal; sig: PWideChar; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
-  function AddGroup(_id: Cardinal; sig: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function GetChildGroup(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
 
   // RECORD HANDLING METHODS
   function AddRecord(_id: Cardinal; sig: string; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
