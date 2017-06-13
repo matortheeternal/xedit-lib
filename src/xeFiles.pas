@@ -23,6 +23,8 @@ uses
   function FileByAuthor(author: PWideChar; _res: PCardinal): WordBool; cdecl;
   function SaveFile(_id: Cardinal): WordBool; cdecl;
   function OverrideRecordCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
+  function SortEditorIDs(_id: Cardinal; sig: PWideChar): WordBool; cdecl;
+  function SortNames(_id: Cardinal; sig: PWideChar): WordBool; cdecl;
   {$endregion}
 
 implementation
@@ -228,6 +230,48 @@ begin
     for i := 0 to Pred(_file.RecordCount) do
       if not _file.Records[i].IsMaster then
         Inc(count^);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function SortEditorIDs(_id: Cardinal; sig: PWideChar): WordBool; cdecl;
+var
+  _file: IwbFile;
+  i: Integer;
+begin
+  Result := False;
+  try
+    if _id = 0 then begin
+      for i := Low(xFiles) to High(xFiles) do
+        xFiles[i].SortEditorIDs(string(sig));
+    end
+    else if Supports(Resolve(_id), IwbFile, _file) then
+      _file.SortEditorIDs(string(sig))
+    else
+      raise Exception.Create('Interface must be a file.');
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function SortNames(_id: Cardinal; sig: PWideChar): WordBool; cdecl;
+var
+  _file: IwbFile;
+  i: Integer;
+begin
+  Result := False;
+  try
+    if _id = 0 then begin
+      for i := Low(xFiles) to High(xFiles) do
+        xFiles[i].SortNames(string(sig));
+    end
+    else if Supports(Resolve(_id), IwbFile, _file) then
+      _file.SortNames(string(sig))
+    else
+      raise Exception.Create('Interface must be a file.');
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
