@@ -431,7 +431,7 @@ begin
           It('Should fail if interface is not a container', procedure
             begin
               ExpectSuccess(GetElement(ar2, 'FULL', @element));
-              ExpectFailure(AddElement(element, '', @h));
+              ExpectFailure(AddElement(element, '.', @h));
             end);
         end);
 

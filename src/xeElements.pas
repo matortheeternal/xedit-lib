@@ -26,6 +26,7 @@ type
   function AddGroupIfMissing(_file: IwbFile; sig: String): IwbGroupRecord;
   function CreateFromContainer(container: IwbContainerElementRef; path: String): IInterface;
   function CreateFromGroup(group: IwbGroupRecord; path: String): IInterface;
+  function CreateFile(fileName, nextPath: String): IInterface;
   function CreateElement(e: IInterface; path: String): IInterface;
   function NativeAddElement(_id: Cardinal; key: string): IInterface;
   function IsChildGroup(group: IwbGroupRecord): Boolean;
@@ -517,6 +518,8 @@ function NativeAddElement(_id: Cardinal; key: String): IInterface;
 begin
   if _id = 0 then
     Result := CreateFromRoot(key)
+  else if key = '' then
+    Result := Resolve(_id)   
   else
     Result := CreateElement(Resolve(_id), key);
 end;
