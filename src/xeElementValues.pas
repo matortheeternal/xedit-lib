@@ -12,6 +12,8 @@ uses
   function NativeName(e: IwbElement; quoteFull: Boolean = False): String;
   function ParseFormIDValue(value: String; var formID: Int64): Boolean;
   procedure SetElementValue(element: IwbElement; value: String);
+  function IndexOfFlag(flagsDef: IwbFlagsDef; name: String): Integer;
+  procedure NativeSetFlag(element: IwbElement; index: Integer; enabled: WordBool);
   function NativeSignatureFromName(name: String): String;
   function NativeNameFromSignature(sig: String): String;
   procedure BuildSignatureNameMap;
@@ -250,6 +252,13 @@ begin
 end;
 {$endregion}
 
+function IndexOfFlag(flagsDef: IwbFlagsDef; name: String): Integer;
+begin
+  for Result := 0 to Pred(flagsDef.FlagCount) do
+    if flagsDef.Flags[Result] = name then exit;
+  Result := -1;
+end;
+
 procedure NativeSetFlag(element: IwbElement; index: Integer; enabled: WordBool);
 var
   flagVal: UInt64;
@@ -485,20 +494,20 @@ function GetFlag(_id: Cardinal; path, name: PWideChar; enabled: PWordBool): Word
 var
   element: IwbElement;
   flagsDef: IwbFlagsDef;
-  i: Integer;
+  index: Integer;
 begin
   Result := False;
   try
     element := NativeGetElementEx(_id, path);
     if not GetFlagsDef(element, flagsDef) then
       raise Exception.Create('Element does not have flags');
-    for i := 0 to Pred(flagsDef.FlagCount) do
-      if flagsDef.Flags[i] = name then begin
-        enabled^ := element.NativeValue and (1 shl i);
-        Result := True;
-        exit;
-      end;
-    raise Exception.Create('Flag "' + name + '" not found.');
+    index := IndexOfFlag(flagsDef, string(name));
+    if index > -1 then begin
+      enabled^ := element.NativeValue and (1 shl index);
+      Result := True;
+    end
+    else
+      raise Exception.Create('Flag "' + name + '" not found.');
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -508,20 +517,20 @@ function SetFlag(_id: Cardinal; path, name: PWideChar; enabled: WordBool): WordB
 var
   element: IwbElement;
   flagsDef: IwbFlagsDef;
-  i: Integer;
+  index: Integer;
 begin
   Result := False;
   try
     element := NativeGetElementEx(_id, path);
     if not GetFlagsDef(element, flagsDef) then
       raise Exception.Create('Element does not have flags');
-    for i := 0 to Pred(flagsDef.FlagCount) do
-      if flagsDef.Flags[i] = name then begin
-        NativeSetFlag(element, i, enabled);
-        Result := True;
-        break;
-      end;
-    raise Exception.Create('Flag "' + name + '" not found.');
+    index := IndexOfFlag(flagsDef, name);
+    if index > -1 then begin
+      NativeSetFlag(element, index, enabled);
+      Result := True;
+    end
+    else
+      raise Exception.Create('Flag "' + name + '" not found.');
   except
     on x: Exception do ExceptionHandler(x);
   end;
