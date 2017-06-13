@@ -40,6 +40,7 @@ var
   len, i: Integer;
   d: Double;
   ary: TJSONArray;
+  b: WordBool;
 begin
   Describe('Serialization', procedure
     begin
@@ -391,6 +392,16 @@ begin
                   ExpectEqual(d, 8.12);
                   ExpectSuccess(GetIntValue(rec, 'DATA\Value', @i));
                   ExpectEqual(i, 6565);
+                end);
+
+              It('Should deserialize flags properly', procedure
+                begin
+                  ExpectSuccess(ElementFromJson(rec, 'Record Header', '{"Record Flags":{"Non-Playable":true}}'));
+                  ExpectSuccess(GetFlag(rec, 'Record Header\Record Flags', 'Non-Playable', @b));
+                  ExpectEqual(b, True);
+                  ExpectSuccess(ElementFromJson(rec, 'Record Header', '{"Record Flags":{}}'));
+                  ExpectSuccess(GetFlag(rec, 'Record Header\Record Flags', 'Non-Playable', @b));
+                  ExpectEqual(b, False);
                 end);
             end);
         end);
