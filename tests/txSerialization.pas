@@ -14,7 +14,7 @@ uses
   txImports,
 {$ENDIF}
 {$IFNDEF USE_DLL}
-  xeSerialization, xeElements,
+  xeSerialization, xeElements, xeElementValues,
 {$ENDIF}
   txMeta, txElements;
 
@@ -334,7 +334,15 @@ begin
 
       Describe('ElementFromJSON', procedure
         begin
-          // TODO
+          Describe('Element deserialization', procedure
+            begin
+              It('Should deserialize strings', procedure
+                begin
+                  ExpectSuccess(ElementFromJson(rec, '', '{"EDID":"Deserialization01"}', @h));
+                  ExpectSuccess(GetValue(rec, 'EDID', @len));
+                  ExpectEqual(grs(len), 'Deserialization01');
+                end);
+            end);
         end);
     end);
 end;
