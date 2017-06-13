@@ -7,7 +7,7 @@ uses
   wbInterface;
 
   {$region 'Native functions'}
-  function JsonToElement(element: IwbElement; obj: TJSONObject; path: String): IInterface;
+  procedure JsonToElement(element: IwbElement; obj: TJSONObject; path: String);
   procedure JsonToElements(container: IwbContainerElementRef; obj: TJSONObject; const excludedPaths: array of string);
   function NativeElementToJson(element: IwbElement): TJSONValue;
   function GroupToJson(group: IwbGroupRecord; obj: TJSONObject): TJSONObject;
@@ -210,7 +210,7 @@ begin
   end;
 end;
 
-function JsonToElement(element: IwbElement; obj: TJSONObject; path: String): IInterface;
+procedure JsonToElement(element: IwbElement; obj: TJSONObject; path: String);
 const
   ArrayTypes: TSmashTypes = [stUnsortedArray, stUnsortedStructArray, stSortedArray,
     stSortedStructArray];
@@ -244,7 +244,6 @@ begin
         SetElementValue(element, v.AsString);
     end;
   end;
-  Result := element;
 end;
 
 procedure JsonToElements(container: IwbContainerElementRef; obj: TJSONObject; const excludedPaths: array of string);
@@ -285,7 +284,7 @@ begin
   JsonToElements(container, obj, ExcludedPaths);
 end;
 
-function JsonToRecord(rec: IwbMainRecord; obj: TJSONObject): IInterface;
+procedure JsonToRecord(rec: IwbMainRecord; obj: TJSONObject);
 const
   ExcludedPaths: array[0..0] of string = (
     'Record Header'
@@ -293,7 +292,6 @@ const
 var
   container: IwbContainerElementRef;
 begin
-  Result := rec;
   // deserialize header
   JsonToRecordHeader(rec.ElementByPath['Record Header'], obj.O['Record Header']);
   // deserialize elements
@@ -331,7 +329,7 @@ begin
     Result := '"' + str + '"';
 end;
 
-function JsonToGroup(group: IwbGroupRecord; ary: TJSONArray): IInterface;
+procedure JsonToGroup(group: IwbGroupRecord; ary: TJSONArray);
 var
   recObj: TJSONObject;
   key: String;
@@ -339,7 +337,6 @@ var
   rec: IwbMainRecord;
   i: Integer;
 begin
-  Result := group;
   // loop through array of records
   for i := 0 to Pred(ary.Count) do begin
     recObj := ary.O[i];
@@ -385,14 +382,13 @@ begin
   JsonToElements(container, obj, ExcludedPaths);
 end;
 
-function JsonToFile(_file: IwbFile; obj: TJSONObject): IInterface;
+procedure JsonToFile(_file: IwbFile; obj: TJSONObject);
 var
   groups: TJSONObject;
   group: IwbGroupRecord;
   signature: string;
   i: Integer;
 begin
-  Result := _file;
   // deserialize header
   JsonToFileHeader(_file.Header, obj.O['File Header']);
   // deserialize groups
@@ -401,6 +397,19 @@ begin
     signature := groups.Keys[i];
     group := AddGroupIfMissing(_file, signature);
     JsonToGroup(group, groups.A[signature]);
+  end;
+end;
+
+procedure JsonToFiles(obj: TJSONObject);
+var
+  i: Integer;
+  _file: IwbFile;
+  fileName: String;
+begin
+  for i := 0 to Pred(obj.Count) do begin
+    fileName := obj.Keys[i];
+    _file := CreateFile(fileName, '') as IwbFile;
+    JsonToFile(_file, obj.O[fileName]);
   end;
 end;
 {$endregion}
@@ -456,20 +465,21 @@ var
 begin
   Result := False;
   try
-    if path = '' then
-      e := Resolve(_id)
-    else
-      e := NativeAddElement(_id, path);
     obj := TJSONObject.Create(json);
     try
-      if Supports(e, IwbFile, _file) then
-        JsonToFile(_file, obj)
-      else if Supports(e, IwbGroupRecord, group) then
-        JsonToGroup(group, obj.A['Records'])
-      else if Supports(e, IwbMainRecord, rec) then
-        JsonToRecord(rec, obj)
-      else if Supports(e, IwbContainerElementRef, container) then
-        JsonToElements(container, obj, []);
+      if (_id = 0) and (path = '') then
+        JsonToFiles(obj)
+      else begin
+        e := NativeAddElement(_id, path);
+        if Supports(e, IwbFile, _file) then
+          JsonToFile(_file, obj)
+        else if Supports(e, IwbGroupRecord, group) then
+          JsonToGroup(group, obj.A['Records'])
+        else if Supports(e, IwbMainRecord, rec) then
+          JsonToRecord(rec, obj)
+        else if Supports(e, IwbContainerElementRef, container) then
+          JsonToElements(container, obj, []);
+      end;
     finally
       obj.Free;
     end;
