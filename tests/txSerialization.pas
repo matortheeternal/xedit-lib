@@ -348,6 +348,9 @@ begin
                   ExpectSuccess(ElementFromJson(rec, '', '{"EDID":"Deserialization01"}'));
                   ExpectSuccess(GetValue(rec, 'EDID', @len));
                   ExpectEqual(grs(len), 'Deserialization01');
+                  ExpectSuccess(ElementFromJson(rec, 'BODT', '{"Unused":"12 34 56"}'));
+                  ExpectSuccess(GetValue(rec, 'BODT\Unused', @len));
+                  ExpectEqual(grs(len), '12 34 56');
                 end);
 
               It('Should deserialize integer numbers', procedure
@@ -376,6 +379,18 @@ begin
                   ExpectSuccess(ElementFromJson(rec, '', '{"ZNAM":"DRSIronAlleyClose"}'));
                   ExpectSuccess(GetValue(rec, 'ZNAM', @len));
                   ExpectEqual(grs(len), 'DRSIronAlleyClose [SNDR:000C0303]');
+                  ExpectSuccess(ElementFromJson(rec, '', '{"ZNAM":"AMBCobwebSD [SNDR:0003E5DD]"}'));
+                  ExpectSuccess(GetValue(rec, 'ZNAM', @len));
+                  ExpectEqual(grs(len), 'AMBCobwebSD [SNDR:0003E5DD]');
+                end);
+
+              It('Should deserialize nested elements properly', procedure
+                begin
+                  ExpectSuccess(ElementFromJson(rec, '', '{"DATA":{"Weight":8.12,"Value":6565}}'));
+                  ExpectSuccess(GetFloatValue(rec, 'DATA\Weight', @d));
+                  ExpectEqual(d, 8.12);
+                  ExpectSuccess(GetIntValue(rec, 'DATA\Value', @i));
+                  ExpectEqual(i, 6565);
                 end);
             end);
         end);
