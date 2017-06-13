@@ -37,7 +37,8 @@ procedure BuildSerializationTests;
 var
   testFile, armo, rec, cell, keywords, keyword, dnam, h: Cardinal;
   obj, obj2, obj3: TJSONObject;
-  len: Integer;
+  len, i: Integer;
+  d: Double;
   ary: TJSONArray;
 begin
   Describe('Serialization', procedure
@@ -338,9 +339,23 @@ begin
             begin
               It('Should deserialize strings', procedure
                 begin
-                  ExpectSuccess(ElementFromJson(rec, '', '{"EDID":"Deserialization01"}', @h));
+                  ExpectSuccess(ElementFromJson(rec, '', '{"EDID":"Deserialization01"}'));
                   ExpectSuccess(GetValue(rec, 'EDID', @len));
                   ExpectEqual(grs(len), 'Deserialization01');
+                end);
+
+              It('Should deserialize integers', procedure
+                begin
+                  ExpectSuccess(ElementFromJson(rec, '', '{"DNAM":9900}'));
+                  ExpectSuccess(GetIntValue(rec, 'DNAM', @i));
+                  ExpectEqual(i, 9900);
+                end);
+
+              It('Should deserialize doubles', procedure
+                begin
+                  ExpectSuccess(ElementFromJson(rec, 'DATA', '{"Weight":5.432}'));
+                  ExpectSuccess(GetFloatValue(rec, 'DATA\Weight', @d));
+                  ExpectEqual(d, 5.432);
                 end);
             end);
         end);
