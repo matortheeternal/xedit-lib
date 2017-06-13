@@ -241,7 +241,7 @@ begin
       jtInt, jtBoolean, jtDouble:
         element.NativeValue := v.AsVariant;
       jtString:
-        element.EditValue := v.AsString;
+        SetElementValue(element, v.AsString);
     end;
   end;
   Result := element;
