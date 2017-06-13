@@ -95,9 +95,11 @@ type
 
   // SERIALIZATION METHODS
   function ElementToJson(_id: Cardinal; len: PInteger; editValues: WordBool): WordBool; cdecl; external 'XEditLib.dll';
-  //function ElementFromJson(_id: Cardinal; path: PWideChar; json: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
+  function ElementFromJson(_id: Cardinal; path: PWideChar; json: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
 
   // RECORD HANDLING METHODS
+  function GetFormID(_id: Cardinal; formID: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
+  function SetFormID(_id: Cardinal; formID: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
   function GetRecords(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function RecordsBySignature(_id: Cardinal; sig: string; _res: PCardinalArray): WordBool; cdecl; external 'XEditLib.dll';
   function GetOverrides(_id: Cardinal; count: PInteger): WordBool; cdecl; external 'XEditLib.dll';
@@ -105,10 +107,6 @@ type
   function IsInjected(_id: Cardinal; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
   function IsOverride(_id: Cardinal; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
   function IsWinningOverride(_id: Cardinal; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
-
-  // RECORD VALUE METHODS
-  function GetFormID(_id: Cardinal; formID: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function SetFormID(_id: Cardinal; formID: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
 
   // PLUGIN ERROR METHODS
   function CheckForErrors(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
