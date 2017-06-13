@@ -15,7 +15,7 @@ uses
 
   {$region 'API functions'}
   function ElementToJson(_id: Cardinal; len: PInteger; editValues: WordBool): WordBool; cdecl;
-  function ElementFromJson(_id: Cardinal; path: PWideChar; json: PWideChar; _res: PCardinal): WordBool; cdecl;
+  function ElementFromJson(_id: Cardinal; path: PWideChar; json: PWideChar): WordBool; cdecl;
   {$endregion}
 
 implementation
@@ -249,7 +249,6 @@ end;
 
 procedure JsonToElements(container: IwbContainerElementRef; obj: TJSONObject; const excludedPaths: array of string);
 var
-  hasExcludedPaths: Boolean;
   element: IwbElement;
   path: string;
   i: Integer;
@@ -446,7 +445,7 @@ begin
   end;
 end;
 
-function ElementFromJson(_id: Cardinal; path: PWideChar; json: PWideChar; _res: PCardinal): WordBool; cdecl;
+function ElementFromJson(_id: Cardinal; path: PWideChar; json: PWideChar): WordBool; cdecl;
 var
   e: IInterface;
   obj: TJSONObject;
@@ -474,7 +473,6 @@ begin
     finally
       obj.Free;
     end;
-    _res^ := Store(e);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
