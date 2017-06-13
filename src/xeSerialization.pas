@@ -210,6 +210,21 @@ begin
   end;
 end;
 
+procedure JsonToFlags(element: IwbElement; flagsDef: IwbFlagsDef; obj: TJSONObject);
+var
+  flagVal: UInt64;
+  i, index: Integer;
+  flagName: String;
+begin
+  flagVal := 0;
+  for i := 0 to Pred(obj.Count) do begin
+    flagName := obj.Keys[i];
+    index := IndexOfFlag(flagsDef, flagName);
+    flagVal := flagVal or (1 shl index);
+  end;
+  element.NativeValue := flagVal;
+end;
+
 procedure JsonToElement(element: IwbElement; obj: TJSONObject; path: String);
 const
   ArrayTypes: TSmashTypes = [stUnsortedArray, stUnsortedStructArray, stSortedArray,
@@ -220,10 +235,13 @@ var
   ary: TJSONArray;
   i: Integer;
   v: TJSONValue;
+  flagsDef: IwbFlagsDef;
 begin
   if not Assigned(element) or not Assigned(obj) then
     exit;
-  if Supports(element, IwbContainerElementRef, container)
+  if GetFlagsDef(element, flagsDef) then
+    JsonToFlags(element, flagsDef, obj.O[path])
+  else if Supports(element, IwbContainerElementRef, container)
   and (container.ElementCount > 0) then begin
     if GetSmashType(element) in ArrayTypes then begin
       ary := obj.A[path];
