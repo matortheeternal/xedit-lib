@@ -14,7 +14,7 @@ uses
   txImports,
 {$ENDIF}
 {$IFNDEF USE_DLL}
-  xeSerialization, xeElements, xeElementValues,
+  xeSerialization, xeFiles, xeElements, xeElementValues,
 {$ENDIF}
   txMeta, txElements;
 
@@ -337,6 +337,12 @@ begin
         begin
           Describe('Element deserialization', procedure
             begin
+              BeforeAll(procedure
+                begin
+                  ExpectSuccess(FileByName('Skyrim.esm', @h));
+                  ExpectSuccess(SortEditorIDs(h, 'SNDR'));
+                end);
+
               It('Should deserialize strings', procedure
                 begin
                   ExpectSuccess(ElementFromJson(rec, '', '{"EDID":"Deserialization01"}'));
