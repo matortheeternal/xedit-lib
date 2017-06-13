@@ -7,13 +7,15 @@ uses
   wbInterface;
 
   {$region 'Native functions'}
+  function JsonToElement(element: IwbElement; obj: TJSONObject; path: String): IInterface;
+  procedure JsonToElements(container: IwbContainerElementRef; obj: TJSONObject; const excludedPaths: array of string);
   function NativeElementToJson(element: IwbElement): TJSONValue;
   function GroupToJson(group: IwbGroupRecord; obj: TJSONObject): TJSONObject;
   {$endregion}
 
   {$region 'API functions'}
   function ElementToJson(_id: Cardinal; len: PInteger; editValues: WordBool): WordBool; cdecl;
-  //function ElementFromJson(_id: Cardinal; path: PWideChar; json: PWideChar; _res: PCardinal): WordBool; cdecl;
+  function ElementFromJson(_id: Cardinal; path: PWideChar; json: PWideChar; _res: PCardinal): WordBool; cdecl;
   {$endregion}
 
 implementation
@@ -178,7 +180,7 @@ end;
 {$endregion}
 
 {$region 'ElementFromJSON helpers'}
-{function AddElementIfMissing(container: IwbContainerElementRef; path: String): IwbElement;
+function AddElementIfMissing(container: IwbContainerElementRef; path: String): IwbElement;
 begin
   Result := container.ElementByPath[path];
   if not Assigned(Result) then
@@ -193,62 +195,61 @@ begin
     Result := container.Assign(High(integer), nil, False);
 end;
 
-function JsonToElement(element: IwbElement; obj: TJSONObject): IInterface;
+procedure JsonToArrayElement(element: IwbElement; ary: TJSONArray; index: Integer);
+var
+  v: TJSONValue;
+begin
+  v := ary[index];
+  case v.JSONValueType of
+    jtInt, jtBoolean, jtDouble:
+      element.NativeValue := v.AsVariant;
+    jtString:
+      element.EditValue := v.AsString;
+    jtObject:
+      JsonToElement(element, v.AsObject, '');
+  end;
+end;
+
+function JsonToElement(element: IwbElement; obj: TJSONObject; path: String): IInterface;
 const
   ArrayTypes: TSmashTypes = [stUnsortedArray, stUnsortedStructArray, stSortedArray,
     stSortedStructArray];
 var
   container: IwbContainerElementRef;
   childElement: IwbElement;
-  path: String;
   ary: TJSONArray;
   i: Integer;
-  v: Variant;
+  v: TJSONValue;
 begin
   if not Assigned(element) or not Assigned(obj) then
     exit;
-  path := GetPathName(element);
-  if Supports(element, IwbContainerElementRef, container) then begin
+  if Supports(element, IwbContainerElementRef, container)
+  and (container.ElementCount > 0) then begin
     if GetSmashType(element) in ArrayTypes then begin
       ary := obj.A[path];
       for i := 0 to Pred(ary.Count) do begin
         childElement := AssignElementIfMissing(container, i);
-        JsonToElement(childElement, ary.O[i]);
+        JsonToArrayElement(childElement, ary, i);
       end;
     end
-    else begin
-      ary := obj.A[path];
-      for i := 0 to Pred(obj.Count) do begin
-        path := obj.Keys[i];
-        childElement := AddElementIfMissing(container, path);
-        JsonToElement(childElement, obj.O[path]);
-      end;
-    end;
+    else
+      JsonToElements(container, obj.O[path], []);
   end
   else begin
-    v := element.NativeValue;
-    case VarType(v) of
-      varSmallInt, varInteger, varInt64, varByte, varWord, varLongWord:
-        element.NativeValue := obj.I[path];
-      varSingle, varDouble:
-        element.NativeValue := obj.D[path];
-      varBoolean:
-        element.NativeValue := obj.B[path];
-    else
-      element.EditValue := obj.S[path];
+    v := obj[path];
+    case v.JSONValueType of
+      jtInt, jtBoolean, jtDouble:
+        element.NativeValue := v.AsVariant;
+      jtString:
+        element.EditValue := v.AsString;
     end;
   end;
   Result := element;
 end;
 
-procedure ApplyJson(container: IwbContainerElementRef; obj: TJSONObject; path: string);
-begin
-  JsonToElement(container.ElementByPath[path], obj.O[path]);
-end;
-
-procedure JsonToElements(container: IwbContainerElementRef; var obj: TJSONObject;
-  const excludedPaths: array of string);
+procedure JsonToElements(container: IwbContainerElementRef; obj: TJSONObject; const excludedPaths: array of string);
 var
+  hasExcludedPaths: Boolean;
   element: IwbElement;
   path: string;
   i: Integer;
@@ -256,8 +257,8 @@ begin
   for i := 0 to Pred(obj.Count) do begin
     path := obj.Keys[i];
     if MatchStr(path, excludedPaths) then continue;
-    element := AddElementIfMissing(container, path);
-    JsonToElement(element, obj);
+    element := CreateFromContainer(container, path) as IwbElement;
+    JsonToElement(element, obj, path);
   end;
 end;
 
@@ -301,9 +302,40 @@ begin
     JsonToElements(container, obj, ExcludedPaths);
 end;
 
+function GetObjString(obj: TJSONObject; key: String; var value: String): Boolean;
+begin
+  Result := obj.HasKey(key);
+  if Result then
+    value := obj.S[key];
+end;
+
+function GetRecordKey(recObj: TJSONObject): String;
+var
+  recHeader: TJSONObject;
+  v: TJSONValue;
+  str: String;
+begin
+  Result := '';
+  recHeader := recObj.O['Record Header'];
+  if recHeader.HasKey('FormID') then begin
+    v := recHeader.Values['FormID'];
+    if v.JSONValueType = jtInt then
+      Result := IntToHex(recHeader.I['FormID'], 8)
+    else if v.JSONValueType = jtString then
+      Result := recHeader.S['FormID'];
+  end
+  else if GetObjString(recHeader, 'EDID - Editor ID', str)
+  or GetObjString(recHeader, 'EDID', str) then
+    Result := str
+  else if GetObjString(recHeader, 'FULL - Name', str)
+  or GetObjString(recHeader, 'FULL', str) then
+    Result := '"' + str + '"';
+end;
+
 function JsonToGroup(group: IwbGroupRecord; ary: TJSONArray): IInterface;
 var
-  recObj, recHeader: TJSONObject;
+  recObj: TJSONObject;
+  key: String;
   e: IInterface;
   rec: IwbMainRecord;
   i: Integer;
@@ -312,12 +344,15 @@ begin
   // loop through array of records
   for i := 0 to Pred(ary.Count) do begin
     recObj := ary.O[i];
-    recHeader := recObj.O['Record Header'];
-    // attempt to resolve existing record
-    e := ResolveFromGroup(group, recHeader.S['FormID']);
+    key := GetRecordKey(recObj);
+    // attempt to resolve existing record if resolution key found
+    if key <> '' then
+      e := ResolveRecord(group, key, '')
+    else
+      e := nil;
     // create record if not found
-    if not Assigned(e) then
-      e := group.Add(recHeader.S['Signature']);
+    if e = nil then
+      e := group.Add(recObj.O['Record Header'].S['Signature']);
     // deserialize record JSON
     if Supports(e, IwbMainRecord, rec) then
       JsonToRecord(rec, recObj);
@@ -369,31 +404,6 @@ begin
     JsonToGroup(group, groups.A[signature]);
   end;
 end;
-
-function WriteElementFromJson(e: IInterface; obj: TJSONObject): IInterface;
-var
-  _file: IwbFile;
-  group: IwbGroupRecord;
-  rec: IwbMainRecord;
-  element: IwbElement;
-begin
-  if Supports(e, IwbFile, _file) then
-    Result := JsonToFile(_file, obj)
-  //else if Supports(e, IwbGroupRecord, group) then
-    //Result := SOToGroup(group, obj)
-  else if Supports(e, IwbMainRecord, rec) then
-    Result := JsonToRecord(rec, obj)
-  else if Supports(e, IwbElement, element) then
-    Result := JsonToElement(element, obj);
-end;
-
-function ResolveOrAddElement(_id: Cardinal; path: PWideChar): IInterface;
-begin
-  if string(path) <> '' then
-    Result := NativeAddElement(_id, string(path))
-  else
-    Result := Resolve(_id);
-end;}
 {$endregion}
 {$endregion}
 
@@ -436,20 +446,40 @@ begin
   end;
 end;
 
-{function ElementFromJson(_id: Cardinal; path: PWideChar; json: PWideChar; _res: PCardinal): WordBool; cdecl;
+function ElementFromJson(_id: Cardinal; path: PWideChar; json: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
   e: IInterface;
+  obj: TJSONObject;
+  _file: IwbFile;
+  group: IwbGroupRecord;
+  rec: IwbMainRecord;
+  container: IwbContainerElementRef;
 begin
   Result := False;
   try
-    e := ResolveOrAddElement(_id, path);
-    WriteElementFromSO(e, TJSONObject.Create(json));
+    if path = '' then
+      e := Resolve(_id)
+    else
+      e := NativeAddElement(_id, path);
+    obj := TJSONObject.Create(json);
+    try
+      if Supports(e, IwbFile, _file) then
+        JsonToFile(_file, obj)
+      else if Supports(e, IwbGroupRecord, group) then
+        JsonToGroup(group, obj.A['Records'])
+      else if Supports(e, IwbMainRecord, rec) then
+        JsonToRecord(rec, obj)
+      else if Supports(e, IwbContainerElementRef, container) then
+        JsonToElements(container, obj, []);
+    finally
+      obj.Free;
+    end;
     _res^ := Store(e);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
-end;}
+end;
 {$endregion}
 
 end.

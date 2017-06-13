@@ -16,6 +16,7 @@ type
   TSmashTypes = set of TSmashType;
 
   {$region 'Native functions'}
+  function ResolveRecord(group: IwbGroupRecord; key, nextPath: String): IInterface; overload;
   function ResolveFromGroup(group: IwbGroupRecord; path: String): IInterface;
   function ResolveElement(e: IInterface; path: String): IInterface;
   function NativeGetElement(_id: Cardinal; key: PWideChar): IInterface;
@@ -23,6 +24,7 @@ type
   procedure NativeMoveArrayItem(element: IwbElement; index: Integer);
   function NativeContainer(element: IwbElement): IwbContainer;
   function AddGroupIfMissing(_file: IwbFile; sig: String): IwbGroupRecord;
+  function CreateFromContainer(container: IwbContainerElementRef; path: String): IInterface;
   function CreateFromGroup(group: IwbGroupRecord; path: String): IInterface;
   function CreateElement(e: IInterface; path: String): IInterface;
   function NativeAddElement(_id: Cardinal; key: string): IInterface;
