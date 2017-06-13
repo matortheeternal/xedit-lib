@@ -8,12 +8,20 @@ uses
   wbHelpers, wbInterface, wbImplementation;
 
 type
+  {$region 'Types'}
   TLoaderThread = class(TThread)
   protected
     procedure Execute; override;
   end;
+  TRefThread = class(TThread)
+  protected
+    procedure Execute; override;
+  end;
+  {$endregion}
 
   {$region 'Native functions}
+  procedure LoadPluginFiles;
+  procedure LoadResources;
   procedure BuildPluginsList(sLoadPath: String; var sl: TStringList);
   procedure BuildLoadOrder(sLoadPath: String; var slLoadOrder, slPlugins: TStringList);
   procedure RemoveCommentsAndEmpty(var sl: TStringList);
@@ -33,24 +41,73 @@ type
   function GetActivePlugins(len: PInteger): WordBool; cdecl;
   function LoadPlugins(loadOrder: PWideChar): WordBool; cdecl;
   function LoadPlugin(filename: PWideChar): WordBool; cdecl;
-  function UnloadPlugin(_id: Cardinal): WordBool; cdecl;
+  function BuildReferences(_id: Cardinal): WordBool; cdecl;
   function GetLoaderDone: WordBool; cdecl;
+  function UnloadPlugin(_id: Cardinal): WordBool; cdecl;
   {$endregion}
 
 var
-  xFiles: array of IwbFile;
+  xFiles, rFiles: array of IwbFile;
   slLoadOrder, slSavedFiles: TStringList;
   LoaderThread: TLoaderThread;
+  RefThread: TRefThread;
   BaseFileIndex: Integer;
 
 implementation
 
 uses
-  SysUtils, ShlObj,
+  Windows, SysUtils, ShlObj,
   // mte units
   mteHelpers,
   // xelib units
   xeMeta, xeConfiguration, xeMessages, xeMasters;
+
+{$region 'TLoaderThread'}
+procedure TLoaderThread.Execute;
+begin
+  try
+    ProgramStatus.bLoaderDone := False;
+    LoadPluginFiles;
+    LoadResources;
+
+    // done loading
+    ProgramStatus.bLoaderDone := True;
+    AddMessage('Done loading files.');
+  except
+    on E: Exception do begin
+      AddMessage('Fatal Error: <' + e.ClassName + ': ' + e.Message + '>');
+      wbLoaderError := True;
+    end;
+  end;
+end;
+{$endregion}
+
+{$region 'TRefThread'}
+procedure TRefThread.Execute;
+var
+  i: Integer;
+  _file: IwbFile;
+begin
+  try
+    ProgramStatus.bLoaderDone := False;
+    for i := Low(rFiles) to High(rFiles) do begin
+      _file := rFiles[i];
+      AddMessage(Format('Building references for %s (%d/%d)', [_file.FileName, i + 1, Length(rFiles)]));
+      rFiles[i].BuildRef;
+    end;
+
+    // done loading
+    SetLength(rFiles, 0);
+    ProgramStatus.bLoaderDone := True;
+    AddMessage('Done building references.');
+  except
+    on E: Exception do begin
+      AddMessage('Fatal Error: <' + e.ClassName + ': ' + e.Message + '>');
+      wbLoaderError := True;
+    end;
+  end;
+end;
+{$endregion}
 
 {$region 'Native functions'}
 {$region 'File loading'}
@@ -160,24 +217,6 @@ begin
     end;
   finally
     slBSAFileNames.Free;
-  end;
-end;
-
-procedure TLoaderThread.Execute;
-begin
-  try
-    ProgramStatus.bLoaderDone := False;
-    LoadPluginFiles;
-    LoadResources;
-
-    // done loading
-    ProgramStatus.bLoaderDone := True;
-    AddMessage('Done loading files.');
-  except
-    on E: Exception do begin
-      AddMessage('Fatal Error: <' + e.ClassName + ': ' + e.Message + '>');
-      wbLoaderError := True;
-    end;
   end;
 end;
 
@@ -566,12 +605,34 @@ begin
   end;
 end;
 
+function BuildReferences(_id: Cardinal): WordBool; cdecl;
+var
+  _file: IwbFile;
+begin
+  Result := False;
+  try
+    if _id = 0 then
+      rFiles := Copy(xFiles, 0, MaxInt)
+    else begin
+      if not Supports(Resolve(_id), IwbFile, _file) then
+        raise Exception.Create('Interface must be a file.');
+      SetLength(rFiles, 1);
+      rFiles[0] := _file;
+    end;
+    RefThread := TRefThread.Create;
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
 function GetLoaderDone: WordBool; cdecl;
 begin
   Result := ProgramStatus.bLoaderDone;
   if Result then begin
     if Assigned(LoaderThread) then LoaderThread.Free;
-    if Assigned(slLoadOrder) then slLoadOrder.Free;
+    if Assigned(RefThread)    then RefThread.Free;
+    if Assigned(slLoadOrder)  then slLoadOrder.Free;
   end;
 end;
 
