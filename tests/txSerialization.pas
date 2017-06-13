@@ -344,18 +344,32 @@ begin
                   ExpectEqual(grs(len), 'Deserialization01');
                 end);
 
-              It('Should deserialize integers', procedure
+              It('Should deserialize integer numbers', procedure
                 begin
                   ExpectSuccess(ElementFromJson(rec, '', '{"DNAM":9900}'));
                   ExpectSuccess(GetIntValue(rec, 'DNAM', @i));
                   ExpectEqual(i, 9900);
                 end);
 
-              It('Should deserialize doubles', procedure
+              It('Should deserialize real numbers', procedure
                 begin
                   ExpectSuccess(ElementFromJson(rec, 'DATA', '{"Weight":5.432}'));
                   ExpectSuccess(GetFloatValue(rec, 'DATA\Weight', @d));
                   ExpectEqual(d, 5.432);
+                end);
+
+              It('Should deserialize references from integers', procedure
+                begin
+                  ExpectSuccess(ElementFromJson(rec, '', '{"ZNAM":282309}'));
+                  ExpectSuccess(GetIntValue(rec, 'ZNAM', @i));
+                  ExpectEqual(i, 282309);
+                end);
+
+              It('Should deserialize references from strings', procedure
+                begin
+                  ExpectSuccess(ElementFromJson(rec, '', '{"ZNAM":"DRSIronAlleyClose"}'));
+                  ExpectSuccess(GetValue(rec, 'ZNAM', @len));
+                  ExpectEqual(grs(len), 'DRSIronAlleyClose [SNDR:000C0303]');
                 end);
             end);
         end);
