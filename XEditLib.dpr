@@ -48,8 +48,8 @@ exports
   GetMessagesLength, GetMessages, ClearMessages, GetExceptionMessageLength,
   GetExceptionMessage,
   // LOADING AND SET UP METHODS
-  SetGameMode, GetLoadOrder, GetActivePlugins, LoadPlugins, LoadPlugin,
-  UnloadPlugin, GetLoaderDone, GetGamePath,
+  GetGamePath, SetGameMode, GetLoadOrder, GetActivePlugins, LoadPlugins,
+  LoadPlugin, BuildReferences, GetLoaderDone, UnloadPlugin,
   // FILE HANDLING METHODS
   AddFile, FileByIndex, FileByLoadOrder, FileByName, FileByAuthor, SaveFile,
   OverrideRecordCount,
@@ -71,11 +71,9 @@ exports
   GetFlag, SetFlag, GetEnabledFlags, SetEnabledFlags, GetAllFlags,
   SignatureFromName, NameFromSignature, GetSignatureNameMap,
   // RECORD HANDLING METHODS
-  AddRecord, GetRecords, RecordsBySignature, RecordByFormID, RecordByEditorID,
-  RecordByName, GetOverrides, GetReferences, ExchangeReferences, IsMaster,
-  IsInjected, IsOverride, IsWinningOverride, ConflictThis, ConflictAll,
-  // RECORD VALUE METHODS
-  EditorID, FullName, GetFormID, SetFormID;
+  GetFormID, SetFormID, GetRecords, RecordsBySignature, GetOverrides,
+  GetReferences, ExchangeReferences, IsMaster, IsInjected, IsOverride,
+  IsWinningOverride, ConflictThis, ConflictAll;
 
 begin
   IsMultiThread := True;
