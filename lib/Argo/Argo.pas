@@ -51,6 +51,10 @@ type
     procedure Put(value: TJSONArray); overload;
     procedure Put(value: TJSONObject); overload;
     function IsNull: Boolean;
+    function AsArray: TJSONArray;
+    function AsObject: TJSONObject;
+    function AsString: String;
+    function AsVariant: Variant;
     function ToString: string; override;
     property JSONValueType: TJSONValueType read GetJSONValueType;
   end;
@@ -578,6 +582,33 @@ begin
     Result := 'false';
 end;
 
+function TJSONValue.AsArray: TJSONArray;
+begin
+  Result := _v.a;
+end;
+
+function TJSONValue.AsObject: TJSONObject;
+begin
+  Result := _v.o;
+end;
+
+function TJSONValue.AsString: String;
+begin
+  Result := _s;
+end;
+
+function TJSONValue.AsVariant: Variant;
+begin
+  case _v.t of
+    jtNull: Result := VarEmpty;
+    jtString: Result := _s;
+    jtBoolean: Result := _v.b;
+    jtInt: Result := _v.i;
+    jtDouble: Result := _v.d;
+    else
+      raise Exception.Create('Arrays and objects cannot be treated as variants.');
+  end;
+end;
 
 function TJSONValue.ToString: String;
 begin
