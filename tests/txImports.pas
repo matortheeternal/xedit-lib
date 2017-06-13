@@ -24,11 +24,14 @@ type
 
   // LOADING AND SET UP METHODS
   function SetGameMode(mode: Integer): Boolean; cdecl; external 'XEditLib.dll';
+  function GetGamePath(gameMode: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetLoadOrder(len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetActivePlugins(len: PInteger): WordBool; cdecl; cdecl; external 'XEditLib.dll';
   function LoadPlugins(loadOrder: PWideChar): WordBool; cdecl; cdecl; external 'XEditLib.dll';
+  function LoadPlugin(filename: PWideChar): WordBool; cdecl; cdecl; external 'XEditLib.dll';
+  function BuildReferences(_id: Cardinal): WordBool; cdecl; cdecl; external 'XEditLib.dll';
   function GetLoaderDone: WordBool; cdecl; external 'XEditLib.dll';
-  function GetGamePath(gameMode: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function UnloadPlugin(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
 
   // MASTER HANDLING METHODS
   function CleanMasters(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
@@ -95,7 +98,7 @@ type
 
   // SERIALIZATION METHODS
   function ElementToJson(_id: Cardinal; len: PInteger; editValues: WordBool): WordBool; cdecl; external 'XEditLib.dll';
-  function ElementFromJson(_id: Cardinal; path: PWideChar; json: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
+  function ElementFromJson(_id: Cardinal; path: PWideChar; json: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
 
   // RECORD HANDLING METHODS
   function GetFormID(_id: Cardinal; formID: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
