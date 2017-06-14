@@ -319,10 +319,6 @@ begin
 end;
 
 procedure JsonToRecord(rec: IwbMainRecord; obj: TJSONObject);
-const
-  ExcludedPaths: array[0..0] of string = (
-    'Record Header'
-  );
 var
   container: IwbContainerElementRef;
 begin
@@ -330,7 +326,7 @@ begin
   JsonToRecordHeader(rec.ElementByPath['Record Header'], obj.O['Record Header']);
   // deserialize elements
   if Supports(rec, IwbContainerElementRef, container) then
-    JsonToElements(container, obj, ExcludedPaths);
+    JsonToElements(container, obj, ['Record Header']);
 end;
 
 function GetObjString(obj: TJSONObject; key: String; var value: String): Boolean;
@@ -340,16 +336,18 @@ begin
     value := obj.S[key];
 end;
 
-function GetRecordKey(recObj: TJSONObject): String;
+function GetRecordKey(recObj: TJSONObject; var allowOverride: Boolean): String;
 var
   recHeader: TJSONObject;
   v: TJSONValue;
   str: String;
 begin
   Result := '';
+  allowOverride := false;
   recHeader := recObj.O['Record Header'];
   if Assigned(recHeader) and recHeader.HasKey('FormID') then begin
     v := recHeader['FormID'];
+    allowOverride := true;
     case v.JSONValueType of
       jtInt: Result := IntToHex(v.AsVariant, 8);
       jtString: Result := v.AsString;
@@ -379,20 +377,27 @@ end;
 procedure JsonToGroup(group: IwbGroupRecord; ary: TJSONArray);
 var
   recObj: TJSONObject;
-  e: IInterface;
   key, sig: String;
+  allowOverride: Boolean;
+  e: IwbElement;
   rec: IwbMainRecord;
   i: Integer;
 begin
   // loop through array of records
   for i := 0 to Pred(ary.Count) do begin
     recObj := ary.O[i];
-    key := GetRecordKey(recObj);
+    key := GetRecordKey(recObj, allowOverride);
     // attempt to resolve existing record if resolution key found
     if key <> '' then
-      e := ResolveRecord(group, key, '')
-    else
-      e := nil;
+      e := ResolveRecord(group, key, '') as IwbElement;
+    // override record if it is not in the correct file and
+    // it was found by formID
+    if Assigned(e) and not e._File.Equals(group._File) then begin
+      if allowOverride then
+        e := wbCopyElementToFile(e, group._File, false, true, '', '', '')
+      else
+        e := nil;
+    end;
     // create record if not found
     if not Assigned(e) then begin
       sig := GetAddSignature(recObj, group);
