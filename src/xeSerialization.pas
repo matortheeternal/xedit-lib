@@ -476,8 +476,9 @@ begin
   // add masters
   _file := header._File;
   ary := obj.A['Master Files'];
-  for i := 0 to Pred(ary.Count) do
-    _file.AddMasterIfMissing(ary.O[i].S['MAST - Filename']);
+  if Assigned(ary) then
+    for i := 0 to Pred(ary.Count) do
+      _file.AddMasterIfMissing(ary.O[i].S['MAST - Filename']);
   // set record header and element values
   JsonToRecordHeader(header.ElementByPath['Record Header'], obj.O['Record Header']);
   JsonToElements(container, obj, ExcludedPaths);
