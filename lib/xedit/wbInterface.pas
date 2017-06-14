@@ -1180,6 +1180,7 @@ type
     function GetMainRecordByFormID(const aFormID: Cardinal): IwbMainRecord;
 
     procedure AddElement(const aElement: IwbElement);
+    function AddGroup(const aName: string): IwbGroupRecord;
 
     property GroupType: Integer
       read GetGroupType;

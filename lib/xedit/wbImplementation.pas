@@ -1524,6 +1524,7 @@ type
 
     function GetAddList: TDynStrings; override;
     function Add(const aName: string; aSilent: Boolean): IwbElement; override;
+    function AddGroup(const aName: string): IwbGroupRecord;
     procedure Sort;
 
     procedure UpdatedEnded; override;
@@ -10568,6 +10569,64 @@ end;
 
 { TwbGroupRecord }
 
+function TwbGroupRecord.AddGroup(const aName: string): IwbGroupRecord;
+
+  function ParseLabel(aName: String; const start: Integer; ext: Boolean): Cardinal;
+  var
+    i: Integer;
+  begin
+    if ext then begin
+      i := Pos(aName, ',');
+      Result := StrToInt(Copy(aName, start, i - start)) shl 16 + StrToInt(Copy(aName, i + 1, 4));
+    end
+    else
+      Result := StrToInt(Copy(aName, start, 4));
+  end;
+
+  function ParseBlock(aName: String; var grLabel: Cardinal; ext: Boolean = False): Boolean;
+  begin
+    Result := Pos('Block', aName) = 1;
+    if Result then
+      grLabel := ParseLabel(aName, 7, ext);
+  end;
+
+  function ParseSubBlock(aName: String; var grLabel: Cardinal; ext: Boolean = False): Boolean;
+  var
+    i: Integer;
+  begin
+    Result := Pos('Sub-Block', aName) = 1;
+    if Result then
+      grLabel := ParseLabel(aName, 11, ext);
+  end;
+
+var
+  grLabel: Cardinal;
+begin
+  case grStruct.grsGroupType of
+    0: // Top level groups
+      if (TwbSignature(grStruct.grsLabel) = 'CELL')
+      and ParseBlock(aName, grLabel) then
+        Result := TwbGroupRecord.Create(Self, 2, grLabel);
+    1: // World children
+      if ParseBlock(aName, grLabel, true) then
+        Result := TwbGroupRecord.Create(Self, 4, grLabel);
+    2: // Interior (CELL) blocks
+      if ParseSubBlock(aName, grLabel) then
+        Result := TwbGroupRecord.Create(Self, 3, grLabel);
+    4: // Exterior (WRLD) blocks
+      if ParseSubBlock(aName, grLabel, true) then
+        Result := TwbGroupRecord.Create(Self, 5, grLabel);
+    6: // CELL children
+      if SameText(aName, 'Persistent') then
+        Result := TwbGroupRecord.Create(Self, 8, (Self as IwbGroupRecord).ChildrenOf)
+      else if SameText(aName, 'Temporary') then
+        Result := TwbGroupRecord.Create(Self, 9, (Self as IwbGroupRecord).ChildrenOf);
+  end;
+  // unable to add group - raise exception
+  if not Assigned(Result) then
+    raise Exception.Create(Format('Failed to add group %s to %s', [aName, (Self as IwbElement).Name]));
+end;
+
 function TwbGroupRecord.Add(const aName: string; aSilent: Boolean): IwbElement;
 var
   Signature : TwbSignature;
@@ -10593,6 +10652,9 @@ begin
     1: if (Signature <> 'ROAD') and
           (Signature <> 'CELL') then
          Exit;
+    2,3:
+      if (Signature <> 'CELL') then
+        Exit;
     7: if (Signature <> 'INFO') then
          Exit;
     6: begin
