@@ -234,7 +234,10 @@ function ResolveGroupOrRecord(group: IwbGroupRecord; key, nextPath: String): IIn
 var
   name, sig: String;
   formID: Cardinal;
+  grp: IwbGroupRecord;
+  rec: IwbMainRecord;
 begin
+  Result := nil;
   if ParseFormID(key, formID) then
     Result := group._File.RecordByFormID[formID, True]
   else if ParseFullName(key, name) then
@@ -246,8 +249,12 @@ begin
     if not Assigned(Result) then
       Result := FindRecordOrGroup(group, key);
   end;
-  if Assigned(Result) and (nextPath <> '') then
-    Result := ResolveFromRecord(Result as IwbMainRecord, nextPath);
+  if nextPath <> '' then begin
+    if Supports(Result, IwbGroupRecord, grp) then
+      Result := ResolveFromGroup(grp, nextPath)
+    else if Supports(Result, IwbMainRecord, rec) then
+      Result := ResolveFromRecord(rec, nextPath);
+  end;
 end;
 
 function ResolveFromGroup(group: IwbGroupRecord; path: String): IInterface;
