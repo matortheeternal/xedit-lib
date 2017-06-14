@@ -195,7 +195,7 @@ begin
   if ParseFormID(key, formID) then
     Result := group._File.RecordByFormID[formID, True]
   else if ParseFullName(key, name) then
-    Result := group.MainRecordByName[key]
+    Result := group.MainRecordByName[name]
   else
     Result := group.MainRecordByEditorID[key];
   if Assigned(Result) and (nextPath <> '') then
