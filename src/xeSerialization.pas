@@ -363,11 +363,24 @@ begin
     Result := '"' + str + '"';
 end;
 
+function GetAddSignature(obj: TJSONObject; group: IwbGroupRecord): String;
+var
+  recHeader: TJSONObject;
+begin
+  recHeader := obj.O['Record Header'];
+  if Assigned(recHeader) and recHeader.HasKey('Signature') then
+    Result := recHeader.S['Signature']
+  else if group.GroupType = 0 then
+    Result := String(TwbSignature(group.GroupLabel))
+  else
+    raise Exception.Create('Failed to determine add signature when deserializing: ' + Copy(obj.ToString, 1, 20) + '...');
+end;
+
 procedure JsonToGroup(group: IwbGroupRecord; ary: TJSONArray);
 var
   recObj: TJSONObject;
-  key: String;
   e: IInterface;
+  key, sig: String;
   rec: IwbMainRecord;
   i: Integer;
 begin
@@ -381,8 +394,10 @@ begin
     else
       e := nil;
     // create record if not found
-    if e = nil then
-      e := group.Add(recObj.O['Record Header'].S['Signature']);
+    if not Assigned(e) then begin
+      sig := GetAddSignature(recObj, group);
+      e := group.Add(sig) as IwbElement;
+    end;
     // deserialize record JSON
     if Supports(e, IwbMainRecord, rec) then
       JsonToRecord(rec, recObj);
