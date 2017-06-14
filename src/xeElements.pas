@@ -16,7 +16,8 @@ type
   TSmashTypes = set of TSmashType;
 
   {$region 'Native functions'}
-  function ResolveRecord(group: IwbGroupRecord; key, nextPath: String): IInterface; overload;
+  function ResolveRecord(group: IwbGroupRecord; key, nextPath: String): IInterface;
+  function ResolveGroupOrRecord(group: IwbGroupRecord; key, nextPath: String): IInterface; overload;
   function ResolveFromGroup(group: IwbGroupRecord; path: String): IInterface;
   function ResolveElement(e: IInterface; path: String): IInterface;
   function NativeGetElement(_id: Cardinal; key: PWideChar): IInterface;
@@ -25,6 +26,9 @@ type
   function NativeContainer(element: IwbElement): IwbContainer;
   function AddGroupIfMissing(_file: IwbFile; sig: String): IwbGroupRecord;
   function CreateFromContainer(container: IwbContainerElementRef; path: String): IInterface;
+  function CreateFromRecord(rec: IwbMainRecord; path: String): IInterface;
+  function CreateRecord(group: IwbGroupRecord; formID: Cardinal; nextPath: String): IInterface; overload;
+  function CreateGroupOrRecord(group: IwbGroupRecord; key, nextPath: String): IInterface; overload;
   function CreateFromGroup(group: IwbGroupRecord; path: String): IInterface;
   function CreateFile(fileName, nextPath: String): IInterface;
   function CreateElement(e: IInterface; path: String): IInterface;
@@ -187,9 +191,33 @@ begin
     Result := ResolveFromContainer(container, path);
 end;
 
-function ResolveRecord(group: IwbGroupRecord; key, nextPath: String): IInterface; overload;
+function FindRecordOrGroup(group: IwbGroupRecord; searchKey: String): IInterface;
 var
-  name: String;
+  i: Integer;
+  element: IwbElement;
+  rec: IwbMainRecord;
+  grp: IwbGroupRecord;
+begin
+  for i := 0 to Pred(group.ElementCount) do begin
+    element := group.Elements[i];
+    if Supports(element, IwbMainRecord, rec) then begin
+      if SameText(rec.EditorID, searchKey) then begin
+        Result := rec;
+        exit;
+      end;
+    end
+    else if Supports(element, IwbGroupRecord, grp) then begin
+      if SameText(grp.ShortName, searchKey) then begin
+        Result := grp;
+        exit;
+      end;
+    end;
+  end;
+end;
+
+function ResolveRecord(group: IwbGroupRecord; key, nextPath: String): IInterface;
+var
+  name, sig: String;
   formID: Cardinal;
 begin
   if ParseFormID(key, formID) then
@@ -198,6 +226,26 @@ begin
     Result := group.MainRecordByName[name]
   else
     Result := group.MainRecordByEditorID[key];
+  if Assigned(Result) and (nextPath <> '') then
+    Result := ResolveFromRecord(Result as IwbMainRecord, nextPath);
+end;
+
+function ResolveGroupOrRecord(group: IwbGroupRecord; key, nextPath: String): IInterface; overload;
+var
+  name, sig: String;
+  formID: Cardinal;
+begin
+  if ParseFormID(key, formID) then
+    Result := group._File.RecordByFormID[formID, True]
+  else if ParseFullName(key, name) then
+    Result := group.MainRecordByName[name]
+  else begin
+    sig := AnsiString(TwbSignature(group.GroupLabel));
+    if group._File.EditorIDSorted(sig) then
+      Result := group._File.RecordByEditorID[key];
+    if not Assigned(Result) then
+      Result := FindRecordOrGroup(group, key);
+  end;
   if Assigned(Result) and (nextPath <> '') then
     Result := ResolveFromRecord(Result as IwbMainRecord, nextPath);
 end;
@@ -213,10 +261,10 @@ begin
   if ParseIndex(key, index) then
     Result := ResolveByIndex(group as IwbContainerElementRef, index, nextPath)
   else
-    Result := ResolveRecord(group, key, nextPath);
+    Result := ResolveGroupOrRecord(group, key, nextPath);
 end;
 
-function ResolveGroupOrRecord(_file: IwbFile; key: String; nextPath: String): IInterface;
+function ResolveGroupOrRecord(_file: IwbFile; key: String; nextPath: String): IInterface; overload;
 var
   formID: Cardinal;
   name: String;
@@ -421,13 +469,23 @@ begin
     Result := CreateFromRecord(Result as IwbMainRecord, nextPath);
 end;
 
-function CreateRecord(group: IwbGroupRecord; key, nextPath: String): IInterface; overload;
+function CreateGroupOrRecord(group: IwbGroupRecord; key, nextPath: String): IInterface; overload;
+var
+  innerGroup: IwbGroupRecord;
+  rec: IwbMainRecord;
 begin
   if key = '.' then
     key := String(AnsiString(group.GroupLabel));
-  Result := group.Add(key) as IwbMainRecord;
-  if Assigned(Result) and (nextPath <> '') then
-    Result := CreateFromRecord(Result as IwbMainRecord, nextPath);
+  if Length(key) > 4 then
+    Result := FindRecordOrGroup(group, key);
+  if not Assigned(Result) then
+    Result := group.Add(key);
+  if nextPath <> '' then begin
+    if Supports(Result, IwbGroupRecord, innerGroup) then
+      Result := CreateFromGroup(innerGroup, nextPath)
+    else if Supports(Result, IwbMainRecord, rec) then
+      Result := CreateFromRecord(Result as IwbMainRecord, nextPath);
+  end;
 end;
 
 function CreateFromGroup(group: IwbGroupRecord; path: String): IInterface;
@@ -437,14 +495,14 @@ var
 begin
   SplitPath(path, key, nextPath);
   // resolve/override record by formID
-  // else create new record by signature
+  // else create new group/main record
   if ParseFormID(key, formID) then
     Result := CreateRecord(group, formID, nextPath)
   else
-    Result := CreateRecord(group, key, nextPath);
+    Result := CreateGroupOrRecord(group, key, nextPath);
 end;
 
-function CreateGroup(_file: IwbFile; key: String; nextPath: String): IInterface;
+function CreateGroup(_file: IwbFile; key: String; nextPath: String): IInterface; overload;
 begin
   if Length(key) > 4 then
     key := NativeSignatureFromName(key);
