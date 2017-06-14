@@ -224,7 +224,7 @@ begin
     if value = '' then
       element.NativeValue := 0
     else if ParseFormIDValue(value, formID) then
-      element.NativeValue := formID
+      element.NativeValue := element._File.LoadOrderFormIDtoFileFormID(formID)
     else
       element.NativeValue := EditorIDToFormID(element._File, value);
   end
