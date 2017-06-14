@@ -348,18 +348,18 @@ var
 begin
   Result := '';
   recHeader := recObj.O['Record Header'];
-  if recHeader.HasKey('FormID') then begin
-    v := recHeader.Values['FormID'];
-    if v.JSONValueType = jtInt then
-      Result := IntToHex(recHeader.I['FormID'], 8)
-    else if v.JSONValueType = jtString then
-      Result := recHeader.S['FormID'];
+  if Assigned(recHeader) and recHeader.HasKey('FormID') then begin
+    v := recHeader['FormID'];
+    case v.JSONValueType of
+      jtInt: Result := IntToHex(v.AsVariant, 8);
+      jtString: Result := v.AsString;
+    end;
   end
-  else if GetObjString(recHeader, 'EDID - Editor ID', str)
-  or GetObjString(recHeader, 'EDID', str) then
+  else if GetObjString(recObj, 'EDID - Editor ID', str)
+  or GetObjString(recObj, 'EDID', str) then
     Result := str
-  else if GetObjString(recHeader, 'FULL - Name', str)
-  or GetObjString(recHeader, 'FULL', str) then
+  else if GetObjString(recObj, 'FULL - Name', str)
+  or GetObjString(recObj, 'FULL', str) then
     Result := '"' + str + '"';
 end;
 
