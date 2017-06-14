@@ -391,7 +391,7 @@ begin
                 begin
                   It('Should recognize existing records by FormID', procedure
                     begin
-                      ExpectSuccess(ElementFromJson(armo, '', '{"Records":[{"Record Header":{"FormID":"03000800"},"FULL":"New Armor2"}]}'));
+                      ExpectSuccess(ElementFromJson(armo, '', '{"Records":[{"Record Header":{"FormID":"03000801"},"FULL":"New Armor2"}]}'));
                       ExpectSuccess(ElementCount(armo, @i));
                       ExpectEqual(i, 2);
                       ExpectSuccess(GetElement(armo, '[1]', @h));
@@ -417,6 +417,11 @@ begin
                       ExpectSuccess(GetElement(armo, '[1]', @h));
                       ExpectSuccess(GetValue(h, 'DATA\Value', @len));
                       ExpectEqual(grs(len), '999');
+                    end);
+
+                  It('Should fail if signatures don''t match', procedure
+                    begin
+                      ExpectFailure(ElementFromJson(armo, '', '{"Records":[{"Record Header":{"FormID":"03000801","Signature":"ALCH"}}]}'));
                     end);
                 end);
 
