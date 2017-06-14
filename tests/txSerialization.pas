@@ -37,7 +37,7 @@ procedure BuildSerializationTests;
 var
   testFile, armo, rec, cell, refr, keywords, keyword, dnam, h: Cardinal;
   obj, obj2, obj3: TJSONObject;
-  len, i: Integer;
+  len, i, count: Integer;
   d: Double;
   ary: TJSONArray;
   b: WordBool;
@@ -337,6 +337,41 @@ begin
 
       Describe('ElementFromJSON', procedure
         begin
+          BeforeAll(procedure
+            begin
+              ExpectSuccess(ElementCount(0, @count));
+            end);
+
+          Describe('Root deserialization', procedure
+            begin
+              It('Should create missing files', procedure
+                begin
+                  ExpectSuccess(ElementFromJson(0, '', '{"xtest-6.esp":{"File Header":{"CNAM":"Bob Ross"}}}'));
+                  ExpectSuccess(ElementCount(0, @i));
+                  ExpectEqual(i, count + 1);
+                  ExpectSuccess(GetValue(0, 'xtest-6.esp\File Header\CNAM', @len));
+                  ExpectEqual(grs(len), 'Bob Ross');
+                end);
+
+              It('Should use existing file if present', procedure
+                begin
+                  ExpectSuccess(ElementFromJson(0, '', '{"xtest-2.esp":{"File Header":{}}}'));
+                  ExpectSuccess(ElementCount(0, @i));
+                  ExpectEqual(i, count + 1);
+                end);
+            end);
+
+          Describe('File deserialization', procedure
+            begin
+              It('Should deserialize file header values', procedure
+                begin
+                  ExpectSuccess(ElementFromJson(testFile, '', '{"File Header":{"CNAM":"George","SNAM":"La dee da"}}'));
+                  ExpectSuccess(GetValue(testFile, 'File Header\CNAM', @len));
+                  ExpectEqual(grs(len), 'George');
+                  ExpectSuccess(GetValue(testFile, 'File Header\SNAM', @len));
+                  ExpectEqual(grs(len), 'La dee da');
+                end);
+            end);
 
           Describe('Group deserialization', procedure
             begin
