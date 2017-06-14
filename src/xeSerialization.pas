@@ -92,15 +92,12 @@ begin
 end;
 
 function NativeElementToJson(element: IwbElement): TJSONValue;
-const
-  ArrayTypes: TSmashTypes = [stUnsortedArray, stUnsortedStructArray, stSortedArray,
-    stSortedStructArray];
 var
   container: IwbContainerElementRef;
 begin
   if Supports(element, IwbContainerElementRef, container)
   and ((container.ElementCount > 0) or IsFlags(element)) then begin
-    if GetSmashType(element) in ArrayTypes then
+    if IsArray(element) then
       Result := ArrayToJson(container)
     else
       Result := StructToJson(container);
@@ -226,9 +223,6 @@ begin
 end;
 
 procedure JsonToElement(element: IwbElement; obj: TJSONObject; path: String);
-const
-  ArrayTypes: TSmashTypes = [stUnsortedArray, stUnsortedStructArray, stSortedArray,
-    stSortedStructArray];
 var
   container: IwbContainerElementRef;
   childElement: IwbElement;
@@ -243,7 +237,7 @@ begin
     JsonToFlags(element, flagsDef, obj.O[path])
   else if Supports(element, IwbContainerElementRef, container)
   and (container.ElementCount > 0) then begin
-    if GetSmashType(element) in ArrayTypes then begin
+    if IsArray(element) then begin
       ary := obj.A[path];
       for i := 0 to Pred(ary.Count) do begin
         childElement := AssignElementIfMissing(container, i);
