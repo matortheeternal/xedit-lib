@@ -426,9 +426,7 @@ end;
 
 function CreateChildGroup(rec: IwbMainRecord; nextPath: String): IInterface;
 begin
-  Result := rec.ChildGroup;
-  if not Assigned(Result) then
-    raise Exception.Create('Child group not found for ' + rec.Name);
+  Result := rec.EnsureChildGroup;
   if Assigned(Result) and (nextPath <> '') then
     Result := CreateFromGroup(Result as IwbGroupRecord, nextPath);
 end;
@@ -483,9 +481,12 @@ var
 begin
   if key = '.' then
     key := String(AnsiString(group.GroupLabel));
-  if Length(key) > 4 then
+  if Length(key) > 4 then begin
     Result := FindRecordOrGroup(group, key);
-  if not Assigned(Result) then
+    if not Assigned(Result) then
+      Result := group.AddGroup(key);
+  end
+  else
     Result := group.Add(key);
   if nextPath <> '' then begin
     if Supports(Result, IwbGroupRecord, innerGroup) then
