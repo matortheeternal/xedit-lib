@@ -22,6 +22,7 @@ implementation
 
 uses
   Variants, SysUtils, StrUtils,
+  wbImplementation,
   xeMeta, xeFiles, xeElements, xeElementValues, xeMessages;
 
 var
@@ -272,28 +273,49 @@ begin
   end;
 end;
 
+function GetObjSignature(obj: TJSONObject; var signature: String): Boolean;
+begin
+  Result := obj.HasKey('Signature');
+  if Result then
+    signature := obj.S['Signature'];
+end;
+
+function GetObjFormID(obj: TJSONObject; var formID: Cardinal): Boolean;
+var
+  v: TJSONValue;
+begin
+  Result := obj.HasKey('FormID');
+  if Result then begin
+    v := obj['FormID'];
+    case v.JSONValueType of
+      jtInt: formID := v.AsVariant;
+      jtString: formID := StrToInt('$' + v.AsString);
+      else
+        Result := false;
+    end;
+  end;
+end;
+
 procedure JsonToRecordHeader(header: IwbElement; obj: TJSONObject);
-const
-  ExcludedPaths: array[0..1] of string = (
-    'Signature',
-    'Data Size'
-  );
-  SignatureExceptionFormat = 'Error deserializing record header: record ' +
-    'signatures do not match, %s != %s';
 var
   container: IwbContainerElementRef;
   recordSig, objSig: String;
+  recordFormID, objFormID: Cardinal;
 begin
   if not Supports(header, IwbContainerElementRef, container)
   or not Assigned(obj) then
     exit;
   // raise exception if signature does not match
   recordSig := container.ElementEditValues['Signature'];
-  objSig := obj.S['Signature'];
-  if recordSig <> objSig then
-    raise Exception.Create(Format(SignatureExceptionFormat, [recordSig, objSig]));
+  if GetObjSignature(obj, objSig) and (recordSig <> objSig) then
+    raise Exception.Create(Format('Error deserializing record header: record ' +
+      'signatures do not match, %s != %s', [recordSig, objSig]));
+  // set load order formID if different
+  recordFormID := container.ElementNativeValues['FormID'];
+  if GetObjFormID(obj, objFormID) and (recordFormID <> objFormID) then
+    header.ContainingMainRecord.SetLoadOrderFormID(objFormID);
   // assign to whitelisted paths
-  JsonToElements(container, obj, ExcludedPaths);
+  JsonToElements(container, obj, ['Signature', 'Data Size', 'FormID', 'Form Version']);
 end;
 
 procedure JsonToRecord(rec: IwbMainRecord; obj: TJSONObject);
