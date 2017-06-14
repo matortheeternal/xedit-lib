@@ -354,11 +354,21 @@ begin
                   ExpectEqual(b, True);
                 end);
 
-              It('Should create child groups if missing', procedure
+              It('Should create inner groups if missing', procedure
                 begin
+                  ExpectSuccess(ElementFromJson(testFile, '',
+                    '{"Groups":{"CELL":{"Block 1":{"Sub-Block 1":['+
+                      '{"EDID":"NewCell01","XLCN":"000E9DA7","Child Group":{'+
+                        '"Temporary":['+
+                          '{"Record Header":{"Signature":"REFR"},"EDID":"NullRef001","DATA":{"Position":{"X":1234.56}}}'+
+                        ']'+
+                      '}}'+
+                    ']}}}}'));
+                  ExpectSuccess(GetFloatValue(testFile, '03000801\Child Group\Temporary\NullRef001\DATA\Position\X', @d));
+                  ExpectEqual(RoundTo(d, -2), 1234.56);
                 end);
 
-              It('Should use existing child groups if present', procedure
+              It('Should use existing inner groups if present', procedure
                 begin
                   ExpectSuccess(ElementFromJson(testFile, '',
                     '{"Groups":{"CELL":{"Block 0":{"Sub-Block 0":['+
@@ -391,7 +401,7 @@ begin
                 begin
                   It('Should recognize existing records by FormID', procedure
                     begin
-                      ExpectSuccess(ElementFromJson(armo, '', '{"Records":[{"Record Header":{"FormID":"03000801"},"FULL":"New Armor2"}]}'));
+                      ExpectSuccess(ElementFromJson(armo, '', '{"Records":[{"Record Header":{"FormID":"03000803"},"FULL":"New Armor2"}]}'));
                       ExpectSuccess(ElementCount(armo, @i));
                       ExpectEqual(i, 2);
                       ExpectSuccess(GetElement(armo, '[1]', @h));
@@ -421,7 +431,7 @@ begin
 
                   It('Should fail if signatures don''t match', procedure
                     begin
-                      ExpectFailure(ElementFromJson(armo, '', '{"Records":[{"Record Header":{"FormID":"03000801","Signature":"ALCH"}}]}'));
+                      ExpectFailure(ElementFromJson(armo, '', '{"Records":[{"Record Header":{"FormID":"03000803","Signature":"ALCH"}}]}'));
                     end);
                 end);
 
