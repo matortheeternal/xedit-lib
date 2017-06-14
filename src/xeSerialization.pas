@@ -9,6 +9,8 @@ uses
   {$region 'Native functions'}
   procedure JsonToElement(element: IwbElement; obj: TJSONObject; path: String);
   procedure JsonToElements(container: IwbContainerElementRef; obj: TJSONObject; const excludedPaths: array of string);
+  procedure JsonToGroup(group: IwbGroupRecord; obj: TJSONObject); overload;
+  procedure JsonToGroup(group: IwbGroupRecord; obj: TJSONObject; key: String); overload;
   function NativeElementToJson(element: IwbElement): TJSONValue;
   function GroupToJson(group: IwbGroupRecord; obj: TJSONObject): TJSONObject;
   {$endregion}
@@ -320,13 +322,24 @@ end;
 
 procedure JsonToRecord(rec: IwbMainRecord; obj: TJSONObject);
 var
-  container: IwbContainerElementRef;
+  i: Integer;
+  path: String;
+  e: IInterface;
+  element: IwbElement;
+  group: IwbGroupRecord;
 begin
   // deserialize header
   JsonToRecordHeader(rec.ElementByPath['Record Header'], obj.O['Record Header']);
   // deserialize elements
-  if Supports(rec, IwbContainerElementRef, container) then
-    JsonToElements(container, obj, ['Record Header']);
+  for i := 0 to Pred(obj.Count) do begin
+    path := obj.Keys[i];
+    if path = 'Record Header' then continue;
+    e := CreateFromRecord(rec, path);
+    if Supports(e, IwbGroupRecord, group) then
+      JsonToGroup(group, obj, path)
+    else if Supports(e, IwbElement, element) then
+      JsonToElement(element, obj, path);
+  end;
 end;
 
 function GetObjString(obj: TJSONObject; key: String; var value: String): Boolean;
@@ -374,7 +387,7 @@ begin
     raise Exception.Create('Failed to determine add signature when deserializing: ' + Copy(obj.ToString, 1, 20) + '...');
 end;
 
-procedure JsonToGroup(group: IwbGroupRecord; ary: TJSONArray);
+procedure JsonToRecords(group: IwbGroupRecord; ary: TJSONArray);
 var
   recObj: TJSONObject;
   key, sig: String;
@@ -389,7 +402,7 @@ begin
     key := GetRecordKey(recObj, allowOverride);
     // attempt to resolve existing record if resolution key found
     if key <> '' then
-      e := ResolveRecord(group, key, '') as IwbElement;
+      e := ResolveGroupOrRecord(group, key, '') as IwbElement;
     // override record if it is not in the correct file and
     // it was found by formID
     if Assigned(e) and not e._File.Equals(group._File) then begin
@@ -407,6 +420,36 @@ begin
     if Supports(e, IwbMainRecord, rec) then
       JsonToRecord(rec, recObj);
   end;
+end;
+
+procedure JsonToGroup(group: IwbGroupRecord; obj: TJSONObject); overload;
+var
+  i: Integer;
+  key: String;
+  innerGroup: IwbGroupRecord;
+begin
+  for i := 0 to Pred(obj.Count) do begin
+    key := obj.Keys[i];
+    if key = 'Records' then
+      JsonToRecords(group, obj.A['Records'])
+    else begin
+      innerGroup := CreateGroupOrRecord(group, key, '') as IwbGroupRecord;
+      if not Assigned(innerGroup) then
+        raise Exception.Create('Failed to resolve inner group ' + key);
+      JsonToGroup(innerGroup, obj, key);
+    end;
+  end;
+end;
+
+procedure JsonToGroup(group: IwbGroupRecord; obj: TJSONObject; key: String); overload;
+var
+  v: TJSONValue;
+begin
+  v := obj[key];
+  if v.JSONValueType = jtArray then
+    JsonToRecords(group, v.AsArray)
+  else
+    JsonToGroup(group, v.AsObject);
 end;
 
 procedure JsonToFileHeader(header: IwbMainRecord; obj: TJSONObject);
@@ -447,11 +490,12 @@ begin
   JsonToFileHeader(_file.Header, obj.O['File Header']);
   // deserialize groups
   groups := obj.O['Groups'];
-  for i := 0 to Pred(groups.Count) do begin
-    signature := groups.Keys[i];
-    group := AddGroupIfMissing(_file, signature);
-    JsonToGroup(group, groups.A[signature]);
-  end;
+  if Assigned(groups) then
+    for i := 0 to Pred(groups.Count) do begin
+      signature := groups.Keys[i];
+      group := AddGroupIfMissing(_file, signature);
+      JsonToGroup(group, groups, signature);
+    end;
 end;
 
 procedure JsonToFiles(obj: TJSONObject);
@@ -528,7 +572,7 @@ begin
         if Supports(e, IwbFile, _file) then
           JsonToFile(_file, obj)
         else if Supports(e, IwbGroupRecord, group) then
-          JsonToGroup(group, obj.A['Records'])
+          JsonToGroup(group, obj)
         else if Supports(e, IwbMainRecord, rec) then
           JsonToRecord(rec, obj)
         else if Supports(e, IwbContainerElementRef, container) then
