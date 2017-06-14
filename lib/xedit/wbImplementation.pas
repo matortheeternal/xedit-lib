@@ -11381,7 +11381,7 @@ begin
     end;
     if bIsSorted then begin
       Result := _File.RecordByEditorID[aEditorID];
-      if Result.Signature <> aSignature then
+      if Assigned(Result) and (Result.Signature <> aSignature) then
         Result := nil;
     end;
   end;
@@ -11423,7 +11423,7 @@ begin
     end;
     if bIsSorted then begin
       Result := _File.RecordByName[aName];
-      if Result.Signature <> aSignature then
+      if Assigned(Result) and (Result.Signature <> aSignature) then
         Result := nil;
     end;
   end;
