@@ -8,7 +8,7 @@ interface
 implementation
 
 uses
-  SysUtils,
+  SysUtils, Math,
   Argo, Mahogany,
 {$IFDEF USE_DLL}
   txImports,
@@ -35,7 +35,7 @@ end;
 
 procedure BuildSerializationTests;
 var
-  testFile, armo, rec, cell, keywords, keyword, dnam, h: Cardinal;
+  testFile, armo, rec, cell, refr, keywords, keyword, dnam, h: Cardinal;
   obj, obj2, obj3: TJSONObject;
   len, i: Integer;
   d: Double;
@@ -46,13 +46,14 @@ begin
     begin
       BeforeAll(procedure
         begin
-          GetElement(0, 'xtest-2.esp', @testFile);
-          GetElement(testFile, 'ARMO', @armo);
-          GetElement(armo, '00012E46', @rec);
-          GetElement(testFile, 'CELL', @cell);
-          GetElement(rec, 'KWDA', @keywords);
-          GetElement(keywords, '[0]', @keyword);
-          GetElement(rec, 'DNAM', @dnam);
+          ExpectSuccess(GetElement(0, 'xtest-2.esp', @testFile));
+          ExpectSuccess(GetElement(testFile, 'ARMO', @armo));
+          ExpectSuccess(GetElement(armo, '00012E46', @rec));
+          ExpectSuccess(GetElement(testFile, 'CELL', @cell));
+          ExpectSuccess(GetElement(testFile, '000170F0', @refr));
+          ExpectSuccess(GetElement(rec, 'KWDA', @keywords));
+          ExpectSuccess(GetElement(keywords, '[0]', @keyword));
+          ExpectSuccess(GetElement(rec, 'DNAM', @dnam));
         end);
 
       Describe('ElementToJSON', procedure
@@ -336,6 +337,42 @@ begin
 
       Describe('ElementFromJSON', procedure
         begin
+
+          Describe('Group deserialization', procedure
+            begin
+              It('Should create top level group if missing', procedure
+                begin
+                  ExpectSuccess(ElementFromJson(testFile, '', '{"Groups":{"ARMA":[]}}'));
+                  ExpectSuccess(HasElement(testFile, 'ARMA', @b));
+                  ExpectEqual(b, True);
+                end);
+
+              It('Should use existing top level group if present', procedure
+                begin
+                  ExpectSuccess(ElementFromJson(testFile, '', '{"Groups":{"ARMA":[{"EDID":"TestARMA"}]}}'));
+                  ExpectSuccess(HasElement(testFile, 'ARMA\[0]', @b));
+                  ExpectEqual(b, True);
+                end);
+
+              It('Should create child groups if missing', procedure
+                begin
+                end);
+
+              It('Should use existing child groups if present', procedure
+                begin
+                  ExpectSuccess(ElementFromJson(testFile, '',
+                    '{"Groups":{"CELL":{"Block 0":{"Sub-Block 0":['+
+                      '{"EDID":"KilkreathRuins03","Child Group":{'+
+                        '"Persistent":['+
+                          '{"EDID":"DA09PedestalEmptyRef","DATA":{"Position":{"X":1234.56}}}'+
+                        ']'+
+                      '}}'+
+                    ']}}}}'));
+                  ExpectSuccess(GetFloatValue(refr, 'DATA\Position\X', @d));
+                  ExpectEqual(RoundTo(d, -2), 1234.56);
+                end);
+            end);
+
           Describe('Record deserialization', procedure
             begin
               It('Should create new record when necessary', procedure
