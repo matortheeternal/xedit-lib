@@ -46,7 +46,7 @@ begin
   rec := _file.RecordByEditorID[editorID];
   if not Assigned(rec) then
     raise Exception.Create('Failed to find record with Editor ID: ' + editorID + ' in file ' + _file.FileName);
-  Result := rec.LoadOrderFormID;
+  Result := _file.LoadOrderFormIDtoFileFormID(rec.LoadOrderFormID);
 end;
 
 procedure StoreRecords(_file: IwbFile; len: PInteger);
