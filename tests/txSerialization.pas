@@ -14,7 +14,7 @@ uses
   txImports,
 {$ENDIF}
 {$IFNDEF USE_DLL}
-  xeSerialization, xeFiles, xeElements, xeElementValues,
+  xeSerialization, xeFiles, xeElements, xeElementValues, xeRecords,
 {$ENDIF}
   txMeta, txElements;
 
@@ -336,6 +336,142 @@ begin
 
       Describe('ElementFromJSON', procedure
         begin
+          Describe('Record deserialization', procedure
+            begin
+              It('Should create new record when necessary', procedure
+                begin
+                  ExpectSuccess(ElementFromJson(armo, '', '{"Records":[{"EDID":"NewArmor","FULL":"New Armor"}]}'));
+                  ExpectSuccess(ElementCount(armo, @i));
+                  ExpectEqual(i, 2);
+                  ExpectSuccess(GetElement(armo, '[1]', @h));
+                  ExpectSuccess(GetValue(h, 'EDID', @len));
+                  ExpectEqual(grs(len), 'NewArmor');
+                  ExpectSuccess(GetValue(h, 'FULL', @len));
+                  ExpectEqual(grs(len), 'New Armor');
+                end);
+
+              Describe('Existing records', procedure
+                begin
+                  It('Should recognize existing records by FormID', procedure
+                    begin
+                      ExpectSuccess(ElementFromJson(armo, '', '{"Records":[{"Record Header":{"FormID":"03000800"},"FULL":"New Armor2"}]}'));
+                      ExpectSuccess(ElementCount(armo, @i));
+                      ExpectEqual(i, 2);
+                      ExpectSuccess(GetElement(armo, '[1]', @h));
+                      ExpectSuccess(GetValue(h, 'FULL', @len));
+                      ExpectEqual(grs(len), 'New Armor2');
+                    end);
+
+                  It('Should recognize existing records by Editor ID', procedure
+                    begin
+                      ExpectSuccess(ElementFromJson(armo, '', '{"Records":[{"EDID":"NewArmor","FULL":"New Armor3"}]}'));
+                      ExpectSuccess(ElementCount(armo, @i));
+                      ExpectEqual(i, 2);
+                      ExpectSuccess(GetElement(armo, '[1]', @h));
+                      ExpectSuccess(GetValue(h, 'FULL', @len));
+                      ExpectEqual(grs(len), 'New Armor3');
+                    end);
+
+                  It('Should recognize existing records by FULL Name', procedure
+                    begin
+                      ExpectSuccess(ElementFromJson(armo, '', '{"Records":[{"FULL":"New Armor3","DATA":{"Value":"999"}}]}'));
+                      ExpectSuccess(ElementCount(armo, @i));
+                      ExpectEqual(i, 2);
+                      ExpectSuccess(GetElement(armo, '[1]', @h));
+                      ExpectSuccess(GetValue(h, 'DATA\Value', @len));
+                      ExpectEqual(grs(len), '999');
+                    end);
+                end);
+
+              Describe('Overriding records', procedure
+                begin
+                  BeforeAll(procedure
+                    begin
+                      ExpectSuccess(FileByName('Skyrim.esm', @h));
+                      ExpectSuccess(SortNames(h, 'ARMO'));
+                      ExpectSuccess(SortEditorIDs(h, 'ARMO'));
+                    end);
+
+                  It('Should override existing records by FormID', procedure
+                    begin
+                      ExpectSuccess(ElementFromJson(armo, '', '{"Records":[{"Record Header":{"FormID":"00012E49"},"FULL":"Iron Armor2"}]}'));
+                      ExpectSuccess(ElementCount(armo, @i));
+                      ExpectEqual(i, 3);
+                      ExpectSuccess(GetElement(armo, '[1]', @h));
+                      ExpectSuccess(GetValue(h, 'FULL', @len));
+                      ExpectEqual(grs(len), 'Iron Armor2');
+                    end);
+
+                  It('Should not override existing records by Editor ID', procedure
+                    begin
+                      ExpectSuccess(ElementFromJson(armo, '', '{"Records":[{"EDID":"ArmorIronBoots"}]}'));
+                      ExpectSuccess(ElementCount(armo, @i));
+                      ExpectEqual(i, 4);
+                      ExpectSuccess(GetElement(armo, '[3]', @h));
+                      ExpectSuccess(IsMaster(h, @b));
+                      ExpectEqual(b, true);
+                    end);
+
+                  It('Should not override existing records by FULL Name', procedure
+                    begin
+                      ExpectSuccess(ElementFromJson(armo, '', '{"Records":[{"FULL":"Iron Shield"}]}'));
+                      ExpectSuccess(ElementCount(armo, @i));
+                      ExpectEqual(i, 5);
+                      ExpectSuccess(GetElement(armo, '[4]', @h));
+                      ExpectSuccess(IsMaster(h, @b));
+                      ExpectEqual(b, true);
+                    end);
+                end);
+
+              Describe('Record header', procedure
+                begin
+                  It('Should fail if signature does not match', procedure
+                    begin
+                      ExpectFailure(ElementFromJson(rec, '', '{"Record Header":{"Signature":"ALCH"}}'));
+                    end);
+
+                  It('Should ignore data size', procedure
+                    begin
+                      ExpectSuccess(ElementFromJson(rec, '', '{"Record Header":{"Data Size":320}}'));
+                      ExpectSuccess(GetValue(rec, 'Record Header\Data Size', @len));
+                      ExpectEqual(grs(len), '271');
+                    end);
+
+                  It('Should ignore form version', procedure
+                    begin
+                      ExpectSuccess(ElementFromJson(rec, '', '{"Record Header":{"Form Version":43}}'));
+                      ExpectSuccess(GetValue(rec, 'Record Header\Form Version', @len));
+                      ExpectEqual(grs(len), '40');
+                    end);
+
+                  It('Should ignore version control info', procedure
+                    begin
+                      ExpectSuccess(ElementFromJson(armo, '[1]', '{"Record Header":{"Version Control Info 1":"12 34 56 78","Version Control Info 2":"01 23"}}'));
+                      ExpectSuccess(GetValue(armo, '[1]\Record Header\Version Control Info 1', @len));
+                      ExpectEqual(grs(len), '00 00 00 00');
+                      ExpectSuccess(GetValue(armo, '[1]\Record Header\Version Control Info 2', @len));
+                      ExpectEqual(grs(len), '00 00');
+                    end);
+
+                  It('Should set record flags properly', procedure
+                    begin
+                      ExpectSuccess(ElementFromJson(rec, '', '{"Record Header":{"Record Flags":{"Ignored":true,"Unknown 15":true}}}'));
+                      ExpectSuccess(GetFlag(rec, 'Record Header\Record Flags', 'Ignored', @b));
+                      ExpectEqual(b, true);
+                      ExpectSuccess(GetFlag(rec, 'Record Header\Record Flags', 'Unknown 15', @b));
+                      ExpectEqual(b, true);
+                    end);
+
+                  It('Should set FormID properly', procedure
+                    begin
+                      ExpectSuccess(GetElement(armo, '[2]', @h));
+                      ExpectSuccess(ElementFromJson(h, '', '{"Record Header":{"FormID":"03123456"}}'));
+                      ExpectSuccess(GetValue(armo, '[2]\Record Header\FormID', @len));
+                      ExpectEqual(grs(len), 'NewArmor "New Armor3" [ARMO:03123456]');
+                    end);
+                end);
+            end);
+
           Describe('Element deserialization', procedure
             begin
               BeforeAll(procedure
