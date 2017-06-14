@@ -381,10 +381,14 @@ begin
   recHeader := obj.O['Record Header'];
   if Assigned(recHeader) and recHeader.HasKey('Signature') then
     Result := recHeader.S['Signature']
-  else if group.GroupType = 0 then
-    Result := String(TwbSignature(group.GroupLabel))
-  else
-    raise Exception.Create('Failed to determine add signature when deserializing: ' + Copy(obj.ToString, 1, 20) + '...');
+  else begin
+    case group.GroupType of
+      0: Result := String(TwbSignature(group.GroupLabel));
+      1,2,3: Result := 'CELL';
+      else
+        raise Exception.Create('Failed to determine add signature when deserializing: ' + Copy(obj.ToString, 1, 20) + '...');
+    end;
+  end;
 end;
 
 procedure JsonToRecords(group: IwbGroupRecord; ary: TJSONArray);
