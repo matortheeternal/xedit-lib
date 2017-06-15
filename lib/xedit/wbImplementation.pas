@@ -15193,7 +15193,12 @@ begin
   (_File as IwbFileInternal).ForceClosed;
   for i := index + 1 to Pred(aLength) do
     Files[i - 1] := Files[i];
-  FilesMap.Delete(FilesMap.IndexOf(fileName));
+  SetLength(Files, aLength - 1);
+  for i := 0 to Pred(FilesMap.Count) do
+    if SameText(ExtractFileName(FilesMap[i]), fileName) then begin
+      FilesMap.Delete(i);
+      break;
+    end;
 end;
 
 function wbExpandFileName(const aFileName: string): string;
