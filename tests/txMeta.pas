@@ -44,7 +44,7 @@ begin
     wcBuffer := PWideChar(str);
     GetMessages(wcBuffer, len);
     Delete(str, Length(str) - 1, 2);
-    WriteLn(str);
+    WriteLn('> ' + StringReplace(str, #13#10, #13#10'> ', [rfReplaceAll]));
   end;
 end;
 
@@ -87,7 +87,7 @@ begin
       s := s + ', ';
   end;
   s := s + ' ]';
-  WriteLn(s);
+  WriteLn('> ' + s);
 end;
 
 procedure WriteExceptions;
@@ -101,7 +101,7 @@ begin
     SetLength(str, len);
     wcBuffer := PWideChar(str);
     GetExceptionMessage(wcBuffer, len);
-    WriteLn(str);
+    WriteLn('> ' + str);
   end;
 end;
 

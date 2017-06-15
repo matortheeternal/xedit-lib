@@ -79,9 +79,12 @@ begin
     WriteLn(msg);
   end;
 
-  // run the tests
+  // init xedit
   InitXEdit;
-  LoadXEdit;
+  WriteMessages;
+  WriteLn(' ');
+
+  // run the tests
   RunTests(LogToConsole);
   CloseXEdit;
 
