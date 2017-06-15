@@ -127,6 +127,7 @@ end;
 procedure ExpectFailure(b: WordBool);
 begin
   Expect(not b, 'Function should return false');
+  ClearMessages;
 end;
 
 procedure TestGetGlobal(global: PWideChar);

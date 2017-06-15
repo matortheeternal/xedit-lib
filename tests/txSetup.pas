@@ -73,7 +73,6 @@ begin
         begin
           AfterAll(procedure
             begin
-              ClearMessages;
               ExpectSuccess(GetGlobal('AppDataPath', @len));
               appDataPath := grs(len);
             end);
@@ -238,11 +237,6 @@ begin
 
       Describe('LoadPlugin', procedure
         begin
-          BeforeAll(procedure
-            begin
-              ClearMessages;
-            end);
-
           It('Should successfully load plugins', procedure
             begin
               WriteLn(' ');
