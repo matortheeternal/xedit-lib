@@ -20,6 +20,7 @@ type
   {$endregion}
 
   {$region 'Native functions}
+  procedure UpdateFileCount;
   procedure LoadPluginFiles;
   procedure LoadResources;
   procedure BuildPluginsList(sLoadPath: String; var sl: TStringList);
@@ -69,6 +70,7 @@ begin
     ProgramStatus.bLoaderDone := False;
     LoadPluginFiles;
     LoadResources;
+    UpdateFileCount;
 
     // done loading
     ProgramStatus.bLoaderDone := True;
@@ -111,6 +113,11 @@ end;
 
 {$region 'Native functions'}
 {$region 'File loading'}
+procedure UpdateFileCount;
+begin
+  Globals.Values['FileCount'] := IntToStr(Length(xFiles));
+end;
+
 procedure LoadFile(filePath: String; loadOrder: Integer);
 var
   _file: IwbFile;
@@ -237,7 +244,9 @@ begin
   Assert(index < len);
   for i := index + 1 to Pred(len) do
     xFiles[i - 1] := xFiles[i];
+  SetLength(xFiles, len - 1);
   wbFileForceClosed(_file);
+  UpdateFileCount;
 end;
 {$endregion}
 
@@ -574,9 +583,6 @@ begin
     slLoadOrder := TStringList.Create;
     slLoadOrder.Text := loadOrder;
 
-    // set filecount global
-    Globals.Values['FileCount'] := IntToStr(slLoadOrder.Count);
-
     // start loader thread
     LoaderThread := TLoaderThread.Create;
     Result := True;
@@ -593,9 +599,6 @@ begin
     ProgramStatus.bLoaderDone := False;
     slLoadOrder := TStringList.Create;
     slLoadOrder.Add(fileName);
-
-    // update filecount global
-    Globals.Values['FileCount'] := IntToStr(Length(xFiles) + 1);
 
     // start loader thread
     LoaderThread := TLoaderThread.Create;
