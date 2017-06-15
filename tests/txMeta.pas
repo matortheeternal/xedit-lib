@@ -176,6 +176,21 @@ begin
               TestGetGlobal('DataPath');
             end);
 
+          It('Should have the AppDataPath global', procedure
+            begin
+              TestGetGlobal('AppDataPath');
+            end);
+
+          It('Should have the MyGamesPath global', procedure
+            begin
+              TestGetGlobal('MyGamesPath');
+            end);
+
+          It('Should have the GameIniPath global', procedure
+            begin
+              TestGetGlobal('GameIniPath');
+            end);
+
           It('Should have the FileCount global', procedure
             begin
               TestGetGlobal('FileCount');
