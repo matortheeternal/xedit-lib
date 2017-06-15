@@ -635,9 +635,9 @@ function GetLoaderDone: WordBool; cdecl;
 begin
   Result := ProgramStatus.bLoaderDone;
   if Result then begin
-    if Assigned(LoaderThread) then LoaderThread.Free;
-    if Assigned(RefThread)    then RefThread.Free;
-    if Assigned(slLoadOrder)  then slLoadOrder.Free;
+    if Assigned(LoaderThread) then FreeAndNil(LoaderThread);
+    if Assigned(RefThread)    then FreeAndNil(RefThread);
+    if Assigned(slLoadOrder)  then FreeAndNil(slLoadOrder);
   end;
 end;
 
