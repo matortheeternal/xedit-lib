@@ -17,13 +17,13 @@ uses
   txImports;
 {$ENDIF}
 {$IFNDEF USE_DLL}
-  xeFiles;
+  xeMeta, xeFiles, xeSetup;
 {$ENDIF}
 
 procedure BuildFileHandlingTests;
 var
   h: Cardinal;
-  count: Integer;
+  len, count: Integer;
 begin
   Describe('File Handling Functions', procedure
     begin
@@ -113,11 +113,21 @@ begin
             end);
         end);
 
-      {$IF false}
       Describe('AddFile', procedure
-        var
-          i: Integer;
         begin
+          AfterAll(procedure
+            var
+              i: Integer;
+            begin
+              for i := 254 downto 0 do
+                if FileByName(PWideChar(IntToStr(i) + '.esp'), @h) then
+                  ExpectSuccess(UnloadPlugin(h))
+                else
+                  Break;
+              ExpectSuccess(FileByName('abc.esp', @h));
+              ExpectSuccess(UnloadPlugin(h));
+            end);
+
           It('Should return true if it succeeds', procedure
             begin
               ExpectSuccess(AddFile('abc.esp', @h));
@@ -128,16 +138,17 @@ begin
               ExpectFailure(AddFile('Dawnguard.esm', @h));
             end);
 
-          {$IF false}
           It('Should return false if the load order is already full', procedure
+            var
+              i, start: Integer;
             begin
-              for i := GetGlobal('FileCount') to 254 do
-                AddFile(Concat(IntToStr(i),'.esp', @h));
+              ExpectSuccess(GetGlobal('FileCount', @len));
+              start := StrToInt(grs(len));
+              for i := start to 254 do
+                ExpectSuccess(AddFile(PWideChar(IntToStr(i) + '.esp'), @h));
               ExpectFailure(AddFile('255.esp', @h));
             end);
-          {$IFEND}
         end);
-      {$IFEND}
     end);
 end;
 
