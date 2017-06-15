@@ -67,7 +67,6 @@ uses
 procedure TLoaderThread.Execute;
 begin
   try
-    ProgramStatus.bLoaderDone := False;
     LoadPluginFiles;
     LoadResources;
     UpdateFileCount;
@@ -91,7 +90,6 @@ var
   _file: IwbFile;
 begin
   try
-    ProgramStatus.bLoaderDone := False;
     for i := Low(rFiles) to High(rFiles) do begin
       _file := rFiles[i];
       AddMessage(Format('Building references for %s (%d/%d)', [_file.FileName, i + 1, Length(rFiles)]));
@@ -580,6 +578,7 @@ begin
       raise Exception.Create('Already loading plugins.');
     
     // store load order we're going to use in slLoadOrder
+    ProgramStatus.bLoaderDone := False;
     slLoadOrder := TStringList.Create;
     slLoadOrder.Text := loadOrder;
 
@@ -614,6 +613,7 @@ var
 begin
   Result := False;
   try
+    ProgramStatus.bLoaderDone := False;
     if _id = 0 then
       rFiles := Copy(xFiles, 0, MaxInt)
     else begin
