@@ -67,6 +67,7 @@ begin
   SetLength(xFiles, Succ(Length(xFiles)));
   xFiles[High(xFiles)] := _file;
   _file._AddRef;
+  UpdateFileCount;
   Result := _file;
 end;
 
