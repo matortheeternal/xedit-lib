@@ -59,6 +59,7 @@ const
 
 procedure BuildXETests;
 begin
+  BuildSetupTests;
   BuildMetaTests;
   BuildFileHandlingTests;
   BuildMasterHandlingTests;
