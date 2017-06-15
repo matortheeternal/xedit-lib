@@ -470,6 +470,8 @@ function SetGameMode(mode: Integer): WordBool; cdecl;
 begin
   Result := False;
   try
+    if wbGameName <> '' then
+      raise Exception.Create('Game mode already set to: ' + wbGameName);
     SetGame(mode);
     // log message
     AddMessage(Format('Game: %s, DataPath: %s', [wbGameName, wbDataPath]));
