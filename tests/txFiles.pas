@@ -17,7 +17,7 @@ uses
   txImports;
 {$ENDIF}
 {$IFNDEF USE_DLL}
-  xeMeta, xeFiles;
+  xeMeta, xeFiles, xeSetup;
 {$ENDIF}
 
 procedure BuildFileHandlingTests;
@@ -95,7 +95,7 @@ begin
             end);
         end);
 
-      {$IF true}
+      {$IF false}
       Describe('AddFile', procedure
         var
           i: Integer;
@@ -103,6 +103,7 @@ begin
           It('Should return true if it succeeds', procedure
             begin
               ExpectSuccess(AddFile('abc.esp', @h));
+              UnloadPlugin(h);
             end);
 
           It('Should return false if the file already exists', procedure
