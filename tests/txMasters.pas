@@ -55,14 +55,29 @@ begin
   end;
 end;
 
+procedure TestGetRequiredBy(f: Cardinal; masterNames: array of string);
+var
+  len, i: Integer;
+  masters: CardinalArray;
+begin
+  ExpectSuccess(GetRequiredBy(f, @len));
+  masters := gra(len);
+  ExpectEqual(Length(masters), Length(masterNames));
+  for i := 0 to len - 1 do begin
+    ExpectSuccess(Name(masters[i], @len));
+    ExpectEqual(grs(len), masterNames[i]);
+  end;
+end;
+
 procedure BuildMasterHandlingTests;
 var
-  xt5: Cardinal;
+  xt5, skyrim: Cardinal;
 begin
   Describe('Master handling', procedure
     begin
       BeforeAll(procedure
         begin
+          ExpectSuccess(FileByName('Skyrim.esm', @skyrim));
           ExpectSuccess(FileByName('xtest-5.esp', @xt5));
           TestMasterCount(xt5, 2);
         end);
@@ -114,6 +129,14 @@ begin
           It('Should get master file handles', procedure
             begin
               TestGetMasters(xt5, ['Skyrim.esm','Update.esm','xtest-1.esp','xtest-2.esp','xtest-3.esp','xtest-4.esp']);
+            end);
+        end);
+
+      Describe('GetRequiredBy', procedure
+        begin
+          It('Should get required by file handles', procedure
+            begin
+              TestGetRequiredBy(skyrim, ['Update.esm','xtest-1.esp','xtest-2.esp','xtest-3.esp','xtest-4.esp','xtest-5.esp']);
             end);
         end);
 
