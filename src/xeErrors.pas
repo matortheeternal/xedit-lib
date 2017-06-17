@@ -100,7 +100,7 @@ procedure CheckForIdenticalErrors(rec, lastRecord: IwbMainRecord);
 var
   errorObj: TRecordError; 
 begin
-  if rec.IsMaster then exit;
+  if rec.IsMaster or rec.Master.IsInjected then exit;
   if Assigned(rec.ChildGroup) and (rec.ChildGroup.ElementCount > 0) then exit;
   if IsITM(rec) then begin
     errorObj := TRecordError.Create(rec, erITM);
