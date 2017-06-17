@@ -10,6 +10,7 @@ uses
   xeMeta;
 
 type
+  {$region 'Types'}
   TErrorTypeID = ( erITM, erITPO, erUDR, erUES, erURR, erUER, erUnknown );
   TErrorType = record
     id: TErrorTypeID;
@@ -37,13 +38,17 @@ type
   protected
     procedure Execute; override;
   end;
+  {$endregion}
 
+  {$region 'API functions'}
   function CheckForErrors(_id: Cardinal): WordBool; cdecl;
   function GetErrorThreadDone: WordBool; cdecl;
   function GetErrors(len: PInteger): WordBool; cdecl;
   function GetErrorString(_id: Cardinal; len: PInteger): WordBool; cdecl;
+  {$endregion}
 
 const
+  {$region 'ErrorTypes'}
   ErrorTypes: array[0..6] of TErrorType = (
     (id: erITM; shortName: 'ITM'; longName: 'Identical to Master'; expr: ''),
     (id: erITPO; shortName: 'ITPO'; longName: 'Identical to Previous Override';
@@ -58,6 +63,7 @@ const
       expr: 'Found a ([a-zA-Z_]+) reference, expected: (\w+)'),
     (id: erUnknown; shortName: 'UNK'; longName: 'Unknown'; expr: '')
   );
+  {$endregion}
 
 implementation
 
@@ -75,13 +81,8 @@ var
   bErrorCheckThreadDone: Boolean;
   elementToCheck: IwbElement;
 
-
-{******************************************************************************}
-{ ERROR CHECKING
-  Methods for checking for errors.
-}
-{******************************************************************************}
-
+{$region 'Native functions'}
+{$region 'CheckForErrors helpers'}
 procedure CheckForSubrecordErrors(rec, lastRecord: IwbMainRecord);  
 var
   error: String;  
@@ -149,7 +150,107 @@ begin
   NativeCheckForErrors(elementToCheck, nil);
   bErrorCheckThreadDone := True;
 end;
+{$endregion}
 
+{$region 'GetErrors helpers'}
+function ErrorToJson(error: TRecordError): TJSONObject;
+begin
+  Result := TJSONObject.Create;
+  try
+    Result.I['group'] := Ord(error.&type.id);
+    Result.I['handle'] := error.handle;
+    Result.S['signature'] := string(error.signature);
+    Result.I['form_id'] := error.formID;
+    Result.S['name'] := error.name;
+    if error.path <> '' then
+      Result.S['path'] := error.path;
+    if error.data <> '' then
+      Result.S['data'] := error.data;
+  except
+    on x: Exception do begin
+      Result.Free;
+      raise x;
+    end;
+  end;
+end;
+{$endregion}
+
+{$region 'Error parsing'}
+function MatchesError(error: string; errorID: TErrorTypeID;
+  i1, i2: Integer; var &type: TErrorType; var data: string): boolean;
+var
+  errorType: TErrorType;
+  regex: TRegex;
+  match: TMatch;
+begin
+  errorType := ErrorTypes[Ord(errorID)];
+  regex := TRegex.Create(string(errorType.expr));
+  match := regex.Match(error);
+  Result := match.success;
+
+  // if the expression matches the error, use its type and
+  // parse data from regex groups
+  if match.success then begin
+    &type := errorType;
+    if i1 > 0 then begin
+      data := match.Groups.Item[i1].Value;
+      if i2 > 0 then
+        data := data + ',' + match.Groups.Item[i2].Value;
+    end;
+  end;
+end;
+
+procedure ParseError(error: string; var &type: TErrorType;
+  var data: string);
+begin
+  // test errors with regex expressions, and if they match use
+  // their type and parse data from the correct regex groups
+  if MatchesError(error, erUDR, 1, 0, &type, data)
+  or MatchesError(error, erUES, 2, 0, &type, data)
+  or MatchesError(error, erURR, 1, 0, &type, data)
+  or MatchesError(error, erUER, 1, 2, &type, data) then
+    exit;
+
+  // error unknown
+  &type := ErrorTypes[Ord(erUnknown)];
+  data := error;
+end;
+{$endregion}
+
+{$region 'TRecordError'}
+constructor TRecordError.Create(rec: IwbMainRecord; id: TErrorTypeID);
+begin
+  Init(rec);
+  &type := ErrorTypes[Ord(id)];
+end;
+
+constructor TRecordError.Create(rec: IwbMainRecord; id: TErrorTypeID;
+  error: string);
+begin
+  Init(rec);
+  &type := ErrorTypes[Ord(id)];
+  data := error;
+end;
+
+constructor TRecordError.Create(rec: IwbMainRecord; element: IwbElement;
+  error: string);
+begin
+  Init(rec);
+  path := GetPath(element, false);
+  ParseError(error, &type, data);
+end;
+
+procedure TRecordError.Init(rec: IwbMainRecord);
+begin
+  handle := Store(rec);
+  signature := rec.signature;
+  formID := rec.FixedFormID;
+  name := rec.Name;
+end;
+{$endregion}
+{$endregion}
+
+{$region 'API functions'}
 function CheckForErrors(_id: Cardinal): WordBool; cdecl;
 var
   element: IwbElement;
@@ -173,27 +274,6 @@ end;
 function GetErrorThreadDone: WordBool; cdecl;
 begin
   Result := bErrorCheckThreadDone;
-end;
-
-function ErrorToJson(error: TRecordError): TJSONObject;
-begin
-  Result := TJSONObject.Create;
-  try
-    Result.I['group'] := Ord(error.&type.id);
-    Result.I['handle'] := error.handle;
-    Result.S['signature'] := string(error.signature);
-    Result.I['form_id'] := error.formID;
-    Result.S['name'] := error.name;
-    if error.path <> '' then
-      Result.S['path'] := error.path;
-    if error.data <> '' then
-      Result.S['data'] := error.data;
-  except
-    on x: Exception do begin
-      Result.Free;
-      raise x;
-    end;
-  end;
 end;
 
 function GetErrors(len: PInteger): WordBool; cdecl;
@@ -237,78 +317,7 @@ begin
     on x: Exception do ExceptionHandler(x);
   end;
 end;
-
-function MatchesError(error: string; errorID: TErrorTypeID;
-  i1, i2: Integer; var &type: TErrorType; var data: string): boolean;
-var
-  errorType: TErrorType;
-  regex: TRegex;
-  match: TMatch;
-begin
-  errorType := ErrorTypes[Ord(errorID)];
-  regex := TRegex.Create(string(errorType.expr));
-  match := regex.Match(error);
-  Result := match.success;
-
-  // if the expression matches the error, use its type and
-  // parse data from regex groups
-  if match.success then begin
-    &type := errorType;
-    if i1 > 0 then begin
-      data := match.Groups.Item[i1].Value;
-      if i2 > 0 then
-        data := data + ',' + match.Groups.Item[i2].Value;
-    end;
-  end;
-end;
-
-procedure ParseError(error: string; var &type: TErrorType;
-  var data: string);
-begin
-  // test errors with regex expressions, and if they match use
-  // their type and parse data from the correct regex groups
-  if MatchesError(error, erUDR, 1, 0, &type, data)
-  or MatchesError(error, erUES, 2, 0, &type, data)
-  or MatchesError(error, erURR, 1, 0, &type, data)
-  or MatchesError(error, erUER, 1, 2, &type, data) then
-    exit;
-
-  // error unknown
-  &type := ErrorTypes[Ord(erUnknown)];
-  data := error;
-end;
-
-{ TRecordError }
-constructor TRecordError.Create(rec: IwbMainRecord; id: TErrorTypeID);
-begin
-  Init(rec);
-  &type := ErrorTypes[Ord(id)];
-end;
-
-constructor TRecordError.Create(rec: IwbMainRecord; id: TErrorTypeID;
-  error: string);
-begin
-  Init(rec);
-  &type := ErrorTypes[Ord(id)];
-  data := error;
-end;
-
-constructor TRecordError.Create(rec: IwbMainRecord; element: IwbElement;
-  error: string);
-begin
-  Init(rec);
-  path := GetPath(element, false);
-  ParseError(error, &type, data);
-end;
-
-procedure TRecordError.Init(rec: IwbMainRecord);
-begin
-  handle := Store(rec);
-  signature := rec.signature;
-  formID := rec.FixedFormID;
-  name := rec.Name;
-end;
-
+{$endregion}
 
 initialization
   bErrorCheckThreadDone := True;

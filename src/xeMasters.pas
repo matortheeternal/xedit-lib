@@ -5,16 +5,19 @@ interface
 uses
   wbInterface;
 
+  {$region 'Native functions'}
+  procedure NativeAddRequiredMasters(element: IwbElement; targetFile: IwbFile; asNew: Boolean);
+  function NativeFileHasMaster(_file, _master: IwbFile): Boolean;
+  {$endregion}
+
+  {$region 'API functions'}
   function CleanMasters(_id: Cardinal): WordBool; cdecl;
   function SortMasters(_id: Cardinal): WordBool; cdecl;
   function AddMaster(_id: Cardinal; masterName: PWideChar): WordBool; cdecl;
   function AddMasters(_id: Cardinal; masters: PWideChar): WordBool; cdecl;
   function GetMasters(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function GetRequiredBy(_id: Cardinal; len: PInteger): WordBool; cdecl;
-
-  // native functions
-  procedure NativeAddRequiredMasters(element: IwbElement; targetFile: IwbFile; asNew: Boolean);
-  function NativeFileHasMaster(_file, _master: IwbFile): Boolean;
+  {$endregion}
 
 implementation
 
@@ -25,13 +28,46 @@ uses
   // xelib modules
   xeMeta, xeFiles, xeMessages, xeSetup;
 
+{$region 'Native functions'}
+procedure NativeAddMaster(targetFile: IwbFile; masterName: String);
+begin
+  NativeFileByNameEx(string(masterName));
+  targetFile.AddMasterIfMissing(string(masterName));
+end;
 
-{******************************************************************************}
-{ MASTER HANDLING
-  Methods for handling masters on loaded files.
-}
-{******************************************************************************}
+procedure NativeAddRequiredMasters(element: IwbElement; targetFile: IwbFile; asNew: Boolean);
+var
+  sl: TStringList;
+  i: Integer;
+begin
+  sl := TStringList.Create;
+  sl.Sorted := True;
+  sl.Duplicates := dupIgnore;
+  try
+    element.ReportRequiredMasters(sl, asNew);
+    if sl.Find(targetFile.FileName, i) then
+      sl.Delete(i);
+    for i := 0 to Pred(sl.Count) do
+      NativeAddMaster(targetFile, sl[i]);
+  finally
+    sl.Free;
+  end;
+end;
 
+function NativeFileHasMaster(_file, _master: IwbFile): Boolean;
+var
+  i: Integer;
+begin
+  Result := False;
+  for i := 0 to Pred(_file.MasterCount) do
+    if _file.Masters[i].FileName = _master.FileName then begin
+      Result := True;
+      break;
+    end;
+end;
+{$endregion}
+
+{$region 'API functions'}
 function CleanMasters(_id: Cardinal): WordBool; cdecl;
 var
   _file: IwbFile;
@@ -70,25 +106,11 @@ begin
   try
     if not Supports(Resolve(_id), IwbFile, _file) then
       raise Exception.Create('Interface must be a file.');
-    _file.AddMasterIfMissing(string(masterName));
+    NativeAddMaster(_file, string(masterName));
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
-end;
-
-procedure NativeAddMasters(targetFile: IwbFile; var masters: TStringList);
-var
-  i: Integer;
-begin
-  for i := 0 to Pred(masters.Count) do
-    if IwbFile(Pointer(masters.Objects[i])).LoadOrder >= targetFile.LoadOrder then
-      raise Exception.Create(Format('The required master "%s" cannot be ' +
-        'added to "%s" because it has a higher load order.', [masters[i],
-        targetFile.FileName]));
-  masters.Sorted := False;
-  masters.CustomSort(CompareLoadOrder);
-  targetFile.AddMasters(masters);
 end;
 
 function AddMasters(_id: Cardinal; masters: PWideChar): WordBool; cdecl;
@@ -105,8 +127,7 @@ begin
     try
       sl.Text := string(masters);
       for i := 0 to Pred(sl.Count) do
-        sl.Objects[i] := Pointer(NativeFileByNameEx(sl[i]));
-      NativeAddMasters(_file, sl);
+        NativeAddMaster(_file, sl[i]);
     finally
       sl.Free;
     end;
@@ -114,46 +135,6 @@ begin
   except
     on x: Exception do ExceptionHandler(x);
   end;
-end;
-
-procedure GetMissingMasters(targetFile: IwbFile; var masters: TStringList);
-var
-  i, j: Integer;
-begin
-  for i := 0 to Pred(targetFile.MasterCount) do
-    if masters.Find(targetFile.Masters[i].FileName, j) then
-      masters.Delete(j);
-  if masters.Find(targetFile.FileName, j) then
-    masters.Delete(j);
-end;
-
-procedure NativeAddRequiredMasters(element: IwbElement; targetFile: IwbFile; asNew: Boolean);
-var
-  sl: TStringList;
-begin
-  sl := TStringList.Create;
-  sl.Sorted := True;
-  sl.Duplicates := dupIgnore;
-  try
-    element.ReportRequiredMasters(sl, asNew);
-    GetMissingMasters(targetFile, sl);
-    if sl.Count > 0 then
-      NativeAddMasters(targetFile, sl);
-  finally
-    sl.Free;
-  end;
-end;
-
-function NativeFileHasMaster(_file, _master: IwbFile): Boolean;
-var
-  i: Integer;
-begin
-  Result := False;
-  for i := 0 to Pred(_file.MasterCount) do
-    if _file.Masters[i].FileName = _master.FileName then begin
-      Result := True;
-      break;
-    end;
 end;
 
 {$POINTERMATH ON}
@@ -201,5 +182,6 @@ begin
   end;
 end;
 {$POINTERMATH OFF}
+{$endregion}
 
 end.

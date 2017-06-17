@@ -11,6 +11,7 @@ uses
   wbDefinitionsFNV, wbDefinitionsFO3;
 
 type
+  {$region 'Types'}
   TGameMode = Record
     longName: string;
     gameName: string;
@@ -44,13 +45,14 @@ type
     GameMode: TGameMode;
     constructor Create; virtual;
   end;
+  {$endregion}
 
+  {$region 'Functions'}
   procedure SetGame(id: integer);
   function NativeGetGamePath(mode: TGameMode): string;
-  function SetGameAbbr(abbrName: string): boolean;
-  function SetGameParam(param: string): boolean;
   procedure LoadSettings;
   procedure SaveSettings;
+  {$endregion}
 
 var
   ProgramStatus: TProgramStatus;
@@ -60,7 +62,7 @@ var
   wbMyGamesPath: String;
 
 const
-  // GAME MODES
+  {$region 'Game modes'}
   GameArray: array[0..5] of TGameMode = (
     ( longName: 'Fallout New Vegas'; gameName: 'FalloutNV'; gameMode: gmFNV;
       regName: 'FalloutNV'; appName: 'FNV'; exeName: 'FalloutNV.exe';
@@ -81,6 +83,7 @@ const
       regName: 'Fallout4'; appName: 'FO4'; exeName: 'Fallout4.exe';
       appIDs: '377160'; )
   );
+  {$endregion}
 
 implementation
 
@@ -88,7 +91,7 @@ uses
   StrUtils, Rtti, TypInfo;
 
 
-{ TSettings }
+{$region 'TSettings'}
 constructor TSettings.Create;
 begin
   language := 'English';
@@ -135,14 +138,17 @@ begin
   SetGamePath('skyrimSEPath', 4);
   SetGamePath('fallout4Path', 5);
 end;
+{$endregion}
 
-{ TProgramStatus }
+{$region 'TProgramStatus'}
 constructor TProgramStatus.Create;
 begin
   bLoaderDone := False;
   ProgramVersion := GetVersionMem;
 end;
+{$endregion}
 
+{$region 'SetGame'}
 function GetMyGamesPath: String;
 var
   profilePath: String;
@@ -218,6 +224,7 @@ begin
     gmFO3: DefineFO3;
   end;
 end;
+{$endregion}
 
 { Gets the path of a game from registry key or app path }
 function NativeGetGamePath(mode: TGameMode): string;
@@ -257,27 +264,6 @@ begin
   // set result
   if Result <> '' then
     Result := IncludeTrailingPathDelimiter(Result);
-end;
-
-function SetGameAbbr(abbrName: String): boolean;
-var
-  i: Integer;
-begin
-  Result := False;
-  for i := Low(GameArray) to High(GameArray) do
-    if SameText(GameArray[i].abbrName, abbrName) then begin
-      SetGame(i);
-      Result := True;
-      exit;
-    end;
-end;
-
-function SetGameParam(param: string): boolean;
-var
-  abbrName: string;
-begin
-  abbrName := Copy(param, 2, Length(param));
-  Result := SetGameAbbr(abbrName);
 end;
 
 procedure LoadSettings;

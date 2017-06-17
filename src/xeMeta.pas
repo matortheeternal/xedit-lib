@@ -5,7 +5,14 @@ interface
 uses
   Classes, SysUtils, Generics.Collections;
 
-  // API METHODS
+  {$region 'Native functions'}
+  function Resolve(_id: Cardinal): IInterface;
+  procedure StoreIfAssigned(var x: IInterface; var _res: PCardinal; var Success: WordBool);
+  function Store(x: IInterface): Cardinal;
+  function xStrCopy(source: WideString; dest: PWideChar; maxLen: Integer): WordBool;
+  {$endregion}
+
+  {$region 'API functions'}
   procedure InitXEdit; cdecl;
   procedure CloseXEdit; cdecl;
   function GetResultString(str: PWideChar; maxLen: Integer): WordBool; cdecl;
@@ -14,12 +21,7 @@ uses
   function GetGlobals(len: PInteger): WordBool; cdecl;
   function Release(_id: Cardinal): WordBool; cdecl;
   function ResetStore: WordBool; cdecl;
-
-  // NATIVE METHODS
-  function Resolve(_id: Cardinal): IInterface;
-  procedure StoreIfAssigned(var x: IInterface; var _res: PCardinal; var Success: WordBool);
-  function Store(x: IInterface): Cardinal;
-  function xStrCopy(source: WideString; dest: PWideChar; maxLen: Integer): WordBool;
+  {$endregion}
 
 var
   _store: TInterfaceList;
@@ -35,15 +37,56 @@ uses
   // mte modules
   mteHelpers,
   // xelib modules
-  xeConfiguration, xeMessages, xeSetup;
+  xeConfiguration, xeMessages, xeSetup, xeFiles;
 
+{$region 'Native functions'}
+function xStrCopy(source: WideString; dest: PWideChar; maxLen: Integer): WordBool;
+var
+  len: Integer;
+begin
+  Result := False;
+  try
+    len := Length(source);
+    if len > maxLen then
+      raise Exception.Create(Format('Found buffer length %d, expected %d.', [maxLen, len + 1]));
+    Move(PWideChar(source)^, dest^, len * SizeOf(WideChar));
+    dest[len] := #0;
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
 
-{******************************************************************************}
-{ META METHODS
-  Methods which correspond to the overall functioning of the API.
-}
-{******************************************************************************}
+function Resolve(_id: Cardinal): IInterface;
+begin
+  if _id = 0 then raise Exception.Create('ERROR: Cannot resolve NULL reference.');
+  Result := _store[_id];
+end;
 
+procedure StoreIfAssigned(var x: IInterface; var _res: PCardinal; var Success: WordBool);
+begin
+  if Assigned(x) then begin
+    _res^ := Store(x);
+    Success := True;
+  end;
+end;
+
+function Store(x: IInterface): Cardinal;
+var
+  i: Integer;
+begin
+  if _releasedIDs.Count > 0 then begin
+    i := _releasedIDs[0];
+    _store[i] := x;
+    _releasedIDs.Delete(0);
+    Result := i;
+  end
+  else
+    Result := _store.Add(x);
+end;
+{$endregion}
+
+{$region 'API functions'}
 procedure InitXEdit; cdecl;
 begin
   // initialize variables
@@ -63,6 +106,7 @@ end;
 
 procedure CloseXEdit; cdecl;
 begin
+  RenameSavedFiles;
   SaveMessages;
   settings.Free;
   _releasedIDs.Free;
@@ -72,23 +116,6 @@ begin
   wbFileForceClosed;
   if Assigned(wbContainerHandler) then
     wbContainerHandler._Release;
-end;
-
-function xStrCopy(source: WideString; dest: PWideChar; maxLen: Integer): WordBool;
-var
-  len: Integer;
-begin
-  Result := False;
-  try
-    len := Length(source);
-    if len > maxLen then
-      raise Exception.Create(Format('Found buffer length %d, expected %d.', [maxLen, len + 1]));
-    Move(PWideChar(source)^, dest^, len * SizeOf(WideChar));
-    dest[len] := #0;
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
 end;
 
 function GetResultString(str: PWideChar; maxLen: Integer): WordBool; cdecl;
@@ -141,34 +168,6 @@ begin
   end;
 end;
 
-function Resolve(_id: Cardinal): IInterface;
-begin
-  if _id = 0 then raise Exception.Create('ERROR: Cannot resolve NULL reference.');
-  Result := _store[_id];
-end;
-
-procedure StoreIfAssigned(var x: IInterface; var _res: PCardinal; var Success: WordBool);
-begin
-  if Assigned(x) then begin
-    _res^ := Store(x);
-    Success := True;
-  end;
-end;
-
-function Store(x: IInterface): Cardinal;
-var
-  i: Integer;
-begin
-  if _releasedIDs.Count > 0 then begin
-    i := _releasedIDs[0];
-    _store[i] := x;
-    _releasedIDs.Delete(0);
-    Result := i;
-  end
-  else
-    Result := _store.Add(x);
-end;
-
 function Release(_id: Cardinal): WordBool; cdecl;
 begin
   Result := False;
@@ -194,5 +193,6 @@ begin
     on x: Exception do ExceptionHandler(x);
   end;
 end;
+{$endregion}
 
 end.

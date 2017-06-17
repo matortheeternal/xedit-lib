@@ -8,13 +8,13 @@ interface
 implementation
 
 uses
-  SysUtils,
+  SysUtils, Math,
   Argo, Mahogany,
 {$IFDEF USE_DLL}
   txImports,
 {$ENDIF}
 {$IFNDEF USE_DLL}
-  xeSerialization, xeElements,
+  xeSerialization, xeFiles, xeElements, xeElementValues, xeRecords,
 {$ENDIF}
   txMeta, txElements;
 
@@ -35,22 +35,25 @@ end;
 
 procedure BuildSerializationTests;
 var
-  testFile, armo, rec, cell, keywords, keyword, dnam, h: Cardinal;
+  testFile, armo, rec, cell, refr, keywords, keyword, dnam, h: Cardinal;
   obj, obj2, obj3: TJSONObject;
-  len: Integer;
+  len, i, count: Integer;
+  d: Double;
   ary: TJSONArray;
+  b: WordBool;
 begin
   Describe('Serialization', procedure
     begin
       BeforeAll(procedure
         begin
-          GetElement(0, 'xtest-2.esp', @testFile);
-          GetElement(testFile, 'ARMO', @armo);
-          GetElement(armo, '00012E46', @rec);
-          GetElement(testFile, 'CELL', @cell);
-          GetElement(rec, 'KWDA', @keywords);
-          GetElement(keywords, '[0]', @keyword);
-          GetElement(rec, 'DNAM', @dnam);
+          ExpectSuccess(GetElement(0, 'xtest-2.esp', @testFile));
+          ExpectSuccess(GetElement(testFile, 'ARMO', @armo));
+          ExpectSuccess(GetElement(armo, '00012E46', @rec));
+          ExpectSuccess(GetElement(testFile, 'CELL', @cell));
+          ExpectSuccess(GetElement(testFile, '000170F0', @refr));
+          ExpectSuccess(GetElement(rec, 'KWDA', @keywords));
+          ExpectSuccess(GetElement(keywords, '[0]', @keyword));
+          ExpectSuccess(GetElement(rec, 'DNAM', @dnam));
         end);
 
       Describe('ElementToJSON', procedure
@@ -334,7 +337,296 @@ begin
 
       Describe('ElementFromJSON', procedure
         begin
-          // TODO
+          BeforeAll(procedure
+            begin
+              ExpectSuccess(ElementCount(0, @count));
+            end);
+
+          Describe('Root deserialization', procedure
+            begin
+              It('Should create missing files', procedure
+                begin
+                  ExpectSuccess(ElementFromJson(0, '', '{"xtest-6.esp":{"File Header":{"CNAM":"Bob Ross"}}}'));
+                  ExpectSuccess(ElementCount(0, @i));
+                  ExpectEqual(i, count + 1);
+                  ExpectSuccess(GetValue(0, 'xtest-6.esp\File Header\CNAM', @len));
+                  ExpectEqual(grs(len), 'Bob Ross');
+                end);
+
+              It('Should use existing file if present', procedure
+                begin
+                  ExpectSuccess(ElementFromJson(0, '', '{"xtest-2.esp":{"File Header":{}}}'));
+                  ExpectSuccess(ElementCount(0, @i));
+                  ExpectEqual(i, count + 1);
+                end);
+            end);
+
+          Describe('File deserialization', procedure
+            begin
+              It('Should deserialize file header values', procedure
+                begin
+                  ExpectSuccess(ElementFromJson(testFile, '', '{"File Header":{"CNAM":"George","SNAM":"La dee da"}}'));
+                  ExpectSuccess(GetValue(testFile, 'File Header\CNAM', @len));
+                  ExpectEqual(grs(len), 'George');
+                  ExpectSuccess(GetValue(testFile, 'File Header\SNAM', @len));
+                  ExpectEqual(grs(len), 'La dee da');
+                end);
+            end);
+
+          Describe('Group deserialization', procedure
+            begin
+              It('Should create top level group if missing', procedure
+                begin
+                  ExpectSuccess(ElementFromJson(testFile, '', '{"Groups":{"ARMA":[]}}'));
+                  ExpectSuccess(HasElement(testFile, 'ARMA', @b));
+                  ExpectEqual(b, True);
+                end);
+
+              It('Should use existing top level group if present', procedure
+                begin
+                  ExpectSuccess(ElementFromJson(testFile, '', '{"Groups":{"ARMA":[{"EDID":"TestARMA"}]}}'));
+                  ExpectSuccess(HasElement(testFile, 'ARMA\[0]', @b));
+                  ExpectEqual(b, True);
+                end);
+
+              It('Should create inner groups if missing', procedure
+                begin
+                  ExpectSuccess(ElementFromJson(testFile, '',
+                    '{"Groups":{"CELL":{"Block 1":{"Sub-Block 1":['+
+                      '{"EDID":"NewCell01","XLCN":"000E9DA7","Child Group":{'+
+                        '"Temporary":['+
+                          '{"Record Header":{"Signature":"REFR"},"EDID":"NullRef001","DATA":{"Position":{"X":1234.56}}}'+
+                        ']'+
+                      '}}'+
+                    ']}}}}'));
+                  ExpectSuccess(GetFloatValue(testFile, '03000801\Child Group\Temporary\NullRef001\DATA\Position\X', @d));
+                  ExpectEqual(RoundTo(d, -2), 1234.56);
+                end);
+
+              It('Should use existing inner groups if present', procedure
+                begin
+                  ExpectSuccess(ElementFromJson(testFile, '',
+                    '{"Groups":{"CELL":{"Block 0":{"Sub-Block 0":['+
+                      '{"EDID":"KilkreathRuins03","Child Group":{'+
+                        '"Persistent":['+
+                          '{"EDID":"DA09PedestalEmptyRef","DATA":{"Position":{"X":1234.56}}}'+
+                        ']'+
+                      '}}'+
+                    ']}}}}'));
+                  ExpectSuccess(GetFloatValue(refr, 'DATA\Position\X', @d));
+                  ExpectEqual(RoundTo(d, -2), 1234.56);
+                end);
+            end);
+
+          Describe('Record deserialization', procedure
+            begin
+              It('Should create new record when necessary', procedure
+                begin
+                  ExpectSuccess(ElementFromJson(armo, '', '{"Records":[{"EDID":"NewArmor","FULL":"New Armor"}]}'));
+                  ExpectSuccess(ElementCount(armo, @i));
+                  ExpectEqual(i, 2);
+                  ExpectSuccess(GetElement(armo, '[1]', @h));
+                  ExpectSuccess(GetValue(h, 'EDID', @len));
+                  ExpectEqual(grs(len), 'NewArmor');
+                  ExpectSuccess(GetValue(h, 'FULL', @len));
+                  ExpectEqual(grs(len), 'New Armor');
+                end);
+
+              Describe('Existing records', procedure
+                begin
+                  It('Should recognize existing records by FormID', procedure
+                    begin
+                      ExpectSuccess(ElementFromJson(armo, '', '{"Records":[{"Record Header":{"FormID":"03000803"},"FULL":"New Armor2"}]}'));
+                      ExpectSuccess(ElementCount(armo, @i));
+                      ExpectEqual(i, 2);
+                      ExpectSuccess(GetElement(armo, '[1]', @h));
+                      ExpectSuccess(GetValue(h, 'FULL', @len));
+                      ExpectEqual(grs(len), 'New Armor2');
+                    end);
+
+                  It('Should recognize existing records by Editor ID', procedure
+                    begin
+                      ExpectSuccess(ElementFromJson(armo, '', '{"Records":[{"EDID":"NewArmor","FULL":"New Armor3"}]}'));
+                      ExpectSuccess(ElementCount(armo, @i));
+                      ExpectEqual(i, 2);
+                      ExpectSuccess(GetElement(armo, '[1]', @h));
+                      ExpectSuccess(GetValue(h, 'FULL', @len));
+                      ExpectEqual(grs(len), 'New Armor3');
+                    end);
+
+                  It('Should recognize existing records by FULL Name', procedure
+                    begin
+                      ExpectSuccess(ElementFromJson(armo, '', '{"Records":[{"FULL":"New Armor3","DATA":{"Value":"999"}}]}'));
+                      ExpectSuccess(ElementCount(armo, @i));
+                      ExpectEqual(i, 2);
+                      ExpectSuccess(GetElement(armo, '[1]', @h));
+                      ExpectSuccess(GetValue(h, 'DATA\Value', @len));
+                      ExpectEqual(grs(len), '999');
+                    end);
+
+                  It('Should fail if signatures don''t match', procedure
+                    begin
+                      ExpectFailure(ElementFromJson(armo, '', '{"Records":[{"Record Header":{"FormID":"03000803","Signature":"ALCH"}}]}'));
+                    end);
+                end);
+
+              Describe('Overriding records', procedure
+                begin
+                  BeforeAll(procedure
+                    begin
+                      ExpectSuccess(FileByName('Skyrim.esm', @h));
+                      ExpectSuccess(SortNames(h, 'ARMO'));
+                      ExpectSuccess(SortEditorIDs(h, 'ARMO'));
+                    end);
+
+                  It('Should override existing records by FormID', procedure
+                    begin
+                      ExpectSuccess(ElementFromJson(armo, '', '{"Records":[{"Record Header":{"FormID":"00012E49"},"FULL":"Iron Armor2"}]}'));
+                      ExpectSuccess(ElementCount(armo, @i));
+                      ExpectEqual(i, 3);
+                      ExpectSuccess(GetElement(armo, '[1]', @h));
+                      ExpectSuccess(GetValue(h, 'FULL', @len));
+                      ExpectEqual(grs(len), 'Iron Armor2');
+                    end);
+
+                  It('Should not override existing records by Editor ID', procedure
+                    begin
+                      ExpectSuccess(ElementFromJson(armo, '', '{"Records":[{"EDID":"ArmorIronBoots"}]}'));
+                      ExpectSuccess(ElementCount(armo, @i));
+                      ExpectEqual(i, 4);
+                      ExpectSuccess(GetElement(armo, '[3]', @h));
+                      ExpectSuccess(IsMaster(h, @b));
+                      ExpectEqual(b, true);
+                    end);
+
+                  It('Should not override existing records by FULL Name', procedure
+                    begin
+                      ExpectSuccess(ElementFromJson(armo, '', '{"Records":[{"FULL":"Iron Shield"}]}'));
+                      ExpectSuccess(ElementCount(armo, @i));
+                      ExpectEqual(i, 5);
+                      ExpectSuccess(GetElement(armo, '[4]', @h));
+                      ExpectSuccess(IsMaster(h, @b));
+                      ExpectEqual(b, true);
+                    end);
+                end);
+
+              Describe('Record header', procedure
+                begin
+                  It('Should fail if signature does not match', procedure
+                    begin
+                      ExpectFailure(ElementFromJson(rec, '', '{"Record Header":{"Signature":"ALCH"}}'));
+                    end);
+
+                  It('Should ignore data size', procedure
+                    begin
+                      ExpectSuccess(ElementFromJson(rec, '', '{"Record Header":{"Data Size":320}}'));
+                      ExpectSuccess(GetValue(rec, 'Record Header\Data Size', @len));
+                      ExpectEqual(grs(len), '271');
+                    end);
+
+                  It('Should ignore form version', procedure
+                    begin
+                      ExpectSuccess(ElementFromJson(rec, '', '{"Record Header":{"Form Version":43}}'));
+                      ExpectSuccess(GetValue(rec, 'Record Header\Form Version', @len));
+                      ExpectEqual(grs(len), '40');
+                    end);
+
+                  It('Should ignore version control info', procedure
+                    begin
+                      ExpectSuccess(ElementFromJson(armo, '[1]', '{"Record Header":{"Version Control Info 1":"12 34 56 78","Version Control Info 2":"01 23"}}'));
+                      ExpectSuccess(GetValue(armo, '[1]\Record Header\Version Control Info 1', @len));
+                      ExpectEqual(grs(len), '00 00 00 00');
+                      ExpectSuccess(GetValue(armo, '[1]\Record Header\Version Control Info 2', @len));
+                      ExpectEqual(grs(len), '00 00');
+                    end);
+
+                  It('Should set record flags properly', procedure
+                    begin
+                      ExpectSuccess(ElementFromJson(rec, '', '{"Record Header":{"Record Flags":{"Ignored":true,"Unknown 15":true}}}'));
+                      ExpectSuccess(GetFlag(rec, 'Record Header\Record Flags', 'Ignored', @b));
+                      ExpectEqual(b, true);
+                      ExpectSuccess(GetFlag(rec, 'Record Header\Record Flags', 'Unknown 15', @b));
+                      ExpectEqual(b, true);
+                    end);
+
+                  It('Should set FormID properly', procedure
+                    begin
+                      ExpectSuccess(GetElement(armo, '[2]', @h));
+                      ExpectSuccess(ElementFromJson(h, '', '{"Record Header":{"FormID":"03123456"}}'));
+                      ExpectSuccess(GetValue(armo, '[2]\Record Header\FormID', @len));
+                      ExpectEqual(grs(len), 'NewArmor "New Armor3" [ARMO:03123456]');
+                    end);
+                end);
+            end);
+
+          Describe('Element deserialization', procedure
+            begin
+              BeforeAll(procedure
+                begin
+                  ExpectSuccess(FileByName('Skyrim.esm', @h));
+                  ExpectSuccess(SortEditorIDs(h, 'SNDR'));
+                end);
+
+              It('Should deserialize strings', procedure
+                begin
+                  ExpectSuccess(ElementFromJson(rec, '', '{"EDID":"Deserialization01"}'));
+                  ExpectSuccess(GetValue(rec, 'EDID', @len));
+                  ExpectEqual(grs(len), 'Deserialization01');
+                  ExpectSuccess(ElementFromJson(rec, 'BODT', '{"Unused":"12 34 56"}'));
+                  ExpectSuccess(GetValue(rec, 'BODT\Unused', @len));
+                  ExpectEqual(grs(len), '12 34 56');
+                end);
+
+              It('Should deserialize integer numbers', procedure
+                begin
+                  ExpectSuccess(ElementFromJson(rec, '', '{"DNAM":9900}'));
+                  ExpectSuccess(GetIntValue(rec, 'DNAM', @i));
+                  ExpectEqual(i, 9900);
+                end);
+
+              It('Should deserialize real numbers', procedure
+                begin
+                  ExpectSuccess(ElementFromJson(rec, 'DATA', '{"Weight":5.432}'));
+                  ExpectSuccess(GetFloatValue(rec, 'DATA\Weight', @d));
+                  ExpectEqual(d, 5.432);
+                end);
+
+              It('Should deserialize references from integers', procedure
+                begin
+                  ExpectSuccess(ElementFromJson(rec, '', '{"ZNAM":282309}'));
+                  ExpectSuccess(GetIntValue(rec, 'ZNAM', @i));
+                  ExpectEqual(i, 282309);
+                end);
+
+              It('Should deserialize references from strings', procedure
+                begin
+                  ExpectSuccess(ElementFromJson(rec, '', '{"ZNAM":"DRSIronAlleyClose"}'));
+                  ExpectSuccess(GetValue(rec, 'ZNAM', @len));
+                  ExpectEqual(grs(len), 'DRSIronAlleyClose [SNDR:000C0303]');
+                  ExpectSuccess(ElementFromJson(rec, '', '{"ZNAM":"AMBCobwebSD [SNDR:0003E5DD]"}'));
+                  ExpectSuccess(GetValue(rec, 'ZNAM', @len));
+                  ExpectEqual(grs(len), 'AMBCobwebSD [SNDR:0003E5DD]');
+                end);
+
+              It('Should deserialize nested elements properly', procedure
+                begin
+                  ExpectSuccess(ElementFromJson(rec, '', '{"DATA":{"Weight":8.12,"Value":6565}}'));
+                  ExpectSuccess(GetFloatValue(rec, 'DATA\Weight', @d));
+                  ExpectEqual(d, 8.12);
+                  ExpectSuccess(GetIntValue(rec, 'DATA\Value', @i));
+                  ExpectEqual(i, 6565);
+                end);
+
+              It('Should deserialize flags properly', procedure
+                begin
+                  ExpectSuccess(ElementFromJson(rec, 'Record Header', '{"Record Flags":{"Non-Playable":true}}'));
+                  ExpectSuccess(GetFlag(rec, 'Record Header\Record Flags', 'Non-Playable', @b));
+                  ExpectEqual(b, True);
+                  ExpectSuccess(ElementFromJson(rec, 'Record Header', '{"Record Flags":{}}'));
+                  ExpectSuccess(GetFlag(rec, 'Record Header\Record Flags', 'Non-Playable', @b));
+                  ExpectEqual(b, False);
+                end);
+            end);
         end);
     end);
 end;
