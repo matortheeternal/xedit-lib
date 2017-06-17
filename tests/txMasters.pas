@@ -103,6 +103,20 @@ begin
               TestMasterNames(xt5, ['Skyrim.esm','Update.esm','xtest-1.esp','xtest-2.esp','xtest-3.esp','xtest-4.esp']);
             end);
         end);
+
+      Describe('CleanMasters', procedure
+        begin
+          AfterAll(procedure
+            begin
+              ExpectSuccess(AddMasters(xt5, 'Skyrim.esm'#13#10'Update.esm'));
+            end);
+
+          It('Should remove unneeded masters', procedure
+            begin
+              ExpectSuccess(CleanMasters(xt5));
+              TestMasterCount(xt5, 0);
+            end);
+        end);
     end);
 end;
 
