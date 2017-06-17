@@ -56,7 +56,7 @@ const
     (id: erUDR; shortName: 'UDR'; longName: 'Undelete and Disable Reference';
       expr: 'Record marked as deleted but contains: (\w+)'),
     (id: erUES; shortName: 'UES'; longName: 'Unexpected Subrecord';
-      expr: 'Error: Record ([a-zA-Z_]+) contains unexpected \(or out of order\) subrecord (\w+)'),
+      expr: 'Error: Record contains unexpected \(or out of order\) subrecord (\w+)'),
     (id: erURR; shortName: 'URR'; longName: 'Unresolved Reference';
       expr: '\[([0-9A-F]+)\] \< Error: Could not be resolved \>'),
     (id: erUER; shortName: 'UER'; longName: 'Unexpected Reference';
