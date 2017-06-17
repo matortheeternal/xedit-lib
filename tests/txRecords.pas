@@ -34,7 +34,7 @@ begin
           ExpectSuccess(GetElement(0, 'xtest-3.esp\00012E46', @ar3));
           ExpectSuccess(GetElement(0, 'xtest-1.esp\00C23800', @kw1));
           ExpectSuccess(GetElement(0, 'xtest-1.esp\00C23801', @kw2));
-          ExpectSuccess(GetElement(0, 'xtest-3.esp\00C23801', @kw3));
+          ExpectSuccess(GetElement(0, 'xtest-4.esp\00C23801', @kw3));
         end);
 
       Describe('IsMaster', procedure

@@ -113,8 +113,8 @@ begin
                       ExpectExists(obj2, 'HEDR - Header');
                       obj3 := obj2.O['HEDR - Header'];
                       ExpectEqual(obj3.D['Version'], 1.7, '');
-                      ExpectEqual(obj3.I['Number of Records'], 13, '');
-                      ExpectEqual(obj3.I['Next Object ID'], 2048, '');
+                      ExpectEqual(obj3.I['Number of Records'], 14, '');
+                      ExpectEqual(obj3.I['Next Object ID'], 2049, '');
                     end);
 
                   It('Should have Master Files', procedure
@@ -375,6 +375,11 @@ begin
 
           Describe('Group deserialization', procedure
             begin
+              AfterAll(procedure
+                begin
+                  ExpectSuccess(SetFloatValue(refr, 'DATA\Position\X', 13373.052734));
+                end);
+
               It('Should create top level group if missing', procedure
                 begin
                   ExpectSuccess(ElementFromJson(testFile, '', '{"Groups":{"ARMA":[]}}'));
@@ -399,7 +404,7 @@ begin
                         ']'+
                       '}}'+
                     ']}}}}'));
-                  ExpectSuccess(GetFloatValue(testFile, '03000801\Child Group\Temporary\NullRef001\DATA\Position\X', @d));
+                  ExpectSuccess(GetFloatValue(testFile, '03000802\Child Group\Temporary\NullRef001\DATA\Position\X', @d));
                   ExpectEqual(RoundTo(d, -2), 1234.56);
                 end);
 
@@ -409,7 +414,7 @@ begin
                     '{"Groups":{"CELL":{"Block 0":{"Sub-Block 0":['+
                       '{"EDID":"KilkreathRuins03","Child Group":{'+
                         '"Persistent":['+
-                          '{"EDID":"DA09PedestalEmptyRef","DATA":{"Position":{"X":1234.56}}}'+
+                          '{"EDID":"ITPOTest","DATA":{"Position":{"X":1234.56}}}'+
                         ']'+
                       '}}'+
                     ']}}}}'));
@@ -436,7 +441,7 @@ begin
                 begin
                   It('Should recognize existing records by FormID', procedure
                     begin
-                      ExpectSuccess(ElementFromJson(armo, '', '{"Records":[{"Record Header":{"FormID":"03000803"},"FULL":"New Armor2"}]}'));
+                      ExpectSuccess(ElementFromJson(armo, '', '{"Records":[{"Record Header":{"FormID":"03000804"},"FULL":"New Armor2"}]}'));
                       ExpectSuccess(ElementCount(armo, @i));
                       ExpectEqual(i, 2);
                       ExpectSuccess(GetElement(armo, '[1]', @h));
@@ -466,7 +471,7 @@ begin
 
                   It('Should fail if signatures don''t match', procedure
                     begin
-                      ExpectFailure(ElementFromJson(armo, '', '{"Records":[{"Record Header":{"FormID":"03000803","Signature":"ALCH"}}]}'));
+                      ExpectFailure(ElementFromJson(armo, '', '{"Records":[{"Record Header":{"FormID":"03000804","Signature":"ALCH"}}]}'));
                     end);
                 end);
 
@@ -484,7 +489,7 @@ begin
                       ExpectSuccess(ElementFromJson(armo, '', '{"Records":[{"Record Header":{"FormID":"00012E49"},"FULL":"Iron Armor2"}]}'));
                       ExpectSuccess(ElementCount(armo, @i));
                       ExpectEqual(i, 3);
-                      ExpectSuccess(GetElement(armo, '[1]', @h));
+                      ExpectSuccess(GetElement(armo, '00012E49', @h));
                       ExpectSuccess(GetValue(h, 'FULL', @len));
                       ExpectEqual(grs(len), 'Iron Armor2');
                     end);

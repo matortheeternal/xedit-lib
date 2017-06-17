@@ -135,7 +135,7 @@ begin
               It('Should resolve Editor ID, if present', procedure
                 begin
                   ExpectSuccess(Name(refr, @len));
-                  ExpectEqual(grs(len), 'DA09PedestalEmptyRef');
+                  ExpectEqual(grs(len), 'ITPOTest');
                 end);
               It('Should resolve context for cells with no EDID or FULL', procedure
                 begin
