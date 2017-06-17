@@ -219,7 +219,7 @@ end;
 
 function ResolveRecord(group: IwbGroupRecord; key, nextPath: String): IInterface;
 var
-  name, sig: String;
+  name: String;
   formID: Cardinal;
 begin
   if ParseFormID(key, formID) then
@@ -245,7 +245,7 @@ begin
   else if ParseFullName(key, name) then
     Result := group.MainRecordByName[name]
   else begin
-    sig := AnsiString(TwbSignature(group.GroupLabel));
+    sig := String(TwbSignature(group.GroupLabel));
     if group._File.EditorIDSorted(sig) then
       Result := group._File.RecordByEditorID[key];
     if not Assigned(Result) then
