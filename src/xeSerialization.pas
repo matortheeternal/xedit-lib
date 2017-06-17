@@ -411,7 +411,7 @@ begin
     // it was found by formID
     if Assigned(e) and not e._File.Equals(group._File) then begin
       if allowOverride then
-        e := CopyElementToFile(e, group._File, false, true)
+        e := wbCopyElementToFile(e, group._File, false, true, '', '', '')
       else
         e := nil;
     end;
