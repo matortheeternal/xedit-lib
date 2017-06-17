@@ -33,6 +33,8 @@ type
   function CreateFile(fileName, nextPath: String): IInterface;
   function CreateElement(e: IInterface; path: String): IInterface;
   function NativeAddElement(_id: Cardinal; key: string): IInterface;
+  function CopyElementToFile(const aSource: IwbElement; aFile: IwbFile; aAsNew, aDeepCopy: Boolean): IwbElement;
+  function CopyElementToRecord(const aSource: IwbElement; aMainRecord: IwbMainRecord; aAsNew, aDeepCopy: Boolean): IwbElement;
   function IsChildGroup(group: IwbGroupRecord): Boolean;
   function IsSorted(e: IwbElement): Boolean;
   function IsArray(element: IwbElement): Boolean;
@@ -456,7 +458,7 @@ begin
     raise Exception.Create(Format('Failed to find record %s in file %s',
       [IntToHex(formID, 8), f.FileName]));
   NativeAddRequiredMasters(rec as IwbElement, f, false);
-  Result := wbCopyElementToFile(rec, targetFile, false, true, '', '', '') as IwbMainRecord;
+  Result := CopyElementToFile(rec, targetFile, false, true) as IwbMainRecord;
 end;
 
 function CreateRecord(group: IwbGroupRecord; formID: Cardinal; nextPath: String): IInterface; overload;
@@ -731,6 +733,44 @@ begin
     Dec(index);
   element.Remove;
   container.InsertElement(index, element);
+end;
+{$endregion}
+
+{$region 'Element copying'}
+function CopyElementToFile(const aSource: IwbElement; aFile: IwbFile; aAsNew, aDeepCopy: Boolean): IwbElement;
+var
+  MainRecord: IwbMainRecord;
+  Container: IwbContainer;
+  Target: IwbElement;
+begin
+  Result := nil;
+  Container := aSource.Container;
+  if Assigned(Container) then begin
+    if Supports(Container, IwbMainRecord, MainRecord) then
+      Container := MainRecord.HighestOverrideOrSelf[aFile.LoadOrder];
+    Target := CopyElementToFile(Container, aFile, False, False)
+  end;
+
+  if Assigned(Target) then
+    Result := Target.AddIfMissing(aSource, aAsNew, aDeepCopy, '', '', '');
+end;
+
+function CopyElementToRecord(const aSource: IwbElement; aMainRecord: IwbMainRecord; aAsNew, aDeepCopy: Boolean): IwbElement;
+var
+  Container: IwbContainer;
+  Target: IwbElement;
+begin
+  Result := nil;
+
+  if Assigned(aSource) and (aSource.ElementType = etMainRecord) then
+    Exit;
+
+  Container := aSource.Container;
+  Assert(Assigned(Container));
+  Target := CopyElementToRecord(Container, aMainRecord, False, False);
+
+  if Assigned(Target) then
+    Result := Target.AddIfMissing(aSource, aAsNew, aDeepCopy, '', '', '');
 end;
 {$endregion}
 
@@ -1207,9 +1247,9 @@ begin
     if not Supports(Resolve(_id), IwbElement, element) then
       raise Exception.Create('Interface is not an element.');
     if Supports(Resolve(_id2), IwbFile, _file) then
-      _res^ := Store(wbCopyElementToFile(element, _file, aAsNew, aDeepCopy, '', '', ''))
+      _res^ := Store(CopyElementToFile(element, _file, aAsNew, aDeepCopy))
     else if Supports(Resolve(_id2), IwbMainRecord, rec) then
-      _res^ := Store(wbCopyElementToRecord(element, rec, aAsNew, aDeepCopy))
+      _res^ := Store(CopyElementToRecord(element, rec, aAsNew, aDeepCopy))
     else
       raise Exception.Create('Second interface must be a file or a main record.');
     Result := True;
