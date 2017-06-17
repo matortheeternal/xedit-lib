@@ -60,6 +60,26 @@ begin
             end);
         end);
 
+      Describe('AddMasters', procedure
+        begin
+          It('Should add multiple masters', procedure
+            begin
+              ExpectSuccess(AddMasters(xt5, 'xtest-2.esp'#13#10'xtest-4.esp'));
+              TestMasterCount(xt5, 5);
+            end);
+
+          It('Should not duplicate masters', procedure
+            begin
+              ExpectSuccess(AddMasters(xt5, 'xtest-2.esp'#13#10'xtest-1.esp'));
+              TestMasterCount(xt5, 6);
+            end);
+
+          It('Should fail if one or masters does not exist', procedure
+            begin
+              ExpectFailure(AddMasters(xt5, 'NonExistingFile.esp'#13#10'xtest-1.esp'#13#10'Blah.esp'));
+              TestMasterCount(xt5, 6);
+            end);
+        end);
     end);
 end;
 
