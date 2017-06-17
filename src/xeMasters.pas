@@ -29,43 +29,26 @@ uses
   xeMeta, xeFiles, xeMessages, xeSetup;
 
 {$region 'Native functions'}
-procedure NativeAddMasters(targetFile: IwbFile; var masters: TStringList);
-var
-  i: Integer;
+procedure NativeAddMaster(targetFile: IwbFile; masterName: String);
 begin
-  for i := 0 to Pred(masters.Count) do
-    if IwbFile(Pointer(masters.Objects[i])).LoadOrder >= targetFile.LoadOrder then
-      raise Exception.Create(Format('The required master "%s" cannot be ' +
-        'added to "%s" because it has a higher load order.', [masters[i],
-        targetFile.FileName]));
-  masters.Sorted := False;
-  masters.CustomSort(CompareLoadOrder);
-  targetFile.AddMasters(masters);
-end;
-
-procedure GetMissingMasters(targetFile: IwbFile; var masters: TStringList);
-var
-  i, j: Integer;
-begin
-  for i := 0 to Pred(targetFile.MasterCount) do
-    if masters.Find(targetFile.Masters[i].FileName, j) then
-      masters.Delete(j);
-  if masters.Find(targetFile.FileName, j) then
-    masters.Delete(j);
+  NativeFileByNameEx(string(masterName));
+  targetFile.AddMasterIfMissing(string(masterName));
 end;
 
 procedure NativeAddRequiredMasters(element: IwbElement; targetFile: IwbFile; asNew: Boolean);
 var
   sl: TStringList;
+  i: Integer;
 begin
   sl := TStringList.Create;
   sl.Sorted := True;
   sl.Duplicates := dupIgnore;
   try
     element.ReportRequiredMasters(sl, asNew);
-    GetMissingMasters(targetFile, sl);
-    if sl.Count > 0 then
-      NativeAddMasters(targetFile, sl);
+    if sl.Find(targetFile.FileName, i) then
+      sl.Delete(i);
+    for i := 0 to Pred(sl.Count) do
+      NativeAddMaster(targetFile, sl[i]);
   finally
     sl.Free;
   end;
@@ -123,7 +106,7 @@ begin
   try
     if not Supports(Resolve(_id), IwbFile, _file) then
       raise Exception.Create('Interface must be a file.');
-    _file.AddMasterIfMissing(string(masterName));
+    NativeAddMaster(_file, string(masterName));
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
@@ -144,8 +127,7 @@ begin
     try
       sl.Text := string(masters);
       for i := 0 to Pred(sl.Count) do
-        sl.Objects[i] := Pointer(NativeFileByNameEx(sl[i]));
-      NativeAddMasters(_file, sl);
+        NativeAddMaster(_file, sl[i]);
     finally
       sl.Free;
     end;
