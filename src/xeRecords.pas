@@ -6,12 +6,19 @@ uses
   wbInterface,
   xeMeta;
 
-  function AddRecord(_id: Cardinal; sig: PWideChar; _res: PCardinal): WordBool; cdecl;
+  {$region 'Native functions'}
+  function EditorIDToFormID(_file: IwbFile; editorID: String): Cardinal;
+  procedure StoreRecords(_file: IwbFile; len: PInteger); overload;
+  procedure StoreRecords(group: IwbGroupRecord; len: PInteger); overload;
+  procedure FindRecordsBySignature(group: IwbGroupRecord; sig: TwbSignature; len: PInteger); overload;
+  procedure FindRecordsBySignature(_file: IwbFile; sig: TwbSignature; len: PInteger); overload;
+  {$endregion}
+
+  {$region 'API functions'}
+  function GetFormID(_id: Cardinal; formID: PCardinal): WordBool; cdecl;
+  function SetFormID(_id: Cardinal; formID: Cardinal): WordBool; cdecl;
   function GetRecords(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function RecordsBySignature(_id: Cardinal; sig: PWideChar; len: PInteger): WordBool; cdecl;
-  function RecordByFormID(_id, formID: Cardinal; _res: PCardinal): WordBool; cdecl;
-  function RecordByEditorID(_id: Cardinal; edid: PWideChar; _res: PCardinal): WordBool; cdecl;
-  function RecordByName(_id: Cardinal; full: PWideChar; _res: PCardinal): WordBool; cdecl;
   function GetOverrides(_id: Cardinal; count: PInteger): WordBool; cdecl;
   function ExchangeReferences(_id, oldFormID, newFormID: Cardinal): WordBool; cdecl;
   function GetReferences(_id: Cardinal; len: PInteger): WordBool; cdecl;
@@ -21,14 +28,7 @@ uses
   function IsWinningOverride(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
   function ConflictAll(_id: Cardinal; enum: PByte): WordBool; cdecl;
   function ConflictThis(_id: Cardinal; enum: PByte): WordBool; cdecl;
-
-  // NATIVE FUNCTIONS
-  procedure StoreRecords(_file: IwbFile; len: PInteger); overload;
-  procedure StoreRecords(group: IwbGroupRecord; len: PInteger); overload;
-  procedure FindRecordsBySignature(group: IwbGroupRecord; sig: TwbSignature; len: PInteger); overload;
-  procedure FindRecordsBySignature(_file: IwbFile; sig: TwbSignature; len: PInteger); overload;
-  function FindRecordByName(_file: IwbFile; full: string): IwbMainRecord; overload;
-  function FindRecordByName(group: IwbGroupRecord; full: string): IwbMainRecord; overload;
+  {$endregion}
 
 implementation
 
@@ -36,27 +36,17 @@ uses
   Classes, SysUtils,
   mteConflict,
   wbImplementation,
-  xeGroups, xeMessages;
+  xeMessages, xeElements;
 
-function AddRecord(_id: Cardinal; sig: PWideChar; _res: PCardinal): WordBool; cdecl;
+{$region 'Native functions'}
+function EditorIDToFormID(_file: IwbFile; editorID: String): Cardinal;
 var
-  e: IInterface;
-  _file: IwbFile;
-  group: IwbGroupRecord;
-  element: IwbElement;
+  rec: IwbMainRecord;
 begin
-  Result := False;
-  try
-    e := Resolve(_id);
-    if Supports(e, IwbFile, _file) then
-      group := AddGroupIfMissing(_file, string(sig))
-    else if not Supports(e, IwbGroupRecord, group) then
-      raise Exception.Create('Interface must be a file or group');
-    element := group.Add(string(sig));
-    StoreIfAssigned(IInterface(element), _res, Result);
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
+  rec := _file.RecordByEditorID[editorID];
+  if not Assigned(rec) then
+    raise Exception.Create('Failed to find record with Editor ID: ' + editorID + ' in file ' + _file.FileName);
+  Result := _file.LoadOrderFormIDtoFileFormID(rec.LoadOrderFormID);
 end;
 
 procedure StoreRecords(_file: IwbFile; len: PInteger);
@@ -81,27 +71,6 @@ begin
       resultArray[len^] := Store(rec);
       Inc(len^);
     end;
-end;
-
-function GetRecords(_id: Cardinal; len: PInteger): WordBool; cdecl;
-var
-  e: IInterface;
-  _file: IwbFile;
-  group: IwbGroupRecord;
-begin
-  Result := False;
-  try
-    e := Resolve(_id);
-    if Supports(e, IwbFile, _file) then
-      StoreRecords(_file, len)
-    else if Supports(e, IwbGroupRecord, group) then
-      StoreRecords(group, len)
-    else
-      raise Exception.Create('Interface must be a file or group.');
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
 end;
 
 procedure StoreRecord(rec: IwbMainRecord; len: PInteger);
@@ -132,10 +101,10 @@ begin
         if rec.Signature = sig then
           StoreRecord(rec, len)
         else if Assigned(rec.ChildGroup) then
-          FindRecordsBySignature(rec.ChildGroup, sig, len);   
+          FindRecordsBySignature(rec.ChildGroup, sig, len);
       end
       else if Supports(element, IwbGroupRecord, subGroup) then
-        FindRecordsBySignature(subGroup, sig, len);   
+        FindRecordsBySignature(subGroup, sig, len);
     end;
 end;
 
@@ -150,6 +119,60 @@ begin
     for i := 0 to _file.ElementCount do
       if Supports(_file.Elements[i], IwbGroupRecord, group) then
         FindRecordsBySignature(group, sig, len);
+end;
+{$endregion}
+
+{$region 'API functions'}
+function GetFormID(_id: Cardinal; formID: PCardinal): WordBool; cdecl;
+var
+  rec: IwbMainRecord;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbMainRecord, rec) then
+      raise Exception.Create('Interface must be a main record.');
+    formID^ := rec.LoadOrderFormID;
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function SetFormID(_id: Cardinal; formID: Cardinal): WordBool; cdecl;
+var
+  rec: IwbMainRecord;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbMainRecord, rec) then
+      raise Exception.Create('Interface must be a main record.');
+    // TODO: Fix references
+    rec.LoadOrderFormID := formID;
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetRecords(_id: Cardinal; len: PInteger): WordBool; cdecl;
+var
+  e: IInterface;
+  _file: IwbFile;
+  group: IwbGroupRecord;
+begin
+  Result := False;
+  try
+    e := Resolve(_id);
+    if Supports(e, IwbFile, _file) then
+      StoreRecords(_file, len)
+    else if Supports(e, IwbGroupRecord, group) then
+      StoreRecords(group, len)
+    else
+      raise Exception.Create('Interface must be a file or group.');
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
 end;
 
 function RecordsBySignature(_id: Cardinal; sig: PWideChar; len: PInteger): WordBool; cdecl;
@@ -169,87 +192,6 @@ begin
     else
       raise Exception.Create('Interface must be a file or group.');
     Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function RecordByFormID(_id, formID: Cardinal; _res: PCardinal): WordBool; cdecl;
-var
-  _file: IwbFile;
-  rec: IwbMainRecord;
-begin
-  Result := False;
-  try
-    if not Supports(Resolve(_id), IwbFile, _file) then
-      raise Exception.Create('Interface must be a file.');
-    rec := _file.RecordByFormID[formID, True];
-    StoreIfAssigned(IInterface(rec), _res, Result);
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function RecordByEditorID(_id: Cardinal; edid: PWideChar; _res: PCardinal): WordBool; cdecl;
-var
-  e: IInterface;
-  _file: IwbFile;
-  rec: IwbMainRecord;
-  group: IwbGroupRecord;
-begin
-  Result := False;
-  try
-    e := Resolve(_id);
-    if Supports(e, IwbGroupRecord, group) then
-      _file := group._File
-    else if not Supports(e, IwbFile, _file) then
-      raise Exception.Create('Input interface must be a file or a group.');
-    rec := _file.RecordByEditorID[string(edid)];
-    StoreIfAssigned(IInterface(rec), _res, Result);
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function FindRecordByName(_file: IwbFile; full: string): IwbMainRecord; overload;
-var
-  i: Integer;
-begin
-  for i := 0 to Pred(_file.RecordCount) do
-    if Supports(_file.Records[i], IwbMainRecord, Result) then
-      if Result.ElementEditValues['FULL'] = full then exit;
-  Result := nil;
-end;
-
-function FindRecordByName(group: IwbGroupRecord; full: string): IwbMainRecord; overload;
-var
-  i: Integer;
-begin
-  for i := 0 to Pred(group.ElementCount) do
-    if Supports(group.Elements[i], IwbMainRecord, Result) then
-      if Result.ElementEditValues['FULL'] = full then exit;
-  Result := nil;
-end;
-
-function FindRecordByName(e: IInterface; full: string): IwbMainRecord; overload;
-var
-  _file: IwbFile;
-  group: IwbGroupRecord;
-begin
-  if Supports(e, IwbFile, _file) then
-    FindRecordByName(_file, full)
-  else if Supports(e, IwbGroupRecord, group) then
-    FindRecordByName(group, full);
-end;
-
-function RecordByName(_id: Cardinal; full: PWideChar; _res: PCardinal): WordBool; cdecl;
-var
-  rec: IwbMainRecord;
-begin
-  Result := False;
-  try
-    rec := FindRecordByName(Resolve(_id), string(full));
-    StoreIfAssigned(IInterface(rec), _res, Result);
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -394,5 +336,6 @@ begin
     on x: Exception do ExceptionHandler(x);
   end;
 end;
+{$endregion}
 
 end.

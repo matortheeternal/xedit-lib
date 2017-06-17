@@ -23,6 +23,7 @@ uses
 procedure BuildFileHandlingTests;
 var
   h: Cardinal;
+  len, count: Integer;
 begin
   Describe('File Handling Functions', procedure
     begin
@@ -82,6 +83,23 @@ begin
             end);
         end);
 
+      Describe('OverrideRecordCount', procedure
+        begin
+          It('Should return an integer > 0 for a plugin with overrides', procedure
+            begin
+              ExpectSuccess(FileByName('Update.esm', @h));
+              ExpectSuccess(OverrideRecordCount(h, @count));
+              Expect(count > 0, 'Should be greater than 0 for Update.esm');
+            end);
+
+          It('Should return 0 for a plugin with no records', procedure
+            begin
+              ExpectSuccess(FileByName('xtest-1.esp', @h));
+              ExpectSuccess(OverrideRecordCount(h, @count));
+              ExpectEqual(count, 0);
+            end);
+        end);
+        
       Describe('SaveFile', procedure
         begin
           It('Should return true if it succeeded in saving the file', procedure
@@ -95,15 +113,24 @@ begin
             end);
         end);
 
-      {$IF false}
       Describe('AddFile', procedure
-        var
-          i: Integer;
         begin
+          AfterAll(procedure
+            var
+              i: Integer;
+            begin
+              for i := 254 downto 0 do
+                if FileByName(PWideChar(IntToStr(i) + '.esp'), @h) then
+                  ExpectSuccess(UnloadPlugin(h))
+                else
+                  Break;
+              ExpectSuccess(FileByName('abc.esp', @h));
+              ExpectSuccess(UnloadPlugin(h));
+            end);
+
           It('Should return true if it succeeds', procedure
             begin
               ExpectSuccess(AddFile('abc.esp', @h));
-              UnloadPlugin(h);
             end);
 
           It('Should return false if the file already exists', procedure
@@ -111,23 +138,17 @@ begin
               ExpectFailure(AddFile('Dawnguard.esm', @h));
             end);
 
-          {$IF false}
           It('Should return false if the load order is already full', procedure
             var
-              i: Integer;
-              len: Integer;
-              fn: String;
+              i, start: Integer;
             begin
               ExpectSuccess(GetGlobal('FileCount', @len));
-              for i := StrToInt(grs(len)) to 253 do begin
-                fn := IntToStr(i) + '.esp';
-                ExpectSuccess(AddFile(PWideChar(fn), @h));
-              end;
-              ExpectFailure(AddFile('254.esp', @h));
+              start := StrToInt(grs(len));
+              for i := start to 254 do
+                ExpectSuccess(AddFile(PWideChar(IntToStr(i) + '.esp'), @h));
+              ExpectFailure(AddFile('255.esp', @h));
             end);
-          {$IFEND}
         end);
-      {$IFEND}
     end);
 end;
 

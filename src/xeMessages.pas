@@ -5,17 +5,19 @@ interface
 uses
   SysUtils;
 
-  // API METHODS
+  {$region 'Native functions'}
+  procedure ExceptionHandler(x: Exception);
+  procedure AddMessage(msg: String);
+  procedure SaveMessages;
+  {$endregion}
+
+  {$region 'API functions'}
   procedure GetMessagesLength(len: PInteger); cdecl;
   function GetMessages(str: PWideChar; maxLen: Integer): WordBool; cdecl;
   procedure ClearMessages; cdecl;
   procedure GetExceptionMessageLength(len: PInteger); cdecl;
   function GetExceptionMessage(str: PWideChar; len: Integer): WordBool; cdecl;
-
-  // NATIVE METHODS
-  procedure ExceptionHandler(x: Exception);
-  procedure AddMessage(msg: String);
-  procedure SaveMessages;
+  {$endregion}
 
 const
   LineBreak = #13#10;
@@ -30,7 +32,7 @@ uses
   Classes,
   xeMeta;
 
-// NATIVE METHODS
+{$region 'Native functions'}
 procedure ExceptionHandler(x: Exception);
 begin
   if x.Message <> '' then
@@ -57,7 +59,9 @@ begin
     sl.Free;
   end;
 end;
+{$endregion}
 
+{$region 'API functions'}
 procedure GetExceptionMessageLength(len: PInteger); cdecl;
 begin
   len^ := Length(exceptionMessage);
@@ -76,7 +80,6 @@ begin
   end;
 end;
 
-// API METHODS
 procedure GetMessagesLength(len: PInteger); cdecl;
 begin
   len^ := Length(Messages);
@@ -98,5 +101,6 @@ procedure ClearMessages; cdecl;
 begin
   Messages := '';
 end;
+{$endregion}
 
 end.

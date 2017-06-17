@@ -15,13 +15,10 @@ uses
   xeSetup in 'src\xeSetup.pas',
   xeFiles in 'src\xeFiles.pas',
   xeMasters in 'src\xeMasters.pas',
-  xeFileValues in 'src\xeFileValues.pas',
   xeElements in 'src\xeElements.pas',
   xeElementValues in 'src\xeElementValues.pas',
   xeErrors in 'src\xeErrors.pas',
   xeRecords in 'src\xeRecords.pas',
-  xeRecordValues in 'src\xeRecordValues.pas',
-  xeGroups in 'src\xeGroups.pas',
   xeSerialization in 'src\xeSerialization.pas',
   mteHelpers in 'lib\mte\mteHelpers.pas',
   mteConflict in 'lib\mte\mteConflict.pas',
@@ -44,14 +41,11 @@ uses
   txMeta in 'tests\txMeta.pas',
   txSetup in 'tests\txSetup.pas',
   txFiles in 'tests\txFiles.pas',
-  txFileValues in 'tests\txFileValues.pas',
   txMasters in 'tests\txMasters.pas',
   txElements in 'tests\txElements.pas',
   txElementValues in 'tests\txElementValues.pas',
   txSerialization in 'tests\txSerialization.pas',
-  txGroups in 'tests\txGroups.pas',
   txRecords in 'tests\txRecords.pas',
-  txRecordValues in 'tests\txRecordValues.pas',
   txErrors in 'tests\txErrors.pas',
   Argo in 'lib\Argo\Argo.pas',
   ArgoTypes in 'lib\Argo\ArgoTypes.pas',
@@ -65,16 +59,14 @@ const
 
 procedure BuildXETests;
 begin
+  BuildSetupTests;
   BuildMetaTests;
   BuildFileHandlingTests;
-  BuildFileValueTests;
   BuildMasterHandlingTests;
   BuildElementHandlingTests;
   BuildElementValueTests;
   BuildSerializationTests;
-  BuildGroupHandlingTests;
   BuildRecordHandlingTests;
-  BuildRecordValueTests;
   BuildPluginErrorTests;
 end;
 
@@ -88,9 +80,12 @@ begin
     WriteLn(msg);
   end;
 
-  // run the tests
+  // init xedit
   InitXEdit;
-  LoadXEdit;
+  WriteMessages;
+  WriteLn(' ');
+
+  // run the tests
   RunTests(LogToConsole);
   CloseXEdit;
 

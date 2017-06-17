@@ -9,13 +9,10 @@ uses
   xeSetup in 'src\xeSetup.pas',
   xeFiles in 'src\xeFiles.pas',
   xeMasters in 'src\xeMasters.pas',
-  xeFileValues in 'src\xeFileValues.pas',
   xeElements in 'src\xeElements.pas',
   xeElementValues in 'src\xeElementValues.pas',
   xeErrors in 'src\xeErrors.pas',
   xeRecords in 'src\xeRecords.pas',
-  xeRecordValues in 'src\xeRecordValues.pas',
-  xeGroups in 'src\xeGroups.pas',
   xeSerialization in 'src\xeSerialization.pas',
   mteHelpers in 'lib\mte\mteHelpers.pas',
   mteConflict in 'lib\mte\mteConflict.pas',
@@ -51,39 +48,32 @@ exports
   GetMessagesLength, GetMessages, ClearMessages, GetExceptionMessageLength,
   GetExceptionMessage,
   // LOADING AND SET UP METHODS
-  SetGameMode, GetLoadOrder, GetActivePlugins, LoadPlugins, GetLoaderDone,
-  GetGamePath,
+  GetGamePath, SetGameMode, GetLoadOrder, GetActivePlugins, LoadPlugins,
+  LoadPlugin, BuildReferences, GetLoaderDone, UnloadPlugin,
   // FILE HANDLING METHODS
   AddFile, FileByIndex, FileByLoadOrder, FileByName, FileByAuthor, SaveFile,
+  OverrideRecordCount, SortEditorIDs, SortNames,
   // MASTER HANDLING METHODS
   CleanMasters, SortMasters, AddMaster, AddMasters, GetMasters, GetRequiredBy,
-  // FILE VALUE METHODS
-  GetFileHeader, GetNextObjectId, SetNextObjectID, GetFileName, GetAuthor,
-  SetAuthor, GetDescription, SetDescription, OverrideRecordCount, GetIsESM,
-  SetIsESM,
   // ELEMENT HANDLING METHODS
   HasElement, GetElement, AddElement, RemoveElement, RemoveElementOrParent,
   GetElements, GetContainer,  GetElementFile, GetLinksTo, ElementCount,
   ElementEquals, ElementMatches, HasArrayItem, GetArrayItem, AddArrayItem,
-  RemoveArrayItem, CopyElement, MoveElement, GetExpectedSignatures, SortKey,
+  RemoveArrayItem, MoveArrayItem, CopyElement, GetSignatureAllowed, SortKey,
   ElementType, DefType, SmashType,
   // ERROR CHECKING METHODS
   CheckForErrors, GetErrorThreadDone, GetErrors, GetErrorString,
   // SERIALIZATION METHODS
-  ElementToJson, {SetElementFromJson, AddElementFromJson,}
+  ElementToJson, {ElementFromJson,}
   // ELEMENT VALUE METHODS
   Name, LongName, DisplayName, Path, Signature, GetValue, SetValue, GetIntValue,
   SetIntValue, GetUIntValue, SetUIntValue, GetFloatValue, SetFloatValue,
   GetFlag, SetFlag, GetEnabledFlags, SetEnabledFlags, GetAllFlags,
   SignatureFromName, NameFromSignature, GetSignatureNameMap,
-  // GROUP HANDLING METHODS
-  HasGroup, AddGroup, GetChildGroup,
   // RECORD HANDLING METHODS
-  AddRecord, GetRecords, RecordsBySignature, RecordByFormID, RecordByEditorID,
-  RecordByName, GetOverrides, GetReferences, ExchangeReferences, IsMaster,
-  IsInjected, IsOverride, IsWinningOverride, ConflictThis, ConflictAll,
-  // RECORD VALUE METHODS
-  EditorID, FullName, GetFormID, SetFormID;
+  GetFormID, SetFormID, GetRecords, RecordsBySignature, GetOverrides,
+  GetReferences, ExchangeReferences, IsMaster, IsInjected, IsOverride,
+  IsWinningOverride, ConflictThis, ConflictAll;
 
 begin
   IsMultiThread := True;

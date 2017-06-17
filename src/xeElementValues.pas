@@ -6,6 +6,20 @@ uses
   wbInterface,
   xeTypes;
 
+  {$region 'Native functions'}
+  function GetPath(element: IwbElement; full: WordBool = True; curPath: String = ''): String;
+  function GetPathName(element: IwbElement): String;
+  function NativeName(e: IwbElement; quoteFull: Boolean = False): String;
+  function ParseFormIDValue(value: String; var formID: Int64): Boolean;
+  procedure SetElementValue(element: IwbElement; value: String);
+  function IndexOfFlag(flagsDef: IwbFlagsDef; name: String): Integer;
+  procedure NativeSetFlag(element: IwbElement; index: Integer; enabled: WordBool);
+  function NativeSignatureFromName(name: String): String;
+  function NativeNameFromSignature(sig: String): String;
+  procedure BuildSignatureNameMap;
+  {$endregion}
+
+  {$region 'API functions'}
   function Name(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function LongName(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function DisplayName(_id: Cardinal; len: PInteger): WordBool; cdecl;
@@ -27,16 +41,7 @@ uses
   function SignatureFromName(name: PWideChar; len: PInteger): WordBool; cdecl;
   function NameFromSignature(sig: PWideChar; len: PInteger): WordBool; cdecl;
   function GetSignatureNameMap(len: PInteger): WordBool; cdecl;
-
-  // native functions
-  function GetPath(element: IwbElement; full: WordBool = True; curPath: String = ''): String;
-  function GetPathName(element: IwbElement): String;
-  function NativeName(e: IwbElement; quoteFull: Boolean = False): String;
-  function ParseFormIDValue(value: String; var formID: Int64): Boolean;
-  procedure SetElementValue(element: IwbElement; value: String);
-  function NativeSignatureFromName(name: String): String;
-  function NativeNameFromSignature(sig: String): String;
-  procedure BuildSignatureNameMap;
+  {$endregion}
 
 var
   slSignatureNameMap: TFastStringList;
@@ -51,8 +56,10 @@ uses
   // xedit modules
   wbImplementation,
   // xelib modules
-  xeMeta, xeMessages, xeElements, xeGroups, xeRecordValues;
+  xeMeta, xeMessages, xeElements, xeRecords;
 
+{$region 'Native functions'}
+{$region 'Name helpers'}
 function FormString(rec: IwbMainRecord): String;
 begin
   Result := Format('[%s:%s]', [
@@ -107,55 +114,9 @@ begin
   else
     Result := e.Name;
 end;
+{$endregion}
 
-function Name(_id: Cardinal; len: PInteger): WordBool; cdecl;
-var
-  element: IwbElement;
-begin
-  Result := False;
-  try
-    if not Supports(Resolve(_id), IwbElement, element) then
-      raise Exception.Create('Interface is not an element.');
-    resultStr := NativeName(element);
-    len^ := Length(resultStr);
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function LongName(_id: Cardinal; len: PInteger): WordBool; cdecl;
-var
-  element: IwbElement;
-begin
-  Result := False;
-  try
-    if not Supports(Resolve(_id), IwbElement, element) then
-      raise Exception.Create('Interface is not an element.');
-    resultStr := element.Name;
-    len^ := Length(resultStr);
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function DisplayName(_id: Cardinal; len: PInteger): WordBool; cdecl;
-var
-  element: IwbElement;
-begin
-  Result := False;
-  try
-    if not Supports(Resolve(_id), IwbElement, element) then
-      raise Exception.Create('Interface is not an element.');
-    resultStr := element.DisplayName;
-    len^ := Length(resultStr);
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
+{$region 'Path helpers'}
 function HexFormID(rec: IwbMainRecord): String;
 begin
   Result := IntToHex(rec.LoadOrderFormID, 8);
@@ -204,22 +165,7 @@ begin
     Result := GetPath(container as IwbElement, full, Result);
   end;
 end;
-
-function Path(_id: Cardinal; full: WordBool; len: PInteger): WordBool; cdecl;
-var
-  element: IwbElement;
-begin
-  Result := False;
-  try
-    if not Supports(Resolve(_id), IwbElement, element) then
-      raise Exception.Create('Interface is not an element.');
-    resultStr := GetPath(element, full);
-    len^ := Length(resultStr);
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
+{$endregion}
 
 function NativeSignature(element: IwbElement): String;
 var
@@ -238,37 +184,7 @@ begin
     raise Exception.Create('Error: Element does not have a signature.');
 end;
 
-function Signature(_id: Cardinal; len: PInteger): WordBool; cdecl;
-var
-  element: IwbElement;
-begin
-  Result := False;
-  try
-    if not Supports(Resolve(_id), IwbElement, element) then
-      raise Exception.Create('Interface is not an element.');
-    resultStr := NativeSignature(element);
-    len^ := Length(resultStr);
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function GetValue(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
-var
-  element: IwbElement;
-begin
-  Result := False;
-  try
-    element := NativeGetElementEx(_id, path);
-    resultStr := element.EditValue;
-    len^ := Length(resultStr);
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
+{$region 'SetValue helpers'}
 function ParseFormIDValue(value: String; var formID: Int64): Boolean;
 var
   n, len, open: Integer;
@@ -308,25 +224,16 @@ begin
     if value = '' then
       element.NativeValue := 0
     else if ParseFormIDValue(value, formID) then
-      element.NativeValue := formID
+      element.NativeValue := element._File.LoadOrderFormIDtoFileFormID(formID)
     else
       element.NativeValue := EditorIDToFormID(element._File, value);
   end
   else
     element.EditValue := value;
 end;
+{$endregion}
 
-function SetValue(_id: Cardinal; path, value: PWideChar): WordBool; cdecl;
-begin
-  Result := False;
-  try
-    SetElementValue(NativeGetElementEx(_id, path), string(value));
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
+{$region 'Native value helpers'}
 function GetNativeValue(_id: Cardinal; path: PWideChar): Variant;
 var
   element: IwbElement;
@@ -343,7 +250,178 @@ begin
   element := NativeGetElementEx(_id, path);
   element.NativeValue := value;
 end;
+{$endregion}
 
+function IndexOfFlag(flagsDef: IwbFlagsDef; name: String): Integer;
+begin
+  for Result := 0 to Pred(flagsDef.FlagCount) do
+    if flagsDef.Flags[Result] = name then exit;
+  Result := -1;
+end;
+
+procedure NativeSetFlag(element: IwbElement; index: Integer; enabled: WordBool);
+var
+  flagVal: UInt64;
+begin
+  flagVal := 1 shl index;
+  if enabled then
+    element.NativeValue := element.NativeValue or flagVal
+  else
+    element.NativeValue := element.NativeValue and not flagVal;
+end;
+
+{$region 'SignatureNameMap helpers'}
+function NativeSignatureFromName(name: String): String;
+var
+  i: Integer;
+begin
+  BuildSignatureNameMap;
+  i := slSignatureNameMap.IndexOfValue(name);
+  if i = -1 then
+    raise Exception.Create('Could not find signature for name: ' + name);
+  Result := slSignatureNameMap.Names[i];
+end;
+
+function NativeNameFromSignature(sig: String): String;
+var
+  i: Integer;
+begin
+  BuildSignatureNameMap;
+  i := slSignatureNameMap.IndexOfName(sig);
+  if i = -1 then
+    raise Exception.Create('Could not find name for signature: ' + sig);
+  Result := slSignatureNameMap.ValueFromIndex[i];
+end;
+
+procedure BuildSignatureNameMap;
+var
+  i: Integer;
+  sig: String;
+  recordDef: TwbRecordDefEntry;
+begin
+  if bSignatureNameMapBuilt then exit;
+  for i := Low(wbRecordDefs) to High(wbRecordDefs) do begin
+    recordDef := wbRecordDefs[i];
+    sig := String(recordDef.rdeSignature);
+    slSignatureNameMap.Values[sig] := recordDef.rdeDef.Name;
+  end;
+  bSignatureNameMapBuilt := True;
+end;
+{$endregion}
+{$endregion}
+
+{$region 'API functions'}
+{$region 'Name functions'}
+function Name(_id: Cardinal; len: PInteger): WordBool; cdecl;
+var
+  element: IwbElement;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    resultStr := NativeName(element);
+    len^ := Length(resultStr);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function LongName(_id: Cardinal; len: PInteger): WordBool; cdecl;
+var
+  element: IwbElement;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    resultStr := element.Name;
+    len^ := Length(resultStr);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function DisplayName(_id: Cardinal; len: PInteger): WordBool; cdecl;
+var
+  element: IwbElement;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    resultStr := element.DisplayName;
+    len^ := Length(resultStr);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+{$endregion}
+
+function Path(_id: Cardinal; full: WordBool; len: PInteger): WordBool; cdecl;
+var
+  element: IwbElement;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    resultStr := GetPath(element, full);
+    len^ := Length(resultStr);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function Signature(_id: Cardinal; len: PInteger): WordBool; cdecl;
+var
+  element: IwbElement;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    resultStr := NativeSignature(element);
+    len^ := Length(resultStr);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+{$region 'Edit value functions'}
+function GetValue(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
+var
+  element: IwbElement;
+begin
+  Result := False;
+  try
+    element := NativeGetElementEx(_id, path);
+    resultStr := element.EditValue;
+    len^ := Length(resultStr);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function SetValue(_id: Cardinal; path, value: PWideChar): WordBool; cdecl;
+begin
+  Result := False;
+  try
+    SetElementValue(NativeGetElementEx(_id, path), string(value));
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+{$endregion}
+
+{$region 'Native value functions'}
 function GetIntValue(_id: Cardinal; path: PWideChar; value: PInteger): WordBool; cdecl;
 begin
   Result := False;
@@ -409,59 +487,50 @@ begin
     on x: Exception do ExceptionHandler(x);
   end;
 end;
+{$endregion}
 
+{$region 'Flag functions'}
 function GetFlag(_id: Cardinal; path, name: PWideChar; enabled: PWordBool): WordBool; cdecl;
 var
   element: IwbElement;
   flagsDef: IwbFlagsDef;
-  i: Integer;
+  index: Integer;
 begin
   Result := False;
   try
     element := NativeGetElementEx(_id, path);
     if not GetFlagsDef(element, flagsDef) then
       raise Exception.Create('Element does not have flags');
-    for i := 0 to Pred(flagsDef.FlagCount) do
-      if flagsDef.Flags[i] = name then begin
-        enabled^ := element.NativeValue and (1 shl i);
-        Result := True;
-        exit;
-      end;
-    raise Exception.Create('Flag "' + name + '" not found.');
+    index := IndexOfFlag(flagsDef, string(name));
+    if index > -1 then begin
+      enabled^ := element.NativeValue and (1 shl index);
+      Result := True;
+    end
+    else
+      raise Exception.Create('Flag "' + name + '" not found.');
   except
     on x: Exception do ExceptionHandler(x);
   end;
-end;
-
-procedure NativeSetFlag(element: IwbElement; index: Integer; enabled: WordBool);
-var
-  flagVal: UInt64;
-begin
-  flagVal := 1 shl index;
-  if enabled then
-    element.NativeValue := element.NativeValue or flagVal
-  else
-    element.NativeValue := element.NativeValue and not flagVal;
 end;
 
 function SetFlag(_id: Cardinal; path, name: PWideChar; enabled: WordBool): WordBool; cdecl;
 var
   element: IwbElement;
   flagsDef: IwbFlagsDef;
-  i: Integer;
+  index: Integer;
 begin
   Result := False;
   try
     element := NativeGetElementEx(_id, path);
     if not GetFlagsDef(element, flagsDef) then
       raise Exception.Create('Element does not have flags');
-    for i := 0 to Pred(flagsDef.FlagCount) do
-      if flagsDef.Flags[i] = name then begin
-        NativeSetFlag(element, i, enabled);
-        Result := True;
-        break;
-      end;
-    raise Exception.Create('Flag "' + name + '" not found.');
+    index := IndexOfFlag(flagsDef, name);
+    if index > -1 then begin
+      NativeSetFlag(element, index, enabled);
+      Result := True;
+    end
+    else
+      raise Exception.Create('Flag "' + name + '" not found.');
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -570,18 +639,9 @@ begin
     on x: Exception do ExceptionHandler(x);
   end;
 end;
+{$endregion}
 
-function NativeSignatureFromName(name: String): String;
-var
-  i: Integer;
-begin
-  BuildSignatureNameMap;
-  i := slSignatureNameMap.IndexOfValue(name);
-  if i = -1 then
-    raise Exception.Create('Could not find signature for name: ' + name);
-  Result := slSignatureNameMap.Names[i];
-end;
-
+{$region 'SignatureNameMap functions'}
 function SignatureFromName(name: PWideChar; len: PInteger): WordBool; cdecl;
 begin
   Result := False;
@@ -592,17 +652,6 @@ begin
   except
     on x: Exception do ExceptionHandler(x);
   end;
-end;
-
-function NativeNameFromSignature(sig: String): String;
-var
-  i: Integer;
-begin
-  BuildSignatureNameMap;
-  i := slSignatureNameMap.IndexOfName(sig);
-  if i = -1 then
-    raise Exception.Create('Could not find name for signature: ' + sig);
-  Result := slSignatureNameMap.ValueFromIndex[i];
 end;
 
 function NameFromSignature(sig: PWideChar; len: PInteger): WordBool; cdecl;
@@ -629,21 +678,8 @@ begin
     on x: Exception do ExceptionHandler(x);
   end;
 end;
-
-procedure BuildSignatureNameMap;
-var
-  i: Integer;
-  sig: String;
-  recordDef: TwbRecordDefEntry;
-begin
-  if bSignatureNameMapBuilt then exit;
-  for i := Low(wbRecordDefs) to High(wbRecordDefs) do begin
-    recordDef := wbRecordDefs[i];
-    sig := String(recordDef.rdeSignature);
-    slSignatureNameMap.Values[sig] := recordDef.rdeDef.Name;
-  end;
-  bSignatureNameMapBuilt := True;
-end;
+{$endregion}
+{$endregion}
 
 initialization
 begin

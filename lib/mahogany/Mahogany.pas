@@ -50,7 +50,7 @@ type
 
     constructor Create(context: TTest; exception: Exception);
     procedure MarkContextFailed;
-    function ToString: String;
+    function ToString: String; override;
   end;
 
   // PUBLIC API
