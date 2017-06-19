@@ -3554,7 +3554,7 @@ end;
 
 procedure TwbFile.SortAllEditorIDs;
 var
-  i, n, initialLen: Integer;
+  i, initialLen: Integer;
   rec: IwbMainRecord;
 begin
   initialLen := flRecordsByEditorIDCount;
@@ -3597,7 +3597,7 @@ end;
 
 procedure TwbFile.SortAllNames;
 var
-  i, n, initialLen: Integer;
+  i, initialLen: Integer;
   rec: IwbMainRecord;
 begin
   initialLen := flRecordsByNameCount;
@@ -6329,7 +6329,7 @@ begin
     Exit;
 
   DecompressIfNeeded;
-  
+
   mrSubrecordErrors := '';
   FoundError := False;
 
@@ -6406,7 +6406,7 @@ begin
         Continue;
       end;
 
-      if (CurrentDefPos < mrDef.MemberCount) then begin
+      if (CurrentDefPos < mrDef.MemberCount) and not FoundError then begin
         CurrentDef := mrDef.Members[CurrentDefPos];
         if not CurrentDef.CanHandle(CurrentRec.Signature, CurrentRec) then begin
           Inc(CurrentDefPos);
@@ -6417,8 +6417,12 @@ begin
         if Assigned(wbProgressCallback) then
           wbProgressCallback('Error: record '+ String(GetSignature) + ' contains unexpected (or out of order) subrecord ' + String(CurrentRec.Signature) );
         FoundError := True;
-        Inc(CurrentRecPos);
-        Continue;
+        CurrentDefPos := mrDef.GetMemberIndexFor(CurrentRec.Signature, CurrentRec);
+        if CurrentDefPos < 0 then begin
+          Inc(CurrentRecPos);
+          Continue;
+        end;
+        CurrentDef := mrDef.Members[CurrentDefPos];
       end;
     end;
 
@@ -10591,8 +10595,6 @@ function TwbGroupRecord.AddGroup(const aName: string): IwbGroupRecord;
   end;
 
   function ParseSubBlock(aName: String; var grLabel: Cardinal; ext: Boolean = False): Boolean;
-  var
-    i: Integer;
   begin
     Result := Pos('Sub-Block', aName) = 1;
     if Result then
