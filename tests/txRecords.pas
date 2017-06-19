@@ -4,6 +4,7 @@ interface
 
   // PUBLIC TESTING INTERFACE
   procedure BuildRecordHandlingTests;
+  procedure TestIsMaster(rec: Cardinal; expectedValue: WordBool);
 
 implementation
 
@@ -16,6 +17,38 @@ uses
   xeElements, xeRecords,
   {$ENDIF}
   txMeta;
+
+procedure TestIsMaster(rec: Cardinal; expectedValue: WordBool);
+var
+  b: WordBool;
+begin
+  ExpectSuccess(IsMaster(rec, @b));
+  ExpectEqual(b, expectedValue);
+end;
+
+procedure TestIsInjected(rec: Cardinal; expectedValue: WordBool);
+var
+  b: WordBool;
+begin
+  ExpectSuccess(IsInjected(rec, @b));
+  ExpectEqual(b, expectedValue);
+end;
+
+procedure TestIsOverride(rec: Cardinal; expectedValue: WordBool);
+var
+  b: WordBool;
+begin
+  ExpectSuccess(IsOverride(rec, @b));
+  ExpectEqual(b, expectedValue);
+end;
+
+procedure TestIsWinningOverride(rec: Cardinal; expectedValue: WordBool);
+var
+  b: WordBool;
+begin
+  ExpectSuccess(IsWinningOverride(rec, @b));
+  ExpectEqual(b, expectedValue);
+end;
 
 procedure BuildRecordHandlingTests;
 var
@@ -41,22 +74,16 @@ begin
         begin
           It('Should return true for master records', procedure
             begin
-              ExpectSuccess(IsMaster(ar1, @b));
-              Expect(b);
-              ExpectSuccess(IsMaster(kw1, @b));
-              Expect(b);
-              ExpectSuccess(IsMaster(kw2, @b));
-              Expect(b);
+              TestIsMaster(ar1, True);
+              TestIsMaster(kw1, True);
+              TestIsMaster(kw2, True);
             end);
 
           It('Should return false for override records', procedure
             begin
-              ExpectSuccess(IsMaster(ar2, @b));
-              Expect(not b);
-              ExpectSuccess(IsMaster(ar3, @b));
-              Expect(not b);
-              ExpectSuccess(IsMaster(kw3, @b));
-              Expect(not b);
+              TestIsMaster(ar2, False);
+              TestIsMaster(ar3, False);
+              TestIsMaster(kw3, False);
             end);
 
           It('Should fail on elements that are not records', procedure
@@ -76,22 +103,18 @@ begin
         begin
           It('Should return false for master records', procedure
             begin
-              ExpectSuccess(IsInjected(ar1, @b));
-              Expect(not b);
+              TestIsInjected(ar1, False);
             end);
 
           It('Should return false for override records', procedure
             begin
-              ExpectSuccess(IsInjected(ar2, @b));
-              Expect(not b);
+              TestIsInjected(ar2, False);
             end);
 
           It('Should return true for injected records', procedure
             begin
-              ExpectSuccess(IsInjected(kw1, @b));
-              Expect(b);
-              ExpectSuccess(IsInjected(kw2, @b));
-              Expect(b);
+              TestIsInjected(kw1, True);
+              TestIsInjected(kw2, True);
             end);
 
           It('Should fail on elements that are not records', procedure
@@ -111,22 +134,16 @@ begin
         begin
           It('Should return false for master records', procedure
             begin
-              ExpectSuccess(IsOverride(ar1, @b));
-              Expect(not b);
-              ExpectSuccess(IsOverride(kw1, @b));
-              Expect(not b);
-              ExpectSuccess(IsOverride(kw2, @b));
-              Expect(not b);
+              TestIsOverride(ar1, False);
+              TestIsOverride(kw1, False);
+              TestIsOverride(kw2, False);
             end);
 
           It('Should return true for override records', procedure
             begin
-              ExpectSuccess(IsOverride(ar2, @b));
-              Expect(b);
-              ExpectSuccess(IsOverride(ar3, @b));
-              Expect(b);
-              ExpectSuccess(IsOverride(kw3, @b));
-              Expect(b);
+              TestIsOverride(ar2, True);
+              TestIsOverride(ar3, True);
+              TestIsOverride(kw3, True);
             end);
 
           It('Should fail on elements that are not records', procedure
@@ -146,30 +163,24 @@ begin
         begin
           It('Should return true for records with no overrides', procedure
             begin
-              ExpectSuccess(IsWinningOverride(kw1, @b));
-              Expect(b);
+              TestIsWinningOverride(kw1, True);
             end);
 
           It('Should return false for losing master records', procedure
             begin
-              ExpectSuccess(IsWinningOverride(ar1, @b));
-              Expect(not b);
+              TestIsWinningOverride(ar1, False);
             end);
 
           It('Should return false for losing override records', procedure
             begin
-              ExpectSuccess(IsWinningOverride(ar2, @b));
-              Expect(not b);
-              ExpectSuccess(IsWinningOverride(kw2, @b));
-              Expect(not b);
+              TestIsWinningOverride(ar2, False);
+              TestIsWinningOverride(kw2, False);
             end);
 
           It('Should return true for winning override records', procedure
             begin
-              ExpectSuccess(IsWinningOverride(ar3, @b));
-              Expect(b);
-              ExpectSuccess(IsWinningOverride(kw3, @b));
-              Expect(b);
+              TestIsWinningOverride(ar3, True);
+              TestIsWinningOverride(kw3, True);
             end);
 
           It('Should fail on elements that are not records', procedure
