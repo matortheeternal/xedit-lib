@@ -64,7 +64,7 @@ type
   function AddArrayItem(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
   function RemoveArrayItem(_id: Cardinal; path, subpath, value: PWideChar): WordBool; cdecl;
   function MoveArrayItem(_id: Cardinal; index: Integer): WordBool; cdecl;
-  function CopyElement(_id, _id2: Cardinal; aAsNew, aDeepCopy: WordBool; _res: PCardinal): WordBool; cdecl;
+  function CopyElement(_id, _id2: Cardinal; aAsNew: WordBool; _res: PCardinal): WordBool; cdecl;
   function GetSignatureAllowed(_id: Cardinal; sig: PWideChar; bool: PWordBool): WordBool; cdecl;
   function SortKey(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function ElementType(_id: Cardinal; enum: PByte): WordBool; cdecl;
@@ -749,7 +749,9 @@ begin
     if Supports(Container, IwbMainRecord, MainRecord) then
       Container := MainRecord.HighestOverrideOrSelf[aFile.LoadOrder];
     Target := CopyElementToFile(Container, aFile, False, False)
-  end;
+  end
+  else
+    Result := aFile;
 
   if Assigned(Target) then
     Result := Target.AddIfMissing(aSource, aAsNew, aDeepCopy, '', '', '');
@@ -762,8 +764,11 @@ var
 begin
   Result := nil;
 
-  if Assigned(aSource) and (aSource.ElementType = etMainRecord) then
+  if Assigned(aSource) and (aSource.ElementType = etMainRecord) then begin
+    if not aSource.Equals(aMainRecord) then
+      Result := aMainRecord;
     Exit;
+  end;
 
   Container := aSource.Container;
   Assert(Assigned(Container));
@@ -1236,22 +1241,25 @@ begin
 end;
 {$endregion}
 
-function CopyElement(_id, _id2: Cardinal; aAsNew, aDeepCopy: WordBool; _res: PCardinal): WordBool; cdecl;
+function CopyElement(_id, _id2: Cardinal; aAsNew: WordBool; _res: PCardinal): WordBool; cdecl;
 var
   _file: IwbFile;
   rec: IwbMainRecord;
-  element: IwbElement;
+  element, copy: IwbElement;
 begin
   Result := False;
   try
     if not Supports(Resolve(_id), IwbElement, element) then
       raise Exception.Create('Interface is not an element.');
     if Supports(Resolve(_id2), IwbFile, _file) then
-      _res^ := Store(CopyElementToFile(element, _file, aAsNew, aDeepCopy))
+      copy := CopyElementToFile(element, _file, aAsNew, True)
     else if Supports(Resolve(_id2), IwbMainRecord, rec) then
-      _res^ := Store(CopyElementToRecord(element, rec, aAsNew, aDeepCopy))
+      copy := CopyElementToRecord(element, rec, aAsNew, True)
     else
       raise Exception.Create('Second interface must be a file or a main record.');
+    if not Assigned(copy) then
+      raise Exception.Create('Failed to copy element.');
+    _res^ := Store(copy);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
