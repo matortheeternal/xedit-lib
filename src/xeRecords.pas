@@ -16,7 +16,7 @@ uses
   function GetRecords(_id: Cardinal; search: PWideChar; includeOverrides: WordBool; len: PInteger): WordBool; cdecl;
   function GetOverrides(_id: Cardinal; count: PInteger): WordBool; cdecl;
   function ExchangeReferences(_id, oldFormID, newFormID: Cardinal): WordBool; cdecl;
-  function GetReferences(_id: Cardinal; len: PInteger): WordBool; cdecl;
+  function GetReferencedBy(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function IsMaster(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
   function IsInjected(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
   function IsOverride(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
@@ -245,7 +245,7 @@ begin
   end;
 end;
 
-function GetReferences(_id: Cardinal; len: PInteger): WordBool; cdecl;
+function GetReferencedBy(_id: Cardinal; len: PInteger): WordBool; cdecl;
 var
   rec, ref: IwbMainRecord;
   i: Integer;
