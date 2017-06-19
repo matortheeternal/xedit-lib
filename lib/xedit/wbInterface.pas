@@ -75,6 +75,7 @@ var
   wbClampFormID            : Boolean  = True;
   wbAllowSlowSearching     : Boolean  = False;
   wbSortOnDemand           : Boolean  = True;
+  wbAllowErrors            : Boolean  = True;
   wbDoNotBuildRefsFor      : TStringList;
   wbCopyIsRunning          : Integer  = 0;
 
@@ -12811,9 +12812,11 @@ var
   Error: string;
 begin
   Result := inherited FromEditValue(aValue, aElement);
-  Error := Check(Result, aElement);
-  if Error <> '' then
-    raise Exception.Create(Error);
+  if not wbAllowErrors then begin
+    Error := Check(Result, aElement);
+    if Error <> '' then
+      raise Exception.Create(Error);
+  end;
 end;
 
 function TwbFormIDChecked.GetNoReach: Boolean;
