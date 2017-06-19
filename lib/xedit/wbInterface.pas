@@ -76,6 +76,7 @@ var
   wbAllowSlowSearching     : Boolean  = False;
   wbSortOnDemand           : Boolean  = True;
   wbAllowErrors            : Boolean  = True;
+  wbAllowUnordered         : Boolean  = True;
   wbDoNotBuildRefsFor      : TStringList;
   wbCopyIsRunning          : Integer  = 0;
 
@@ -7295,7 +7296,7 @@ var
 begin
   recRecordFlags := aRecordFlags;
   recQuickInitLimit := -1;
-  recAllowUnordered := aAllowUnordered;
+  recAllowUnordered := aAllowUnordered or wbAllowUnordered;
   recAddInfoCallback := aAddInfoCallback;
 
   if Assigned(recRecordFlags) and Assigned(wbRecordFlags) and Assigned(wbMainRecordHeader) then begin
