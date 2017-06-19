@@ -15,10 +15,10 @@ uses
   {$endregion}
 
   {$region 'API functions'}
-  function GetFormID(_id: Cardinal; formID: PCardinal): WordBool; cdecl;
-  function SetFormID(_id: Cardinal; formID: Cardinal): WordBool; cdecl;
   function GetRecords(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function RecordsBySignature(_id: Cardinal; sig: PWideChar; len: PInteger): WordBool; cdecl;
+  function GetFormID(_id: Cardinal; formID: PCardinal; local: WordBool): WordBool; cdecl;
+  function SetFormID(_id: Cardinal; formID: Cardinal; local, fixReferences: WordBool): WordBool; cdecl;
   function GetOverrides(_id: Cardinal; count: PInteger): WordBool; cdecl;
   function ExchangeReferences(_id, oldFormID, newFormID: Cardinal): WordBool; cdecl;
   function GetReferences(_id: Cardinal; len: PInteger): WordBool; cdecl;
@@ -123,7 +123,7 @@ end;
 {$endregion}
 
 {$region 'API functions'}
-function GetFormID(_id: Cardinal; formID: PCardinal): WordBool; cdecl;
+function GetFormID(_id: Cardinal; formID: PCardinal; local: WordBool): WordBool; cdecl;
 var
   rec: IwbMainRecord;
 begin
@@ -131,23 +131,36 @@ begin
   try
     if not Supports(Resolve(_id), IwbMainRecord, rec) then
       raise Exception.Create('Interface must be a main record.');
-    formID^ := rec.LoadOrderFormID;
+    if local then
+      formID^ := rec._File.LoadOrderFormIDtoFileFormID(rec.LoadOrderFormID)
+    else
+      formID^ := rec.LoadOrderFormID;
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
 end;
 
-function SetFormID(_id: Cardinal; formID: Cardinal): WordBool; cdecl;
+function SetFormID(_id: Cardinal; formID: Cardinal; local, fixReferences: WordBool): WordBool; cdecl;
 var
   rec: IwbMainRecord;
+  oldFormID, newFormID: Cardinal;
+  i: Integer;
 begin
   Result := False;
   try
     if not Supports(Resolve(_id), IwbMainRecord, rec) then
       raise Exception.Create('Interface must be a main record.');
-    // TODO: Fix references
-    rec.LoadOrderFormID := formID;
+    oldFormID := rec.FormID;
+    if local then
+      rec.LoadOrderFormID := rec._File.FileFormIDtoLoadOrderFormID(formID)
+    else
+      rec.LoadOrderFormID := formID;
+    if fixReferences then begin
+      newFormID := rec.FormID;
+      for i := Pred(rec.ReferencedByCount) downto 0 do
+        rec.ReferencedBy[i].CompareExchangeFormID(oldFormID, newFormID);
+    end;
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
