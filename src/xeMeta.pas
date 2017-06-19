@@ -7,6 +7,7 @@ uses
 
   {$region 'Native functions'}
   function Resolve(_id: Cardinal): IInterface;
+  procedure StoreList(lst: TList; len: PInteger);
   procedure StoreIfAssigned(var x: IInterface; var _res: PCardinal; var Success: WordBool);
   function Store(x: IInterface): Cardinal;
   function xStrCopy(source: WideString; dest: PWideChar; maxLen: Integer): WordBool;
@@ -62,6 +63,16 @@ function Resolve(_id: Cardinal): IInterface;
 begin
   if _id = 0 then raise Exception.Create('ERROR: Cannot resolve NULL reference.');
   Result := _store[_id];
+end;
+
+procedure StoreList(lst: TList; len: PInteger);
+var
+  i: Integer;
+begin
+  SetLength(resultArray, lst.Count);
+  for i := 0 to Pred(lst.Count) do
+    resultArray[i] := Store(IInterface(lst[i]));
+  len^ := Length(resultArray);
 end;
 
 procedure StoreIfAssigned(var x: IInterface; var _res: PCardinal; var Success: WordBool);
