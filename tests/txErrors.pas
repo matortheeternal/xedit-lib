@@ -90,7 +90,6 @@ begin
                       Expect(Assigned(errorObj), 'Matching error not found');
                     end);
 
-                  // TODO
                   It('Should include records with children', procedure
                     begin
                       errorObj := FindError(obj, erITM, 'KilkreathRuins03');
@@ -137,13 +136,13 @@ begin
                   Expect(Assigned(errorObj), 'Matching error not found');
                 end);
 
-              {It('Should find Unexpected Subrecord Errors (UESs)', procedure
+              It('Should find Unexpected Subrecord Errors (UESs)', procedure
                 begin
                   errorObj := FindError(obj, erUES, 'UESTest');
                   Expect(Assigned(errorObj), 'Matching error not found');
                 end);
 
-              It('Should find Other Errors (OEs)', procedure
+              {It('Should find Other Errors (OEs)', procedure
                 begin
                   errorObj := FindError(obj, erUnknown, 'OETest');
                   Expect(Assigned(errorObj), 'Matching error not found');
