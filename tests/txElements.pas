@@ -17,9 +17,9 @@ uses
   txImports,
 {$ENDIF}
 {$IFNDEF USE_DLL}
-  xeFiles, xeElements, xeElementValues,
+  xeFiles, xeMasters, xeElements, xeElementValues, xeRecords,
 {$ENDIF}
-  txMeta;
+  txMeta, txRecords;
 
 procedure TestHasElement(h: Cardinal; path: PWideChar; expectedValue: WordBool = True);
 var
@@ -122,6 +122,35 @@ begin
   end;
 end;
 
+function TestCopyElement(path: PWideChar; destination: Cardinal; asNew: WordBool): Cardinal;
+var
+  source: Cardinal;
+begin
+  ExpectSuccess(GetElement(0, path, @source));
+  ExpectSuccess(CopyElement(source, destination, asNew, @Result));
+end;
+
+procedure TestElementFile(element: Cardinal; expectedFileName: String);
+var
+  h: Cardinal;
+  len: Integer;
+begin
+  ExpectSuccess(GetElementFile(element, @h));
+  ExpectSuccess(Name(h, @len));
+  ExpectEqual(grs(len), expectedFileName);
+end;
+
+procedure RemoveElements(_file: Cardinal);
+var
+  len, i: Integer;
+  elements: CardinalArray;
+begin
+  ExpectSuccess(GetElements(_file, '', @len));
+  elements := gra(len);
+  for i := Low(elements) to High(elements) do
+    ExpectSuccess(RemoveElement(elements[i], ''));
+end;
+
 procedure TestNames(a: CardinalArray; firstName, secondName: String);
 var
   len: Integer;
@@ -187,7 +216,7 @@ end;
 procedure BuildElementHandlingTests;
 var
   b: WordBool;
-  h, skyrim, xt3, armo1, ar1, keywords, keyword, dnam, element, armo2,
+  h, rec, skyrim, xt3, xt5, armo1, ar1, keywords, keyword, dnam, element, armo2,
   ar2, ar3, refr, lvli, entries, armature: Cardinal;
   len: Integer;
 begin
@@ -204,6 +233,7 @@ begin
           ExpectSuccess(GetElement(0, 'xtest-2.esp\00012E46', @ar2));
           ExpectSuccess(GetElement(ar2, 'Armature', @armature));
           ExpectSuccess(GetElement(0, 'xtest-3.esp', @xt3));
+          ExpectSuccess(GetElement(0, 'xtest-5.esp', @xt5));
           ExpectSuccess(GetElement(xt3, 'ARMO', @armo2));
           ExpectSuccess(GetElement(armo2, '00012E46', @ar3));
           ExpectSuccess(GetElement(0, 'xtest-2.esp\000170F0', @refr));
@@ -892,34 +922,106 @@ begin
 
       Describe('CopyElement', procedure
         begin
-          // TODO
+          BeforeAll(procedure
+            begin
+              ExpectSuccess(AddMasters(xt5, 'xtest-2.esp'#13#10'xtest-4.esp'));
+            end);
+
+          AfterAll(procedure
+            begin
+              RemoveElements(xt5);
+            end);
+
+          It('Should be able to deep copy groups', procedure
+            begin
+              h := TestCopyElement('xtest-2.esp\ARMO', xt5, True);
+              TestElementFile(h, 'xtest-5.esp');
+              ExpectSuccess(GetElement(h, '[0]', @rec));
+              TestIsMaster(rec, True);
+            end);
+
+          It('Should be able to deep copy records', procedure
+            begin
+              h := TestCopyElement('xtest-2.esp\00013739', xt5, True);
+              TestElementFile(h, 'xtest-5.esp');
+              TestIsMaster(h, True);
+            end);
+
+          It('Should be able to deep copy elements', procedure
+            begin
+              try
+                ExpectSuccess(AddArrayItem(0, 'xtest-3.esp\00012E46\KWDA', '', '0006BBD4', @h));
+                ExpectSuccess(GetElement(0, 'xtest-5.esp\ARMO\[0]', @rec));
+                h := TestCopyElement('xtest-3.esp\00012E46\KWDA', rec, True);
+                TestElementFile(h, 'xtest-5.esp');
+                TestElementCount(h, 6);
+              finally
+                ExpectSuccess(RemoveArrayItem(0, 'xtest-3.esp\00012E46\KWDA', '', '0006BBD4'));
+              end;
+            end);
+
+          It('Should be able to override records', procedure
+            begin
+              h := TestCopyElement('xtest-2.esp\00012E46', xt5, False);
+              TestElementFile(h, 'xtest-5.esp');
+              TestIsMaster(h, False);
+            end);
+
+          Describe('Copying records with errors', procedure
+            begin
+              It('Should copy records with Deleted References (UDRs)', procedure
+                begin
+                  h := TestCopyElement('xtest-4.esp\00027DE7', xt5, False);
+                  TestElementFile(h, 'xtest-5.esp');
+                end);
+
+              It('Should copy records with Unexpected References (UERs)', procedure
+                begin
+                  h := TestCopyElement('xtest-4.esp\05000800', xt5, False);
+                  TestElementFile(h, 'xtest-5.esp');
+                end);
+
+              It('Should copy records with Unresolved References (URRs)', procedure
+                begin
+                  h := TestCopyElement('xtest-4.esp\05000801', xt5, False);
+                  TestElementFile(h, 'xtest-5.esp');
+                end);
+
+              It('Should copy records with Unexpected Subrecords (UESs)', procedure
+                begin
+                  h := TestCopyElement('xtest-4.esp\05000802', xt5, False);
+                  TestElementFile(h, 'xtest-5.esp');
+                end);
+            end);
         end);
         
       Describe('GetSignatureAllowed', procedure
         begin
           It('Should return true if signature is allowed', procedure
             begin
-              TestGetSignatureAllowed(keyword, 'KYWD', true);
-              TestGetSignatureAllowed(keyword, 'NULL', true);
+              TestGetSignatureAllowed(keyword, 'KYWD', True);
+              TestGetSignatureAllowed(keyword, 'NULL', True);
               ExpectSuccess(GetElement(ar2, 'ZNAM', @h));
-              TestGetSignatureAllowed(h, 'SNDR', true);
+              TestGetSignatureAllowed(h, 'SNDR', True);
               ExpectSuccess(GetElement(0, 'Update.esm\000E49CD\VMAD\Scripts\[0]\Properties\[0]\Value\Object Union\Object v2\FormID', @h));
-              TestGetSignatureAllowed(h, 'NULL', true);
-              TestGetSignatureAllowed(h, 'ARMO', true);
-              TestGetSignatureAllowed(h, 'WEAP', true);
-              TestGetSignatureAllowed(h, 'COBJ', true);
+              TestGetSignatureAllowed(h, 'NULL', True);
+              TestGetSignatureAllowed(h, 'ARMO', True);
+              TestGetSignatureAllowed(h, 'WEAP', True);
+              TestGetSignatureAllowed(h, 'COBJ', True);
             end);
           It('Should return false if signature is not allowed', procedure
             begin
-              TestGetSignatureAllowed(keyword, 'ARMO', false);
-              TestGetSignatureAllowed(keyword, 'NPC_', false);
+              TestGetSignatureAllowed(keyword, 'ARMO', False);
+              TestGetSignatureAllowed(keyword, 'NPC_', False);
               ExpectSuccess(GetElement(ar2, 'ZNAM', @h));
-              TestGetSignatureAllowed(h, 'NULL', false);
+              TestGetSignatureAllowed(h, 'NULL', False);
             end);
+
           It('Should raise an exception if a null handle is passed', procedure
             begin
               ExpectFailure(GetSignatureAllowed(0, 'TES4', @b));
             end);
+
           It('Should raise an exception if element isn''t an integer', procedure
             begin
               ExpectFailure(GetSignatureAllowed(skyrim, 'TES4', @b));
