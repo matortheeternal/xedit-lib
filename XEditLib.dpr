@@ -64,16 +64,16 @@ exports
   // ERROR CHECKING METHODS
   CheckForErrors, GetErrorThreadDone, GetErrors, GetErrorString,
   // SERIALIZATION METHODS
-  ElementToJson, {ElementFromJson,}
+  ElementToJson, ElementFromJson,
   // ELEMENT VALUE METHODS
   Name, LongName, DisplayName, Path, Signature, GetValue, SetValue, GetIntValue,
   SetIntValue, GetUIntValue, SetUIntValue, GetFloatValue, SetFloatValue,
   GetFlag, SetFlag, GetEnabledFlags, SetEnabledFlags, GetAllFlags,
   SignatureFromName, NameFromSignature, GetSignatureNameMap,
   // RECORD HANDLING METHODS
-  GetFormID, SetFormID, GetRecords, RecordsBySignature, GetOverrides,
-  GetReferences, ExchangeReferences, IsMaster, IsInjected, IsOverride,
-  IsWinningOverride, ConflictThis, ConflictAll;
+  GetFormID, SetFormID, GetRecords, GetOverrides, GetReferencedBy,
+  ExchangeReferences, IsMaster, IsInjected, IsOverride, IsWinningOverride,
+  ConflictThis, ConflictAll;
 
 begin
   IsMultiThread := True;

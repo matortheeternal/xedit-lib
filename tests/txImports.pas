@@ -14,6 +14,7 @@ type
   function GetResultArray(_res: PCardinal; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
   function GetGlobal(key: PWideChar; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function Release(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
+  function Switch(_id, _id2: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
   function ResetStore: WordBool; cdecl; external 'XEditLib.dll';
 
   // MESSAGE METHODS
@@ -102,15 +103,18 @@ type
   function ElementFromJson(_id: Cardinal; path: PWideChar; json: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
 
   // RECORD HANDLING METHODS
-  function GetFormID(_id: Cardinal; formID: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function SetFormID(_id: Cardinal; formID: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function GetRecords(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
-  function RecordsBySignature(_id: Cardinal; sig: string; _res: PCardinalArray): WordBool; cdecl; external 'XEditLib.dll';
+  function GetFormID(_id: Cardinal; formID: PCardinal; local: WordBool): WordBool; cdecl; external 'XEditLib.dll';
+  function SetFormID(_id: Cardinal; formID: Cardinal; local, fixReferences: WordBool): WordBool; cdecl; external 'XEditLib.dll';
+  function GetRecords(_id: Cardinal; search: PWideChar; allowOverrides: WordBool; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetOverrides(_id: Cardinal; count: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function ExchangeReferences(_id, oldFormID, newFormID: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
+  function GetReferencedBy(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function IsMaster(_id: Cardinal; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
   function IsInjected(_id: Cardinal; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
   function IsOverride(_id: Cardinal; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
   function IsWinningOverride(_id: Cardinal; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
+  function ConflictAll(_id: Cardinal; enum: PByte): WordBool; cdecl; external 'XEditLib.dll';
+  function ConflictThis(_id: Cardinal; enum: PByte): WordBool; cdecl; external 'XEditLib.dll';
 
   // PLUGIN ERROR METHODS
   function CheckForErrors(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
