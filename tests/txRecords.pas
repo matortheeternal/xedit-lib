@@ -18,6 +18,20 @@ uses
   {$ENDIF}
   txMeta;
 
+procedure TestGetRecords(context: Cardinal; path, search: PWideChar; includeOverrides: WordBool; expectedCount: Integer);
+var
+  h: Cardinal;
+  len: Integer;
+begin
+  if path <> '' then
+    ExpectSuccess(GetElement(context, path, @h))
+  else
+    h := context;
+  ExpectSuccess(GetRecords(h, search, includeOverrides, @len));
+  ExpectEqual(len, expectedCount);
+  gra(len);
+end;
+
 procedure TestIsMaster(rec: Cardinal; expectedValue: WordBool);
 var
   b: WordBool;
@@ -68,6 +82,60 @@ begin
           ExpectSuccess(GetElement(0, 'xtest-1.esp\00C23800', @kw1));
           ExpectSuccess(GetElement(0, 'xtest-1.esp\00C23801', @kw2));
           ExpectSuccess(GetElement(0, 'xtest-4.esp\00C23801', @kw3));
+        end);
+
+      Describe('GetRecords', procedure
+        begin
+          Describe('No search', procedure
+            begin
+              It('Should return all records in a file', procedure
+                begin
+                  TestGetRecords(0, 'xtest-2.esp', '', True, 6);
+                end);
+
+              It('Should be able to exclude overrides', procedure
+                begin
+                  TestGetRecords(0, 'xtest-2.esp', '', False, 1);
+                end);
+
+              It('Should return all records in a top level group', procedure
+                begin
+                  TestGetRecords(armo, '', '', True, 2762);
+                  TestGetRecords(0, 'xtest-2.esp\CELL', '', True, 3);
+                end);
+
+              It('Should return all records in a subgroup', procedure
+                begin
+                  TestGetRecords(0, 'xtest-2.esp\00027D1C\Child Group\Persistent', '', True, 2);
+                end);
+
+              It('Should return all record children of a record', procedure
+                begin
+                  TestGetRecords(0, 'xtest-2.esp\00027D1C', '', True, 2);
+                end);
+            end);
+
+          Describe('Search', procedure
+            begin
+              It('Should return all records of a given signature in all files', procedure
+                begin
+                  TestGetRecords(0, '', 'DOBJ', False, 1);
+                  TestGetRecords(0, '', 'DOBJ', True, 2);
+                  TestGetRecords(0, '', 'ARMO', False, 2763);
+                  TestGetRecords(0, '', 'ARMO', True, 2808);
+                end);
+
+              It('Should be able to handle multiple signatures', procedure
+                begin
+                  TestGetRecords(0, '', 'ARMO,WEAP,MISC', False, 2763 + 2484 + 371);
+                end);
+
+              It('Should map names to signatures', procedure
+                begin
+                  TestGetRecords(0, '', 'Armor', False, 2763);
+                  TestGetRecords(0, '', 'Constructible Object,Non-Player Character (Actor)', False, 606 + 5119);
+                end);
+            end);
         end);
 
       Describe('IsMaster', procedure
