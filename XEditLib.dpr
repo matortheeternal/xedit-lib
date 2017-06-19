@@ -43,7 +43,7 @@ const
 exports
   // META METHODS
   InitXEdit, CloseXEdit, GetResultString, GetResultArray, GetGlobal, GetGlobals,
-  Release, ResetStore,
+  Release, Switch, ResetStore,
   // MESSAGE METHODS
   GetMessagesLength, GetMessages, ClearMessages, GetExceptionMessageLength,
   GetExceptionMessage,

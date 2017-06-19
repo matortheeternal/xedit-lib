@@ -20,6 +20,7 @@ uses
   function GetGlobal(key: PWideChar; len: PInteger): WordBool; cdecl;
   function GetGlobals(len: PInteger): WordBool; cdecl;
   function Release(_id: Cardinal): WordBool; cdecl;
+  function Switch(_id, _id2: Cardinal): WordBool; cdecl;
   function ResetStore: WordBool; cdecl;
   {$endregion}
 
@@ -175,6 +176,21 @@ begin
     if (_id = 0) or (_id >= Cardinal(_store.Count)) then exit;
     _store[_id] := nil;
     _releasedIDs.Add(_id);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function Switch(_id, _id2: Cardinal): WordBool; cdecl;
+begin
+  Result := False;
+  try
+    if (_id = 0) or (_id >= Cardinal(_store.Count))
+    or (_id2 = 0) or (_id2 >= Cardinal(_store.Count)) then exit;
+    _store[_id] := _store[_id2];
+    _store[_id2] := nil;
+    _releasedIDs.Add(_id2);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
