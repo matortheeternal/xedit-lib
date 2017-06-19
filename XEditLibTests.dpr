@@ -65,8 +65,8 @@ begin
   BuildMasterHandlingTests;
   BuildElementHandlingTests;
   BuildElementValueTests;
-  BuildSerializationTests;
   BuildRecordHandlingTests;
+  BuildSerializationTests;
   BuildPluginErrorTests;
 end;
 
