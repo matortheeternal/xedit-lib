@@ -8,17 +8,12 @@ uses
 
   {$region 'Native functions'}
   function EditorIDToFormID(_file: IwbFile; editorID: String): Cardinal;
-  procedure StoreRecords(_file: IwbFile; len: PInteger); overload;
-  procedure StoreRecords(group: IwbGroupRecord; len: PInteger); overload;
-  procedure FindRecordsBySignature(group: IwbGroupRecord; sig: TwbSignature; len: PInteger); overload;
-  procedure FindRecordsBySignature(_file: IwbFile; sig: TwbSignature; len: PInteger); overload;
   {$endregion}
 
   {$region 'API functions'}
-  function GetRecords(_id: Cardinal; len: PInteger): WordBool; cdecl;
-  function RecordsBySignature(_id: Cardinal; sig: PWideChar; len: PInteger): WordBool; cdecl;
   function GetFormID(_id: Cardinal; formID: PCardinal; local: WordBool): WordBool; cdecl;
   function SetFormID(_id: Cardinal; formID: Cardinal; local, fixReferences: WordBool): WordBool; cdecl;
+  function GetRecords(_id: Cardinal; search: PWideChar; includeOverrides: WordBool; len: PInteger): WordBool; cdecl;
   function GetOverrides(_id: Cardinal; count: PInteger): WordBool; cdecl;
   function ExchangeReferences(_id, oldFormID, newFormID: Cardinal): WordBool; cdecl;
   function GetReferences(_id: Cardinal; len: PInteger): WordBool; cdecl;
@@ -36,7 +31,7 @@ uses
   Classes, SysUtils,
   mteConflict,
   wbImplementation,
-  xeMessages, xeElements;
+  xeTypes, xeMessages, xeSetup, xeElements, xeElementValues;
 
 {$region 'Native functions'}
 function EditorIDToFormID(_file: IwbFile; editorID: String): Cardinal;
@@ -49,76 +44,106 @@ begin
   Result := _file.LoadOrderFormIDtoFileFormID(rec.LoadOrderFormID);
 end;
 
-procedure StoreRecords(_file: IwbFile; len: PInteger);
+procedure GetSignatures(search: String; signatures: TStringList);
 var
   i: Integer;
+  str: String;
 begin
-  len^ := _file.RecordCount;
-  SetLength(resultArray, len^);
-  for i := 0 to Pred(_file.RecordCount) do
-    resultArray[i] := Store(_file.Records[i]);
+  signatures.StrictDelimiter := true;
+  signatures.CommaText := search;
+  for i := 0 to Pred(signatures.Count) do begin
+    str := signatures[i];
+    if Length(str) > 4 then
+      signatures[i] := NativeSignatureFromName(str);
+  end;
 end;
 
-procedure StoreRecords(group: IwbGroupRecord; len: PInteger);
+function AllSignaturesTopLevel(signatures: TFastStringList): Boolean;
 var
   i: Integer;
+  sig: String;
+begin
+  Result := False;
+  for i := 0 to Pred(signatures.Count) do begin
+    sig := signatures[i];
+    if (sig = 'CELL') or (wbGroupOrder.IndexOf(sig) = -1) then
+      exit;
+  end;
+  Result := True;
+end;
+
+procedure FindRecords(_file: IwbFile; signatures: TFastStringList; includeOverrides: Boolean; lst: TList); overload;
+var
+  allRecords: Boolean;
+  i, j: Integer;
+  group: IwbGroupRecord;
   rec: IwbMainRecord;
 begin
-  len^ := 0;
-  SetLength(resultArray, group.ElementCount);
-  for i := 0 to Pred(group.ElementCount) do
-    if Supports(group.Elements[i], IwbMainRecord, rec) then begin
-      resultArray[len^] := Store(rec);
-      Inc(len^);
+  allRecords := signatures.Count = 0;
+  if not allRecords and AllSignaturesTopLevel(signatures) then begin
+    for i := 0 to Pred(signatures.Count) do begin
+      group := _file.GroupBySignature[StrToSignature(signatures[i])];
+      if not Assigned(group) then continue;
+      for j := 0 to Pred(group.ElementCount) do
+        if Supports(group.Elements[j], IwbMainRecord, rec)
+        and (includeOverrides or rec.IsMaster) then
+          lst.Add(Pointer(rec));
     end;
+  end
+  else begin
+    for i := 0 to Pred(_file.RecordCount) do begin
+      rec := _file.Records[i];
+      if (includeOverrides or rec.IsMaster) and (allRecords
+      or (signatures.IndexOf(string(rec.Signature)) > -1)) then
+        lst.Add(Pointer(rec));
+    end;
+  end;
 end;
 
-procedure StoreRecord(rec: IwbMainRecord; len: PInteger);
+procedure FindRecords(group: IwbGroupRecord; signatures: TFastStringList; includeOverrides: Boolean; lst: TList); overload;
 var
-  capacity: Integer;
-begin
-  // grow capacity by 1KB when reached
-  capacity := High(resultArray);
-  if len^ > capacity then
-    SetLength(resultArray, capacity + 256);
-  resultArray[len^] := Store(IInterface(rec));
-  Inc(len^);
-end;
-
-procedure FindRecordsBySignature(group: IwbGroupRecord; sig: TwbSignature; len: PInteger);
-var
+  allRecords: Boolean;
   i: Integer;
   element: IwbElement;
   rec: IwbMainRecord;
-  subGroup: IwbGroupRecord;
+  subgroup: IwbGroupRecord;
 begin
-  if (group.GroupType = 0) and (TwbSignature(group.GroupLabel) = sig) then
-    StoreRecords(group, len)
-  else
-    for i := 0 to Pred(group.ElementCount) do begin
-      element := group.Elements[i];
-      if Supports(element, IwbMainRecord, rec) then begin
-        if rec.Signature = sig then
-          StoreRecord(rec, len)
-        else if Assigned(rec.ChildGroup) then
-          FindRecordsBySignature(rec.ChildGroup, sig, len);
-      end
-      else if Supports(element, IwbGroupRecord, subGroup) then
-        FindRecordsBySignature(subGroup, sig, len);
-    end;
+  allRecords := signatures.Count = 0;
+  for i := 0 to Pred(group.ElementCount) do begin
+    element := group.Elements[i];
+    if Supports(element, IwbMainRecord, rec) and (includeOverrides or rec.IsMaster)
+    and (allRecords or (signatures.IndexOf(string(rec.Signature)) > -1)) then
+      lst.Add(Pointer(rec))
+    else if Supports(element, IwbGroupRecord, subgroup) then
+      FindRecords(subgroup, signatures, includeOverrides, lst);
+  end;
 end;
 
-procedure FindRecordsBySignature(_file: IwbFile; sig: TwbSignature; len: PInteger);
+procedure NativeGetRecords(_id: Cardinal; signatures: TFastStringList; includeOverrides: Boolean; lst: TList);
 var
   i: Integer;
+  e: IInterface;
+  _file: IwbFile;
   group: IwbGroupRecord;
+  rec: IwbMainRecord;
 begin
-  if _file.HasGroup(sig) then
-    StoreRecords(_file.GroupBySignature[sig], len)
-  else
-    for i := 0 to _file.ElementCount do
-      if Supports(_file.Elements[i], IwbGroupRecord, group) then
-        FindRecordsBySignature(group, sig, len);
+  if _id = 0 then begin
+    for i := Low(xFiles) to High(xFiles) do
+      FindRecords(xFiles[i], signatures, includeOverrides, lst);
+  end
+  else begin
+    e := Resolve(_id);
+    if Supports(e, IwbFile, _file) then
+      FindRecords(_file, signatures, includeOverrides, lst)
+    else if Supports(e, IwbGroupRecord, group) then
+      FindRecords(group, signatures, includeOverrides, lst)
+    else if Supports(e, IwbMainRecord, rec) then begin
+      if Assigned(rec.ChildGroup) then
+        FindRecords(rec.ChildGroup, signatures, includeOverrides, lst);
+    end
+    else
+      raise Exception.Create('Interface must be a file, group, or main record.');
+  end;
 end;
 {$endregion}
 
@@ -167,44 +192,24 @@ begin
   end;
 end;
 
-function GetRecords(_id: Cardinal; len: PInteger): WordBool; cdecl;
+function GetRecords(_id: Cardinal; search: PWideChar; includeOverrides: WordBool; len: PInteger): WordBool; cdecl;
 var
-  e: IInterface;
-  _file: IwbFile;
-  group: IwbGroupRecord;
+  lst: TList;
+  signatures: TFastStringList;
 begin
   Result := False;
   try
-    e := Resolve(_id);
-    if Supports(e, IwbFile, _file) then
-      StoreRecords(_file, len)
-    else if Supports(e, IwbGroupRecord, group) then
-      StoreRecords(group, len)
-    else
-      raise Exception.Create('Interface must be a file or group.');
-    Result := True;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function RecordsBySignature(_id: Cardinal; sig: PWideChar; len: PInteger): WordBool; cdecl;
-var
-  _sig: TwbSignature;
-  _file: IwbFile;
-  group: IwbGroupRecord;
-begin
-  Result := False;
-  try
-    len^ := 0;
-    _sig := TwbSignature(AnsiString(sig));
-    if Supports(Resolve(_id), IwbFile, _file) then
-      FindRecordsBySignature(_file, _sig, len)
-    else if Supports(Resolve(_id), IwbGroupRecord, group) then
-      FindRecordsBySignature(group, _sig, len)
-    else
-      raise Exception.Create('Interface must be a file or group.');
-    Result := True;
+    lst := TList.Create;
+    signatures := TFastStringList.Create;
+    try
+      GetSignatures(string(search), signatures);
+      NativeGetRecords(_id, signatures, includeOverrides, lst);
+      StoreList(lst, len);
+      Result := True;
+    finally
+      lst.Free;
+      signatures.Free;
+    end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
