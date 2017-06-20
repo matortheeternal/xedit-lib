@@ -119,14 +119,15 @@ var
   container: IwbContainerElementRef;
   i: Integer;
 begin
+  error := element.Check;
+
   // special main record error checks (ITM, ITPO, UES)
   if Supports(element, IwbMainRecord, rec) then begin
     CheckForSubrecordErrors(rec, lastRecord);
     CheckForIdenticalErrors(rec, lastRecord);
   end;
 
-  // general error checking                   
-  error := element.Check;
+  // general error checking     
   if error <> '' then begin
     Result := element.ContainingMainRecord;
     if Assigned(Result) then begin
