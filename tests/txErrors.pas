@@ -142,6 +142,21 @@ begin
                   Expect(Assigned(errorObj), 'Matching error not found');
                 end);
 
+              It('Should find all errors on a record', procedure
+                var
+                  i, n: Integer;
+                  ary: TJSONArray;
+                begin
+                  n := 0;
+                  ary := obj.A['errors'];
+                  for i := 0 to Pred(ary.Count) do begin
+                    errorObj := ary.O[i];
+                    if (Pos('UESTest', errorObj.S['name']) = 1) then
+                      Inc(n);
+                  end;
+                  ExpectEqual(n, 8);
+                end);
+
               {It('Should find Other Errors (OEs)', procedure
                 begin
                   errorObj := FindError(obj, erUnknown, 'OETest');
