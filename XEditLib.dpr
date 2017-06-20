@@ -62,7 +62,7 @@ exports
   RemoveArrayItem, MoveArrayItem, CopyElement, GetSignatureAllowed, SortKey,
   ElementType, DefType, SmashType,
   // ERROR CHECKING METHODS
-  CheckForErrors, GetErrorThreadDone, GetErrors, GetErrorString,
+  CheckForErrors, GetErrorThreadDone, GetErrors,
   // SERIALIZATION METHODS
   ElementToJson, ElementFromJson,
   // ELEMENT VALUE METHODS

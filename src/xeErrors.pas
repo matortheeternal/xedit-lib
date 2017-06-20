@@ -44,7 +44,6 @@ type
   function CheckForErrors(_id: Cardinal): WordBool; cdecl;
   function GetErrorThreadDone: WordBool; cdecl;
   function GetErrors(len: PInteger): WordBool; cdecl;
-  function GetErrorString(_id: Cardinal; len: PInteger): WordBool; cdecl;
   {$endregion}
 
 const
@@ -296,22 +295,6 @@ begin
       Result := True;
     finally
       obj.Free;
-    end;
-  except
-    on x: Exception do ExceptionHandler(x);
-  end;
-end;
-
-function GetErrorString(_id: Cardinal; len: PInteger): WordBool; cdecl;
-var
-  element: IwbElement;
-begin
-  Result := False;
-  try
-    if Supports(Resolve(_id), IwbElement, element) then begin
-      resultStr := element.Check;
-      len^ := Length(resultStr);
-      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);

@@ -165,11 +165,6 @@ begin
             end);
         end);
 
-      Describe('GetErrorString', procedure
-        begin
-          // TODO
-        end);
-
       {$IFDEF FULL_ERROR_CHECK}
       Describe('Full Error Check', procedure
         begin
