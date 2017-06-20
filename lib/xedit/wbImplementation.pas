@@ -6389,8 +6389,6 @@ begin
       CurrentDefPos := mrDef.GetMemberIndexFor(CurrentRec.Signature, CurrentRec);
       if CurrentDefPos < 0 then begin
         SubrecordError(String(CurrentRec.Signature));
-        if Assigned(wbProgressCallback) then
-          wbProgressCallback('Error: record '+ String(GetSignature) + ' contains unexpected (or out of order) subrecord ' + String(CurrentRec.Signature) + ' ' + IntToHex(Int64(Cardinal(CurrentRec.Signature)), 8) );
         FoundError := True;
         Inc(CurrentRecPos);
         Continue;
@@ -6399,8 +6397,6 @@ begin
     end else begin
       if not mrDef.ContainsMemberFor(CurrentRec.Signature, CurrentRec) then begin
         SubrecordError(String(CurrentRec.Signature));
-        if Assigned(wbProgressCallback) then
-          wbProgressCallback('Error: record '+ String(GetSignature) + ' contains unexpected (or out of order) subrecord ' + String(CurrentRec.Signature) + ' ' + IntToHex(Int64(Cardinal(CurrentRec.Signature)), 8) );
         FoundError := True;
         Inc(CurrentRecPos);
         Continue;
@@ -6414,8 +6410,6 @@ begin
         end;
       end else begin
         SubrecordError(String(CurrentRec.Signature));
-        if Assigned(wbProgressCallback) then
-          wbProgressCallback('Error: record '+ String(GetSignature) + ' contains unexpected (or out of order) subrecord ' + String(CurrentRec.Signature) );
         FoundError := True;
         CurrentDefPos := mrDef.GetMemberIndexFor(CurrentRec.Signature, CurrentRec);
         if CurrentDefPos < 0 then begin
@@ -6497,8 +6491,6 @@ begin
     end;
 
     SubrecordError(String(CurrentRec.Signature));
-    if Assigned(wbProgressCallback) then
-      wbProgressCallback('Error: record '+ String(GetSignature) + ' contains unexpected (or out of order) subrecord ' + String(CurrentRec.Signature) );
     FoundError := True;
 
     Inc(CurrentRecPos);
@@ -6772,6 +6764,8 @@ end;
 
 procedure TwbMainRecord.SubrecordError(sig: String);
 begin
+  if Assigned(wbProgressCallback) then
+    wbProgressCallback('Error: record '+ String(GetSignature) + ' contains unexpected (or out of order) subrecord ' + sig);
   if mrSubrecordErrors = '' then
     mrSubrecordErrors := sig
   else
