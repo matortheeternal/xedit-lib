@@ -16,7 +16,7 @@ uses
   {$endregion}
 
   {$region 'API functions'}
-  function ElementToJson(_id: Cardinal; len: PInteger; editValues: WordBool): WordBool; cdecl;
+  function ElementToJson(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function ElementFromJson(_id: Cardinal; path: PWideChar; json: PWideChar): WordBool; cdecl;
   {$endregion}
 
@@ -26,9 +26,6 @@ uses
   Variants, SysUtils, StrUtils,
   wbImplementation,
   xeMeta, xeFiles, xeElements, xeElementValues, xeMessages;
-
-var
-  SerializeEditValues: Boolean;
 
 {$region 'Native functions'}
 function IsFlags(element: IwbElement): Boolean;
@@ -48,20 +45,32 @@ end;
 function ValueToJson(element: IwbElement): TJSONValue;
 var
   v: Variant;
+  ref: IwbMainRecord;
+  n: Int64;
+  vt: TVarType;
 begin
   Result := TJSONValue.Create;
-  if SerializeEditValues then
-    Result.Put(element.EditValue)
+  if IsFormID(element) and Supports(element.LinksTo, IwbMainRecord, ref) then begin
+    if ref.ElementExists['EDID'] then
+      Result.Put(ref.ElementEditValues['EDID'])
+    else
+      Result.Put(IntToHex(element.NativeValue, 8));
+  end
   else begin
     v := element.NativeValue;
-    case VarType(v) of
-      varSmallInt, varInteger, varInt64, varByte, varWord, varLongWord:
-        Result.Put(LongWord(v));
+    vt := VarType(v);
+    case vt of
+      varByte, varSmallint, varInteger, varInt64, varWord, varLongWord: begin
+        n := v;
+        Result.Put(n);
+      end;
       varSingle, varDouble:
         Result.Put(Double(v));
       varBoolean:
         Result.Put(Boolean(v));
-    else
+      varUString:
+        Result.Put(String(v));
+    else // byte array
       Result.Put(element.EditValue);
     end;
   end;
@@ -72,6 +81,7 @@ var
   obj: TJSONObject;
   i: Integer;
   childElement: IwbElement;
+  path: String;
 begin
   Result := TJSONValue.Create;
   obj := TJSONObject.Create;
@@ -109,18 +119,45 @@ begin
     Result := ValueToJSON(element);
 end;
 
+function RecordHeaderToJSON(recHeader: IwbElement): TJSONObject;
+var
+  container: IwbContainerElementRef;
+  flags: IwbElement;
+  formID: Cardinal;
+begin
+  Result := TJSONObject.Create;
+  if not Supports(recHeader, IwbContainerElementRef, container) then
+    raise Exception.Create('Failed to serialize record header.');
+  // serialize record header elements
+  Result.S['Signature'] := container.ElementEditValues['Signature'];
+  flags := container.ElementByPath['Record Flags'];
+  Result['Record Flags'] := StructToJSON(flags as IwbContainerElementRef);
+  formID := container.ElementNativeValues['FormID'];
+  if formID > 0 then
+    Result.S['FormID'] := IntToHex(formID, 8);
+end;
+
 function RecordToJson(rec: IwbMainRecord): TJSONObject;
 var
+  container: IwbContainerElementRef;
   i: Integer;
   element: IwbElement;
   path: String;
+  recHeaderProcessed: Boolean;
 begin
   Result := TJSONObject.Create;
   // serialize elements
-  for i := 0 to Pred(rec.ElementCount) do begin
-    element := rec.Elements[i];
+  if not Supports(rec, IwbContainerElementRef, container) then
+    raise Exception.Create('Failed to serialize record.');
+  for i := 0 to Pred(container.ElementCount) do begin
+    element := container.Elements[i];
     path := element.Name;
-    Result[path] := NativeElementToJson(element);
+    if (not recHeaderProcessed) and (path = 'Record Header') then begin
+      recHeaderProcessed := true;
+      Result.O[path] := RecordHeaderToJSON(element);
+    end
+    else
+      Result[path] := NativeElementToJSON(element);
   end;
   // serialize child group
   if Assigned(rec.ChildGroup) then
@@ -519,7 +556,7 @@ end;
 {$endregion}
 
 {$region 'API functions'}
-function ElementToJson(_id: Cardinal; len: PInteger; editValues: WordBool): WordBool; cdecl;
+function ElementToJson(_id: Cardinal; len: PInteger): WordBool; cdecl;
 var
   e: IInterface;
   _file: IwbFile;
@@ -530,7 +567,6 @@ var
 begin
   Result := False;
   try
-    SerializeEditValues := editValues;
     e := Resolve(_id);
     obj := nil;
     // convert input element to JSONObject
