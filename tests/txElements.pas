@@ -147,7 +147,7 @@ var
 begin
   ExpectSuccess(GetElements(_file, '', @len));
   elements := gra(len);
-  for i := Low(elements) to High(elements) do
+  for i := 1 to High(elements) do
     ExpectSuccess(RemoveElement(elements[i], ''));
 end;
 
@@ -584,7 +584,7 @@ begin
             end);
         end);
 
-      Describe('GetFile', procedure
+      Describe('GetElementFile', procedure
         begin
           It('Should return the input if the input is a file', procedure
             begin
