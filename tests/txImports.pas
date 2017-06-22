@@ -41,15 +41,18 @@ type
   function AddMaster(_id: Cardinal; masterName: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
   function AddMasters(_id: Cardinal; masters: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
   function GetMasters(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function GetRequiredBy(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
 
   // FILE HANDLING METHODS
-  function NewFile(filename: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
+  function AddFile(filename: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function FileByIndex(index: Integer; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function FileByLoadOrder(load_order: Integer; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function FileByName(name: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function FileByAuthor(author: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function SaveFile(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
   function OverrideRecordCount(_id: Cardinal; count: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function SortEditorIDs(_id: Cardinal; sig: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
+  function SortNames(_id: Cardinal; sig: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
 
   // ELEMENT HANDLING METHODS
   function HasElement(_id: Cardinal; key: PWideChar; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
@@ -62,13 +65,13 @@ type
   function GetLinksTo(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function ElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function ElementEquals(_id, _id2: Cardinal; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
-  function ElementMatches(_id: Cardinal; path, value: PWideChar; bool: PWordBool): WordBool; cdecl;
-  function HasArrayItem(_id: Cardinal; path, subpath, value: PWideChar; bool: PWordBool): WordBool; cdecl;
-  function GetArrayItem(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
-  function AddArrayItem(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
-  function RemoveArrayItem(_id: Cardinal; path, subpath, value: PWideChar): WordBool; cdecl;
+  function ElementMatches(_id: Cardinal; path, value: PWideChar; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
+  function HasArrayItem(_id: Cardinal; path, subpath, value: PWideChar; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
+  function GetArrayItem(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
+  function AddArrayItem(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
+  function RemoveArrayItem(_id: Cardinal; path, subpath, value: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
+  function MoveArrayItem(_id: Cardinal; index: Integer): WordBool; cdecl; external 'XEditLib.dll';
   function CopyElement(_id, _id2: Cardinal; aAsNew: WordBool; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function MoveElement(_id: Cardinal; index: Integer): WordBool; cdecl; external 'XEditLib.dll';
   function GetSignatureAllowed(_id: Cardinal; sig: PWideChar; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
   function SortKey(_id: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function ElementType(_id: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
@@ -99,7 +102,7 @@ type
   function GetSignatureNameMap(len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
 
   // SERIALIZATION METHODS
-  function ElementToJson(_id: Cardinal; len: PInteger; editValues: WordBool): WordBool; cdecl; external 'XEditLib.dll';
+  function ElementToJson(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function ElementFromJson(_id: Cardinal; path: PWideChar; json: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
 
   // RECORD HANDLING METHODS
