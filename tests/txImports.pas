@@ -13,6 +13,7 @@ type
   function GetResultString(str: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
   function GetResultArray(_res: PCardinal; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
   function GetGlobal(key: PWideChar; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function GetGlobals(len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function Release(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
   function Switch(_id, _id2: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
   function ResetStore: WordBool; cdecl; external 'XEditLib.dll';
@@ -25,23 +26,15 @@ type
   function GetExceptionMessage(str: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
 
   // LOADING AND SET UP METHODS
-  function SetGameMode(mode: Integer): Boolean; cdecl; external 'XEditLib.dll';
+  function SetGameMode(mode: Integer): WordBool; cdecl; external 'XEditLib.dll';
   function GetGamePath(gameMode: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetLoadOrder(len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
-  function GetActivePlugins(len: PInteger): WordBool; cdecl; cdecl; external 'XEditLib.dll';
-  function LoadPlugins(loadOrder: PWideChar): WordBool; cdecl; cdecl; external 'XEditLib.dll';
-  function LoadPlugin(filename: PWideChar): WordBool; cdecl; cdecl; external 'XEditLib.dll';
-  function BuildReferences(_id: Cardinal): WordBool; cdecl; cdecl; external 'XEditLib.dll';
+  function GetActivePlugins(len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function LoadPlugins(loadOrder: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
+  function LoadPlugin(filename: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
+  function BuildReferences(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
   function GetLoaderDone: WordBool; cdecl; external 'XEditLib.dll';
   function UnloadPlugin(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
-
-  // MASTER HANDLING METHODS
-  function CleanMasters(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function SortMasters(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function AddMaster(_id: Cardinal; masterName: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
-  function AddMasters(_id: Cardinal; masters: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
-  function GetMasters(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
-  function GetRequiredBy(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
 
   // FILE HANDLING METHODS
   function AddFile(filename: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
@@ -54,14 +47,24 @@ type
   function SortEditorIDs(_id: Cardinal; sig: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
   function SortNames(_id: Cardinal; sig: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
 
+  // MASTER HANDLING METHODS
+  function CleanMasters(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
+  function SortMasters(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
+  function AddMaster(_id: Cardinal; masterName: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
+  function AddMasters(_id: Cardinal; masters: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
+  function GetMasters(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function GetRequiredBy(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+
   // ELEMENT HANDLING METHODS
   function HasElement(_id: Cardinal; key: PWideChar; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
   function GetElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function AddElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
+  function RemoveElementOrParent(_id: Cardinal; key: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
   function GetElements(_id: Cardinal; key: PWideChar; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function GetElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
+  function GetElementRecord(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function GetLinksTo(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function ElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function ElementEquals(_id, _id2: Cardinal; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
