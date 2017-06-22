@@ -133,8 +133,7 @@ begin
   flags := container.ElementByPath['Record Flags'];
   Result['Record Flags'] := StructToJSON(flags as IwbContainerElementRef);
   formID := container.ElementNativeValues['FormID'];
-  if formID > 0 then
-    Result.S['FormID'] := IntToHex(formID, 8);
+  Result.S['FormID'] := IntToHex(formID, 8);
 end;
 
 function RecordToJson(rec: IwbMainRecord): TJSONObject;
