@@ -81,7 +81,6 @@ var
   obj: TJSONObject;
   i: Integer;
   childElement: IwbElement;
-  path: String;
 begin
   Result := TJSONValue.Create;
   obj := TJSONObject.Create;
@@ -145,6 +144,7 @@ var
   recHeaderProcessed: Boolean;
 begin
   Result := TJSONObject.Create;
+  recHeaderProcessed := False;
   // serialize elements
   if not Supports(rec, IwbContainerElementRef, container) then
     raise Exception.Create('Failed to serialize record.');
