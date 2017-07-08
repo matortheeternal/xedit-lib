@@ -148,6 +148,15 @@ begin
   Result := grs(len);
 end;
 
+procedure TestRename(const fileName: String);
+var
+  filePath: String;
+begin
+  filePath := GetDataPath + fileName;
+  Expect(not FileExists(filePath + '.save'), fileName + '.save should no longer be present');
+  Expect(FileExists(filePath), fileName + ' should exist');
+end;
+
 procedure BuildMetaTests;
 var
   h1, h2: Cardinal;
@@ -247,8 +256,6 @@ begin
 end;
 
 procedure BuildFinalTests;
-var
-  filePath: String;
 begin
   Describe('CloseXEdit', procedure
     begin
@@ -259,8 +266,13 @@ begin
 
       It('Should rename saved files', procedure
         begin
-          filePath := GetDataPath + 'xtest-6.esp';
-          Expect(FileExists(filePath), 'xtest-6.esp should be present in data folder');
+          TestRename('xtest-6.esp');
+          TestRename('xtest-5.esp');
+        end);
+
+      It('Should create backups', procedure
+        begin
+          // TODO
         end);
     end);
 end;
