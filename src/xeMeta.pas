@@ -118,8 +118,6 @@ end;
 
 procedure CloseXEdit; cdecl;
 begin
-  RenameSavedFiles;
-  SaveMessages;
   settings.Free;
   _releasedIDs.Free;
   _store.Free;
@@ -128,6 +126,8 @@ begin
   wbFileForceClosed;
   if Assigned(wbContainerHandler) then
     wbContainerHandler._Release;
+  RenameSavedFiles;
+  SaveMessages;
 end;
 
 function GetResultString(str: PWideChar; maxLen: Integer): WordBool; cdecl;
