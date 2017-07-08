@@ -17,7 +17,9 @@ type
   procedure WriteStringToFile(str, filename: string);
   procedure ExpectSuccess(b: WordBool);
   procedure ExpectFailure(b: WordBool);
+  function GetDataPath: String;
   procedure BuildMetaTests;
+  procedure BuildFinalTests;
   function grs(len: Integer): WideString;
   function gra(len: Integer): CardinalArray;
 
@@ -240,6 +242,25 @@ begin
               ExpectSuccess(FileByName('Skyrim.esm', @h1));
               Expect(h1 = 1, 'First handle allocated after resetting store should be 1');
             end);
+        end);
+    end);
+end;
+
+procedure BuildFinalTests;
+var
+  filePath: String;
+begin
+  Describe('CloseXEdit', procedure
+    begin
+      BeforeAll(procedure
+        begin
+          CloseXEdit;
+        end);
+
+      It('Should rename saved files', procedure
+        begin
+          filePath := GetDataPath + 'xtest-6.esp';
+          Expect(FileExists(filePath), 'xtest-6.esp should be present in data folder');
         end);
     end);
 end;

@@ -68,6 +68,7 @@ begin
   BuildRecordHandlingTests;
   BuildSerializationTests;
   BuildPluginErrorTests;
+  BuildFinalTests;
 end;
 
 procedure RunXETests;
@@ -87,7 +88,6 @@ begin
 
   // run the tests
   RunTests(LogToConsole);
-  CloseXEdit;
 
   // report testing results
   WriteLn(' ');
