@@ -138,6 +138,14 @@ begin
   Expect(Length(grs(len)) > 0, 'Should return a string');
 end;
 
+function GetDataPath: String;
+var
+  len: Integer;
+begin
+  ExpectSuccess(GetGlobal('DataPath', @len));
+  Result := grs(len);
+end;
+
 procedure BuildMetaTests;
 var
   h1, h2: Cardinal;
