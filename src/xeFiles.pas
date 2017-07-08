@@ -202,16 +202,16 @@ var
 begin
   Result := False;
   try
-    if Supports(Resolve(_id), IwbFile, _file) then begin
-      path := wbDataPath + _file.FileName + '.save';
-      FileStream := TFileStream.Create(path, fmCreate);
-      try
-        _file.WritetoStream(FileStream, False);
-        slSavedFiles.Add(path);
-        Result := True;
-      finally
-        FileStream.Free;
-      end;
+    if not Supports(Resolve(_id), IwbFile, _file) then
+      raise Exception.Create('Interface must be a file.');
+    path := wbDataPath + _file.FileName + '.save';
+    FileStream := TFileStream.Create(path, fmCreate);
+    try
+      _file.WritetoStream(FileStream, False);
+      slSavedFiles.Add(path);
+      Result := True;
+    finally
+      FileStream.Free;
     end;
   except
     on x: Exception do ExceptionHandler(x);
