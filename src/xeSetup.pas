@@ -444,14 +444,24 @@ end;
 var
   FileTimeStr: String;
 
+procedure BackupFile(const path: String);
+var
+  bakPath: String;
+begin
+  bakPath := path + '.' + FileTimeStr + '.bak';
+  if not RenameFile(path, bakPath) then
+    RaiseLastOSError;
+end;
+
 procedure RenameSavedFile(const path: String);
 var
   newPath: String;
 begin
   newPath := Copy(path, 1, Length(path) - 5);
   if FileExists(newPath) then
-    RenameFile(newPath, newPath + '.' + FileTimeStr + '.bak');
-  RenameFile(path, newPath);
+    BackupFile(newPath);
+  if not RenameFile(path, newPath) then
+    RaiseLastOSError;
 end;
 
 procedure RenameSavedFiles;
@@ -459,8 +469,12 @@ var
   i: Integer;
 begin
   DateTimeToString(FileTimeStr, 'yymmdd_hhnnss', Now);
-  for i := 0 to Pred(slSavedFiles.Count) do
+  for i := 0 to Pred(slSavedFiles.Count) do try
     RenameSavedFile(slSavedFiles[i]);
+  except
+    on x: Exception do
+      AddMessage('Error renaming saved file, ' + x.Message);
+  end;
 end;
 {$endregion}
 {$endregion}
