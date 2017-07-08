@@ -20,6 +20,19 @@ uses
   xeMeta, xeFiles, xeElements, xeSetup;
 {$ENDIF}
 
+procedure TestSaveFile(fileName: PWideChar);
+var
+  filePath: String;
+  h: Cardinal;
+begin
+  filePath := GetDataPath + fileName + '.save';
+  if FileExists(filePath) then
+    DeleteFile(filePath);
+  ExpectSuccess(FileByName(fileName, @h));
+  ExpectSuccess(SaveFile(h));
+  Expect(FileExists(filePath), 'Plugin file not found at "' + filePath + '"');
+end;
+
 procedure BuildFileHandlingTests;
 var
   h: Cardinal;
@@ -139,21 +152,25 @@ begin
 
       Describe('SaveFile', procedure
         begin
-          It('Should succeed if handle is a file', procedure
-            var
-              filePath: String;
+          BeforeAll(procedure
             begin
-              try
-                h := 0;
-                filePath := GetDataPath + 'xtest-6.esp.save';
-                if FileExists(filePath) then
-                  DeleteFile(filePath);
-                ExpectSuccess(AddFile('xtest-6.esp', @h));
-                ExpectSuccess(SaveFile(h));
-                Expect(FileExists(filePath), 'Plugin file not found at "' + filePath + '"');
-              finally
-                UnloadPlugin(h);
-              end;
+              ExpectSuccess(AddFile('xtest-6.esp', @h));
+            end);
+
+          AfterAll(procedure
+            begin
+              ExpectSuccess(FileByName('xtest-6.esp', @h));
+              ExpectSuccess(UnloadPlugin(h));
+            end);
+
+          It('Should save new files', procedure
+            begin
+              TestSaveFile('xtest-6.esp');
+            end);
+
+          It('Should save existing files', procedure
+            begin
+              TestSaveFile('xtest-5.esp');
             end);
 
           It('Should fail if interface is not a file', procedure
