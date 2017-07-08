@@ -17,7 +17,7 @@ uses
   txImports;
 {$ENDIF}
 {$IFNDEF USE_DLL}
-  xeMeta, xeFiles, xeSetup;
+  xeMeta, xeFiles, xeElements, xeSetup;
 {$ENDIF}
 
 procedure BuildFileHandlingTests;
@@ -99,19 +99,6 @@ begin
               ExpectEqual(count, 0);
             end);
         end);
-        
-      Describe('SaveFile', procedure
-        begin
-          It('Should return true if it succeeded in saving the file', procedure
-            begin
-              ExpectSuccess(SaveFile(3));
-            end);
-
-          It('Should return false if the index is out of bounds', procedure
-            begin
-              ExpectFailure(SaveFile(999));
-            end);
-        end);
 
       Describe('AddFile', procedure
         begin
@@ -147,6 +134,37 @@ begin
               for i := start to 254 do
                 ExpectSuccess(AddFile(PWideChar(IntToStr(i) + '.esp'), @h));
               ExpectFailure(AddFile('255.esp', @h));
+            end);
+        end);
+
+      Describe('SaveFile', procedure
+        begin
+          It('Should succeed if handle is a file', procedure
+            var
+              filePath: String;
+            begin
+              try
+                h := 0;
+                filePath := GetDataPath + 'xtest-6.esp.save';
+                if FileExists(filePath) then
+                  DeleteFile(filePath);
+                ExpectSuccess(AddFile('xtest-6.esp', @h));
+                ExpectSuccess(SaveFile(h));
+                Expect(FileExists(filePath), 'Plugin file not found at "' + filePath + '"');
+              finally
+                UnloadPlugin(h);
+              end;
+            end);
+
+          It('Should fail if interface is not a file', procedure
+            begin
+              ExpectSuccess(GetElement(0, 'xtest-2.esp\00012E46', @h));
+              ExpectFailure(SaveFile(h));
+            end);
+
+          It('Should fail if the handle is invalid', procedure
+            begin
+              ExpectFailure(SaveFile(999));
             end);
         end);
     end);
