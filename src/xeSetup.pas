@@ -448,7 +448,7 @@ procedure RenameSavedFile(const path: String);
 var
   newPath: String;
 begin
-  newPath := ChangeFileExt(path, '');
+  newPath := Copy(path, 1, Length(path) - 5);
   if FileExists(newPath) then
     RenameFile(newPath, newPath + '.' + FileTimeStr + '.bak');
   RenameFile(path, newPath);
