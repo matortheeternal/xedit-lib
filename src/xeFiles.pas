@@ -23,6 +23,7 @@ uses
   function FileByAuthor(author: PWideChar; _res: PCardinal): WordBool; cdecl;
   function SaveFile(_id: Cardinal): WordBool; cdecl;
   function MD5Hash(_id: Cardinal; len: PInteger): WordBool; cdecl;
+  function CRCHash(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function OverrideRecordCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
   function SortEditorIDs(_id: Cardinal; sig: PWideChar): WordBool; cdecl;
   function SortNames(_id: Cardinal; sig: PWideChar): WordBool; cdecl;
@@ -228,6 +229,22 @@ begin
     if not Supports(Resolve(_id), IwbFile, _file) then
       raise Exception.Create('Interface must be a file.');
     resultStr := wbMD5File(wbDataPath + _file.FileName);
+    len^ := Length(resultStr);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function CRCHash(_id: Cardinal; len: PInteger): WordBool; cdecl;
+var
+  _file: IwbFile;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbFile, _file) then
+      raise Exception.Create('Interface must be a file.');
+    resultStr := IntToHex(wbCRC32File(wbDataPath + _file.FileName), 8);
     len^ := Length(resultStr);
     Result := True;
   except
