@@ -52,7 +52,7 @@ exports
   LoadPlugin, BuildReferences, GetLoaderDone, UnloadPlugin,
   // FILE HANDLING METHODS
   AddFile, FileByIndex, FileByLoadOrder, FileByName, FileByAuthor, SaveFile,
-  OverrideRecordCount, SortEditorIDs, SortNames,
+  OverrideRecordCount, MD5Hash, CRCHash, SortEditorIDs, SortNames,
   // MASTER HANDLING METHODS
   CleanMasters, SortMasters, AddMaster, AddMasters, GetMasters, GetRequiredBy,
   // ELEMENT HANDLING METHODS

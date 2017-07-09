@@ -44,6 +44,8 @@ type
   function FileByAuthor(author: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function SaveFile(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
   function OverrideRecordCount(_id: Cardinal; count: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function MD5Hash(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function CRCHash(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function SortEditorIDs(_id: Cardinal; sig: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
   function SortNames(_id: Cardinal; sig: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
 
