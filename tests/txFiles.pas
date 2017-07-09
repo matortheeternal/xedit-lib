@@ -30,6 +30,16 @@ begin
   ExpectEqual(grs(len), expectedHash);
 end;
 
+procedure TestCRCHash(fileName: PWideChar; expectedHash: String);
+var
+  f: Cardinal;
+  len: Integer;
+begin
+  ExpectSuccess(FileByName(fileName, @f));
+  ExpectSuccess(CRCHash(f, @len));
+  ExpectEqual(grs(len), expectedHash);
+end;
+
 procedure TestSaveFile(fileName: PWideChar);
 var
   filePath: String;
@@ -137,6 +147,23 @@ begin
           It('Should fail if interface is not a file', procedure
             begin
               ExpectFailure(MD5Hash(0, @len));
+            end);
+        end);
+
+      Describe('CRCHash', procedure
+        begin
+          It('Should return the CRC32 Hash of a file', procedure
+            begin
+              TestCRCHash('xtest-1.esp', 'F3806FAE');
+              TestCRCHash('xtest-2.esp', '19829D28');
+              TestCRCHash('xtest-3.esp', '0F0247D8');
+              TestCRCHash('xtest-4.esp', '45A2BE28');
+              TestCRCHash('xtest-5.esp', 'AD34E5F4');
+            end);
+
+          It('Should fail if interface is not a file', procedure
+            begin
+              ExpectFailure(CRCHash(0, @len));
             end);
         end);
 
