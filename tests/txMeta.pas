@@ -264,6 +264,11 @@ begin
           CloseXEdit;
         end);
 
+      AfterAll(procedure
+        begin
+          DeleteFile(GetDataPath + 'xtest-6.esp');
+        end);
+
       It('Should rename saved files', procedure
         begin
           TestRename('xtest-6.esp');
