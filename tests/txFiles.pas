@@ -20,6 +20,16 @@ uses
   xeMeta, xeFiles, xeElements, xeSetup;
 {$ENDIF}
 
+procedure TestMD5Hash(fileName: PWideChar; expectedHash: String);
+var
+  f: Cardinal;
+  len: Integer;
+begin
+  ExpectSuccess(FileByName(fileName, @f));
+  ExpectSuccess(MD5Hash(f, @len));
+  ExpectEqual(grs(len), expectedHash);
+end;
+
 procedure TestSaveFile(fileName: PWideChar);
 var
   filePath: String;
@@ -110,6 +120,23 @@ begin
               ExpectSuccess(FileByName('xtest-1.esp', @h));
               ExpectSuccess(OverrideRecordCount(h, @count));
               ExpectEqual(count, 0);
+            end);
+        end);
+
+      Describe('MD5Hash', procedure
+        begin
+          It('Should return the MD5 Hash of a file', procedure
+            begin
+              TestMD5Hash('xtest-1.esp', '3f4b772ce1a525e65f88ed8a789fb464');
+              TestMD5Hash('xtest-2.esp', '43f5edb9430744d2c4928a4ab77c3da9');
+              TestMD5Hash('xtest-3.esp', '9e9ff3b83db35bf4034dc76bf3494939');
+              TestMD5Hash('xtest-4.esp', 'a79cfd017bdd0482d6870c0a8f170fde');
+              TestMD5Hash('xtest-5.esp', '009c98d373424ae73cc26eae31c13193');
+            end);
+
+          It('Should fail if interface is not a file', procedure
+            begin
+              ExpectFailure(MD5Hash(0, @len));
             end);
         end);
 
