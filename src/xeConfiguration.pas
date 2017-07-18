@@ -5,7 +5,7 @@ interface
 uses
   SysUtils, Classes, ShlObj,
   // mte units
-  mteHelpers, CRC32, RttiIni,
+  mteHelpers, CRC32,
   // xedit units
   wbInterface, wbBSA, wbDefinitionsFO4, wbDefinitionsTES5, wbDefinitionsTES4,
   wbDefinitionsFNV, wbDefinitionsFO3;
@@ -21,22 +21,6 @@ type
     exeName: string;
     appIDs: string;
     abbrName: string;
-  end;
-  TSettings = class(TObject)
-  public
-    [IniSection('General')]
-    language: string;
-    [IniSection('Games')]
-    skyrimSEPath: string;
-    skyrimPath: string;
-    oblivionPath: string;
-    fallout4Path: string;
-    fallout3Path: string;
-    falloutNVPath: string;
-    constructor Create; virtual;
-    function GameDataPath: String;
-    procedure UpdateGamePaths;
-    procedure SetGamePath(key: String; gameMode: Integer);
   end;
   TProgramStatus = class(TObject)
   public
@@ -57,9 +41,9 @@ type
 var
   ProgramStatus: TProgramStatus;
   Globals: TStringList;
-  settings: TSettings;
   wbAppDataPath: String;
   wbMyGamesPath: String;
+  GamePath, Language: String;
 
 const
   {$region 'Game modes'}
@@ -89,56 +73,6 @@ implementation
 
 uses
   StrUtils, Rtti, TypInfo;
-
-
-{$region 'TSettings'}
-constructor TSettings.Create;
-begin
-  language := 'English';
-  UpdateGamePaths;
-end;
-
-function TSettings.GameDataPath: string;
-begin
-  case ProgramStatus.GameMode.gameMode of
-    gmTES5: Result := skyrimPath;
-    gmTES4: Result := oblivionPath;
-    gmFNV: Result := falloutNVPath;
-    gmFO3: Result := fallout3Path;
-    gmFO4: Result := fallout4Path;
-    gmSSE: Result := skyrimSEPath;
-  end;
-end;
-
-procedure TSettings.SetGamePath(key: String; gameMode: Integer);
-var
-  ctx: TRttiContext;
-  objType: TRttiType;
-  field: TRttiField;
-  path: String;
-begin
-  ctx := TRttiContext.Create;
-  try
-    objType := ctx.GetType(self.ClassInfo);
-    field := objType.GetField(key);
-    path := field.GetValue(self).AsString;
-    if (path = '') or (path = 'data\') then
-      field.SetValue(self, NativeGetGamePath(GameArray[gameMode]) + 'data\');
-  finally
-    ctx.Free;
-  end;
-end;
-
-procedure TSettings.UpdateGamePaths;
-begin
-  SetGamePath('falloutNVPath', 0);
-  SetGamePath('fallout3Path', 1);
-  SetGamePath('oblivionPath', 2);
-  SetGamePath('skyrimPath', 3);
-  SetGamePath('skyrimSEPath', 4);
-  SetGamePath('fallout4Path', 5);
-end;
-{$endregion}
 
 {$region 'TProgramStatus'}
 constructor TProgramStatus.Create;
@@ -182,18 +116,23 @@ end;
 
 { Sets the game mode in the TES5Edit API }
 procedure SetGame(id: integer);
+var
+  dataPath: String;
 begin
+  // test data path
+  dataPath := GamePath + 'data\';
+  if not DirectoryExists(dataPath) then
+    raise Exception.Create(Format('Game Data Path "%s" does not exist.', [dataPath]));
+
   // update our vars
   ProgramStatus.GameMode := GameArray[id];
-  LoadSettings;
-  SaveSettings;
 
   // update xEdit vars
   wbGameName := ProgramStatus.GameMode.gameName;
   wbGameName2 := ProgramStatus.GameMode.regName;
   wbGameMode := ProgramStatus.GameMode.gameMode;
   wbAppName := ProgramStatus.GameMode.appName;
-  wbDataPath := settings.GameDataPath;
+  wbDataPath := GamePath + 'data\';
   wbVWDInTemporary := wbGameMode in [gmSSE, gmTES5, gmFO3, gmFNV];
   wbVWDAsQuestChildren := wbGameMode = gmFO4;
   wbArchiveExtension := IfThen(wbGameMode = gmFO4, '.ba2', '.bsa');
@@ -205,7 +144,7 @@ begin
   wbHideUnused := True;
   wbFlagsAsArray := True;
   wbRequireLoadOrder := True;
-  wbLanguage := settings.language;
+  wbLanguage := Language;
   wbEditAllowed := True;
   wbLoaderDone := True;
   wbContainerHandler := wbCreateContainerHandler;
@@ -264,18 +203,6 @@ begin
   // set result
   if Result <> '' then
     Result := IncludeTrailingPathDelimiter(Result);
-end;
-
-procedure LoadSettings;
-begin
-  settings := TSettings.Create;
-  TRttiIni.Load(Globals.Values['ProgramPath'] + 'settings.ini', settings);
-  settings.UpdateGamePaths;
-end;
-
-procedure SaveSettings;
-begin
-  TRttiIni.Save(Globals.Values['ProgramPath'] + 'settings.ini', settings);
 end;
 
 initialization
