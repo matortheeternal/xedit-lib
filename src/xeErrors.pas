@@ -131,7 +131,7 @@ begin
     Result := element.ContainingMainRecord;
     if Assigned(Result) then begin
       if (Result <> LastRecord) then
-        AddMessage(Format('  %s', [Result.Name]));
+        AddMessage(Result.Name);
       errorObj := TRecordError.Create(Result, element, error);
       errors.Add(errorObj);
     end;
@@ -146,7 +146,12 @@ end;
 
 procedure TErrorCheckThread.Execute;
 begin
-  NativeCheckForErrors(elementToCheck, nil);
+  try
+    NativeCheckForErrors(elementToCheck, nil);
+  except
+    on x: Exception do
+      ExceptionHandler(x);
+  end;      
   bErrorCheckThreadDone := True;
 end;
 {$endregion}
@@ -258,13 +263,13 @@ begin
   try
     if not bErrorCheckThreadDone then
       raise Exception.Create('You''re currently checking a plugin for errors.');
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Input interface must be an element.');
     errors := TList.Create;
     bErrorCheckThreadDone := False;
-    if Supports(Resolve(_id), IwbElement, element) then begin
-      elementToCheck := element;
-      TErrorCheckThread.Create;
-      Result := True;
-    end;
+    elementToCheck := element;
+    TErrorCheckThread.Create;
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
