@@ -34,8 +34,6 @@ type
   {$region 'Functions'}
   procedure SetGame(id: integer);
   function NativeGetGamePath(mode: TGameMode): string;
-  procedure LoadSettings;
-  procedure SaveSettings;
   {$endregion}
 
 var
@@ -119,6 +117,12 @@ procedure SetGame(id: integer);
 var
   dataPath: String;
 begin
+  // default language and game path
+  if Language = '' then
+    Language := 'English';
+  if GamePath = '' then
+    GamePath := NativeGetGamePath(GameArray[id]);
+
   // test data path
   dataPath := GamePath + 'data\';
   if not DirectoryExists(dataPath) then

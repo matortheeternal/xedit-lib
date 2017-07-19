@@ -38,7 +38,7 @@ type
   {$region 'API functions'}
   function SetGamePath(path: PWideChar): WordBool; cdecl;
   function SetLanguage(lang: PWideChar): WordBool; cdecl;
-  function SetGameMode(mode: Integer; gamePath, language: PWideChar): WordBool; cdecl;
+  function SetGameMode(mode: Integer): WordBool; cdecl;
   function GetGamePath(mode: Integer; len: PInteger): WordBool; cdecl;
   function GetLoadOrder(len: PInteger): WordBool; cdecl;
   function GetActivePlugins(len: PInteger): WordBool; cdecl;
@@ -510,10 +510,6 @@ begin
   try
     if wbGameName <> '' then
       raise Exception.Create('Game mode already set to: ' + wbGameName);
-    if Language = '' then
-      Language := 'English';
-    if GamePath = '' then
-      GamePath := NativeGetGamePath(mode);
     SetGame(mode);
     // log message
     AddMessage(Format('Game: %s, DataPath: %s', [wbGameName, wbDataPath]));

@@ -118,7 +118,6 @@ end;
 
 procedure CloseXEdit; cdecl;
 begin
-  settings.Free;
   _releasedIDs.Free;
   _store.Free;
   SetLength(xFiles, 0);
