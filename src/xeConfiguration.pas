@@ -117,9 +117,7 @@ procedure SetGame(id: integer);
 var
   dataPath: String;
 begin
-  // default language and game path
-  if Language = '' then
-    Language := 'English';
+  // default game path
   if GamePath = '' then
     GamePath := NativeGetGamePath(GameArray[id]);
 
@@ -136,7 +134,7 @@ begin
   wbGameName2 := ProgramStatus.GameMode.regName;
   wbGameMode := ProgramStatus.GameMode.gameMode;
   wbAppName := ProgramStatus.GameMode.appName;
-  wbDataPath := GamePath + 'data\';
+  wbDataPath := dataPath;
   wbVWDInTemporary := wbGameMode in [gmSSE, gmTES5, gmFO3, gmFNV];
   wbVWDAsQuestChildren := wbGameMode = gmFO4;
   wbArchiveExtension := IfThen(wbGameMode = gmFO4, '.ba2', '.bsa');
@@ -213,6 +211,8 @@ initialization
 begin
   ProgramStatus := TProgramStatus.Create;
   Globals := TStringList.Create;
+  GamePath := '';
+  Language := 'English';
 end;
 
 finalization
