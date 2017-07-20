@@ -218,12 +218,17 @@ end;
 function GetOverrides(_id: Cardinal; count: PInteger): WordBool; cdecl;
 var
   rec: IwbMainRecord;
+  i: Integer;
 begin
   Result := False;
   try
     if not Supports(Resolve(_id), IwbMainRecord, rec) then
-      raise Exception.Create('Error Message');
-    count^ := rec.OverrideCount + 1;
+      raise Exception.Create('Interface must be a main record.');
+    rec := rec.MasterOrSelf;
+    count^ := rec.OverrideCount;
+    SetLength(resultArray, count^);
+    for i := 0 to Pred(count^) do
+      resultArray[i] := Store(IInterface(rec.Overrides[i]));
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
