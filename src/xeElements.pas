@@ -444,35 +444,25 @@ begin
     Result := CreateFromContainer(rec as IwbContainerElementRef, path);
 end;
 
-function OverrideRecord(targetFile: IwbFile; formID: Cardinal): IwbMainRecord;
-var
-  f: IwbFile;
-  rec: IwbMainRecord;
+procedure OverrideRecordIfNecessary(rec: IwbMainRecord; targetFile: IwbFile; var output: IInterface);
 begin
-  f := NativeFileByLoadOrder(formID shr 24);
-  if not Assigned(f) then
-    raise Exception.Create(Format('Failed to find file at load order %s to ' +
-      'copy record %s from', [IntToHex(formID shr 24, 2), IntToHex(formID, 8)]));
-  rec := f.RecordByFormID[formID, false];
-  if not Assigned(rec) then
-    raise Exception.Create(Format('Failed to find record %s in file %s',
-      [IntToHex(formID, 8), f.FileName]));
-  NativeAddRequiredMasters(rec as IwbElement, f, false);
-  Result := CopyElementToFile(rec, targetFile, false, true) as IwbMainRecord;
+  if Assigned(rec) and not rec._File.Equals(targetFile) then
+    output := CopyElementToFile(rec, targetFile, false, true);
 end;
 
 function CreateRecord(group: IwbGroupRecord; formID: Cardinal; nextPath: String): IInterface; overload;
 var
   sig: TwbSignature;
+  rec: IwbMainRecord;
 begin
   sig := TwbSignature(group.GroupLabel);
   Result := group._File.RecordByFormID[formID, true];
-  if not Assigned(Result) then
-    Result := OverrideRecord(group._File, formID);
-  if Assigned(Result) and ((Result as IwbMainRecord).Signature <> sig) then
+  if not Supports(Result, IwbMainRecord, rec) then exit;
+  if rec.Signature <> sig then
     raise Exception.Create(Format('Found record %s does not match expected ' +
       'signature %s.', [(Result as IwbMainRecord).Name, string(sig)]));
-  if Assigned(Result) and (nextPath <> '') then
+  OverrideRecordIfNecessary(rec, group._File, Result);
+  if nextPath <> '' then
     Result := CreateFromRecord(Result as IwbMainRecord, nextPath);
 end;
 
@@ -522,10 +512,12 @@ begin
 end;
 
 function CreateRecord(_file: IwbFile; formID: Cardinal; nextPath: String): IInterface; overload;
+var
+  rec: IwbMainRecord;
 begin
   Result := _file.RecordByFormID[formID, true];
-  if not Assigned(Result) then
-    Result := OverrideRecord(_file, formID);
+  if not Supports(Result, IwbMainRecord, rec) then exit;
+  OverrideRecordIfNecessary(rec, _file, Result);
   if Assigned(Result) and (nextPath <> '') then
     Result := CreateFromRecord(Result as IwbMainRecord, nextPath);
 end;
