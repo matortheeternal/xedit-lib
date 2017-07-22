@@ -82,7 +82,7 @@ var
 
 {$region 'Native functions'}
 {$region 'CheckForErrors helpers'}
-procedure CheckForSubrecordErrors(rec, lastRecord: IwbMainRecord);  
+procedure CheckForSubrecordErrors(rec: IwbMainRecord);
 var
   error: String;  
   errorObj: TRecordError;      
@@ -95,9 +95,9 @@ begin
   end;
 end;  
 
-procedure CheckForIdenticalErrors(rec, lastRecord: IwbMainRecord);      
+procedure CheckForIdenticalErrors(rec: IwbMainRecord);
 var
-  errorObj: TRecordError; 
+  errorObj: TRecordError;
 begin
   if rec.IsMaster or rec.Master.IsInjected then exit;
   if IsITM(rec) then begin
@@ -106,6 +106,16 @@ begin
   end
   else if IsITPO(rec) then begin
     errorObj := TRecordError.Create(rec, erITPO);
+    errors.Add(errorObj);
+  end;
+end;
+
+procedure CheckForDeletedNavmeshes(rec: IwbMainRecord);
+var
+  errorObj: TRecordError;
+begin
+  if Signature(rec) = 'NAVM' and rec.IsDeleted then begin
+    errorObj := TRecordError.Create(rec, erUnknown, 'Navmesh marked as deleted');
     errors.Add(errorObj);
   end;
 end;
@@ -120,10 +130,11 @@ var
 begin
   error := element.Check;
 
-  // special main record error checks (ITM, ITPO, UES)
+  // special main record error checks (ITM, ITPO, UDR)
   if Supports(element, IwbMainRecord, rec) then begin
-    CheckForSubrecordErrors(rec, lastRecord);
-    CheckForIdenticalErrors(rec, lastRecord);
+    CheckForSubrecordErrors(rec);
+    CheckForIdenticalErrors(rec);
+    CheckForDeletedNavmeshes(rec);
   end;
 
   // general error checking     
