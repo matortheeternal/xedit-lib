@@ -114,7 +114,7 @@ procedure CheckForDeletedNavmeshes(rec: IwbMainRecord);
 var
   errorObj: TRecordError;
 begin
-  if Signature(rec) = 'NAVM' and rec.IsDeleted then begin
+  if (rec.Signature = 'NAVM') and rec.IsDeleted then begin
     errorObj := TRecordError.Create(rec, erUnknown, 'Navmesh marked as deleted');
     errors.Add(errorObj);
   end;
