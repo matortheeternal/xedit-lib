@@ -182,6 +182,7 @@ begin
     else
       rec.LoadOrderFormID := formID;
     if fixReferences then begin
+      rec._File.BuildRef;
       newFormID := rec.FormID;
       for i := Pred(rec.ReferencedByCount) downto 0 do
         rec.ReferencedBy[i].CompareExchangeFormID(oldFormID, newFormID);

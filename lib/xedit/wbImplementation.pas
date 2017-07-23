@@ -2270,6 +2270,7 @@ end;
 
 procedure TwbFile.BuildRef;
 begin
+  if csRefsBuild in cntStates then exit;
   inherited;
 end;
 
