@@ -108,9 +108,9 @@ var
 begin
   sig := string(rec.Signature);
   if sig = 'NAVM' then
-    errors.Add(TRecordError.Create(rec, erDR, 'Navmesh marked as deleted'))
+    errors.Add(TRecordError.Create(rec, erDR))
   else if MatchStr(sig, ReferenceSignatures) then
-    errors.Add(TRecordError.Create(rec, erDR, 'Reference marked as deleted'));
+    errors.Add(TRecordError.Create(rec, erDR));
 end;
 
 function NativeCheckForErrors(element: IwbElement; lastRecord: IwbMainRecord): IwbMainRecord;
