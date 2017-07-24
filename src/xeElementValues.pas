@@ -235,20 +235,13 @@ end;
 
 {$region 'Native value helpers'}
 function GetNativeValue(_id: Cardinal; path: PWideChar): Variant;
-var
-  element: IwbElement;
 begin
-  Result := Variants.Null;
-  element := NativeGetElementEx(_id, path);
-  Result := element.NativeValue;
+  Result := NativeGetElementEx(_id, path).NativeValue;
 end;
 
 procedure SetNativeValue(_id: Cardinal; path: PWideChar; value: Variant);
-var
-  element: IwbElement;
 begin
-  element := NativeGetElementEx(_id, path);
-  element.NativeValue := value;
+  NativeGetElementEx(_id, path).NativeValue := value;
 end;
 {$endregion}
 
