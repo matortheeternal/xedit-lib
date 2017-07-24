@@ -108,7 +108,7 @@ var
 begin
   sig := string(rec.Signature);
   if sig = 'NAVM' then
-    errors.Add(TRecordError.Create(rec, erUnknown, 'Navmesh marked as deleted'))
+    errors.Add(TRecordError.Create(rec, erDR, 'Navmesh marked as deleted'))
   else if MatchStr(sig, ReferenceSignatures) then
     errors.Add(TRecordError.Create(rec, erDR, 'Reference marked as deleted'));
 end;
