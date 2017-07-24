@@ -61,7 +61,7 @@ const
       expr: 'Found a ([a-zA-Z_]+) reference, expected: (.+)'),
     (id: erUnknown; shortName: 'UNK'; longName: 'Unknown'; expr: '')
   );
-  ReferenceSignatures: array[0..11] of String = (
+  ReferenceSignatures: array[0..10] of String = (
     'REFR', 'PGRE', 'PMIS', 'ACHR', 'ACRE', 'PARW',
     'PBAR', 'PBEA', 'PCON', 'PFLA', 'PHZD'
   );
