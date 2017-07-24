@@ -618,6 +618,12 @@ begin
               TestGetLinksTo(ar1, 'RNAM', 'Default Race');
             end);
 
+          It('Should work with navmesh edge links', procedure
+            begin
+              ExpectSuccess(GetElement(skyrim, '000FF1DE', @h));
+              TestGetLinksTo(h, 'NVNM\Edge Links\[0]\Mesh', '');
+            end);
+
           It('Should fail if called on a NULL reference', procedure
             begin
               ExpectFailure(GetLinksTo(armo2, 'ZNAM', @h));

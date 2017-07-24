@@ -1008,12 +1008,11 @@ end;
 
 function GetLinksTo(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
-  element, linkedElement: IwbElement;
+  linkedElement: IwbElement;
 begin
   Result := False;
   try
-    element := NativeGetElementEx(_id, key);
-    linkedElement := element.LinksTo;
+    linkedElement := NativeGetElementEx(_id, key).LinksTo;
     if not Assigned(linkedElement) then
       raise Exception.Create('Failed to resolve linked element.');
     _res^ := Store(linkedElement);
