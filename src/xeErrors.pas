@@ -47,7 +47,6 @@ type
   {$endregion}
 
 const
-  {$region 'ErrorTypes'}
   ErrorTypes: array[0..6] of TErrorType = (
     (id: erITM; shortName: 'ITM'; longName: 'Identical to Master'; expr: ''),
     (id: erITPO; shortName: 'ITPO'; longName: 'Identical to Previous Override';
@@ -62,12 +61,15 @@ const
       expr: 'Found a ([a-zA-Z_]+) reference, expected: (.+)'),
     (id: erUnknown; shortName: 'UNK'; longName: 'Unknown'; expr: '')
   );
-  {$endregion}
+  ReferenceSignatures: array[0..11] of String = (
+    'REFR', 'PGRE', 'PMIS', 'ACHR', 'ACRE', 'PARW',
+    'PBAR', 'PBEA', 'PCON', 'PFLA', 'PHZD'
+  );
 
 implementation
 
 uses
-  SysUtils, Masks, RegularExpressions,
+  SysUtils, StrUtils, Masks, RegularExpressions,
   // mte units
   mteConflict,
   // xelib units
@@ -84,40 +86,31 @@ var
 {$region 'CheckForErrors helpers'}
 procedure CheckForSubrecordErrors(rec: IwbMainRecord);
 var
-  error: String;  
-  errorObj: TRecordError;      
+  error: String;
 begin
   error := rec.GetSubRecordErrors;
-  if error <> '' then begin
-    errorObj := TRecordError.Create(rec, erUES, Error);
-    errorObj.Data := Error;
-    errors.Add(errorObj);
-  end;
+  if error <> '' then
+    errors.Add(TRecordError.Create(rec, erUES, Error));
 end;  
 
 procedure CheckForIdenticalErrors(rec: IwbMainRecord);
-var
-  errorObj: TRecordError;
 begin
   if rec.IsMaster or rec.Master.IsInjected then exit;
-  if IsITM(rec) then begin
-    errorObj := TRecordError.Create(rec, erITM);
-    errors.Add(errorObj);
-  end
-  else if IsITPO(rec) then begin
-    errorObj := TRecordError.Create(rec, erITPO);
-    errors.Add(errorObj);
-  end;
+  if IsITM(rec) then
+    errors.Add(TRecordError.Create(rec, erITM))
+  else if IsITPO(rec) then
+    errors.Add(TRecordError.Create(rec, erITPO));
 end;
 
-procedure CheckForDeletedNavmeshes(rec: IwbMainRecord);
+procedure CheckForDeletedErrors(rec: IwbMainRecord);
 var
-  errorObj: TRecordError;
+  sig: String;
 begin
-  if (rec.Signature = 'NAVM') and rec.IsDeleted then begin
-    errorObj := TRecordError.Create(rec, erUnknown, 'Navmesh marked as deleted');
-    errors.Add(errorObj);
-  end;
+  sig := string(rec.Signature);
+  if sig = 'NAVM' then
+    errors.Add(TRecordError.Create(rec, erUnknown, 'Navmesh marked as deleted'))
+  else if MatchStr(sig, ReferenceSignatures) then
+    errors.Add(TRecordError.Create(rec, erUDR, 'Reference marked as deleted'));
 end;
 
 function NativeCheckForErrors(element: IwbElement; lastRecord: IwbMainRecord): IwbMainRecord;
@@ -134,7 +127,8 @@ begin
   if Supports(element, IwbMainRecord, rec) then begin
     CheckForSubrecordErrors(rec);
     CheckForIdenticalErrors(rec);
-    CheckForDeletedNavmeshes(rec);
+    if (error = '') and rec.isDeleted then
+      CheckForDeletedErrors(rec);
   end;
 
   // general error checking     
