@@ -158,6 +158,7 @@ end;
 procedure TErrorCheckThread.Execute;
 begin
   try
+    AddMessage('Checking for errors in ' + NativeName(elementToCheck));
     NativeCheckForErrors(elementToCheck, nil);
   except
     on x: Exception do
