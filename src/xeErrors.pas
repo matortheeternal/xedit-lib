@@ -53,13 +53,13 @@ const
     (id: erITPO; shortName: 'ITPO'; longName: 'Identical to Previous Override';
       expr: ''),
     (id: erUDR; shortName: 'UDR'; longName: 'Undelete and Disable Reference';
-      expr: 'Record marked as deleted but contains: (\w+)'),
+      expr: 'Record marked as deleted but contains: (.+)'),
     (id: erUES; shortName: 'UES'; longName: 'Unexpected Subrecord';
-      expr: 'Error: Record contains unexpected \(or out of order\) subrecord (\w+)'),
+      expr: 'Error: Record contains unexpected \(or out of order\) subrecord (.+)'),
     (id: erURR; shortName: 'URR'; longName: 'Unresolved Reference';
       expr: '\[([0-9A-F]+)\] \< Error: Could not be resolved \>'),
     (id: erUER; shortName: 'UER'; longName: 'Unexpected Reference';
-      expr: 'Found a ([a-zA-Z_]+) reference, expected: (\w+)'),
+      expr: 'Found a ([a-zA-Z_]+) reference, expected: (.+)'),
     (id: erUnknown; shortName: 'UNK'; longName: 'Unknown'; expr: '')
   );
   {$endregion}
