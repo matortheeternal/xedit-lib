@@ -109,7 +109,9 @@ begin
     else if rec.ElementExists['NAME'] then
       Result := PlacementName(rec)
     else if rec.Signature = 'TES4' then
-      Result := 'File Header';
+      Result := 'File Header'
+    else
+      Result := FormString(rec);
   end
   else
     Result := e.Name;
