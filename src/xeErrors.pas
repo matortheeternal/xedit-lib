@@ -11,7 +11,7 @@ uses
 
 type
   {$region 'Types'}
-  TErrorTypeID = ( erITM, erITPO, erUDR, erUES, erURR, erUER, erUnknown );
+  TErrorTypeID = ( erITM, erITPO, erDR, erUES, erURR, erUER, erUnknown );
   TErrorType = record
     id: TErrorTypeID;
     shortName: string[4];
@@ -51,7 +51,7 @@ const
     (id: erITM; shortName: 'ITM'; longName: 'Identical to Master'; expr: ''),
     (id: erITPO; shortName: 'ITPO'; longName: 'Identical to Previous Override';
       expr: ''),
-    (id: erUDR; shortName: 'UDR'; longName: 'Undelete and Disable Reference';
+    (id: erDR; shortName: 'DR'; longName: 'Deleted Record';
       expr: 'Record marked as deleted but contains: (.+)'),
     (id: erUES; shortName: 'UES'; longName: 'Unexpected Subrecord';
       expr: 'Error: Record contains unexpected \(or out of order\) subrecord (.+)'),
@@ -110,20 +110,19 @@ begin
   if sig = 'NAVM' then
     errors.Add(TRecordError.Create(rec, erUnknown, 'Navmesh marked as deleted'))
   else if MatchStr(sig, ReferenceSignatures) then
-    errors.Add(TRecordError.Create(rec, erUDR, 'Reference marked as deleted'));
+    errors.Add(TRecordError.Create(rec, erDR, 'Reference marked as deleted'));
 end;
 
 function NativeCheckForErrors(element: IwbElement; lastRecord: IwbMainRecord): IwbMainRecord;
 var
   rec: IwbMainRecord;
-  error: String;                   
-  errorObj: TRecordError;
+  error: String;            
   container: IwbContainerElementRef;
   i: Integer;
 begin
   error := element.Check;
 
-  // special main record error checks (ITM, ITPO, UDR)
+  // special main record error checks (ITM, ITPO, DR)
   if Supports(element, IwbMainRecord, rec) then begin
     CheckForSubrecordErrors(rec);
     CheckForIdenticalErrors(rec);
@@ -137,10 +136,13 @@ begin
     if Assigned(Result) then begin
       if (Result <> LastRecord) then
         AddMessage(Result.Name);
-      errorObj := TRecordError.Create(Result, element, error);
-      errors.Add(errorObj);
+      errors.Add(TRecordError.Create(Result, element, error));
     end;
-    AddMessage(Format('  %s -> %s', [element.Path, error]));
+    // print error message to log
+    if not Supports(element, IwbMainRecord) then
+      AddMessage(Format('  %s -> %s', [element.Path, error]))
+    else
+      AddMessage('  ' + error);
   end;
   
   // recursion
@@ -215,7 +217,7 @@ procedure ParseError(error: string; var &type: TErrorType;
 begin
   // test errors with regex expressions, and if they match use
   // their type and parse data from the correct regex groups
-  if MatchesError(error, erUDR, 1, 0, &type, data)
+  if MatchesError(error, erDR, 1, 0, &type, data)
   or MatchesError(error, erUES, 2, 0, &type, data)
   or MatchesError(error, erURR, 1, 0, &type, data)
   or MatchesError(error, erUER, 1, 2, &type, data) then
@@ -246,7 +248,8 @@ constructor TRecordError.Create(rec: IwbMainRecord; element: IwbElement;
   error: string);
 begin
   Init(rec);
-  path := GetPath(element, false);
+  if not Supports(element, IwbMainRecord) then
+    path := GetPath(element, false);
   ParseError(error, &type, data);
 end;
 
