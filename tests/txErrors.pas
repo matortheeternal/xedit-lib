@@ -118,9 +118,9 @@ begin
                     end);
                 end);
 
-              It('Should find Deleted References (UDRs)', procedure
+              It('Should find Deleted Records (DRs)', procedure
                 begin
-                  errorObj := FindError(obj, erUDR, '[REFR:00027DE7]');
+                  errorObj := FindError(obj, erDR, '[REFR:00027DE7]');
                   Expect(Assigned(errorObj), 'Matching error not found');
                 end);
 
