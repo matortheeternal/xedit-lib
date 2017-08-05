@@ -621,7 +621,7 @@ begin
           It('Should work with navmesh edge links', procedure
             begin
               ExpectSuccess(GetElement(skyrim, '000FF1DE', @h));
-              TestGetLinksTo(h, 'NVNM\Edge Links\[0]\Mesh', '');
+              TestGetLinksTo(h, 'NVNM\Edge Links\[0]\Mesh', '[NAVM:000FF1CB]');
             end);
 
           It('Should fail if called on a NULL reference', procedure
