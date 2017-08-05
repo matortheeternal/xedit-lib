@@ -5,7 +5,7 @@ interface
 type
   CardinalArray = array of Cardinal;
   PCardinalArray = ^CardinalArray;
-  TErrorTypeID = ( erITM, erITPO, erUDR, erUES, erURR, erUER, erUnknown );
+  TErrorTypeID = ( erITM, erITPO, erDR, erUES, erURR, erUER, erUnknown );
 
   // META METHODS
   procedure InitXEdit; cdecl; external 'XEditLib.dll';
