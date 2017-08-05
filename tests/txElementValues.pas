@@ -158,6 +158,31 @@ begin
             end);
         end);
 
+      Describe('DisplayName', procedure
+        begin
+          Describe('File names', procedure
+            begin
+              It('Should include filename', procedure
+                begin
+                  ExpectSuccess(DisplayName(xt2, @len));
+                  Expect(Pos('xtest-2.esp', string(grs(len))) > 0);
+                end);
+
+              It('Should include load order', procedure
+                begin
+                  ExpectSuccess(DisplayName(xt2, @len));
+                  Expect(Pos('[03]', string(grs(len))) = 1);
+                end);
+
+              It('Should format hardcoded dat names properly', procedure
+                begin
+                  ExpectSuccess(GetElement(0, 'Skyrim.Hardcoded.dat', @h));
+                  ExpectSuccess(DisplayName(h, @len));
+                  ExpectEqual(grs(len), '[00] Skyrim.exe');
+                end);
+            end);
+        end);
+
       Describe('Path', procedure
         begin
           It('Should resolve file names', procedure
