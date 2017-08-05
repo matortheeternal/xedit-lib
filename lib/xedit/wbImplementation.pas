@@ -2358,11 +2358,11 @@ constructor TwbFile.Create(const aFileName: string; aLoadOrder: Integer; aCompar
 begin
   if IsTemporary then
     Include(flStates, fsIsTemporary);
-  if aCompareTo <> '' then begin
-    Include(flStates, fsIsCompareLoad);
-    if SameText(ExtractFileName(aFileName), wbGameName + wbHardcodedDat) then
-      Include(flStates, fsIsHardcoded);
-  end else if SameText(ExtractFileName(aFileName), wbGameName + '.esm') then
+  if aCompareTo <> '' then
+    Include(flStates, fsIsCompareLoad)
+  else if SameText(ExtractFileName(aFileName), wbGameName + wbHardcodedDat) then
+      Include(flStates, fsIsHardcoded)
+  else if SameText(ExtractFileName(aFileName), wbGameName + '.esm') then
     Include(flStates, fsIsGameMaster);
   if aOnlyHeader then
     Include(flStates, fsOnlyHeader);
