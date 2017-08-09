@@ -553,6 +553,12 @@ begin
               ExpectSuccess(GetElements(ar2, 'KWDA', 0, @len));
               ExpectEqual(len, 5);
             end);
+
+          It('Should sort elements based on SortBy param', procedure
+            begin
+              ExpectSuccess(GetElements(0, 'Skyrim.esm', 1, @len));
+              TestNames(gra(len), 'File Header', 'Weather');
+            end);
         end);
       
       Describe('GetContainer', procedure
