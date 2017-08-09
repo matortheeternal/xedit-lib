@@ -145,30 +145,30 @@ var
   len, i: Integer;
   elements: CardinalArray;
 begin
-  ExpectSuccess(GetElements(_file, '', @len));
+  ExpectSuccess(GetElements(_file, '', 0, @len));
   elements := gra(len);
   for i := 1 to High(elements) do
     ExpectSuccess(RemoveElement(elements[i], ''));
 end;
 
-procedure TestNames(a: CardinalArray; firstName, secondName: String);
+procedure TestNames(a: CardinalArray; firstName, lastName: String);
 var
   len: Integer;
 begin
   ExpectSuccess(Name(a[Low(a)], @len));
   ExpectEqual(grs(len), firstName);
   ExpectSuccess(Name(a[High(a)], @len));
-  ExpectEqual(grs(len), secondName);
+  ExpectEqual(grs(len), lastName);
 end;
 
-procedure TestEdids(a: CardinalArray; firstEdid, secondEdid: String);
+procedure TestEdids(a: CardinalArray; firstEdid, lastEdid: String);
 var
   len: Integer;
 begin
   ExpectSuccess(GetValue(a[Low(a)], 'EDID', @len));
   ExpectEqual(grs(len), firstEdid);
   ExpectSuccess(GetValue(a[High(a)], 'EDID', @len));
-  ExpectEqual(grs(len), secondEdid);
+  ExpectEqual(grs(len), lastEdid);
 end;
 
 procedure TestGetContainer(h: Cardinal; path: PWideChar);
@@ -515,42 +515,42 @@ begin
         begin
           It('Should resolve root children (files)', procedure
             begin
-              ExpectSuccess(GetElements(0, '', @len));
+              ExpectSuccess(GetElements(0, '', 0, @len));
               ExpectEqual(len, 9);
               TestNames(gra(len), 'Skyrim.esm', 'NewFile-1.esp');
             end);
 
           It('Should resolve file children (file header and groups)', procedure
             begin
-              ExpectSuccess(GetElements(skyrim, '', @len));
+              ExpectSuccess(GetElements(skyrim, '', 0, @len));
               ExpectEqual(len, 118);
               TestNames(gra(len), 'File Header', 'Reverb Parameters');
             end);
 
           It('Should resolve group children (records)', procedure
             begin
-              ExpectSuccess(GetElements(armo1, '', @len));
+              ExpectSuccess(GetElements(armo1, '', 0, @len));
               ExpectEqual(len, 2762);
               TestEdids(gra(len), 'DremoraBoots', 'SkinNaked');
             end);
 
           It('Should resolve record children (subrecords/elements)', procedure
             begin
-              ExpectSuccess(GetElements(ar1, '', @len));
+              ExpectSuccess(GetElements(ar1, '', 0, @len));
               ExpectEqual(len, 13);
               TestNames(gra(len), 'Record Header', 'DNAM - Armor Rating');
             end);
 
           It('Should resolve element children', procedure
             begin
-              ExpectSuccess(GetElements(keywords, '', @len));
+              ExpectSuccess(GetElements(keywords, '', 0, @len));
               ExpectEqual(len, 5);
               TestNames(gra(len), 'Keyword', 'Keyword');
             end);
 
           It('Should resolve paths', procedure
             begin
-              ExpectSuccess(GetElements(ar2, 'KWDA', @len));
+              ExpectSuccess(GetElements(ar2, 'KWDA', 0, @len));
               ExpectEqual(len, 5);
             end);
         end);
