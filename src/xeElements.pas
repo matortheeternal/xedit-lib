@@ -81,7 +81,8 @@ uses
   // xedit units
   wbImplementation,
   // xelib units
-  xeMessages, xeFiles, xeMasters, xeRecords, xeElementValues, xeSetup;
+  xeConfiguration, xeMessages, xeFiles, xeMasters, xeRecords, xeElementValues,
+  xeSetup;
 
 {$region 'Native functions'}
 {$region 'Path parsing'}
@@ -598,12 +599,26 @@ end;
 
 procedure GetContainerElements(container: IwbContainerElementRef; len: PInteger);
 var
-  i: Integer;
+  i, n: Integer;
+  e: IwbElement;
+  g: IwbGroupRecord;
 begin
   len^ := container.ElementCount;
   SetLength(resultArray, len^);
-  for i := 0 to Pred(container.ElementCount) do
-    resultArray[i] := Store(container.Elements[i]);
+  if HideChildGroups then begin
+    n := 0;
+    for i := 0 to Pred(container.ElementCount) do begin
+      e := container.Elements[i];
+      if Supports(e, IwbGroupRecord, g) and IsChildGroup(g) then continue;
+      resultArray[n] := Store(container.Elements[i]);
+      Inc(n);
+    end;
+    len^ := n;
+    SetLength(resultArray, n);
+  end
+  else
+    for i := 0 to Pred(container.ElementCount) do
+      resultArray[i] := Store(container.Elements[i]);
 end;
 
 procedure GetChildrenElements(element: IInterface; len: PInteger);
