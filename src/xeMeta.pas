@@ -8,6 +8,7 @@ uses
   {$region 'Native functions'}
   function Resolve(_id: Cardinal): IInterface;
   procedure StoreList(lst: TList; len: PInteger);
+  procedure SortResultArray(sortBy: Byte);
   procedure StoreIfAssigned(var x: IInterface; var _res: PCardinal; var Success: WordBool);
   function Store(x: IInterface): Cardinal;
   function xStrCopy(source: WideString; dest: PWideChar; maxLen: Integer): WordBool;
@@ -39,7 +40,12 @@ uses
   // mte modules
   mteHelpers,
   // xelib modules
-  xeConfiguration, xeMessages, xeSetup, xeFiles;
+  xeTypes, xeConfiguration, xeMessages, xeSetup, xeFiles;
+
+const
+  sortByFormID = 1;
+  sortByEditorID = 2;
+  sortByName = 3;
 
 {$region 'Native functions'}
 function xStrCopy(source: WideString; dest: PWideChar; maxLen: Integer): WordBool;
@@ -73,6 +79,71 @@ begin
   for i := 0 to Pred(lst.Count) do
     resultArray[i] := Store(IInterface(lst[i]));
   len^ := Length(resultArray);
+end;
+
+function FormData(handle: Cardinal): String;
+var
+  e: IInterface;
+  _file: IwbFile;
+  group: IwbGroupRecord;
+  rec: IwbMainRecord;
+  element: IwbElement;
+begin
+  e := _store[handle];
+  if Supports(e, IwbFile, _file) then
+    Result := _file.DisplayName
+  else if Supports(e, IwbGroupRecord, group) then
+    Result := TwbSignature(group.GroupLabel)
+  else if Supports(e, IwbMainRecord, rec) then
+    Result := IntToHex(rec.LoadOrderFormID, 8)
+  else if Supports(e, IwbElement, element) then
+    Result := ''; // TODO?
+end;
+
+function EditorData(handle: Cardinal): String;
+var
+  e: IInterface;
+  rec: IwbMainRecord;
+begin
+  if Supports(e, IwbMainRecord, rec) then
+    Result := rec.EditorID
+  else
+    Result := '';
+end;
+
+function NameData(handle: Cardinal): String;
+var
+  e: IInterface;
+  rec: IwbMainRecord;
+begin
+  if Supports(e, IwbMainRecord, rec) then
+    Result := rec.FullName
+  else
+    Result := '';
+end;
+
+procedure SortResultArray(sortBy: Byte);
+var
+  sl: TFastStringList;
+  i: Integer;
+begin
+  sl := TFastStringList.Create;
+  sl.Sorted := True;
+  sl.Duplicates := dupAccept;
+  case sortBy of
+    sortByFormID:
+      for i := Low(resultArray) to High(resultArray) do
+        sl.AddObject(FormData(resultArray[i]), TObject(resultArray[i]));
+    sortByEditorID:
+      for i := Low(resultArray) to High(resultArray) do
+        sl.AddObject(EditorData(resultArray[i]), TObject(resultArray[i]));
+    sortByName:
+      for i := Low(resultArray) to High(resultArray) do
+        sl.AddObject(NameData(resultArray[i]), TObject(resultArray[i]));
+  end;
+  Assert(High(resultArray) = Pred(sl.Count));
+  for i := Low(resultArray) to High(resultArray) do
+    resultArray[i] := Cardinal(sl.Objects[i]);
 end;
 
 procedure StoreIfAssigned(var x: IInterface; var _res: PCardinal; var Success: WordBool);
