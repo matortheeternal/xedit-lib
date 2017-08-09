@@ -559,6 +559,12 @@ begin
               ExpectSuccess(GetElements(0, 'Skyrim.esm', 1, @len));
               TestNames(gra(len), 'File Header', 'Weather');
             end);
+
+          It('Should not include child groups', procedure
+            begin
+              ExpectSuccess(GetElements(0, 'Skyrim.esm\DIAL', 1, @len));
+              ExpectEqual(len, 15037);
+            end);
         end);
       
       Describe('GetContainer', procedure
