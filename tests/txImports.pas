@@ -16,6 +16,7 @@ type
   function GetGlobals(len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function Release(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
   function Switch(_id, _id2: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
+  function GetDuplicateHandles(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function ResetStore: WordBool; cdecl; external 'XEditLib.dll';
 
   // MESSAGE METHODS
