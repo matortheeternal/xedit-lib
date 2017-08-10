@@ -239,7 +239,41 @@ begin
               ExpectSuccess(FileByName('Skyrim.esm', @h1));
               ExpectSuccess(Release(h1));
               ExpectSuccess(FileByName('Skyrim.esm', @h2));
+              ExpectSuccess(Release(h2));
               Expect(h1 = h2, 'Next allocation should use the freed handle');
+            end);
+        end);
+
+      Describe('GetDuplicateHandles', procedure
+        begin
+          BeforeAll(procedure
+            begin
+              ExpectSuccess(ResetStore);
+            end);
+
+          It('Should fail if handle is not allocated', procedure
+            begin
+              ExpectFailure(GetDuplicateHandles(100, @len));
+            end);
+
+          It('Should return an empty array if there are no duplicates', procedure
+            begin
+              ExpectSuccess(FileByName('Skyrim.esm', @h1));
+              ExpectSuccess(GetDuplicateHandles(h1, @len));
+              ExpectSuccess(Release(h1));
+              ExpectEqual(len, 0);
+            end);
+
+          It('Should return duplicates', procedure
+            begin
+              ExpectSuccess(FileByName('Skyrim.esm', @h1));
+              ExpectSuccess(FileByName('Skyrim.esm', @h1));
+              ExpectSuccess(FileByName('Skyrim.esm', @h1));
+              ExpectSuccess(FileByName('Skyrim.esm', @h1));
+              ExpectSuccess(FileByName('Skyrim.esm', @h1));
+              ExpectSuccess(FileByName('Update.esm', @h2));
+              ExpectSuccess(GetDuplicateHandles(h1, @len));
+              ExpectEqual(len, 4);
             end);
         end);
 
