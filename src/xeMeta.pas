@@ -23,6 +23,7 @@ uses
   function GetGlobals(len: PInteger): WordBool; cdecl;
   function Release(_id: Cardinal): WordBool; cdecl;
   function Switch(_id, _id2: Cardinal): WordBool; cdecl;
+  function GetDuplicateHandles(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function ResetStore: WordBool; cdecl;
   {$endregion}
 
@@ -273,6 +274,32 @@ begin
     _store[_id2] := nil;
     _releasedIDs.Add(_id2);
     Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetDuplicateHandles(_id: Cardinal; len: PInteger): WordBool; cdecl;
+var
+  e: IInterface;
+  i: Integer;
+  lst: TList<Integer>;
+begin
+  Result := False;
+  try
+    e := _store[_id];
+    lst := TList<Integer>.Create;
+    try
+      for i := 0 to Pred(_store.Count) do
+        if (i <> _id) and (_store[i] = e) then lst.Add(i);
+      len^ := lst.Count;
+      SetLength(resultArray, len^);
+      for i := 0 to Pred(len^) do
+        resultArray[i] := lst[i];
+      Result := True;
+    finally
+      lst.Free;
+    end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
