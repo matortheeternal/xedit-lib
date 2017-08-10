@@ -97,16 +97,24 @@ begin
     Result := TwbSignature(group.GroupLabel)
   else if Supports(e, IwbMainRecord, rec) then
     Result := IntToHex(rec.LoadOrderFormID, 8)
-  else if Supports(e, IwbElement, element) then
-    Result := ''; // TODO?
+  else
+    Result := '';
 end;
 
 function EditorData(handle: Cardinal): String;
 var
   e: IInterface;
+  _file: IwbFile;
+  group: IwbGroupRecord;
   rec: IwbMainRecord;
+  element: IwbElement;
 begin
-  if Supports(e, IwbMainRecord, rec) then
+  e := _store[handle];
+  if Supports(e, IwbFile, _file) then
+    Result := _file.Name
+  else if Supports(e, IwbGroupRecord, group) then
+    Result := group.ShortName
+  else if Supports(e, IwbMainRecord, rec) then
     Result := rec.EditorID
   else
     Result := '';
@@ -115,9 +123,17 @@ end;
 function NameData(handle: Cardinal): String;
 var
   e: IInterface;
+  _file: IwbFile;
+  group: IwbGroupRecord;
   rec: IwbMainRecord;
+  element: IwbElement;
 begin
-  if Supports(e, IwbMainRecord, rec) then
+  e := _store[handle];
+  if Supports(e, IwbFile, _file) then
+    Result := _file.Name
+  else if Supports(e, IwbGroupRecord, group) then
+    Result := group.ShortName
+  else if Supports(e, IwbMainRecord, rec) then
     Result := rec.FullName
   else
     Result := '';
