@@ -64,16 +64,16 @@ end;
 {$region 'API functions'}
 procedure GetExceptionMessageLength(len: PInteger); cdecl;
 begin
-  len^ := Length(exceptionMessage);
+  len^ := Length(ExceptionMessage);
 end;
 
 function GetExceptionMessage(str: PWideChar; len: Integer): WordBool; cdecl;
 begin
   Result := False;
   try
-    if Length(exceptionMessage) > 0 then begin
-      Result := xStrCopy(exceptionMessage, str, len);
-      exceptionMessage := '';
+    if Length(ExceptionMessage) > 0 then begin
+      Result := xStrCopy(ExceptionMessage, str, len);
+      //ExceptionMessage := '';
     end;
   except
     on x: Exception do ExceptionHandler(x);
