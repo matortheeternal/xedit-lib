@@ -328,6 +328,45 @@ begin
                 end);
             end);
 
+          Describe('File record resolution by FormID', procedure
+            begin
+              It('Should return a handle if the record exists', procedure
+                begin
+                  TestGetElement(skyrim, '00012E46');
+                end);
+
+              It('Should fail if the record does not exist', procedure
+                begin
+                  ExpectFailure(GetElement(skyrim, '00FFFFFF', @h));
+                end);
+            end);
+
+          Describe('File record resolution by EditorID', procedure
+            begin
+              It('Should return a handle if the record exists', procedure
+                begin
+                  TestGetElement(xt3, 'ArmorIronGauntlets');
+                end);
+
+              It('Should fail if the record does not exist', procedure
+                begin
+                  ExpectFailure(GetElement(xt3, 'NonExistentEditorID', @h));
+                end);
+            end);
+
+          Describe('File record resolution by Name', procedure
+            begin
+              It('Should return a handle if the record exists', procedure
+                begin
+                  TestGetElement(xt3, '"Iron Gauntlets"');
+                end);
+
+              It('Should fail if the record does not exist', procedure
+                begin
+                  ExpectFailure(GetElement(xt3, '"U. N. Owen"', @h));
+                end);
+            end);
+
           Describe('Group element resolution by index', procedure
             begin
               It('Should return a handle if the index is in bounds', procedure
