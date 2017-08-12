@@ -73,7 +73,7 @@ var
   wbResolveAlias           : Boolean  = True;
   wbActorTemplateHide      : Boolean  = True;
   wbClampFormID            : Boolean  = True;
-  wbAllowSlowSearching     : Boolean  = False;
+  wbAllowSlowSearching     : Boolean  = True;
   wbSortOnDemand           : Boolean  = True;
   wbAllowErrors            : Boolean  = True;
   wbDoNotBuildRefsFor      : TStringList;
@@ -769,6 +769,8 @@ type
     function GetUnsavedSince: TDateTime;
     function GetMaster(aIndex: Integer): IwbFile;
     function GetMasterCount: Integer;
+    function FindEditorID(const aEditorID: String; var rec: IwbMainRecord): Boolean;
+    function FindName(const aName: String; var rec: IwbMainRecord): Boolean;
     function GetRecordByFormID(aFormID: Cardinal; aAllowInjected: Boolean): IwbMainRecord;
     function GetRecordByEditorID(const aEditorID: string): IwbMainRecord;
     function GetRecordByName(const aName: string): IwbMainRecord;

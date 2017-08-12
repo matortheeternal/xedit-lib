@@ -583,6 +583,8 @@ type
 
     flLoadFinished           : Boolean;
     flFormIDsSorted          : Boolean;
+    flEditorIDsSorted        : Boolean;
+    flNamesSorted            : Boolean;
 
     flInjectedRecords        : array of IwbMainRecord;
 
@@ -604,8 +606,8 @@ type
 
     function FindFormID(aFormID: Cardinal; var Index: Integer): Boolean;
     function FindInjectedID(aFormID: Cardinal; var Index: Integer): Boolean;
-    function FindEditorID(const aEditorID: string; var Index: Integer): Boolean;
-    function FindName(const aName: string; var Index: Integer): Boolean;
+    function FindEditorID(const aEditorID: string; var rec: IwbMainRecord): Boolean;
+    function FindName(const aName: string; var rec: IwbMainRecord): Boolean;
     function GetMasterRecordByFormID(aFormID: Cardinal; aAllowInjected: Boolean): IwbMainRecord;
 
     function GetAddList: TDynStrings; override;
@@ -2446,40 +2448,47 @@ begin
   Result := (aFormID and $00FFFFFF) or (Cardinal(NewFileID) shl 24);
 end;
 
-function TwbFile.FindEditorID(const aEditorID: string; var Index: Integer): Boolean;
+function TwbFile.FindEditorID(const aEditorID: string; var rec: IwbMainRecord): Boolean;
+var
+  i: Integer;
 begin
-  Result := False;
-  if not flLoadFinished then
-    Exit;
-  Result := wbBinarySearch(@flRecordsByEditorID[0], Low(flRecordsByEditorID), High(flRecordsByEditorID), @aEditorID, SearchRecordsByEditorID, Index);
+  Result := wbBinarySearch(@flRecordsByEditorID[0], Low(flRecordsByEditorID), High(flRecordsByEditorID),
+    @aEditorID, SearchRecordsByEditorID, i);
+  if Result then
+    rec := flRecordsByEditorID[i]
+  else if wbAllowSlowSearching then
+    for i := Low(flRecords) to High(flRecords) do
+      if flRecords[i].EditorID = aEditorID then begin
+        Result := True;
+        rec := flRecords[i];
+        break;
+      end;
 end;
 
-function TwbFile.FindName(const aName: string; var Index: Integer): Boolean;
+function TwbFile.FindName(const aName: string; var rec: IwbMainRecord): Boolean;
+var
+  i: Integer;
 begin
-  Result := False;
-  if not flLoadFinished then
-    Exit;
-  Result := wbBinarySearch(@flRecordsByName[0], Low(flRecordsByName), High(flRecordsByName), @aName, SearchRecordsByFullName, Index);
+  Result := wbBinarySearch(@flRecordsByName[0], Low(flRecordsByName), High(flRecordsByName),
+    @aName, SearchRecordsByFullName, i);
+  if Result then
+    rec := flRecordsByName[i]
+  else if wbAllowSlowSearching then
+    for i := Low(flRecords) to High(flRecords) do
+      if flRecords[i].FullName = aName then begin
+        Result := True;
+        rec := flRecords[i];
+        break;
+      end;
 end;
 
 function TwbFile.FindFormID(aFormID: Cardinal; var Index: Integer): Boolean;
 var
   i: Integer;
 begin
-  Result := False;
-  if flFormIDsSorted then begin
-    if (aFormID shr 24) > Cardinal(GetMasterCount) then
-      aFormID := (aFormID and $00FFFFFF) or (Cardinal(GetMasterCount) shl 24);
-    Result := wbBinarySearch(@flRecords[0], Low(flRecords), High(flRecords), @aFormID, SearchRecordsByFixedFormID, Index);
-  end
-  else if wbAllowSlowSearching then begin
-    for i := 0 to Pred(flRecordsCount) do
-      if flRecords[i].FixedFormID = aFormID then begin
-        Index := i;
-        Result := True;
-        Exit;
-      end;
-  end;
+  if (aFormID shr 24) > Cardinal(GetMasterCount) then
+    aFormID := (aFormID and $00FFFFFF) or (Cardinal(GetMasterCount) shl 24);
+  Result := wbBinarySearch(@flRecords[0], Low(flRecords), High(flRecords), @aFormID, SearchRecordsByFixedFormID, Index);
 end;
 
 function TwbFile.FindInjectedID(aFormID: Cardinal; var Index: Integer): Boolean;
@@ -2837,14 +2846,11 @@ var
   i: Integer;
 begin
   Result := nil;
-  if FindEditorID(aEditorID, i) then
-    Result := flRecordsByEditorID[i]
-  else
-    for i := Pred(GetMasterCount) downto 0 do begin
-      Result := GetMaster(i).RecordByEditorID[aEditorID];
-      if Assigned(Result) then
-        Exit;
-    end;
+  if not flLoadFinished then exit;
+  if not FindEditorID(aEditorID, Result) then
+    for i := Low(flMasters) to High(flMasters) do
+      if flMasters[i].FindEditorID(aEditorID, Result) then
+        break;
 end;
 
 function TwbFile.GetRecordByName(const aName: string): IwbMainRecord;
@@ -2852,14 +2858,11 @@ var
   i: Integer;
 begin
   Result := nil;
-  if FindName(aName, i) then
-    Result := flRecordsByName[i]
-  else
-    for i := Pred(GetMasterCount) downto 0 do begin
-      Result := GetMaster(i).RecordByName[aName];
-      if Assigned(Result) then
-        Exit;
-    end;
+  if not flLoadFinished then exit;
+  if not FindName(aName, Result) then
+    for i := Low(flMasters) to High(flMasters) do
+      if flMasters[i].FindName(aName, Result) then
+        break;
 end;
 
 function TwbFile.GetRecordByFormID(aFormID: Cardinal; aAllowInjected: Boolean): IwbMainRecord;
@@ -3553,22 +3556,27 @@ begin
     SetLength(aList, len);
 end;
 
+function HasEditorID(rec: IwbMainRecord): Boolean;
+begin
+  Result := rec.EditorID <> '';
+end;
+
 procedure TwbFile.SortAllEditorIDs;
 var
   i, initialLen: Integer;
   rec: IwbMainRecord;
 begin
-  initialLen := flRecordsByEditorIDCount;
+  SetLength(flRecordsByName, 0);
   SetLength(flRecordsByEditorID, GetRecordCount);
   for i := 0 to Pred(GetRecordCount) do begin
     rec := GetRecord(i);
-    if EditorIDSorted(AnsiString(rec.Signature)) then
-      continue;
+    if not HasEditorID(rec) then continue;
     flRecordsbyEditorID[flRecordsByEditorIDCount] := rec;
     Inc(flRecordsByEditorIDCount);
   end;
   if flRecordsByEditorIDCount > initialLen then
     wbMergeSort(@flRecordsByEditorID[0], flRecordsByEditorIDCount, CompareRecordsByEditorID);
+  flEditorIDsSorted := True;
 end;
 
 procedure TwbFile.SortEditorIDs(aSignature: String);
@@ -3580,7 +3588,7 @@ begin
   else if not EditorIDSorted(aSignature) then begin
     flEditorIDSignatures.Add(aSignature);
     len := flRecordsByEditorIDCount;
-    RecordsBySignature(TDynMainRecords(flRecordsByEditorID), aSignature, flRecordsByEditorIDCount);
+    RecordsBySignature(TDynMainRecords(flRecordsByEditorID), aSignature, flRecordsByEditorIDCount, HasEditorID);
     if flRecordsByEditorIDCount > len then
       wbMergeSort(@flRecordsByEditorID[0], flRecordsByEditorIDCount, CompareRecordsByEditorID);
   end;
@@ -3588,7 +3596,7 @@ end;
 
 function TwbFile.EditorIDSorted(aSignature: string): Boolean;
 begin
-  Result := flEditorIDSignatures.IndexOf(aSignature) > -1;
+  Result := flEditorIDsSorted or (flEditorIDSignatures.IndexOf(aSignature) > -1);
 end;
 
 function HasFullName(rec: IwbMainRecord): Boolean;
@@ -3598,20 +3606,20 @@ end;
 
 procedure TwbFile.SortAllNames;
 var
-  i, initialLen: Integer;
+  i: Integer;
   rec: IwbMainRecord;
 begin
-  initialLen := flRecordsByNameCount;
+  SetLength(flRecordsByName, 0);
   SetLength(flRecordsByName, GetRecordCount);
   for i := 0 to Pred(GetRecordCount) do begin
     rec := GetRecord(i);
-    if NamesSorted(AnsiString(rec.Signature)) or not HasFullName(rec) then
-      continue;
+    if not HasFullName(rec) then continue;
     flRecordsByName[flRecordsByNameCount] := rec;
     Inc(flRecordsByNameCount);
   end;
-  if flRecordsByNameCount > initialLen then
+  if flRecordsByNameCount > 0 then
     wbMergeSort(@flRecordsByName[0], flRecordsByNameCount, CompareRecordsByFullName);
+  flNamesSorted := True;
 end;
 
 procedure TwbFile.SortNames(aSignature: String);
@@ -3619,7 +3627,7 @@ var
   len: Integer;
 begin
   if (aSignature = '*') or (aSignature = '') then
-    SortAllEditorIDs
+    SortAllNames
   else if not NamesSorted(aSignature) then begin
     flNameSignatures.Add(aSignature);
     len := flRecordsByNameCount;
@@ -3631,7 +3639,7 @@ end;
 
 function TwbFile.NamesSorted(aSignature: String): Boolean;
 begin
-  Result := flNameSignatures.IndexOf(aSignature) > -1;
+  Result := flNamesSorted or (flNameSignatures.IndexOf(aSignature) > -1);
 end;
 
 procedure TwbFile.SortMasters;
