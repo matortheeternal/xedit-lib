@@ -297,17 +297,19 @@ end;
 
 function GetDuplicateHandles(_id: Cardinal; len: PInteger): WordBool; cdecl;
 var
-  e: IInterface;
+  element, element2: IwbElement;
   i: Integer;
   lst: TList<Integer>;
 begin
   Result := False;
   try
-    e := _store[_id];
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
     lst := TList<Integer>.Create;
     try
-      for i := 0 to Pred(_store.Count) do
-        if (i <> _id) and (_store[i] = e) then lst.Add(i);
+      for i := 1 to Pred(_store.Count) do
+        if (i <> _id) and Supports(_store[i], IwbElement, element2)
+        and element.Equals(element2) then lst.Add(i);
       len^ := lst.Count;
       SetLength(resultArray, len^);
       for i := 0 to Pred(len^) do
