@@ -7,7 +7,7 @@ uses
   xeTypes;
 
   {$region 'Native functions'}
-  function GetPath(element: IwbElement; full: WordBool = True; curPath: String = ''): String;
+  function GetPath(element: IwbElement; short: WordBool = False; local: WordBool = False; curPath: String = ''): String;
   function GetPathName(element: IwbElement): String;
   function NativeName(e: IwbElement; quoteFull: Boolean = False): String;
   function ParseFormIDValue(value: String; var formID: Int64): Boolean;
@@ -23,7 +23,7 @@ uses
   function Name(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function LongName(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function DisplayName(_id: Cardinal; len: PInteger): WordBool; cdecl;
-  function Path(_id: Cardinal; full: WordBool; len: PInteger): WordBool; cdecl;
+  function Path(_id: Cardinal; short, local: WordBool; len: PInteger): WordBool; cdecl;
   function Signature(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function GetValue(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
   function SetValue(_id: Cardinal; path, value: PWideChar): WordBool; cdecl;
@@ -152,19 +152,19 @@ begin
   end;
 end;
 
-function GetPath(element: IwbElement; full: WordBool = True; curPath: String = ''): String;
+function GetPath(element: IwbElement; short: WordBool = False; local: WordBool = False; curPath: String = ''): String;
 var
   container: IwbContainer;
 begin
   Result := GetPathName(element);
   if curPath <> '' then
     Result := Format('%s\%s', [Result, curPath]);
-  if Supports(element, IwbMainRecord) then
-    Result := GetPath(element._File as IwbElement, full, Result)
+  if Supports(element, IwbMainRecord) and short then
+    Result := GetPath(element._File as IwbElement, short, local, Result)
   else if not Supports(element, IwbFile) then begin
     container := NativeContainer(element);
-    if Supports(container, IwbMainRecord) and not full then exit;
-    Result := GetPath(container as IwbElement, full, Result);
+    if Supports(container, IwbMainRecord) and local then exit;
+    Result := GetPath(container as IwbElement, short, local, Result);
   end;
 end;
 {$endregion}
@@ -356,7 +356,7 @@ begin
 end;
 {$endregion}
 
-function Path(_id: Cardinal; full: WordBool; len: PInteger): WordBool; cdecl;
+function Path(_id: Cardinal; short, local: WordBool; len: PInteger): WordBool; cdecl;
 var
   element: IwbElement;
 begin
@@ -364,7 +364,7 @@ begin
   try
     if not Supports(Resolve(_id), IwbElement, element) then
       raise Exception.Create('Interface is not an element.');
-    resultStr := GetPath(element, full);
+    resultStr := GetPath(element, short, local);
     len^ := Length(resultStr);
     Result := True;
   except
