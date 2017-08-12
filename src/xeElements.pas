@@ -284,13 +284,17 @@ var
 begin
   if ParseFormID(key, formID) then
     Result := _file.RecordByFormID[formID, True]
-  else if ParseFullName(key, name) then
-    Result := _file.RecordByName[name]
+  else if ParseFullName(key, name) then begin
+    _file.FindName(name, rec);
+    Result := rec;
+  end
   else if Length(key) > 4 then begin
     if GetSignatureFromName(key, sig) then
       Result := _file.GroupBySignature[sig]
-    else
-      Result := _file.RecordByEditorID[key];
+    else begin
+      _file.FindEditorID(key, rec);
+      Result := rec;
+    end;
   end
   else
     Result := _file.GroupBySignature[StrToSignature(key)];
