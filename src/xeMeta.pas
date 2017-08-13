@@ -3,12 +3,13 @@ unit xeMeta;
 interface
 
 uses
-  Classes, SysUtils, Generics.Collections;
+  Classes, SysUtils, Generics.Collections, wbInterface, xeTypes;
 
   {$region 'Native functions'}
   function Resolve(_id: Cardinal): IInterface;
   procedure StoreList(lst: TList; len: PInteger);
-  procedure SortResultArray(sortBy: Byte);
+  procedure SortResultArray;
+  procedure GetSortedElements(container: IwbContainer; var elements: TDynElements);
   procedure StoreIfAssigned(var x: IInterface; var _res: PCardinal; var Success: WordBool);
   function Store(x: IInterface): Cardinal;
   function xStrCopy(source: WideString; dest: PWideChar; maxLen: Integer): WordBool;
@@ -40,11 +41,11 @@ var
 implementation
 
 uses
-  wbImplementation, wbInterface,
+  wbImplementation,
   // mte modules
   mteHelpers,
   // xelib modules
-  xeTypes, xeConfiguration, xeMessages, xeSetup, xeFiles;
+  xeConfiguration, xeMessages, xeSetup, xeFiles;
 
 const
   sortByFormID = 1;
@@ -85,15 +86,13 @@ begin
   len^ := Length(resultArray);
 end;
 
-function FormData(handle: Cardinal): String;
+function FormData(e: IInterface): String;
 var
-  e: IInterface;
   _file: IwbFile;
   group: IwbGroupRecord;
   rec: IwbMainRecord;
   element: IwbElement;
 begin
-  e := _store[handle];
   if Supports(e, IwbFile, _file) then
     Result := _file.DisplayName
   else if Supports(e, IwbGroupRecord, group) then
@@ -104,15 +103,13 @@ begin
     Result := '';
 end;
 
-function EditorData(handle: Cardinal): String;
+function EditorData(e: IInterface): String;
 var
-  e: IInterface;
   _file: IwbFile;
   group: IwbGroupRecord;
   rec: IwbMainRecord;
   element: IwbElement;
 begin
-  e := _store[handle];
   if Supports(e, IwbFile, _file) then
     Result := _file.Name
   else if Supports(e, IwbGroupRecord, group) then
@@ -123,15 +120,13 @@ begin
     Result := '';
 end;
 
-function NameData(handle: Cardinal): String;
+function NameData(e: IInterface): String;
 var
-  e: IInterface;
   _file: IwbFile;
   group: IwbGroupRecord;
   rec: IwbMainRecord;
   element: IwbElement;
 begin
-  e := _store[handle];
   if Supports(e, IwbFile, _file) then
     Result := _file.Name
   else if Supports(e, IwbGroupRecord, group) then
@@ -142,28 +137,72 @@ begin
     Result := '';
 end;
 
-procedure SortResultArray(sortBy: Byte);
+procedure SortResultArray;
 var
   sl: TFastStringList;
-  i: Integer;
+  i, count: Integer;
 begin
+  if SortBy = 0 then exit;
+  sl := TFastStringList.Create;
+  sl.Sorted := True;
+  sl.Duplicates := dupAccept;
+  case SortBy of
+    sortByFormID:
+      for i := Low(resultArray) to High(resultArray) do
+        sl.AddObject(FormData(_store[resultArray[i]]), TObject(resultArray[i]));
+    sortByEditorID:
+      for i := Low(resultArray) to High(resultArray) do
+        sl.AddObject(EditorData(_store[resultArray[i]]), TObject(resultArray[i]));
+    sortByName:
+      for i := Low(resultArray) to High(resultArray) do
+        sl.AddObject(NameData(_store[resultArray[i]]), TObject(resultArray[i]));
+  end;
+  Assert(High(resultArray) = Pred(sl.Count));
+  if reverse then begin
+    count := sl.Count;
+    for i := Low(resultArray) to High(resultArray) do
+      resultArray[count - i] := Cardinal(sl.Objects[i]);
+  end
+  else
+    for i := Low(resultArray) to High(resultArray) do
+      resultArray[i] := Cardinal(sl.Objects[i]);
+end;
+
+procedure GetSortedElements(container: IwbContainer; var elements: TDynElements);
+var
+  sl: TFastStringList;
+  i, count: Integer;
+begin
+  if SortBy = 0 then begin
+    SetLength(elements, container.ElementCount);
+    for i := Low(elements) to High(elements) do
+      elements[i] := container.Elements[i];
+    exit;
+  end;
   sl := TFastStringList.Create;
   sl.Sorted := True;
   sl.Duplicates := dupAccept;
   case sortBy of
     sortByFormID:
-      for i := Low(resultArray) to High(resultArray) do
-        sl.AddObject(FormData(resultArray[i]), TObject(resultArray[i]));
+      for i := 0 to Pred(container.ElementCount) do
+        sl.AddObject(FormData(container.Elements[i]), TObject(container.Elements[i]));
     sortByEditorID:
-      for i := Low(resultArray) to High(resultArray) do
-        sl.AddObject(EditorData(resultArray[i]), TObject(resultArray[i]));
+      for i := 0 to Pred(container.ElementCount) do
+        sl.AddObject(EditorData(container.Elements[i]), TObject(container.Elements[i]));
     sortByName:
-      for i := Low(resultArray) to High(resultArray) do
-        sl.AddObject(NameData(resultArray[i]), TObject(resultArray[i]));
+      for i := 0 to Pred(container.ElementCount) do
+        sl.AddObject(NameData(container.Elements[i]), TObject(container.Elements[i]));
   end;
-  Assert(High(resultArray) = Pred(sl.Count));
-  for i := Low(resultArray) to High(resultArray) do
-    resultArray[i] := Cardinal(sl.Objects[i]);
+  SetLength(elements, container.ElementCount);
+  Assert(High(elements) = Pred(sl.Count));
+  if reverse then begin
+    count := sl.Count;
+    for i := Low(elements) to High(elements) do
+      elements[count - i] := IwbElement(Pointer(sl.Objects[i]));
+  end
+  else
+    for i := Low(elements) to High(elements) do
+      elements[i] := IwbElement(Pointer(sl.Objects[i]));
 end;
 
 procedure StoreIfAssigned(var x: IInterface; var _res: PCardinal; var Success: WordBool);
