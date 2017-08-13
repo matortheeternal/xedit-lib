@@ -144,28 +144,32 @@ var
 begin
   if SortBy = 0 then exit;
   sl := TFastStringList.Create;
-  sl.Sorted := True;
-  sl.Duplicates := dupAccept;
-  case SortBy of
-    sortByFormID:
+  try
+    sl.Sorted := True;
+    sl.Duplicates := dupAccept;
+    case SortBy of
+      sortByFormID:
+        for i := Low(resultArray) to High(resultArray) do
+          sl.AddObject(FormData(_store[resultArray[i]]), TObject(resultArray[i]));
+      sortByEditorID:
+        for i := Low(resultArray) to High(resultArray) do
+          sl.AddObject(EditorData(_store[resultArray[i]]), TObject(resultArray[i]));
+      sortByName:
+        for i := Low(resultArray) to High(resultArray) do
+          sl.AddObject(NameData(_store[resultArray[i]]), TObject(resultArray[i]));
+    end;
+    Assert(High(resultArray) = Pred(sl.Count));
+    if reverse then begin
+      count := sl.Count;
       for i := Low(resultArray) to High(resultArray) do
-        sl.AddObject(FormData(_store[resultArray[i]]), TObject(resultArray[i]));
-    sortByEditorID:
+        resultArray[count - i] := Cardinal(sl.Objects[i]);
+    end
+    else
       for i := Low(resultArray) to High(resultArray) do
-        sl.AddObject(EditorData(_store[resultArray[i]]), TObject(resultArray[i]));
-    sortByName:
-      for i := Low(resultArray) to High(resultArray) do
-        sl.AddObject(NameData(_store[resultArray[i]]), TObject(resultArray[i]));
+        resultArray[i] := Cardinal(sl.Objects[i]);
+  finally
+    sl.Free;
   end;
-  Assert(High(resultArray) = Pred(sl.Count));
-  if reverse then begin
-    count := sl.Count;
-    for i := Low(resultArray) to High(resultArray) do
-      resultArray[count - i] := Cardinal(sl.Objects[i]);
-  end
-  else
-    for i := Low(resultArray) to High(resultArray) do
-      resultArray[i] := Cardinal(sl.Objects[i]);
 end;
 
 procedure GetSortedElements(container: IwbContainer; var elements: TDynElements);
@@ -177,32 +181,36 @@ begin
     SetLength(elements, container.ElementCount);
     for i := Low(elements) to High(elements) do
       elements[i] := container.Elements[i];
-    exit;
+      exit;
   end;
   sl := TFastStringList.Create;
-  sl.Sorted := True;
-  sl.Duplicates := dupAccept;
-  case sortBy of
-    sortByFormID:
-      for i := 0 to Pred(container.ElementCount) do
-        sl.AddObject(FormData(container.Elements[i]), TObject(container.Elements[i]));
-    sortByEditorID:
-      for i := 0 to Pred(container.ElementCount) do
-        sl.AddObject(EditorData(container.Elements[i]), TObject(container.Elements[i]));
-    sortByName:
-      for i := 0 to Pred(container.ElementCount) do
-        sl.AddObject(NameData(container.Elements[i]), TObject(container.Elements[i]));
+  try
+    sl.Sorted := True;
+    sl.Duplicates := dupAccept;
+    case sortBy of
+      sortByFormID:
+        for i := 0 to Pred(container.ElementCount) do
+          sl.AddObject(FormData(container.Elements[i]), Pointer(container.Elements[i]));
+      sortByEditorID:
+        for i := 0 to Pred(container.ElementCount) do
+          sl.AddObject(EditorData(container.Elements[i]), Pointer(container.Elements[i]));
+      sortByName:
+        for i := 0 to Pred(container.ElementCount) do
+          sl.AddObject(NameData(container.Elements[i]), Pointer(container.Elements[i]));
+    end;
+    SetLength(elements, container.ElementCount);
+    Assert(High(elements) = Pred(sl.Count));
+    if reverse then begin
+      count := sl.Count;
+      for i := Low(elements) to High(elements) do
+        elements[count - i] := IwbElement(Pointer(sl.Objects[i]));
+    end
+    else
+      for i := Low(elements) to High(elements) do
+        elements[i] := IwbElement(Pointer(sl.Objects[i]));
+  finally
+    sl.Free;
   end;
-  SetLength(elements, container.ElementCount);
-  Assert(High(elements) = Pred(sl.Count));
-  if reverse then begin
-    count := sl.Count;
-    for i := Low(elements) to High(elements) do
-      elements[count - i] := IwbElement(Pointer(sl.Objects[i]));
-  end
-  else
-    for i := Low(elements) to High(elements) do
-      elements[i] := IwbElement(Pointer(sl.Objects[i]));
 end;
 
 procedure StoreIfAssigned(var x: IInterface; var _res: PCardinal; var Success: WordBool);

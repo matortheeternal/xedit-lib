@@ -148,9 +148,16 @@ begin
   end;
 end;
 
-function NativeFindNextRecord(container: IwbContainer; i: Integer; search: String; byEdid, byName, recurse: WordBool): IwbMainRecord;
+function ResolveElementIndex(elements: TDynElements; element: IwbElement): Integer;
+begin
+  for Result := Low(elements) to High(elements) do
+    if elements[Result].Equals(element) then exit;
+  Result := -1;
+end;
+
+function NativeFindNextRecord(container: IwbContainer; element: IwbElement; search: String; byEdid, byName, recurse: WordBool): IwbMainRecord;
 var
-  count: Integer;
+  i, count: Integer;
   e: IwbElement;
   rec: IwbMainRecord;
   innerContainer: IwbContainer;
@@ -158,6 +165,7 @@ var
 begin
   // iterate through children
   GetSortedElements(container, elements);
+  i := ResolveElementIndex(elements, element) + 1;
   while i <= High(elements) do begin
     e := elements[i];
     if Supports(e, IwbMainRecord, Result) then begin
@@ -166,7 +174,7 @@ begin
     end
     // recurse through child containers
     else if Supports(e, IwbContainer, innerContainer) then begin
-      Result := NativeFindNextRecord(innerContainer, 0, search, byEdid, byName, false);
+      Result := NativeFindNextRecord(innerContainer, nil, search, byEdid, byName, false);
       if Assigned(Result) then exit;
     end;
     Inc(i);
@@ -177,12 +185,13 @@ begin
     e := container as IwbElement;
     container := e.Container;
     if Assigned(container) then
-      Result := NativeFindNextRecord(container, container.IndexOf(e) + 1, search, byEdid, byName, true);
+      Result := NativeFindNextRecord(container, e, search, byEdid, byName, true);
   end;
 end;
 
-function NativeFindPreviousRecord(container: IwbContainer; i: Integer; search: String; byEdid, byName, recurse: WordBool): IwbMainRecord;
+function NativeFindPreviousRecord(container: IwbContainer; element: IwbElement; search: String; byEdid, byName, recurse: WordBool): IwbMainRecord;
 var
+  i: Integer;
   e: IwbElement;
   rec: IwbMainRecord;
   innerContainer: IwbContainer;
@@ -190,6 +199,8 @@ var
 begin
   // iterate through children
   GetSortedElements(container, elements);
+  i := ResolveElementIndex(elements, element) - 1;
+  if i = -2 then i := High(elements);
   while i > -1 do begin
     e := elements[i];
     if Supports(e, IwbMainRecord, Result) then begin
@@ -198,7 +209,7 @@ begin
     end
     // recurse through child containers
     else if Supports(e, IwbContainer, innerContainer) then begin
-      Result := NativeFindPreviousRecord(innerContainer, innerContainer.ElementCount - 1, search, byEdid, byName, false);
+      Result := NativeFindPreviousRecord(innerContainer, nil, search, byEdid, byName, false);
       if Assigned(Result) then exit;
     end;
     Dec(i);
@@ -208,7 +219,7 @@ begin
     e := container as IwbElement;
     container := e.Container;
     if Assigned(container) then
-      Result := NativeFindPreviousRecord(container, container.IndexOf(e) - 1, search, byEdid, byName, true);
+      Result := NativeFindPreviousRecord(container, e, search, byEdid, byName, true);
   end;
 end;
 {$endregion}
@@ -320,9 +331,9 @@ begin
     if not Supports(element, IwbContainer, container) then
       raise Exception.Create('Input element is not a container.');
     if Supports(element, IwbMainRecord) then
-      rec := NativeFindPreviousRecord(container, container.IndexOf(element) - 1, string(search), byEdid, byName, true)
+      rec := NativeFindPreviousRecord(container, element, string(search), byEdid, byName, true)
     else if Supports(element, IwbGroupRecord) or Supports(element, IwbFile) then
-      rec := NativeFindPreviousRecord(container, container.ElementCount - 1, string(search), byEdid, byName, true)
+      rec := NativeFindPreviousRecord(container, nil, string(search), byEdid, byName, true)
     else
       raise Exception.Create('Input element must be a file, group, or record.');
     if Assigned(rec) then begin
@@ -352,9 +363,9 @@ begin
     if not Supports(element, IwbContainer, container) then
       raise Exception.Create('Input element is not a container.');
     if Supports(element, IwbMainRecord) then
-      rec := NativeFindNextRecord(container, container.IndexOf(element) + 1, string(search), byEdid, byName, True)
+      rec := NativeFindNextRecord(container, element, string(search), byEdid, byName, True)
     else if Supports(element, IwbGroupRecord) or Supports(element, IwbFile) then
-      rec := NativeFindNextRecord(container, 0, string(search), byEdid, byName, True)
+      rec := NativeFindNextRecord(container, nil, string(search), byEdid, byName, True)
     else
       raise Exception.Create('Input element must be a file, group, or record.');
     if Assigned(rec) then begin
