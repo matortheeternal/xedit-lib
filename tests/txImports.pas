@@ -116,6 +116,8 @@ type
   function SetFormID(_id: Cardinal; formID: Cardinal; local, fixReferences: WordBool): WordBool; cdecl; external 'XEditLib.dll';
   function GetRecords(_id: Cardinal; search: PWideChar; allowOverrides: WordBool; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetOverrides(_id: Cardinal; count: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function FindNextRecord(_id: Cardinal; search: PWideChar; byEdid, byName: WordBool; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
+  function FindPreviousRecord(_id: Cardinal; search: PWideChar; byEdid, byName: WordBool; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function ExchangeReferences(_id, oldFormID, newFormID: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
   function GetReferencedBy(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function IsMaster(_id: Cardinal; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
