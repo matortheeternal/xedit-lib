@@ -21,6 +21,7 @@ uses
   function GetResultArray(_res: PCardinal; maxLen: Integer): WordBool; cdecl;
   function GetGlobal(key: PWideChar; len: PInteger): WordBool; cdecl;
   function GetGlobals(len: PInteger): WordBool; cdecl;
+  function SetSortMode(_sortBy: Byte; _reverse: WordBool): WordBool; cdecl;
   function Release(_id: Cardinal): WordBool; cdecl;
   function Switch(_id, _id2: Cardinal): WordBool; cdecl;
   function GetDuplicateHandles(_id: Cardinal; len: PInteger): WordBool; cdecl;
@@ -33,6 +34,8 @@ var
   nextID: Cardinal;
   resultStr: WideString;
   resultArray: array of Cardinal;
+  SortBy: Byte;
+  Reverse: Boolean;
 
 implementation
 
@@ -261,6 +264,20 @@ begin
   try
     resultStr := Globals.Text;
     len^ := Length(resultStr);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function SetSortMode(_sortBy: Byte; _reverse: WordBool): WordBool; cdecl;
+begin
+  Result := False;
+  try
+    if _sortBy > sortByName then
+      raise Exception.Create('Invalid sort mode.');
+    SortBy := _sortBy;
+    Reverse := _reverse;
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
