@@ -3,6 +3,7 @@ unit xeTypes;
 interface
 
 uses
+  wbInterface,
   Classes;
 
 type
@@ -12,6 +13,8 @@ type
   public
     function IndexOfValue(const Value: String): Integer;
   end;
+
+  TDynElements = array of IwbElement;
 
 implementation
 
