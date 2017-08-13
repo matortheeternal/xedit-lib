@@ -71,9 +71,9 @@ exports
   GetFlag, SetFlag, GetEnabledFlags, SetEnabledFlags, GetAllFlags,
   SignatureFromName, NameFromSignature, GetSignatureNameMap,
   // RECORD HANDLING METHODS
-  GetFormID, SetFormID, GetRecords, GetOverrides, GetReferencedBy,
-  ExchangeReferences, IsMaster, IsInjected, IsOverride, IsWinningOverride,
-  ConflictThis, ConflictAll;
+  GetFormID, SetFormID, GetRecords, GetOverrides, GetReferencedBy, FindNextRecord,
+  FindPreviousRecord, ExchangeReferences, IsMaster, IsInjected, IsOverride,
+  IsWinningOverride, ConflictThis, ConflictAll;
 
 begin
   IsMultiThread := True;

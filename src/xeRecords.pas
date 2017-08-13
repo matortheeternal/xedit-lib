@@ -15,6 +15,8 @@ uses
   function SetFormID(_id: Cardinal; formID: Cardinal; local, fixReferences: WordBool): WordBool; cdecl;
   function GetRecords(_id: Cardinal; search: PWideChar; includeOverrides: WordBool; len: PInteger): WordBool; cdecl;
   function GetOverrides(_id: Cardinal; count: PInteger): WordBool; cdecl;
+  function FindPreviousRecord(_id: Cardinal; search: PWideChar; byEdid, byName: Wordbool; _res: PCardinal): WordBool; cdecl;
+  function FindNextRecord(_id: Cardinal; search: PWideChar; byEdid, byName: WordBool; _res: PCardinal): WordBool; cdecl;
   function ExchangeReferences(_id, oldFormID, newFormID: Cardinal): WordBool; cdecl;
   function GetReferencedBy(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function IsMaster(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
@@ -145,6 +147,67 @@ begin
       raise Exception.Create('Interface must be a file, group, or main record.');
   end;
 end;
+
+function NativeFindNextRecord(container: IwbContainer; i: Integer; search: String; byEdid, byName, recurse: WordBool): IwbMainRecord;
+var
+  count: Integer;
+  e: IwbElement;
+  rec: IwbMainRecord;
+  innerContainer: IwbContainer;
+begin
+  // iterate through children
+  count := container.ElementCount;
+  while i < count do begin
+    e := container.Elements[i];
+    if Supports(e, IwbMainRecord, Result) then begin
+      if byEdid and (Pos(search, Result.EditorID) > 0) then exit;
+      if byName and (Pos(search, Result.FullName) > 0) then exit;
+    end
+    // recurse through child containers
+    else if Supports(e, IwbContainer, innerContainer) then begin
+      Result := NativeFindNextRecord(innerContainer, 0, search, byEdid, byName, false);
+      if Assigned(Result) then exit;
+    end;
+    Inc(i);
+  end;
+  Result := nil;
+  // recurse to sibling container
+  if recurse then begin
+    e := container as IwbElement;
+    container := e.Container;
+    if Assigned(container) then
+      Result := NativeFindNextRecord(container, container.IndexOf(e) + 1, search, byEdid, byName, true);
+  end;
+end;
+
+function NativeFindPreviousRecord(container: IwbContainer; i: Integer; search: String; byEdid, byName, recurse: WordBool): IwbMainRecord;
+var
+  e: IwbElement;
+  rec: IwbMainRecord;
+  innerContainer: IwbContainer;
+begin
+  // iterate through children
+  while i > -1 do begin
+    e := container.Elements[i];
+    if Supports(e, IwbMainRecord, Result) then begin
+      if byEdid and (Pos(search, Result.EditorID) > 0) then exit;
+      if byName and (Pos(search, Result.FullName) > 0) then exit;
+    end
+    // recurse through child containers
+    else if Supports(e, IwbContainer, innerContainer) then begin
+      Result := NativeFindPreviousRecord(innerContainer, innerContainer.ElementCount - 1, search, byEdid, byName, false);
+      if Assigned(Result) then exit;
+    end;
+    Dec(i);
+  end;
+  // recurse to sibling container
+  if recurse then begin
+    e := container as IwbElement;
+    container := e.Container;
+    if Assigned(container) then
+      Result := NativeFindPreviousRecord(container, container.IndexOf(e) - 1, search, byEdid, byName, true);
+  end;
+end;
 {$endregion}
 
 {$region 'API functions'}
@@ -231,6 +294,70 @@ begin
     for i := 0 to Pred(count^) do
       resultArray[i] := Store(IInterface(rec.Overrides[i]));
     Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function FindPreviousRecord(_id: Cardinal; search: PWideChar; byEdid, byName: Wordbool; _res: PCardinal): WordBool; cdecl;
+var
+  element: IwbElement;
+  container: IwbContainer;
+  rec: IwbMainRecord;
+begin
+  Result := False;
+  try
+    // treat root as last file
+    // if element is a main record, iterate through its parent container
+    // else if element is a group record or a file, iterate through it
+    if _id = 0 then
+      element := xFiles[High(xFiles)]
+    else if not Supports(Resolve(_id), IwbContainer, element) then
+      raise Exception.Create('Input interface is not an element.');
+    if not Supports(element, IwbContainer, container) then
+      raise Exception.Create('Input element is not a container.');
+    if Supports(element, IwbMainRecord) then
+      rec := NativeFindPreviousRecord(container, container.IndexOf(element) - 1, string(search), byEdid, byName, true)
+    else if Supports(element, IwbGroupRecord) or Supports(element, IwbFile) then
+      rec := NativeFindPreviousRecord(container, container.ElementCount - 1, string(search), byEdid, byName, true)
+    else
+      raise Exception.Create('Input element must be a file, group, or record.');
+    if Assigned(rec) then begin
+      _res^ := Store(rec);
+      Result := True;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function FindNextRecord(_id: Cardinal; search: PWideChar; byEdid, byName: WordBool; _res: PCardinal): WordBool; cdecl;
+var
+  element: IwbElement;
+  container: IwbContainer;
+  rec: IwbMainRecord;
+begin
+  Result := False;
+  try
+    // treat root as first file
+    // if element is a main record, iterate through its parent container
+    // else if element is a group record or a file, iterate through it
+    if _id = 0 then
+      element := xFiles[Low(xFiles)]
+    else if not Supports(Resolve(_id), IwbContainer, element) then
+      raise Exception.Create('Input interface is not an element.');
+    if not Supports(element, IwbContainer, container) then
+      raise Exception.Create('Input element is not a container.');
+    if Supports(element, IwbMainRecord) then
+      rec := NativeFindNextRecord(container, container.IndexOf(element) + 1, string(search), byEdid, byName, True)
+    else if Supports(element, IwbGroupRecord) or Supports(element, IwbFile) then
+      rec := NativeFindNextRecord(container, 0, string(search), byEdid, byName, True)
+    else
+      raise Exception.Create('Input element must be a file, group, or record.');
+    if Assigned(rec) then begin
+      _res^ := Store(rec);
+      Result := True;
+    end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
