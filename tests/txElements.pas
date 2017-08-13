@@ -17,7 +17,7 @@ uses
   txImports,
 {$ENDIF}
 {$IFNDEF USE_DLL}
-  xeFiles, xeMasters, xeElements, xeElementValues, xeRecords,
+  xeMeta, xeFiles, xeMasters, xeElements, xeElementValues, xeRecords,
 {$ENDIF}
   txMeta, txRecords;
 
@@ -145,7 +145,7 @@ var
   len, i: Integer;
   elements: CardinalArray;
 begin
-  ExpectSuccess(GetElements(_file, '', 0, @len));
+  ExpectSuccess(GetElements(_file, '', @len));
   elements := gra(len);
   for i := 1 to High(elements) do
     ExpectSuccess(RemoveElement(elements[i], ''));
@@ -552,56 +552,62 @@ begin
       
       Describe('GetElements', procedure
         begin
+          AfterAll(procedure
+            begin
+              ExpectSuccess(SetSortMode(0, False));
+            end);
+
           It('Should resolve root children (files)', procedure
             begin
-              ExpectSuccess(GetElements(0, '', 0, @len));
+              ExpectSuccess(GetElements(0, '', @len));
               ExpectEqual(len, 9);
               TestNames(gra(len), 'Skyrim.esm', 'NewFile-1.esp');
             end);
 
           It('Should resolve file children (file header and groups)', procedure
             begin
-              ExpectSuccess(GetElements(skyrim, '', 0, @len));
+              ExpectSuccess(GetElements(skyrim, '', @len));
               ExpectEqual(len, 118);
               TestNames(gra(len), 'File Header', 'Reverb Parameters');
             end);
 
           It('Should resolve group children (records)', procedure
             begin
-              ExpectSuccess(GetElements(armo1, '', 0, @len));
+              ExpectSuccess(GetElements(armo1, '', @len));
               ExpectEqual(len, 2762);
               TestEdids(gra(len), 'DremoraBoots', 'SkinNaked');
             end);
 
           It('Should resolve record children (subrecords/elements)', procedure
             begin
-              ExpectSuccess(GetElements(ar1, '', 0, @len));
+              ExpectSuccess(GetElements(ar1, '', @len));
               ExpectEqual(len, 13);
               TestNames(gra(len), 'Record Header', 'DNAM - Armor Rating');
             end);
 
           It('Should resolve element children', procedure
             begin
-              ExpectSuccess(GetElements(keywords, '', 0, @len));
+              ExpectSuccess(GetElements(keywords, '', @len));
               ExpectEqual(len, 5);
               TestNames(gra(len), 'Keyword', 'Keyword');
             end);
 
           It('Should resolve paths', procedure
             begin
-              ExpectSuccess(GetElements(ar2, 'KWDA', 0, @len));
+              ExpectSuccess(GetElements(ar2, 'KWDA', @len));
               ExpectEqual(len, 5);
             end);
 
-          It('Should sort elements based on SortBy param', procedure
+          It('Should be able to return sorted elements', procedure
             begin
-              ExpectSuccess(GetElements(0, 'Skyrim.esm', 1, @len));
+              ExpectSuccess(SetSortMode(1, False));
+              ExpectSuccess(GetElements(0, 'Skyrim.esm', @len));
               TestNames(gra(len), 'File Header', 'Weather');
             end);
 
           It('Should not include child groups', procedure
             begin
-              ExpectSuccess(GetElements(0, 'Skyrim.esm\DIAL', 1, @len));
+              ExpectSuccess(GetElements(0, 'Skyrim.esm\DIAL', @len));
               ExpectEqual(len, 15037);
             end);
         end);

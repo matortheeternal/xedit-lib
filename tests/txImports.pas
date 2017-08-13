@@ -14,6 +14,7 @@ type
   function GetResultArray(_res: PCardinal; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
   function GetGlobal(key: PWideChar; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetGlobals(len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function SetSortMode(_sortBy: Byte; _reverse: WordBool): WordBool; cdecl;
   function Release(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
   function Switch(_id, _id2: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
   function GetDuplicateHandles(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
@@ -64,7 +65,7 @@ type
   function AddElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
   function RemoveElementOrParent(_id: Cardinal; key: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
-  function GetElements(_id: Cardinal; key: PWideChar; sortBy: Byte; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function GetElements(_id: Cardinal; key: PWideChar; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function GetElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function GetElementRecord(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
