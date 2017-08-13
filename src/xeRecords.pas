@@ -154,11 +154,12 @@ var
   e: IwbElement;
   rec: IwbMainRecord;
   innerContainer: IwbContainer;
+  elements: TDynElements;
 begin
   // iterate through children
-  count := container.ElementCount;
-  while i < count do begin
-    e := container.Elements[i];
+  GetSortedElements(container, elements);
+  while i <= High(elements) do begin
+    e := elements[i];
     if Supports(e, IwbMainRecord, Result) then begin
       if byEdid and (Pos(search, Result.EditorID) > 0) then exit;
       if byName and (Pos(search, Result.FullName) > 0) then exit;
@@ -185,10 +186,12 @@ var
   e: IwbElement;
   rec: IwbMainRecord;
   innerContainer: IwbContainer;
+  elements: TDynElements;
 begin
   // iterate through children
+  GetSortedElements(container, elements);
   while i > -1 do begin
-    e := container.Elements[i];
+    e := elements[i];
     if Supports(e, IwbMainRecord, Result) then begin
       if byEdid and (Pos(search, Result.EditorID) > 0) then exit;
       if byName and (Pos(search, Result.FullName) > 0) then exit;
