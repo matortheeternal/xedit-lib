@@ -14,7 +14,7 @@ uses
   txImports,
   {$ENDIF}
   {$IFNDEF USE_DLL}
-  xeElements, xeRecords,
+  xeElements, xeRecords, xeElementValues,
   {$ENDIF}
   txMeta;
 
@@ -30,6 +30,16 @@ begin
   ExpectSuccess(GetRecords(h, search, includeOverrides, @len));
   ExpectEqual(len, expectedCount);
   gra(len);
+end;
+
+function TestFindNextRecord(context: Cardinal; search: PWideChar; byEdid, byName: WordBool; expectedEdid: String): Cardinal;
+var
+  len: Integer;
+begin
+  ExpectSuccess(FindNextRecord(context, search, byEdid, byName, @Result));
+  Expect(Result > 0, 'Should return a handle');
+  ExpectSuccess(GetValue(Result, 'EDID', @len));
+  ExpectEqual(grs(len), expectedEDID);
 end;
 
 procedure TestIsMaster(rec: Cardinal; expectedValue: WordBool);
@@ -67,7 +77,7 @@ end;
 procedure BuildRecordHandlingTests;
 var
   b: WordBool;
-  skyrim, armo, ar1, dnam, ar2, ar3, kw1, kw2, kw3: Cardinal;
+  skyrim, armo, ar1, dnam, ar2, ar3, kw1, kw2, kw3, h: Cardinal;
 begin
   Describe('Record Handling', procedure
     begin
@@ -135,6 +145,19 @@ begin
                   TestGetRecords(0, '', 'Armor', False, 2763);
                   TestGetRecords(0, '', 'Constructible Object,Non-Player Character (Actor)', False, 606 + 5119);
                 end);
+            end);
+        end);
+
+      Describe('FindNextRecord', procedure
+        begin
+          It('Should work with root handle', procedure
+            begin
+              h := TestFindNextRecord(0, 'Armor', True, False, 'sHUDArmorRating');
+            end);
+
+          It('Should work from record handle', procedure
+            begin
+              h := TestFindNextRecord(h, 'Armor', True, False, 'sEnchantArmorIncompatible');
             end);
         end);
 
