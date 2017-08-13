@@ -50,7 +50,7 @@ type
   function AddElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
   function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; cdecl;
   function RemoveElementOrParent(_id: Cardinal): WordBool; cdecl;
-  function GetElements(_id: Cardinal; key: PWideChar; sortBy: Byte; len: PInteger): WordBool; cdecl;
+  function GetElements(_id: Cardinal; key: PWideChar; len: PInteger): WordBool; cdecl;
   function GetLinksTo(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
   function GetElementIndex(_id: Cardinal; index: PInteger): WordBool; cdecl;
   function GetContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
@@ -1011,7 +1011,7 @@ begin
 end;
 
 // returns an array of handles for the elements in a container
-function GetElements(_id: Cardinal; key: PWideChar; sortBy: Byte; len: PInteger): WordBool; cdecl;
+function GetElements(_id: Cardinal; key: PWideChar; len: PInteger): WordBool; cdecl;
 begin
   Result := False;
   try
@@ -1019,8 +1019,7 @@ begin
       GetFiles(len)
     else
       GetChildrenElements(NativeGetElementEx(_id, key), len);
-    if sortBy > 0 then
-      SortResultArray(sortBy);
+    SortResultArray;
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
