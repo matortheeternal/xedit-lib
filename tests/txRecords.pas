@@ -14,7 +14,7 @@ uses
   txImports,
   {$ENDIF}
   {$IFNDEF USE_DLL}
-  xeElements, xeRecords, xeElementValues,
+  xeMeta, xeElements, xeRecords, xeElementValues,
   {$ENDIF}
   txMeta;
 
@@ -150,14 +150,24 @@ begin
 
       Describe('FindNextRecord', procedure
         begin
+          BeforeAll(procedure
+            begin
+              ExpectSuccess(SetSortMode(1, false));
+            end);
+
+          AfterAll(procedure
+            begin
+              ExpectSuccess(SetSortMode(0, false));
+            end);
+
           It('Should work with root handle', procedure
             begin
-              h := TestFindNextRecord(0, 'Armor', True, False, 'sHUDArmorRating');
+              h := TestFindNextRecord(0, 'Armor', True, False, 'TG08ANightingaleArmorActivator');
             end);
 
           It('Should work from record handle', procedure
             begin
-              h := TestFindNextRecord(h, 'Armor', True, False, 'sEnchantArmorIncompatible');
+              h := TestFindNextRecord(h, 'Armor', True, False, 'FortifySkillHeavyArmor02');
             end);
         end);
 
