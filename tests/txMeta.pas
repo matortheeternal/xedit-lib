@@ -222,6 +222,22 @@ begin
             end);
         end);
 
+      Describe('SetSortMode', procedure
+        begin
+          It('Should succeed if sort mode is valid', procedure
+            begin
+              ExpectSuccess(SetSortMode(3, true));
+              ExpectSuccess(SetSortMode(2, false));
+              ExpectSuccess(SetSortMode(1, true));
+              ExpectSuccess(SetSortMode(0, false));
+            end);
+
+          It('Should fail if sort mode is invalid', procedure
+            begin
+              ExpectFailure(SetSortMode(4, false));
+            end);
+        end);
+
       Describe('Release', procedure
         begin
           It('Should fail if handle is not allocated', procedure
