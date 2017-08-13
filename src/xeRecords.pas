@@ -214,6 +214,7 @@ begin
     end;
     Dec(i);
   end;
+  Result := nil;
   // recurse to sibling container
   if recurse then begin
     e := container as IwbElement;
