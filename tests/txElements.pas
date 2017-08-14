@@ -50,6 +50,24 @@ begin
   Expect(element > 0, 'Handle should be greater than 0');
 end;
 
+procedure TestGetDefNames(h: Cardinal; names: TStringArray);
+var
+  len: Integer;
+  sl: TStringList;
+  i: Integer;
+begin
+  ExpectSuccess(GetDefNames(h, @len));
+  sl := TStringList.Create;
+  try
+    sl.Text := grs(len);
+    ExpectEqual(sl.Count, High(names) + 1);
+    for i := 0 to Pred(sl.Count) do
+      ExpectEqual(sl[i], names[i]);
+  finally
+    sl.Free;
+  end;
+end;
+
 procedure TestElementCount(h: Cardinal; expectedCount: Integer);
 var
   count: Integer;
@@ -609,6 +627,22 @@ begin
             begin
               ExpectSuccess(GetElements(0, 'Skyrim.esm\DIAL', False, @len));
               ExpectEqual(len, 15037);
+            end);
+        end);
+
+      Describe('GetDefNames', procedure
+        begin
+          It('Should work with IwbMainRecords', procedure
+            begin
+              TestGetDefNames(ar1, TStringArray.Create('Record Header', 'EDID - Editor ID',
+                'VMAD - Virtual Machine Adapter', 'OBND - Object Bounds', 'FULL - Name',
+                'EITM - Object Effect', 'EAMT - Enchantment Amount', 'Male world model',
+                'Icon', 'Female world model', 'Icon 2 (female)', 'Biped Body Template',
+                'Destructable', 'YNAM - Sound - Pick Up', 'ZNAM - Sound - Put Down',
+                'BMCT - Ragdoll Constraint Template', 'ETYP - Equipment Type',
+                'BIDS - Bash Impact Data Set', 'BAMT - Alternate Block Material', 'RNAM - Race',
+                'KSIZ - Keyword Count', 'KWDA - Keywords', 'DESC - Description', 'Armature',
+                'DATA - Data', 'DNAM - Armor Rating', 'TNAM - Template Armor'));
             end);
         end);
       

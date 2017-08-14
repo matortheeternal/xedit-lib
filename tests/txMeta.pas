@@ -9,6 +9,7 @@ uses
 type
   CardinalArray = array of Cardinal;
   PCardinalArray = ^CardinalArray;
+  TStringArray = array of String;
 
   // PUBLIC TESTING INTERFACE
   procedure WriteMessages;
