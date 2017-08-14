@@ -57,8 +57,8 @@ exports
   CleanMasters, SortMasters, AddMaster, AddMasters, GetMasters, GetRequiredBy,
   // ELEMENT HANDLING METHODS
   HasElement, GetElement, AddElement, RemoveElement, RemoveElementOrParent,
-  GetElements, GetContainer, GetElementFile, GetElementRecord, GetLinksTo,
-  ElementCount, ElementEquals, ElementMatches, HasArrayItem, GetArrayItem,
+  GetElements, GetElementNames, GetContainer, GetElementFile, GetElementRecord,
+  GetLinksTo, ElementCount, ElementEquals, ElementMatches, HasArrayItem, GetArrayItem,
   AddArrayItem, RemoveArrayItem, MoveArrayItem, CopyElement, GetSignatureAllowed,
   SortKey, ElementType, DefType, SmashType,
   // ERROR CHECKING METHODS

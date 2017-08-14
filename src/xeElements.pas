@@ -51,6 +51,7 @@ type
   function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; cdecl;
   function RemoveElementOrParent(_id: Cardinal): WordBool; cdecl;
   function GetElements(_id: Cardinal; key: PWideChar; sort: WordBool; len: PInteger): WordBool; cdecl;
+  function GetDefNames(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function GetLinksTo(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
   function GetElementIndex(_id: Cardinal; index: PInteger): WordBool; cdecl;
   function GetContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
@@ -635,6 +636,42 @@ begin
 end;
 {$endregion}
 
+function GetDefName(def: IwbNamedDef): String;
+var
+  sigDef: IwbSignatureDef;
+begin
+  if Supports(def, IwbSignatureDef, sigDef) then
+    Result := sigDef.Signatures[0] + ' - ' + def.Name
+  else
+    Result := def.Name;
+end;
+
+procedure NativeGetDefNames(def: IwbNamedDef; var sl: TStringList);
+var
+  i: Integer;
+  recDef: IwbRecordDef;
+  structDef: IwbStructDef;
+  sraDef: IwbSubRecordArrayDef;
+  aDef: IwbArrayDef;
+begin
+  // try IwbRecordDef
+  if Supports(def, IwbRecordDef, recDef) then begin
+    sl.Add('Record Header');
+    for i := 0 to Pred(recDef.MemberCount) do
+      sl.Add(GetDefName(recDef.Members[i]))
+  end
+  // try IwbStructDef
+  else if Supports(def, IwbStructDef, structDef) then
+    for i := 0 to Pred(structDef.MemberCount) do
+      sl.Add(GetDefName(structDef.Members[i]))
+  // try IwbSubRecordArrayDef
+  else if Supports(def, IwbSubRecordArrayDef, sraDef) then
+    sl.Add(GetDefName(sraDef.Element))
+  // try IwbArrayDef
+  else if Supports(def, IwbArrayDef, aDef) then
+    sl.Add(GetDefName(aDef.Element));
+end;
+
 function NativeContainer(element: IwbElement): IwbContainer;
 var
   group: IwbGroupRecord;
@@ -1020,6 +1057,38 @@ begin
     else
       GetChildrenElements(NativeGetElementEx(_id, key), len);
     if sort then SortResultArray;
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetDefNames(_id: Cardinal; len: PInteger): WordBool; cdecl;
+var
+  e: IInterface;
+  element: IwbElement;
+  sl: TStringList;
+  i: Integer;
+  def: IwbNamedDef;
+begin
+  Result := False;
+  try
+    e := Resolve(_id);
+    if not Supports(e, IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    if Supports(e, IwbFile) or Supports(e, IwbGroupRecord) then
+      raise Exception.Create('Interface cannot be a file or group.');
+    sl := TStringList.Create;
+    try
+      def := element.Def;
+      NativeGetDefNames(def, sl);
+      resultStr := sl.Text;
+      Delete(resultStr, Length(resultStr) - 1, 2);
+      len^ := Length(resultStr);
+      Result := True;
+    finally
+      sl.Free;
+    end;
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
