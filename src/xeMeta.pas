@@ -359,7 +359,7 @@ end;
 function GetDuplicateHandles(_id: Cardinal; len: PInteger): WordBool; cdecl;
 var
   element, element2: IwbElement;
-  i: Cardinal;
+  i: Integer;
   lst: TList<Integer>;
 begin
   Result := False;
@@ -369,7 +369,7 @@ begin
     lst := TList<Integer>.Create;
     try
       for i := 1 to Pred(_store.Count) do
-        if (i <> _id) and Supports(_store[i], IwbElement, element2)
+        if (i <> Integer(_id)) and Supports(_store[i], IwbElement, element2)
         and element.Equals(element2) then lst.Add(i);
       len^ := lst.Count;
       SetLength(resultArray, len^);
