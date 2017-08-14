@@ -157,9 +157,8 @@ end;
 
 function NativeFindNextRecord(container: IwbContainer; element: IwbElement; search: String; byEdid, byName, recurse: WordBool): IwbMainRecord;
 var
-  i, count: Integer;
+  i: Integer;
   e: IwbElement;
-  rec: IwbMainRecord;
   innerContainer: IwbContainer;
   elements: TDynElements;
 begin
@@ -193,7 +192,6 @@ function NativeFindPreviousRecord(container: IwbContainer; element: IwbElement; 
 var
   i: Integer;
   e: IwbElement;
-  rec: IwbMainRecord;
   innerContainer: IwbContainer;
   elements: TDynElements;
 begin

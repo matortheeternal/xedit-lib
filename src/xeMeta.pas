@@ -91,12 +91,11 @@ var
   _file: IwbFile;
   group: IwbGroupRecord;
   rec: IwbMainRecord;
-  element: IwbElement;
 begin
   if Supports(e, IwbFile, _file) then
     Result := _file.DisplayName
   else if Supports(e, IwbGroupRecord, group) then
-    Result := TwbSignature(group.GroupLabel)
+    Result := String(TwbSignature(group.GroupLabel))
   else if Supports(e, IwbMainRecord, rec) then
     Result := IntToHex(rec.LoadOrderFormID, 8)
   else
@@ -108,7 +107,6 @@ var
   _file: IwbFile;
   group: IwbGroupRecord;
   rec: IwbMainRecord;
-  element: IwbElement;
 begin
   if Supports(e, IwbFile, _file) then
     Result := _file.Name
@@ -125,7 +123,6 @@ var
   _file: IwbFile;
   group: IwbGroupRecord;
   rec: IwbMainRecord;
-  element: IwbElement;
 begin
   if Supports(e, IwbFile, _file) then
     Result := _file.Name
@@ -362,7 +359,7 @@ end;
 function GetDuplicateHandles(_id: Cardinal; len: PInteger): WordBool; cdecl;
 var
   element, element2: IwbElement;
-  i: Integer;
+  i: Cardinal;
   lst: TList<Integer>;
 begin
   Result := False;
