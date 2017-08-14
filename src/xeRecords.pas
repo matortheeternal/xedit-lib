@@ -15,10 +15,11 @@ uses
   function SetFormID(_id: Cardinal; formID: Cardinal; local, fixReferences: WordBool): WordBool; cdecl;
   function GetRecords(_id: Cardinal; search: PWideChar; includeOverrides: WordBool; len: PInteger): WordBool; cdecl;
   function GetOverrides(_id: Cardinal; count: PInteger): WordBool; cdecl;
-  function FindPreviousRecord(_id: Cardinal; search: PWideChar; byEdid, byName: Wordbool; _res: PCardinal): WordBool; cdecl;
+  function GetMaster(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function FindNextRecord(_id: Cardinal; search: PWideChar; byEdid, byName: WordBool; _res: PCardinal): WordBool; cdecl;
-  function ExchangeReferences(_id, oldFormID, newFormID: Cardinal): WordBool; cdecl;
+  function FindPreviousRecord(_id: Cardinal; search: PWideChar; byEdid, byName: Wordbool; _res: PCardinal): WordBool; cdecl;
   function GetReferencedBy(_id: Cardinal; len: PInteger): WordBool; cdecl;
+  function ExchangeReferences(_id, oldFormID, newFormID: Cardinal): WordBool; cdecl;
   function IsMaster(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
   function IsInjected(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
   function IsOverride(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
@@ -312,33 +313,17 @@ begin
   end;
 end;
 
-function FindPreviousRecord(_id: Cardinal; search: PWideChar; byEdid, byName: Wordbool; _res: PCardinal): WordBool; cdecl;
+function GetMaster(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 var
-  element: IwbElement;
-  container: IwbContainer;
   rec: IwbMainRecord;
+  i: Integer;
 begin
   Result := False;
   try
-    // treat root as last file
-    // if element is a main record, iterate through its parent container
-    // else if element is a group record or a file, iterate through it
-    if _id = 0 then
-      element := xFiles[High(xFiles)]
-    else if not Supports(Resolve(_id), IwbContainer, element) then
-      raise Exception.Create('Input interface is not an element.');
-    if not Supports(element, IwbContainer, container) then
-      raise Exception.Create('Input element is not a container.');
-    if Supports(element, IwbMainRecord) then
-      rec := NativeFindPreviousRecord(container, element, string(search), byEdid, byName, true)
-    else if Supports(element, IwbGroupRecord) or Supports(element, IwbFile) then
-      rec := NativeFindPreviousRecord(container, nil, string(search), byEdid, byName, true)
-    else
-      raise Exception.Create('Input element must be a file, group, or record.');
-    if Assigned(rec) then begin
-      _res^ := Store(rec);
-      Result := True;
-    end;
+    if not Supports(Resolve(_id), IwbMainRecord, rec) then
+      raise Exception.Create('Interface must be a main record.');
+    _res^ := Store(rec.MasterOrSelf);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -376,16 +361,33 @@ begin
   end;
 end;
 
-function ExchangeReferences(_id, oldFormID, newFormID: Cardinal): WordBool; cdecl;
+function FindPreviousRecord(_id: Cardinal; search: PWideChar; byEdid, byName: Wordbool; _res: PCardinal): WordBool; cdecl;
 var
+  element: IwbElement;
+  container: IwbContainer;
   rec: IwbMainRecord;
 begin
   Result := False;
   try
-    if not Supports(Resolve(_id), IwbMainRecord, rec) then
-      raise Exception.Create('Interface must be a main record.');
-    rec.CompareExchangeFormID(oldFormID, newFormID);
-    Result := True;
+    // treat root as last file
+    // if element is a main record, iterate through its parent container
+    // else if element is a group record or a file, iterate through it
+    if _id = 0 then
+      element := xFiles[High(xFiles)]
+    else if not Supports(Resolve(_id), IwbContainer, element) then
+      raise Exception.Create('Input interface is not an element.');
+    if not Supports(element, IwbContainer, container) then
+      raise Exception.Create('Input element is not a container.');
+    if Supports(element, IwbMainRecord) then
+      rec := NativeFindPreviousRecord(container, element, string(search), byEdid, byName, true)
+    else if Supports(element, IwbGroupRecord) or Supports(element, IwbFile) then
+      rec := NativeFindPreviousRecord(container, nil, string(search), byEdid, byName, true)
+    else
+      raise Exception.Create('Input element must be a file, group, or record.');
+    if Assigned(rec) then begin
+      _res^ := Store(rec);
+      Result := True;
+    end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -405,6 +407,21 @@ begin
     for i := 0 to Pred(rec.ReferencedByCount) do
       if Supports(rec.ReferencedBy[i], IwbMainRecord, ref) then
         resultArray[i] := Store(ref);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function ExchangeReferences(_id, oldFormID, newFormID: Cardinal): WordBool; cdecl;
+var
+  rec: IwbMainRecord;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbMainRecord, rec) then
+      raise Exception.Create('Interface must be a main record.');
+    rec.CompareExchangeFormID(oldFormID, newFormID);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
