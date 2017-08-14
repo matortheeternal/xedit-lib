@@ -316,7 +316,6 @@ end;
 function GetMaster(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 var
   rec: IwbMainRecord;
-  i: Integer;
 begin
   Result := False;
   try
