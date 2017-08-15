@@ -632,7 +632,7 @@ begin
 
       Describe('GetDefNames', procedure
         begin
-          It('Should work with IwbMainRecords', procedure
+          It('Should work with main records', procedure
             begin
               TestGetDefNames(ar1, TStringArray.Create('Record Header', 'EDID - Editor ID',
                 'VMAD - Virtual Machine Adapter', 'OBND - Object Bounds', 'FULL - Name',
@@ -643,6 +643,12 @@ begin
                 'BIDS - Bash Impact Data Set', 'BAMT - Alternate Block Material', 'RNAM - Race',
                 'KSIZ - Keyword Count', 'KWDA - Keywords', 'DESC - Description', 'Armature',
                 'DATA - Data', 'DNAM - Armor Rating', 'TNAM - Template Armor'));
+            end);
+
+          It('Should work with structs', procedure
+            begin
+              ExpectSuccess(GetElement( ar1, 'OBND', @h));
+              TestGetDefNames(h, TStringArray.Create('X1', 'Y1', 'Z1', 'X2', 'Y2', 'Z2'));
             end);
         end);
       
