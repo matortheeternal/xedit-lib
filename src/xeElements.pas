@@ -651,16 +651,22 @@ end;
 procedure NativeGetDefNames(def: IwbNamedDef; var sl: TStringList);
 var
   i: Integer;
+  subDef: IwbSubRecordDef;
   recDef: IwbRecordDef;
+  RecordDef: PwbRecordDef;
   structDef: IwbStructDef;
   sraDef: IwbSubRecordArrayDef;
   aDef: IwbArrayDef;
 begin
+  // traverse into subrecord defs
+  if Supports(def, IwbSubRecordDef, subDef) then
+    def := subDef.Value;
   // try IwbRecordDef
   if Supports(def, IwbRecordDef, recDef) then begin
-    sl.Add('Record Header');
+    if wbFindRecordDef(recDef.Signatures[0], RecordDef) then
+      sl.Add('Record Header');
     for i := 0 to Pred(recDef.MemberCount) do
-      sl.Add(GetDefName(recDef.Members[i]))
+      sl.Add(GetDefName(recDef.Members[i]));
   end
   // try IwbStructDef
   else if Supports(def, IwbStructDef, structDef) then
@@ -1084,8 +1090,6 @@ var
   e: IInterface;
   element: IwbElement;
   sl: TStringList;
-  i: Integer;
-  def: IwbNamedDef;
 begin
   Result := False;
   try
@@ -1096,8 +1100,7 @@ begin
       raise Exception.Create('Interface cannot be a file or group.');
     sl := TStringList.Create;
     try
-      def := element.Def;
-      NativeGetDefNames(def, sl);
+      NativeGetDefNames(element.Def, sl);
       resultStr := sl.Text;
       Delete(resultStr, Length(resultStr) - 1, 2);
       len^ := Length(resultStr);
