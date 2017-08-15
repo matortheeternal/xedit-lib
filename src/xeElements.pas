@@ -855,6 +855,20 @@ begin
     Result := Container.Sorted;
 end;
 
+{ Returns true if @e is a flags element }
+function NativeIsFlags(e: IwbElement): Boolean;
+var
+  def: IwbNamedDef;
+  subDef: IwbSubrecordDef;
+  intDef: IwbIntegerDef;
+begin
+  def := e.Def;
+  if Supports(def, IwbSubrecordDef, subDef) then
+    def := subDef.Value;
+  Result := Supports(def, IwbIntegerDef, intDef)
+    and Supports(intDef.Formater[e], IwbFlagsDef);
+end;
+
 { Returns true if @e is a container with struct children }
 function HasStructChildren(e: IwbElement): boolean;
 var
@@ -1424,6 +1438,21 @@ begin
     if not Supports(Resolve(_id), IwbElement, element) then
       raise Exception.Create('Interface is not an element.');
     enum^ := Ord(GetSmashType(element));
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function IsFlags(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
+var
+  element: IwbElement;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    bool^ := NativeIsFlags(element);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
