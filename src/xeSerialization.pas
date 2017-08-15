@@ -28,19 +28,6 @@ uses
   xeMeta, xeFiles, xeElements, xeElementValues, xeMessages;
 
 {$region 'Native functions'}
-function IsFlags(element: IwbElement): Boolean;
-var
-  def: IwbNamedDef;
-  subDef: IwbSubrecordDef;
-  intDef: IwbIntegerDef;
-begin
-  def := element.Def;
-  if Supports(def, IwbSubrecordDef, subDef) then
-    def := subDef.Value;
-  Result := Supports(def, IwbIntegerDef, intDef)
-    and Supports(intDef.Formater[element], IwbFlagsDef);
-end;
-
 {$region 'ElementToJSON helpers'}
 function ValueToJson(element: IwbElement): TJSONValue;
 var
@@ -108,7 +95,7 @@ var
   container: IwbContainerElementRef;
 begin
   if Supports(element, IwbContainerElementRef, container)
-  and ((container.ElementCount > 0) or IsFlags(element)) then begin
+  and ((container.ElementCount > 0) or NativeIsFlags(element)) then begin
     if IsArray(element) then
       Result := ArrayToJson(container)
     else

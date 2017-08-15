@@ -37,6 +37,7 @@ type
   function CopyElementToRecord(const aSource: IwbElement; aMainRecord: IwbMainRecord; aAsNew, aDeepCopy: Boolean): IwbElement;
   function IsChildGroup(group: IwbGroupRecord): Boolean;
   function IsSorted(e: IwbElement): Boolean;
+  function NativeIsFlags(e: IwbElement): Boolean;
   function IsArray(element: IwbElement): Boolean;
   function IsFormID(element: IwbElement): Boolean;
   function GetFlagsDef(element: IwbElement; var flagsDef: IwbFlagsDef): Boolean;
@@ -71,6 +72,7 @@ type
   function ElementType(_id: Cardinal; enum: PByte): WordBool; cdecl;
   function DefType(_id: Cardinal; enum: PByte): WordBool; cdecl;
   function SmashType(_id: Cardinal; enum: PByte): WordBool; cdecl;
+  function IsFlags(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
   {$endregion}
 
 implementation
