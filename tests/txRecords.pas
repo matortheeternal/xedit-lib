@@ -2,6 +2,31 @@ unit txRecords;
 
 interface
 
+type
+  TConflictAll = (
+    caUnknown,
+    caOnlyOne,
+    caNoConflict,
+    caConflictBenign,
+    caOverride,
+    caConflict,
+    caConflictCritical
+  );
+  TConflictThis = (
+    ctUnknown,
+    ctIgnored,
+    ctNotDefined,
+    ctIdenticalToMaster,
+    ctOnlyOne,
+    ctHiddenByModGroup,
+    ctMaster,
+    ctConflictBenign,
+    ctOverride,
+    ctIdenticalToMasterWinsConflict,
+    ctConflictWins,
+    ctConflictLoses
+  );
+
   // PUBLIC TESTING INTERFACE
   procedure BuildRecordHandlingTests;
   procedure TestIsMaster(rec: Cardinal; expectedValue: WordBool);
@@ -74,10 +99,19 @@ begin
   ExpectEqual(b, expectedValue);
 end;
 
+procedure TestGetConflictData(nodes, element: Cardinal; ca: TConflictAll; ct: TConflictTHis);
+var
+  caResult, ctResult: Byte;
+begin
+  ExpectSuccess(GetConflictData(nodes, element, @caResult, @ctResult));
+  ExpectEqual(caResult, Ord(ca));
+  ExpectEqual(ctResult, Ord(ct));
+end;
+
 procedure BuildRecordHandlingTests;
 var
   b: WordBool;
-  skyrim, armo, ar1, dnam, ar2, ar3, kw1, kw2, kw3, h: Cardinal;
+  skyrim, armo, ar1, dnam, ar2, ar3, kw1, kw2, kw3, h, n1, n2: Cardinal;
 begin
   Describe('Record Handling', procedure
     begin
@@ -294,6 +328,54 @@ begin
           It('Should fail if a null handle is passed', procedure
             begin
               ExpectFailure(IsWinningOverride(0, @b));
+            end);
+        end);
+
+      Describe('GetNodes', procedure
+        begin
+          It('Should return a handle if argument is record', procedure
+            begin
+              ExpectSuccess(GetNodes(kw1, @h));
+              ExpectSuccess(ReleaseNodes(h));
+            end);
+
+          It('Should work with records with overrides', procedure
+            begin
+              ExpectSuccess(GetNodes(ar1, @h));
+              ExpectSuccess(ReleaseNodes(h));
+            end);
+
+          It('Should fail on elements that are not records', procedure
+            begin
+              ExpectFailure(GetNodes(skyrim, @h));
+              ExpectFailure(GetNodes(armo, @h));
+              ExpectFailure(GetNodes(dnam, @h));
+            end);
+
+          It('Should fail if a null handle is passed', procedure
+            begin
+              ExpectFailure(GetNodes(0, @h));
+            end);
+        end);
+
+      Describe('GetConflictData', procedure
+        begin
+          BeforeAll(procedure
+            begin
+              ExpectSuccess(GetNodes(kw1, @n1));
+              ExpectSuccess(GetNodes(ar1, @n2));
+            end);
+
+          It('Should work on main records', procedure
+            begin
+              TestGetConflictData(n1, kw1, caOnlyOne, ctOnlyOne);
+              TestGetConflictData(n2, ar1, caConflict, ctMaster);
+            end);
+
+          AfterAll(procedure
+            begin
+              ExpectSuccess(ReleaseNodes(n1));
+              ExpectSuccess(ReleaseNodes(n2));
             end);
         end);
     end);
