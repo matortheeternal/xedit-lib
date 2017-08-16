@@ -383,6 +383,7 @@ begin
               TestGetConflictData(n2, kw2, 'Record Header', caNoConflict, ctMaster);
               TestGetConflictData(n3, ar1, 'Record Header', caNoConflict, ctMaster);
               TestGetConflictData(n2, kw2, 'CNAM - Color', caConflictCritical, ctMaster);
+              TestGetConflictData(n3, ar1, 'OBND - Object Bounds', caConflict, ctMaster);
             end);
 
           It('Should work on value elements', procedure
@@ -391,6 +392,7 @@ begin
               TestGetConflictData(n2, kw2, 'Record Header\Signature', caNoConflict, ctMaster);
               TestGetConflictData(n3, ar1, 'Record Header\Signature', caNoConflict, ctMaster);
               TestGetConflictData(n2, kw2, 'CNAM - Color\Red', caConflictCritical, ctMaster);
+              TestGetConflictData(n3, ar1, 'OBND - Object Bounds\X1', caConflict, ctMaster);
             end);
 
           AfterAll(procedure
