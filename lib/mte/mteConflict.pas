@@ -57,6 +57,7 @@ type
     ConflictAll: TConflictAll;
     ConflictThis: TConflictThis;
     ViewNodeFlags: TViewNodeFlags;
+    ChildNodes: TArray<TViewNodeData>;
   end;
 
   // collections of node datas
@@ -65,17 +66,15 @@ type
 
   TDynViewNodeDatas = array of TViewNodeData;
 
+  // native methods
+  procedure ConflictLevelForMainRecord(const aMainRecord: IwbMainRecord; out aConflictAll: TConflictAll; out aConflictThis: TConflictThis);
+  function ConflictLevelForChildNodeDatas(const aNodeDatas: TDynViewNodeDatas; aSiblingCompare, aInjected: Boolean): TConflictAll;
+  function ConflictLevelForNodeDatas(const aNodeDatas: PViewNodeDatas; aNodeCount: Integer; aSiblingCompare, aInjected: Boolean): TConflictAll;
+  function ConflictAllForElements(e1, e2: IwbElement; aSiblingCompare, aInjected: Boolean): TConflictAll;
+
   // exposed methods
-  procedure ConflictLevelForMainRecord(const aMainRecord: IwbMainRecord;
-    out aConflictAll: TConflictAll; out aConflictThis: TConflictThis);
-  function ConflictLevelForChildNodeDatas(const aNodeDatas: TDynViewNodeDatas;
-    aSiblingCompare, aInjected: Boolean): TConflictAll;
-  function ConflictLevelForNodeDatas(const aNodeDatas: PViewNodeDatas;
-    aNodeCount: Integer; aSiblingCompare, aInjected: Boolean): TConflictAll;
-  function ConflictAllForElements(e1, e2: IwbElement; aSiblingCompare,
-    aInjected: Boolean): TConflictAll;
-  function ConflictThisForMainRecord(aMainRecord: IwbMainRecord): TConflictThis;
-  function ConflictAllForMainRecord(aMainRecord: IwbMainRecord): TConflictAll;
+  function GetRecordNodes(const aMainRecord: IwbMainRecord): TDynViewNodeDatas;
+  function FindNodeForElement(const aNodeDatas: TDynViewNodeDatas; const element: IwbElement): PViewNodeData; overload;
   function IsITPO(rec: IwbMainRecord): Boolean;
   function IsITM(rec: IwbMainRecord): Boolean;
 
@@ -91,8 +90,7 @@ begin
     NodeDatas[Pred(Length(NodeDatas))].Container := Container;
 end;
 
-function ConflictAllForElements(e1, e2: IwbElement; aSiblingCompare,
-  aInjected: Boolean): TConflictAll;
+function ConflictAllForElements(e1, e2: IwbElement; aSiblingCompare, aInjected: Boolean): TConflictAll;
 var
   NodeDatas: TDynViewNodeDatas;
 begin
@@ -314,24 +312,23 @@ begin
     end;
 end;
 
-procedure ConflictLevelForMainRecord(const aMainRecord: IwbMainRecord;
-  out aConflictAll: TConflictAll; out aConflictThis: TConflictThis);
+procedure ConflictLevelForMainRecord(const aMainRecord: IwbMainRecord; out aConflictAll: TConflictAll; out aConflictThis: TConflictThis);
 
-  procedure Fix(const aMainRecord: IwbMainRecord);
+  procedure FixConflictLevel(const aMainRecord: IwbMainRecord);
   begin
     with aMainRecord do begin
       ConflictAll := aConflictAll;
-      if ConflictThis = ctUnknown then begin
+      if ConflictThis = ctUnknown then
         ConflictThis := ctHiddenByModGroup;
-      end;
     end;
   end;
 
 var
-  NodeDatas                   : TDynViewNodeDatas;
-  i                           : Integer;
-  Master                      : IwbMainRecord;
-  KeepAliveRoot               : IwbKeepAliveRoot;
+  NodeDatas: TDynViewNodeDatas;
+  i: Integer;
+  Master: IwbMainRecord;
+  KeepAliveRoot: IwbKeepAliveRoot;
+  bIsInjected: Boolean;
 begin
   KeepAliveRoot := wbCreateKeepAliveRoot;
 
@@ -359,8 +356,11 @@ begin
       NodeDatas[1].ConflictAll := caOverride;
       NodeDatas[0].ConflictThis := ctMaster;
       NodeDatas[1].ConflictThis := ctOverride;}
-    end else
-      aConflictAll := ConflictLevelForChildNodeDatas(NodeDatas, False, (aMainRecord.MasterOrSelf.IsInjected and not (aMainRecord.Signature = 'GMST')) );
+    end
+    else begin
+      bIsInjected := aMainRecord.MasterOrSelf.IsInjected and not (aMainRecord.Signature = 'GMST');
+      aConflictAll := ConflictLevelForChildNodeDatas(NodeDatas, False, bIsInjected);
+    end;
 
     for i := Low(NodeDatas) to High(NodeDatas) do
       with NodeDatas[i] do
@@ -370,30 +370,24 @@ begin
             ConflictThis := NodeDatas[i].ConflictThis;
           end;
 
-    Fix(Master);
+    FixConflictLevel(Master);
     for i := 0 to Pred(Master.OverrideCount) do
-      Fix(Master.Overrides[i]);
+      FixConflictLevel(Master.Overrides[i]);
 
     aConflictThis := aMainRecord.ConflictThis;
   end;
 end;
 
-procedure InitChilds(const aNodeDatas: PViewNodeDatas; aNodeCount: Integer;
-  var aChildCount: Cardinal);
+procedure InitChilds(const aNodeDatas: PViewNodeDatas; aNodeCount: Integer; var aChildCount: Cardinal);
 var
-  NodeData                    : PNavNodeData;
-  Container                   : IwbContainer;
-  FirstContainer              : IwbContainer;
-  SortableContainer           : IwbSortableContainer;
-  Element                     : IwbElement;
-  i, j, k                     : Integer;
-  SortedCount                 : Integer;
-  NonSortedCount              : Integer;
-  SortedKeys                  : array of TnxFastStringListCS;
-  Sortables                   : array of IwbSortableContainer;
-  SortKey                     : string;
-  LastSortKey                 : string;
-  DupCounter                  : Integer;
+  NodeData: PNavNodeData;
+  Container, FirstContainer: IwbContainer;
+  SortableContainer: IwbSortableContainer;
+  Element: IwbElement;
+  i, j, k, SortedCount, NonSortedCount, DupCounter: Integer;
+  SortedKeys: array of TnxFastStringListCS;
+  Sortables: array of IwbSortableContainer;
+  SortKey, LastSortKey: string;
 begin
   SortedCount := 0;
   NonSortedCount := 0;
@@ -495,17 +489,13 @@ begin
     end;
 end;
 
-procedure InitNodes(const aNodeDatas: PViewNodeDatas;
-  const aParentDatas: PViewNodeDatas;
-  aNodeCount: Integer;
-  aIndex: Cardinal;
-  var aInitialStates: TVirtualNodeInitStates);
+procedure InitNodes(const aNodeDatas, aParentDatas: PViewNodeDatas; aNodeCount: Integer; aIndex: Cardinal; var aInitialStates: TVirtualNodeInitStates);
 var
-  NodeData                    : PViewNodeData;
-  ParentData                  : PViewNodeData;
-  Container                   : IwbContainerElementRef;
-  SortableContainer           : IwbSortableContainer;
-  i                           : Integer;
+  NodeData: PViewNodeData;
+  ParentData: PViewNodeData;
+  Container: IwbContainerElementRef;
+  SortableContainer: IwbSortableContainer;
+  i: Integer;
 begin
   for i := 0 to Pred(aNodeCount) do begin
     NodeData := @aNodeDatas[i];
@@ -551,17 +541,18 @@ begin
     end;
 end;
 
-function ConflictLevelForChildNodeDatas(const aNodeDatas: TDynViewNodeDatas;
-  aSiblingCompare, aInjected: Boolean): TConflictAll;
+function ConflictLevelForChildNodeDatas(const aNodeDatas: TDynViewNodeDatas; aSiblingCompare, aInjected: Boolean): TConflictAll;
 var
-  ChildCount                  : Cardinal;
-  i, j                        : Integer;
-  NodeDatas                   : TDynViewNodeDatas;
-  InitialStates               : TVirtualNodeInitStates;
-  ConflictAll                 : TConflictAll;
-  ConflictThis                : TConflictThis;
-  Element                     : IwbElement;
+  ChildCount, NodeCount: Cardinal;
+  i, j: Integer;
+  NodeDatas: TDynViewNodeDatas;
+  InitialStates: TVirtualNodeInitStates;
+  ConflictAll: TConflictAll;
+  ConflictThis: TConflictThis;
+  Element: IwbElement;
+  ChildNodeArrays: TArray<TArray<TViewNodeData>>;
 begin
+  // initialize result
   case Length(aNodeDatas) of
     0: Result := caUnknown;
     1: begin
@@ -572,66 +563,80 @@ begin
     Result := caNoConflict;
   end;
 
+  // do not build child conflict data if unnecessary
   if wbTranslationMode then begin
-    if Result < caOnlyOne then
-      Exit;
+    if Result < caOnlyOne then Exit;
   end
-  else begin
-    if Result < caNoConflict then
-      Exit;
+  else
+    if Result < caNoConflict then Exit;
+
+  // initialize children elements
+  ChildCount := 0;
+  NodeCount := Length(aNodeDatas);
+  InitChilds(@aNodeDatas[0], NodeCount, ChildCount);
+
+  // initialize node trees
+  SetLength(ChildNodeArrays, NodeCount);
+  for i := 0 to Pred(NodeCount) do begin
+    ChildNodeArrays[i] := TArray<TViewNodeData>.Create();
+    SetLength(ChildNodeArrays[i], ChildCount);
   end;
 
-  ChildCount := 0;
-  InitChilds(@aNodeDatas[0], Length(aNodeDatas), ChildCount);
-  if ChildCount > 0 then
-    for i := 0 to Pred(ChildCount) do begin
-      NodeDatas := nil;
-      SetLength(NodeDatas, Length(aNodeDatas));
-      InitialStates := [];
-      InitNodes(@NodeDatas[0], @aNodeDatas[0], Length(aNodeDatas), i, InitialStates);
-      if not (ivsDisabled in InitialStates) then begin
+  // build child conflict data
+  if ChildCount = 0 then exit; // because ChildCount is Cardinal
+  for i := 0 to Pred(ChildCount) do begin
+    NodeDatas := nil;
+    SetLength(NodeDatas, Length(aNodeDatas));
+    InitialStates := [];
+    InitNodes(@NodeDatas[0], @aNodeDatas[0], Length(aNodeDatas), i, InitialStates);
 
-        if ivsHasChildren in InitialStates then
-          ConflictAll := ConflictLevelForChildNodeDatas(NodeDatas, aSiblingCompare, aInjected)
-        else
-          ConflictAll := ConflictLevelForNodeDatas(@NodeDatas[0], Length(NodeDatas), aSiblingCompare, aInjected);
+    // if the node is not disabled, recurse
+    if not (ivsDisabled in InitialStates) then begin
+      if ivsHasChildren in InitialStates then
+        ConflictAll := ConflictLevelForChildNodeDatas(NodeDatas, aSiblingCompare, aInjected)
+      else
+        ConflictAll := ConflictLevelForNodeDatas(@NodeDatas[0], Length(NodeDatas), aSiblingCompare, aInjected);
 
-        if ConflictAll > Result then
-          Result := ConflictAll;
+      // update conflict infos
+      if ConflictAll > Result then Result := ConflictAll;
+      for j := Low(aNodeDatas) to High(aNodeDatas) do
+        if NodeDatas[j].ConflictThis > aNodeDatas[j].ConflictThis then
+          aNodeDatas[j].ConflictThis := NodeDatas[j].ConflictThis;
+    end
+    // else assign conflict this to nodes
+    else begin
+      ConflictThis := ctNotDefined;
 
-        for j := Low(aNodeDatas) to High(aNodeDatas) do
-          if NodeDatas[j].ConflictThis > aNodeDatas[j].ConflictThis then
-            aNodeDatas[j].ConflictThis := NodeDatas[j].ConflictThis;
-
-      end
-      else begin
-
-        ConflictThis := ctNotDefined;
-
-        for j := Low(aNodeDatas) to High(aNodeDatas) do begin
-          Element := aNodeDatas[j].Container;
-          if Assigned(Element) then
-            Break;
-        end;
-
-        if Assigned(Element) and (Element.ElementType in [etMainRecord, etSubRecordStruct]) then begin
-          j := (Element as IwbContainer).AdditionalElementCount;
-          if i >= j then
-            with (Element.Def as IwbRecordDef).Members[i - j] do
-              if (wbTranslationMode and (ConflictPriority[nil] <> cpTranslate)) or
-                (wbTranslationMode and (ConflictPriority[nil] = cpIgnore)) then
-                ConflictThis := ctIgnored;
-        end;
-
-        for j := Low(aNodeDatas) to High(aNodeDatas) do
-          if ConflictThis > aNodeDatas[j].ConflictThis then
-            aNodeDatas[j].ConflictThis := ConflictThis;
+      for j := Low(aNodeDatas) to High(aNodeDatas) do begin
+        Element := aNodeDatas[j].Container;
+        if Assigned(Element) then Break;
       end;
+
+      // ignore conflicts in translation mode
+      if Assigned(Element) and (Element.ElementType in [etMainRecord, etSubRecordStruct]) then begin
+        j := (Element as IwbContainer).AdditionalElementCount;
+        if i >= j then
+          with (Element.Def as IwbRecordDef).Members[i - j] do
+            if wbTranslationMode and ((ConflictPriority[nil] <> cpTranslate) or
+              (ConflictPriority[nil] = cpIgnore)) then ConflictThis := ctIgnored;
+      end;
+
+      for j := Low(aNodeDatas) to High(aNodeDatas) do
+        if ConflictThis > aNodeDatas[j].ConflictThis then
+          aNodeDatas[j].ConflictThis := ConflictThis;
     end;
+
+    // propagate child nodes to node tree
+    for j := 0 to Pred(NodeCount) do
+      ChildNodeArrays[j][i] := NodeDatas[j];
+  end;
+
+  // apply child nodes
+  for i := 0 to Pred(NodeCount) do
+    aNodeDatas[i].ChildNodes := ChildNodeArrays[i];
 end;
 
-function ConflictLevelForNodeDatas(const aNodeDatas: PViewNodeDatas;
-  aNodeCount: Integer; aSiblingCompare, aInjected: Boolean): TConflictAll;
+function ConflictLevelForNodeDatas(const aNodeDatas: PViewNodeDatas; aNodeCount: Integer; aSiblingCompare, aInjected: Boolean): TConflictAll;
 var
   Element                : IwbElement;
   CompareElement         : IwbElement;
@@ -853,22 +858,90 @@ begin
   end;
 end;
 
-function ConflictThisForMainRecord(aMainRecord: IwbMainRecord): TConflictThis;
+function GetRecordNodes(const aMainRecord: IwbMainRecord): TDynViewNodeDatas;
+
+  procedure FixConflictLevel(const aMainRecord: IwbMainRecord; aConflictAll: TConflictAll);
+  begin
+    with aMainRecord do begin
+      ConflictAll := aConflictAll;
+      if ConflictThis = ctUnknown then
+        ConflictThis := ctHiddenByModGroup;
+    end;
+  end;
+
 var
-  ct: TConflictThis;
-  ca: TConflictAll;
+  NodeDatas: TDynViewNodeDatas;
+  i: Integer;
+  Master: IwbMainRecord;
+  KeepAliveRoot: IwbKeepAliveRoot;
+  bIsInjected: Boolean;
+  aConflictAll: TConflictAll;
 begin
-  ConflictLevelForMainRecord(aMainRecord, ca, ct);
-  Result := ct;
+  KeepAliveRoot := wbCreateKeepAliveRoot;
+
+  // get conflict levels
+  Master := aMainRecord.MasterOrSelf;
+  NodeDatas := NodeDatasForMainRecord(aMainRecord);
+  if Length(NodeDatas) = 1 then begin
+    aConflictAll := caOnlyOne;
+    NodeDatas[0].ConflictAll := caOnlyOne;
+    NodeDatas[0].ConflictThis := ctOnlyOne;
+  end
+  else begin
+    bIsInjected := aMainRecord.MasterOrSelf.IsInjected and not (aMainRecord.Signature = 'GMST');
+    aConflictAll := ConflictLevelForChildNodeDatas(NodeDatas, False, bIsInjected);
+  end;
+
+  // assign conflict levels to record nodes
+  for i := Low(NodeDatas) to High(NodeDatas) do
+    with NodeDatas[i] do begin
+      ConflictAll := aConflictAll;
+      if Assigned(Element) then
+        with (Element as IwbMainRecord) do begin
+          ConflictAll := aConflictAll;
+          ConflictThis := NodeDatas[i].ConflictThis;
+        end;
+      end;
+
+  // return nodes
+  Result := NodeDatas;
 end;
 
-function ConflictAllForMainRecord(aMainRecord: IwbMainRecord): TConflictAll;
+function FindRecordNodeForElement(const aNodeDatas: TDynViewNodeDatas; const element: IwbElement): PViewNodeData;
 var
-  ct: TConflictThis;
-  ca: TConflictAll;
+  rec: IwbMainRecord;
+  i: Integer;
 begin
-  ConflictLevelForMainRecord(aMainRecord, ca, ct);
-  Result := ca;
+  rec := element.ContainingMainRecord;
+  for i := Low(aNodeDatas) to High(aNodeDatas) do begin
+    Result := @aNodeDatas[i];
+    if Result.Element.Equals(rec) then exit;
+  end;
+  Result := nil;
+end;
+
+function FindNodeForElement(const node: PViewNodeData; const element: IwbElement): PViewNodeData; overload;
+var
+  childNodes: TArray<TViewNodeData>;
+  i: Integer;
+begin
+  childNodes := node.ChildNodes;
+  for i := Low(childNodes) to High(childNodes) do begin
+    Result := @childNodes[i];
+    if Result.Element.Equals(element) then exit;
+    if Assigned(Result.Container) then begin
+      Result := FindNodeForElement(Result, element);
+      if Assigned(Result) then exit;
+    end;
+  end;
+  Result := nil;
+end;
+
+function FindNodeForElement(const aNodeDatas: TDynViewNodeDatas; const element: IwbElement): PViewNodeData; overload;
+begin
+  Result := FindRecordNodeForElement(aNodeDatas, element);
+  if not Assigned(Result) or Supports(element, IwbMainRecord) then exit;
+  Result := FindNodeForElement(Result, element);
 end;
 
 function IsITPO(rec: IwbMainRecord): Boolean;
@@ -895,8 +968,12 @@ const
     ctIdenticalToMaster,
     ctIdenticalToMasterWinsConflict
   ];
+var
+  ct: TConflictThis;
+  ca: TConflictAll;
 begin
-  Result := ConflictThisForMainRecord(rec) in ITMConflictArray;
+  ConflictLevelForMainRecord(rec, ca, ct);
+  Result := ct in ITMConflictArray;
 end;
 
 end.
