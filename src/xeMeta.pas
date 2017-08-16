@@ -3,15 +3,17 @@ unit xeMeta;
 interface
 
 uses
-  Classes, SysUtils, Generics.Collections, wbInterface, xeTypes;
+  Classes, SysUtils, Generics.Collections, wbInterface, xeTypes, mteConflict;
 
   {$region 'Native functions'}
   function Resolve(_id: Cardinal): IInterface;
+  function ResolveNodes(_id: Cardinal): TDynViewNodeDatas;
   procedure StoreList(lst: TList; len: PInteger);
   procedure SortResultArray;
   procedure GetSortedElements(container: IwbContainer; var elements: TDynElements);
   procedure StoreIfAssigned(var x: IInterface; var _res: PCardinal; var Success: WordBool);
   function Store(x: IInterface): Cardinal;
+  function StoreNodes(nodes: TDynViewNodeDatas): Cardinal; overload;
   function xStrCopy(source: WideString; dest: PWideChar; maxLen: Integer): WordBool;
   {$endregion}
 
@@ -24,6 +26,7 @@ uses
   function GetGlobals(len: PInteger): WordBool; cdecl;
   function SetSortMode(_sortBy: Byte; _reverse: WordBool): WordBool; cdecl;
   function Release(_id: Cardinal): WordBool; cdecl;
+  function ReleaseNodes(_id: Cardinal): WordBool; cdecl;
   function Switch(_id, _id2: Cardinal): WordBool; cdecl;
   function GetDuplicateHandles(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function ResetStore: WordBool; cdecl;
@@ -32,6 +35,7 @@ uses
 var
   _store: TInterfaceList;
   _releasedIDs: TList<Cardinal>;
+  _nodesStore: TList<TDynViewNodeDatas>;
   nextID: Cardinal;
   resultStr: WideString;
   resultArray: array of Cardinal;
@@ -74,6 +78,11 @@ function Resolve(_id: Cardinal): IInterface;
 begin
   if _id = 0 then raise Exception.Create('ERROR: Cannot resolve NULL reference.');
   Result := _store[_id];
+end;
+
+function ResolveNodes(_id: Cardinal): TDynViewNodeDatas;
+begin
+  Result := _nodesStore[_id];
 end;
 
 procedure StoreList(lst: TList; len: PInteger);
@@ -231,6 +240,11 @@ begin
   else
     Result := _store.Add(x);
 end;
+
+function StoreNodes(nodes: TDynViewNodeDatas): Cardinal; overload;
+begin
+  Result := _nodesStore.Add(nodes);
+end;
 {$endregion}
 
 {$region 'API functions'}
@@ -238,6 +252,7 @@ procedure InitXEdit; cdecl;
 begin
   // initialize variables
   _store := TInterfaceList.Create;
+  _nodesStore := TList<TDynViewNodeDatas>.Create;
   _releasedIDs := TList<Cardinal>.Create;
   _store.Add(nil);
   ExceptionMessage := '';
@@ -255,6 +270,7 @@ procedure CloseXEdit; cdecl;
 begin
   _releasedIDs.Free;
   _store.Free;
+  _nodesStore.Free;
   SetLength(xFiles, 0);
   xFiles := nil;
   wbFileForceClosed;
@@ -335,6 +351,17 @@ begin
     if (_id = 0) or (_id >= Cardinal(_store.Count)) then exit;
     _store[_id] := nil;
     _releasedIDs.Add(_id);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function ReleaseNodes(_id: Cardinal): WordBool; cdecl;
+begin
+  Result := False;
+  try
+    _nodesStore[_id] := nil;
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
