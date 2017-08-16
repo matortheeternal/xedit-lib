@@ -583,6 +583,7 @@ begin
   end;
 
   // build child conflict data
+  ConflictAll := Result;
   if ChildCount = 0 then exit; // because ChildCount is Cardinal
   for i := 0 to Pred(ChildCount) do begin
     NodeDatas := nil;
@@ -599,11 +600,13 @@ begin
 
       // update conflict infos
       if ConflictAll > Result then Result := ConflictAll;
-      for j := Low(aNodeDatas) to High(aNodeDatas) do
+      for j := Low(aNodeDatas) to High(aNodeDatas) do begin
+        NodeDatas[j].ConflictAll := ConflictAll;
         if NodeDatas[j].ConflictThis > aNodeDatas[j].ConflictThis then
           aNodeDatas[j].ConflictThis := NodeDatas[j].ConflictThis;
+      end;
     end
-    // else assign conflict this to nodes
+    // else assign conflict status to nodes
     else begin
       ConflictThis := ctNotDefined;
 
@@ -621,9 +624,11 @@ begin
               (ConflictPriority[nil] = cpIgnore)) then ConflictThis := ctIgnored;
       end;
 
-      for j := Low(aNodeDatas) to High(aNodeDatas) do
+      for j := Low(aNodeDatas) to High(aNodeDatas) do begin
+        NodeDatas[j].ConflictAll := ConflictAll;
         if ConflictThis > aNodeDatas[j].ConflictThis then
           aNodeDatas[j].ConflictThis := ConflictThis;
+      end;
     end;
 
     // propagate child nodes to node tree
@@ -938,10 +943,13 @@ begin
 end;
 
 function FindNodeForElement(const aNodeDatas: TDynViewNodeDatas; const element: IwbElement): PViewNodeData; overload;
+var
+  elementNode: PViewNodeData;
 begin
   Result := FindRecordNodeForElement(aNodeDatas, element);
   if not Assigned(Result) or Supports(element, IwbMainRecord) then exit;
-  Result := FindNodeForElement(Result, element);
+  elementNode := FindNodeForElement(Result, element);
+  if Assigned(elementNode) then Result := elementNode;
 end;
 
 function IsITPO(rec: IwbMainRecord): Boolean;
