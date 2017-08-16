@@ -516,6 +516,7 @@ begin
     if not Supports(Resolve(_id2), IwbElement, element) then
       raise Exception.Create('Interface must be an element.');
     node := FindNodeForElement(nodeDatas, element);
+    if not Assigned(node) then exit;
     conflictAll^ := Ord(node.ConflictAll);
     conflictThis^ := Ord(node.ConflictThis);
     Result := True;

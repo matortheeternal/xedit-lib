@@ -99,10 +99,13 @@ begin
   ExpectEqual(b, expectedValue);
 end;
 
-procedure TestGetConflictData(nodes, element: Cardinal; ca: TConflictAll; ct: TConflictTHis);
+procedure TestGetConflictData(nodes, element: Cardinal; path: PWideChar; ca: TConflictAll; ct: TConflictTHis);
 var
   caResult, ctResult: Byte;
+  h: Cardinal;
 begin
+  if path <> '' then
+    ExpectSuccess(GetElement(element, path, @element));
   ExpectSuccess(GetConflictData(nodes, element, @caResult, @ctResult));
   ExpectEqual(caResult, Ord(ca));
   ExpectEqual(ctResult, Ord(ct));
@@ -111,7 +114,7 @@ end;
 procedure BuildRecordHandlingTests;
 var
   b: WordBool;
-  skyrim, armo, ar1, dnam, ar2, ar3, kw1, kw2, kw3, h, n1, n2: Cardinal;
+  skyrim, armo, ar1, dnam, ar2, ar3, kw1, kw2, kw3, h, n1, n2, n3: Cardinal;
 begin
   Describe('Record Handling', procedure
     begin
@@ -363,13 +366,31 @@ begin
           BeforeAll(procedure
             begin
               ExpectSuccess(GetNodes(kw1, @n1));
-              ExpectSuccess(GetNodes(ar1, @n2));
+              ExpectSuccess(GetNodes(kw2, @n2));
+              ExpectSuccess(GetNodes(ar1, @n3));
             end);
 
           It('Should work on main records', procedure
             begin
-              TestGetConflictData(n1, kw1, caOnlyOne, ctOnlyOne);
-              TestGetConflictData(n2, ar1, caConflict, ctMaster);
+              TestGetConflictData(n1, kw1, '', caOnlyOne, ctOnlyOne);
+              TestGetConflictData(n2, kw2, '', caConflictCritical, ctMaster);
+              TestGetConflictData(n3, ar1, '', caConflict, ctMaster);
+            end);
+
+          It('Should work on struct elements', procedure
+            begin
+              TestGetConflictData(n1, kw1, 'Record Header', caOnlyOne, ctOnlyOne);
+              TestGetConflictData(n2, kw2, 'Record Header', caNoConflict, ctMaster);
+              TestGetConflictData(n3, ar1, 'Record Header', caNoConflict, ctMaster);
+              TestGetConflictData(n2, kw2, 'CNAM - Color', caConflictCritical, ctMaster);
+            end);
+
+          It('Should work on value elements', procedure
+            begin
+              TestGetConflictData(n1, kw1, 'Record Header\Signature', caOnlyOne, ctOnlyOne);
+              TestGetConflictData(n2, kw2, 'Record Header\Signature', caNoConflict, ctMaster);
+              TestGetConflictData(n3, ar1, 'Record Header\Signature', caNoConflict, ctMaster);
+              TestGetConflictData(n2, kw2, 'CNAM - Color\Red', caConflictCritical, ctMaster);
             end);
 
           AfterAll(procedure
