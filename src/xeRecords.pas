@@ -24,8 +24,8 @@ uses
   function IsInjected(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
   function IsOverride(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
   function IsWinningOverride(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
-  function ConflictAll(_id: Cardinal; enum: PByte): WordBool; cdecl;
-  function ConflictThis(_id: Cardinal; enum: PByte): WordBool; cdecl;
+  function GetNodes(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
+  function GetConflictData(_id: Cardinal; _id2: Cardinal; conflictAll, conflictThis: PByte): WordBool; cdecl;
   {$endregion}
 
 implementation
@@ -487,30 +487,37 @@ begin
   end;
 end;
 
-function ConflictAll(_id: Cardinal; enum: PByte): WordBool; cdecl;
+function GetNodes(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 var
   rec: IwbMainRecord;
+  NodeDatas: TDynViewNodeDatas;
 begin
   Result := False;
   try
     if not Supports(Resolve(_id), IwbMainRecord, rec) then
       raise Exception.Create('Interface must be a main record.');
-    enum^ := Ord(ConflictAllForMainRecord(rec));
+    NodeDatas := GetRecordNodes(rec);
+    _res^ := StoreNodes(NodeDatas);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
 end;
 
-function ConflictThis(_id: Cardinal; enum: PByte): WordBool; cdecl;
+function GetConflictData(_id: Cardinal; _id2: Cardinal; conflictAll, conflictThis: PByte): WordBool; cdecl;
 var
-  rec: IwbMainRecord;
+  nodeDatas: TDynViewNodeDatas;
+  element: IwbElement;
+  node: PViewNodeData;
 begin
   Result := False;
   try
-    if not Supports(Resolve(_id), IwbMainRecord, rec) then
-      raise Exception.Create('Interface must be a main record.');
-    enum^ := Ord(ConflictThisForMainRecord(rec));
+    nodeDatas := ResolveNodes(_id);
+    if not Supports(Resolve(_id2), IwbElement, element) then
+      raise Exception.Create('Interface must be an element.');
+    node := FindNodeForElement(nodeDatas, element);
+    conflictAll^ := Ord(node.ConflictAll);
+    conflictThis^ := Ord(node.ConflictThis);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);

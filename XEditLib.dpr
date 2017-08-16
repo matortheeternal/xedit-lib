@@ -43,7 +43,7 @@ const
 exports
   // META METHODS
   InitXEdit, CloseXEdit, GetResultString, GetResultArray, GetGlobal, GetGlobals,
-  SetSortMode, Release, Switch, GetDuplicateHandles, ResetStore,
+  SetSortMode, Release, ReleaseNodes, Switch, GetDuplicateHandles, ResetStore,
   // MESSAGE METHODS
   GetMessagesLength, GetMessages, ClearMessages, GetExceptionMessageLength,
   GetExceptionMessage,
@@ -73,7 +73,7 @@ exports
   // RECORD HANDLING METHODS
   GetFormID, SetFormID, GetRecords, GetOverrides, GetReferencedBy, GetMaster,
   FindNextRecord, FindPreviousRecord, ExchangeReferences, IsMaster, IsInjected,
-  IsOverride, IsWinningOverride, ConflictThis, ConflictAll;
+  IsOverride, IsWinningOverride, GetNodes, GetConflictData;
 
 begin
   IsMultiThread := True;
