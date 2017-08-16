@@ -933,7 +933,7 @@ begin
   childNodes := node.ChildNodes;
   for i := Low(childNodes) to High(childNodes) do begin
     Result := @childNodes[i];
-    if Result.Element.Equals(element) then exit;
+    if Assigned(Result.Element) and Result.Element.Equals(element) then exit;
     if Assigned(Result.Container) then begin
       Result := FindNodeForElement(Result, element);
       if Assigned(Result) then exit;
