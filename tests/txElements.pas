@@ -621,6 +621,11 @@ begin
               ExpectSuccess(SetSortMode(1, False));
               ExpectSuccess(GetElements(0, 'Skyrim.esm', True, @len));
               TestNames(gra(len), 'File Header', 'Weather');
+              ExpectSuccess(GetElements(0, '', True, @len));
+              TestNames(gra(len), 'Skyrim.esm', 'NewFile-1.esp');
+              ExpectSuccess(SetSortMode(1, True));
+              ExpectSuccess(GetElements(0, '', True, @len));
+              TestNames(gra(len), 'NewFile-1.esp', 'Skyrim.esm');
             end);
 
           It('Should not include child groups', procedure
