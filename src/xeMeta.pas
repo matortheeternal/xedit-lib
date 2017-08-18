@@ -168,7 +168,7 @@ begin
     if reverse then begin
       count := sl.Count;
       for i := Low(resultArray) to High(resultArray) do
-        resultArray[count - i] := Cardinal(sl.Objects[i]);
+        resultArray[count - i - 1] := Cardinal(sl.Objects[i]);
     end
     else
       for i := Low(resultArray) to High(resultArray) do
