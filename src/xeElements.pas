@@ -974,6 +974,7 @@ var
   def: IwbNamedDef;
   subDef: IwbSubRecordDef;
   stringDef: IwbStringDef;
+  intDef: IwbIntegerDef;
 begin
   def := element.Def;
   if Supports(def, IwbSubRecordDef, subDef) then
@@ -985,10 +986,7 @@ begin
     dtSubRecordArray, dtArray:
       Result := vtArray;
     dtSubRecordStruct, dtStruct:
-      if NativeIsFlags(element) then
-        Result := vtFlags
-      else
-        Result := vtStruct;
+      Result := vtStruct;
     dtString, dtLString, dtLenString:
       if Supports(def, IwbStringDef, stringDef) and (stringDef.GetStringSize > 255) then
         Result := vtText
@@ -999,6 +997,9 @@ begin
     dtInteger, dtIntegerFormater, dtIntegerFormaterUnion, dtFloat:
       if Supports(def, IwbFormID) then
         Result := vtReference
+      else if Supports(def, IwbIntegerDef, intDef)
+      and Supports(intDef.Formater[element], IwbFlagsDef) then
+        Result := vtFlags   
       else
         Result := vtNumber;
     else
