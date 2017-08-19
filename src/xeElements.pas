@@ -14,6 +14,8 @@ type
     stStruct, stUnsortedArray, stUnsortedStructArray, stSortedArray,
     stSortedStructArray, stByteArray, stUnion );
   TSmashTypes = set of TSmashType;
+  TValueType = ( vtUnknown, vtBytes, vtNumber, vtString, vtText, vtReference, vtFlags,
+    vtColor, vtArray, vtStruct );
 
   {$region 'Native functions'}
   function ResolveRecord(group: IwbGroupRecord; key, nextPath: String): IInterface;
@@ -72,7 +74,7 @@ type
   function ElementType(_id: Cardinal; enum: PByte): WordBool; cdecl;
   function DefType(_id: Cardinal; enum: PByte): WordBool; cdecl;
   function SmashType(_id: Cardinal; enum: PByte): WordBool; cdecl;
-  function IsFlags(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
+  function ValueType(_id: Cardinal; enum: PByte): WordBool; cdecl;
   {$endregion}
 
 implementation
@@ -929,21 +931,20 @@ begin
   if Supports(element.Def, IwbSubRecordDef, subDef) then
     dt := subDef.Value.DefType;
 
-  case Ord(dt) of
-    Ord(dtRecord): Result := stRecord;
-    Ord(dtSubRecord): Result := stUnknown;
-    Ord(dtSubRecordStruct): Result := stStruct;
-    Ord(dtSubRecordUnion): Result := stUnion;
-    Ord(dtString): Result := stString;
-    Ord(dtLString): Result := stString;
-    Ord(dtLenString): Result := stString;
-    Ord(dtByteArray): Result := stByteArray;
-    Ord(dtInteger): Result := stInteger;
-    Ord(dtIntegerFormater): Result := stInteger;
-    Ord(dtIntegerFormaterUnion): Result := stInteger;
-    Ord(dtFlag): Result := stFlag;
-    Ord(dtFloat): Result := stFloat;
-    Ord(dtSubRecordArray), Ord(dtArray): begin
+  case dt of
+    dtRecord:
+      Result := stRecord;
+    dtString, dtLString, dtLenString:
+      Result := stString;
+    dtByteArray:
+      Result := stByteArray;
+    dtInteger, dtIntegerFormater, dtIntegerFormaterUnion:
+      Result := stInteger;
+    dtFlag:
+      Result := stFlag;
+    dtFloat:
+      Result := stFloat;
+    dtSubRecordArray, dtArray: begin
       bIsSorted := IsSorted(element);
       bHasStructChildren := HasStructChildren(element);
       if bIsSorted then begin
@@ -959,11 +960,51 @@ begin
           Result := stUnsortedArray;
       end;
     end;
-    Ord(dtStruct): Result := stStruct;
-    Ord(dtUnion): Result := stUnion;
-    Ord(dtEmpty): Result := stUnknown;
-    Ord(dtStructChapter): Result := stStruct;
-    else Result := stUnknown;
+    dtSubRecordStruct, dtStruct, dtStructChapter:
+      Result := stStruct;
+    dtSubRecordUnion, dtUnion:
+      Result := stUnion;
+    else
+      Result := stUnknown;
+  end;
+end;
+
+function GetValueType(element: IwbElement): TValueType;
+var
+  subDef: IwbSubRecordDef;
+  dt: TwbDefType;
+  stringDef: IwbStringDef;
+  size: Integer;
+begin
+  dt := element.Def.DefType;
+  if Supports(element.Def, IwbSubRecordDef, subDef) then
+    dt := subDef.Value.DefType;
+  if Supports(element.Def, IwbUnionDef) then
+    dt := element.ValueDef.DefType;
+
+  case dt of
+    dtSubRecordArray, dtArray:
+      Result := vtArray;
+    dtSubRecordStruct, dtStruct:
+      if NativeIsFlags(element) then
+        Result := vtFlags
+      else
+        Result := vtStruct;
+    dtString, dtLString, dtLenString: begin
+      size := 0;
+      if Supports(element.Def, IwbStringDef, stringDef) then
+        size := stringDef.GetStringSize;
+      if size > 255 then
+        Result := vtText
+      else
+        Result := vtString;
+    end;
+    dtByteArray:
+      Result := vtBytes;
+    dtInteger, dtIntegerFormater, dtIntegerFormaterUnion, dtFloat:
+      Result := vtNumber;
+    else
+      Result := vtUnknown;
   end;
 end;
 {$endregion}
@@ -1443,6 +1484,21 @@ begin
     if not Supports(Resolve(_id), IwbElement, element) then
       raise Exception.Create('Interface is not an element.');
     enum^ := Ord(GetSmashType(element));
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function ValueType(_id: Cardinal; enum: PByte): WordBool; cdecl;
+var
+  element: IwbElement;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    enum^ := Ord(GetValueType(element));
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);

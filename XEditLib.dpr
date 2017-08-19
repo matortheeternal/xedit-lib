@@ -60,7 +60,7 @@ exports
   GetElements, GetDefNames, GetContainer, GetElementFile, GetElementRecord,
   GetLinksTo, ElementCount, ElementEquals, ElementMatches, HasArrayItem, GetArrayItem,
   AddArrayItem, RemoveArrayItem, MoveArrayItem, CopyElement, GetSignatureAllowed,
-  SortKey, ElementType, DefType, SmashType, IsFlags,
+  SortKey, ElementType, DefType, SmashType, ValueType,
   // ERROR CHECKING METHODS
   CheckForErrors, GetErrorThreadDone, GetErrors,
   // SERIALIZATION METHODS
