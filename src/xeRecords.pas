@@ -26,6 +26,7 @@ uses
   function IsWinningOverride(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
   function GetNodes(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function GetConflictData(_id: Cardinal; _id2: Cardinal; conflictAll, conflictThis: PByte): WordBool; cdecl;
+  function GetNodeElements(_id: Cardinal; _id2: Cardinal; len: PInteger): WordBool; cdecl;
   {$endregion}
 
 implementation
@@ -519,6 +520,35 @@ begin
     if not Assigned(node) then exit;
     conflictAll^ := Ord(node.ConflictAll);
     conflictThis^ := Ord(node.ConflictThis);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetNodeElements(_id: Cardinal; _id2: Cardinal; len: PInteger): WordBool; cdecl;
+var
+  nodeDatas: TDynViewNodeDatas;
+  element: IwbElement;
+  node: PViewNodeData;
+  i: Integer;
+begin
+  Result := False;
+  try
+    nodeDatas := ResolveNodes(_id);
+    if not Supports(Resolve(_id2), IwbElement, element) then
+      raise Exception.Create('Interface must be an element.');
+    node := FindNodeForElement(nodeDatas, element);
+    if not Assigned(node) then exit;
+    len^ := Length(node.ChildNodes);
+    SetLength(resultArray, len^);
+    for i := Low(node.ChildNodes) to High(node.ChildNodes) do begin
+      element := node.ChildNodes[i].Element;
+      if Assigned(element) then
+        resultArray[i] := Store(element)
+      else
+        resultArray[i] := 0;
+    end;
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
