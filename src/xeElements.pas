@@ -971,18 +971,17 @@ end;
 
 function GetValueType(element: IwbElement): TValueType;
 var
+  def: IwbNamedDef;
   subDef: IwbSubRecordDef;
-  dt: TwbDefType;
   stringDef: IwbStringDef;
-  size: Integer;
 begin
-  dt := element.Def.DefType;
-  if Supports(element.Def, IwbSubRecordDef, subDef) then
-    dt := subDef.Value.DefType;
-  if Supports(element.Def, IwbUnionDef) then
-    dt := element.ValueDef.DefType;
+  def := element.Def;
+  if Supports(def, IwbSubRecordDef, subDef) then
+    def := subDef.Value;
+  if Supports(def, IwbUnionDef) then
+    def := element.ValueDef;
 
-  case dt of
+  case def.DefType of
     dtSubRecordArray, dtArray:
       Result := vtArray;
     dtSubRecordStruct, dtStruct:
@@ -990,19 +989,18 @@ begin
         Result := vtFlags
       else
         Result := vtStruct;
-    dtString, dtLString, dtLenString: begin
-      size := 0;
-      if Supports(element.Def, IwbStringDef, stringDef) then
-        size := stringDef.GetStringSize;
-      if size > 255 then
+    dtString, dtLString, dtLenString:
+      if Supports(def, IwbStringDef, stringDef) and (stringDef.GetStringSize > 255) then
         Result := vtText
       else
         Result := vtString;
-    end;
     dtByteArray:
       Result := vtBytes;
     dtInteger, dtIntegerFormater, dtIntegerFormaterUnion, dtFloat:
-      Result := vtNumber;
+      if Supports(def, IwbFormID) then
+        Result := vtReference
+      else
+        Result := vtNumber;
     else
       Result := vtUnknown;
   end;
