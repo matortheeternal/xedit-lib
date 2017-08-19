@@ -903,6 +903,16 @@ begin
     and Supports(intDef.Formater[element], IwbFormID);
 end;
 
+function IsColorDef(def: IwbNamedDef): Boolean;
+var
+  structDef: IwbStructDef;
+begin
+  Result := Supports(def, IwbStructDef, structDef) and
+    (structDef.Members[0].Name = 'Red') and
+    (structDef.Members[1].Name = 'Green') and
+    (structDef.Members[2].Name = 'Blue');
+end;
+
 function GetFlagsDef(element: IwbElement; var flagsDef: IwbFlagsDef): Boolean;
 var
   intDef: IwbIntegerDef;
@@ -986,7 +996,10 @@ begin
     dtSubRecordArray, dtArray:
       Result := vtArray;
     dtSubRecordStruct, dtStruct:
-      Result := vtStruct;
+      if IsColorDef(def) then
+        Result := vtColor
+      else
+        Result := vtStruct;
     dtString, dtLString, dtLenString:
       if Supports(def, IwbStringDef, stringDef) and (stringDef.GetStringSize > 255) then
         Result := vtText
