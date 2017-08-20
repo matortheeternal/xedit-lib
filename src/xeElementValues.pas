@@ -38,6 +38,7 @@ uses
   function GetAllFlags(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
   function GetEnabledFlags(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
   function SetEnabledFlags(_id: Cardinal; path, flags: PWideChar): WordBool; cdecl;
+  function GetEnumOptions(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
   function SignatureFromName(name: PWideChar; len: PInteger): WordBool; cdecl;
   function NameFromSignature(sig: PWideChar; len: PInteger): WordBool; cdecl;
   function GetSignatureNameMap(len: PInteger): WordBool; cdecl;
@@ -629,6 +630,40 @@ begin
       Result := True;
     finally
       slFlags.Free;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+{$endregion}
+
+{$region 'Enum functions'}
+function GetEnumOptions(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
+var
+  slOptions: TStringList;
+  element: IwbElement;
+  enumDef: IwbEnumDef;
+  i: Integer;
+begin
+  Result := False;
+  try
+    slOptions := TStringList.Create;
+    slOptions.StrictDelimiter := True;
+    slOptions.Delimiter := ',';
+
+    try
+      element := NativeGetElementEx(_id, path);
+      if not GetEnumDef(element, enumDef) then
+        raise Exception.Create('Element does not have enumeration');
+      for i := 0 to Pred(enumDef.NameCount) do
+        slOptions.Add(enumDef.Names[i]);
+
+      // set output
+      resultStr := slOptions.DelimitedText;
+      len^ := Length(resultStr);
+      Result := True;
+    finally
+      slOptions.Free;
     end;
   except
     on x: Exception do ExceptionHandler(x);

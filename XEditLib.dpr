@@ -68,7 +68,7 @@ exports
   // ELEMENT VALUE METHODS
   Name, LongName, DisplayName, Path, Signature, GetValue, SetValue, GetIntValue,
   SetIntValue, GetUIntValue, SetUIntValue, GetFloatValue, SetFloatValue,
-  GetFlag, SetFlag, GetEnabledFlags, SetEnabledFlags, GetAllFlags,
+  GetFlag, SetFlag, GetEnabledFlags, SetEnabledFlags, GetAllFlags, GetEnumOptions,
   SignatureFromName, NameFromSignature, GetSignatureNameMap,
   // RECORD HANDLING METHODS
   GetFormID, SetFormID, GetRecords, GetOverrides, GetReferencedBy, GetMaster,
