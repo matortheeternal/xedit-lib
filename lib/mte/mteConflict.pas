@@ -212,7 +212,7 @@ begin
       end;
   end;
 
-  if (Length(Result) > 1) and ({ModGroupsEnabled or }AnyHidden) or IsNonOverride then begin
+  if (Length(Result) > 0) and ({ModGroupsEnabled or }AnyHidden) or IsNonOverride then begin
 
     Records := TStringList.Create;
     try
@@ -563,13 +563,6 @@ begin
     Result := caNoConflict;
   end;
 
-  // do not build child conflict data if unnecessary
-  if wbTranslationMode then begin
-    if Result < caOnlyOne then Exit;
-  end
-  else
-    if Result < caNoConflict then Exit;
-
   // initialize children elements
   ChildCount := 0;
   NodeCount := Length(aNodeDatas);
@@ -887,15 +880,8 @@ begin
   // get conflict levels
   Master := aMainRecord.MasterOrSelf;
   NodeDatas := NodeDatasForMainRecord(aMainRecord);
-  if Length(NodeDatas) = 1 then begin
-    aConflictAll := caOnlyOne;
-    NodeDatas[0].ConflictAll := caOnlyOne;
-    NodeDatas[0].ConflictThis := ctOnlyOne;
-  end
-  else begin
-    bIsInjected := aMainRecord.MasterOrSelf.IsInjected and not (aMainRecord.Signature = 'GMST');
-    aConflictAll := ConflictLevelForChildNodeDatas(NodeDatas, False, bIsInjected);
-  end;
+  bIsInjected := aMainRecord.MasterOrSelf.IsInjected and not (aMainRecord.Signature = 'GMST');
+  aConflictAll := ConflictLevelForChildNodeDatas(NodeDatas, False, bIsInjected);
 
   // assign conflict levels to record nodes
   for i := Low(NodeDatas) to High(NodeDatas) do
