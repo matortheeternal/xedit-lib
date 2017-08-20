@@ -15,7 +15,7 @@ type
     stSortedStructArray, stByteArray, stUnion );
   TSmashTypes = set of TSmashType;
   TValueType = ( vtUnknown, vtBytes, vtNumber, vtString, vtText, vtReference, vtFlags,
-    vtColor, vtArray, vtStruct );
+    vtEnum, vtColor, vtArray, vtStruct );
 
   {$region 'Native functions'}
   function ResolveRecord(group: IwbGroupRecord; key, nextPath: String): IInterface;
@@ -43,6 +43,7 @@ type
   function IsArray(element: IwbElement): Boolean;
   function IsFormID(element: IwbElement): Boolean;
   function GetFlagsDef(element: IwbElement; var flagsDef: IwbFlagsDef): Boolean;
+  function GetEnumDef(element: IwbElement; var enumDef: IwbEnumDef): Boolean;
   function GetDefType(element: IwbElement): TwbDefType;
   function GetSmashType(element: IwbElement): TSmashType;
   {$endregion}
@@ -921,6 +922,14 @@ begin
     and Supports(intDef.Formater[element], IwbFlagsDef, flagsDef);
 end;
 
+function GetEnumDef(element: IwbElement; var enumDef: IwbEnumDef): Boolean;
+var
+  intDef: IwbIntegerDef;
+begin
+  Result := Supports(element.ValueDef, IwbIntegerDef, intDef)
+    and Supports(intDef.Formater[element], IwbEnumDef, enumDef);
+end;
+
 function GetDefType(element: IwbElement): TwbDefType;
 var
   subDef: IwbSubRecordDef;
@@ -983,7 +992,6 @@ function GetValueType(element: IwbElement): TValueType;
 var
   def: IwbNamedDef;
   subDef: IwbSubRecordDef;
-  stringDef: IwbStringDef;
   intDef: IwbIntegerDef;
 begin
   def := element.Def;
@@ -1000,21 +1008,26 @@ begin
         Result := vtColor
       else
         Result := vtStruct;
-    dtString, dtLString, dtLenString:
-      if Supports(def, IwbStringDef, stringDef) and (stringDef.GetStringSize > 255) then
+    dtString, dtLenString:
+      Result := vtString;
+    dtLString:
+      if Pos('Name', element.Name) = 0 then
         Result := vtText
       else
         Result := vtString;
     dtByteArray:
       Result := vtBytes;
-    dtInteger, dtIntegerFormater, dtIntegerFormaterUnion, dtFloat:
-      if Supports(def, IwbFormID) then
-        Result := vtReference
-      else if Supports(def, IwbIntegerDef, intDef)
-      and Supports(intDef.Formater[element], IwbFlagsDef) then
-        Result := vtFlags   
-      else
-        Result := vtNumber;
+    dtInteger, dtIntegerFormater, dtIntegerFormaterUnion, dtFloat: begin
+      Result := vtNumber;
+      if Supports(def, IwbIntegerDef, intDef) then begin
+        if Supports(intDef.Formater[element], IwbFormID) then
+          Result := vtReference
+        else if Supports(intDef.Formater[element], IwbFlagsDef) then
+          Result := vtFlags
+        else if Supports(intDef.Formater[element], IwbEnumDef) then
+          Result := vtEnum;
+      end;
+    end
     else
       Result := vtUnknown;
   end;
