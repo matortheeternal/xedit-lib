@@ -71,6 +71,9 @@ type
   function MoveArrayItem(_id: Cardinal; index: Integer): WordBool; cdecl;
   function CopyElement(_id, _id2: Cardinal; aAsNew: WordBool; _res: PCardinal): WordBool; cdecl;
   function GetSignatureAllowed(_id: Cardinal; sig: PWideChar; bool: PWordBool): WordBool; cdecl;
+  function GetIsModified(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
+  function GetIsEditable(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
+  function GetIsRemoveable(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
   function SortKey(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function ElementType(_id: Cardinal; enum: PByte): WordBool; cdecl;
   function DefType(_id: Cardinal; enum: PByte): WordBool; cdecl;
@@ -1448,6 +1451,51 @@ begin
       bool^ := NativeGetSignatureAllowed(formDef, StrToSignature(string(sig)))
     else
       bool^ := true;
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetIsModified(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
+var
+  element: IwbElement;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    bool^ := element.Modified;
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetIsEditable(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
+var
+  element: IwbElement;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    bool^ := element.IsEditable;
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetIsRemoveable(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
+var
+  element: IwbElement;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    bool^ := element.IsRemoveable;
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
