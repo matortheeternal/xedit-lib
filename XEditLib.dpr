@@ -61,7 +61,7 @@ exports
   GetElementRecord, GetLinksTo, ElementCount, ElementEquals, ElementMatches,
   HasArrayItem, GetArrayItem, AddArrayItem, RemoveArrayItem, MoveArrayItem,
   CopyElement, GetSignatureAllowed, GetIsModified, GetIsEditable, GetIsRemoveable,
-  SortKey, ElementType, DefType, SmashType, ValueType,
+  GetCanAdd, SortKey, ElementType, DefType, SmashType, ValueType,
   // ERROR CHECKING METHODS
   CheckForErrors, GetErrorThreadDone, GetErrors,
   // SERIALIZATION METHODS

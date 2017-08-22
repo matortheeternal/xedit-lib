@@ -75,6 +75,7 @@ type
   function GetIsModified(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
   function GetIsEditable(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
   function GetIsRemoveable(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
+  function GetCanAdd(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
   function SortKey(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function ElementType(_id: Cardinal; enum: PByte): WordBool; cdecl;
   function DefType(_id: Cardinal; enum: PByte): WordBool; cdecl;
@@ -854,6 +855,21 @@ begin
     end;
 end;
 
+function NativeGetCanAdd(element: IwbElement): Boolean;
+var
+  eContainer: IwbContainer;
+begin
+  Result := False;
+  eContainer := element.Container;
+  if Assigned(eContainer) then begin
+    if not eContainer.IsElementEditable(element) then
+      exit;
+  end
+  else if not element.IsEditable then
+    exit;
+  Result := not (esNotSuitableToAddTo in element.ElementStates);
+end;
+
 {$region 'Def/type helpers'}
 function IsChildGroup(group: IwbGroupRecord): Boolean;
 begin
@@ -1518,6 +1534,21 @@ begin
     if not Supports(Resolve(_id), IwbElement, element) then
       raise Exception.Create('Interface is not an element.');
     bool^ := element.IsRemoveable;
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetCanAdd(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
+var
+  element: IwbElement;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    bool^ := NativeGetCanAdd(element);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
