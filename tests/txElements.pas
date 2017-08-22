@@ -1176,6 +1176,27 @@ begin
               ExpectEqual(b, False);
             end);
         end);
+
+      Describe('GetAddList', procedure
+        begin
+          It('Should return add list for editable files', procedure
+            begin
+              ExpectSuccess(GetElement(0, 'Update.esm', @h));
+              ExpectSuccess(GetAddList(h, @len));
+              Expect(Length(grs(len)) > 0, 'Should return a string');
+            end);
+
+          It('Should return add list for editable groups', procedure
+            begin
+              ExpectSuccess(GetAddList(armo2, @len));
+              ExpectEqual(grs(len), 'ARMO - Armor');
+            end);
+
+          It('Should fail on uneditable files', procedure
+            begin
+              ExpectFailure(GetAddList(skyrim, @len));
+            end);
+        end);
     end);
 end;
 
