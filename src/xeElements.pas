@@ -56,6 +56,7 @@ type
   function RemoveElementOrParent(_id: Cardinal): WordBool; cdecl;
   function GetElements(_id: Cardinal; key: PWideChar; sort: WordBool; len: PInteger): WordBool; cdecl;
   function GetDefNames(_id: Cardinal; len: PInteger): WordBool; cdecl;
+  function GetAddList(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function GetLinksTo(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
   function GetElementIndex(_id: Cardinal; index: PInteger): WordBool; cdecl;
   function GetContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
@@ -1177,6 +1178,27 @@ begin
     finally
       sl.Free;
     end;
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetAddList(_id: Cardinal; len: PInteger): WordBool; cdecl;
+var
+  container: IwbContainer;
+  strings: TDynStrings;
+  i: Integer;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbContainer, container) then
+      raise Exception.Create('Interface is not an container.');
+    strings := container.GetAddList;
+    resultStr := strings[0];
+    for i := Low(strings) + 1 to High(strings) do
+      resultStr := resultStr + ',' + strings[i];
+    len^ := Length(resultStr);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
