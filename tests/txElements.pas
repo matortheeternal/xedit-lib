@@ -1137,9 +1137,43 @@ begin
               ExpectFailure(GetSignatureAllowed(ar1, 'BODT', @b));
               ExpectFailure(GetSignatureAllowed(keywords, 'KYWD', @b));
             end);
+
           It('Should raise an exception if element can''t hold formIDs', procedure
             begin
               ExpectFailure(GetSignatureAllowed(dnam, 'ARMO', @b));
+            end);
+        end);
+
+      Describe('GetCanAdd', procedure
+        begin
+          It('Should return true for editable files', procedure
+            begin
+              ExpectSuccess(GetElement(0, 'Update.esm', @h));
+              ExpectSuccess(GetCanAdd(h, @b));
+              ExpectEqual(b, True);
+              ExpectSuccess(GetCanAdd(xt3, @b));
+              ExpectEqual(b, True);
+            end);
+
+          It('Should return true for editable groups', procedure
+            begin
+              ExpectSuccess(GetElement(0, 'Update.esm\ARMO', @h));
+              ExpectSuccess(GetCanAdd(h, @b));
+              ExpectEqual(b, True);
+              ExpectSuccess(GetCanAdd(armo2, @b));
+              ExpectEqual(b, True);
+            end);
+
+          It('Should return false for uneditable files', procedure
+            begin
+              ExpectSuccess(GetCanAdd(skyrim, @b));
+              ExpectEqual(b, False);
+            end);
+
+          It('Should return false for uneditable groups', procedure
+            begin
+              ExpectSuccess(GetCanAdd(armo1, @b));
+              ExpectEqual(b, False);
             end);
         end);
     end);
