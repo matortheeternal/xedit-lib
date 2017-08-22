@@ -1197,7 +1197,7 @@ begin
     strings := container.GetAddList;
     resultStr := strings[0];
     for i := Low(strings) + 1 to High(strings) do
-      resultStr := resultStr + ',' + strings[i];
+      resultStr := resultStr + #13#10 + strings[i];
     len^ := Length(resultStr);
     Result := True;
   except
