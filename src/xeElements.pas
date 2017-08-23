@@ -328,8 +328,11 @@ begin
   // else resolve by group signature
   if ParseIndex(key, index) then
     Result := ResolveByIndex(_file as IwbContainerElementRef, index, nextPath)
-  else if key = 'File Header' then
-    Result := ResolveFromRecord(_file.Header, nextPath)
+  else if key = 'File Header' then begin
+    Result := _file.Header;
+    if nextPath <> '' then
+      Result := ResolveFromRecord(_file.Header, nextPath);
+  end
   else 
     Result := ResolveGroupOrRecord(_file, key, nextPath);
 end;
