@@ -125,95 +125,18 @@ var
 begin
   Assert(wbLoaderDone);
   IsNonOverride := False;
-  AnyHidden := False;
+  Master := aMainRecord.MasterOrSelf;
+  SetLength(Result, Succ(Master.OverrideCount));
+  AnyHidden := Master.IsHidden;
 
-  if aMainRecord.Signature = 'GMST' then begin
-    IsNonOverride := True;
-    EditorID := aMainRecord.EditorID;
-    SetLength(Result, PluginsList.Count);
-    Master := nil;
-    for i := 0 to Pred(PluginsList.Count) do begin
-      plugin := TBasePlugin(PluginsList[i]);
-      aFile := plugin._File;
-      Group := aFile.GroupBySignature['GMST'];
-      if Assigned(Group) then begin
-        Rec := Group.MainRecordByEditorID[EditorID];
-        if Assigned(Rec) then begin
-          if not Assigned(Master) then
-            Master := Rec;
-          Result[i].Element := Rec;
-        end;
-      end;
+  if not AnyHidden then
+    for i := 0 to Pred(Master.OverrideCount) do begin
+      AnyHidden := Master.Overrides[i].IsHidden;
+      if AnyHidden then
+        Break;
     end;
 
-  end else if (aMainRecord.Signature = 'NAVI') (* or (aMainRecord.Signature = 'TES4') *) then begin
-    IsNonOverride := True;
-    Signature := aMainRecord.Signature;
-    FormID := aMainRecord.FormID;
-    LoadOrder := aMainRecord.GetFile.LoadOrder;
-    SetLength(Result, 0);
-    Master := nil;
-    for i := 0 to Pred(PluginsList.Count) do begin
-      plugin := TBasePlugin(PluginsList[i]);
-      aFile := plugin._File;
-      if aFile.LoadOrder = LoadOrder then begin
-        Group := aFile.GroupBySignature[Signature];
-        if Assigned(Group) then begin
-          Rec := Group.MainRecordByFormID[FormID];
-          if Assigned(Rec) then begin
-            j := Length(Result);
-            SetLength(Result, j+1);
-            if not Assigned(Master) then
-              Master := Rec;
-            Result[j].Element := Rec;
-          end;
-        end;
-      end;
-    end;
-
-  end else if (aMainRecord.Signature = 'TES4') then begin
-    IsNonOverride := True;
-    Signature := aMainRecord.Signature;
-    LoadOrder := aMainRecord.GetFile.LoadOrder;
-    SetLength(Result, 0);
-    Master := nil;
-    for i := 0 to Pred(PluginsList.Count) do begin
-      plugin := TBasePlugin(PluginsList[i]);
-      aFile := plugin._File;
-      if aFile.LoadOrder = LoadOrder then begin
-        // header of .dat file, show only itself
-        if SameText(ExtractFileExt(aMainRecord.GetFile.FileName), '.dat') and not SameText(ExtractFileExt(aFile.FileName), '.dat') then
-          Continue;
-        // skip .dat file header by default
-        if not SameText(ExtractFileExt(aMainRecord.GetFile.FileName), '.dat') and SameText(ExtractFileExt(aFile.FileName), '.dat') then
-          Continue;
-        Rec := aFile.Elements[0] as IwbMainRecord;
-        if Assigned(Rec) then begin
-          j := Length(Result);
-          SetLength(Result, j+1);
-          if not Assigned(Master) then
-            Master := Rec;
-          Result[j].Element := Rec;
-        end;
-      end;
-    end;
-
-  end else begin
-    Master := aMainRecord.MasterOrSelf;
-
-    SetLength(Result, Succ(Master.OverrideCount));
-
-    AnyHidden := Master.IsHidden;
-    if not AnyHidden then
-      for i := 0 to Pred(Master.OverrideCount) do begin
-        AnyHidden := Master.Overrides[i].IsHidden;
-        if AnyHidden then
-          Break;
-      end;
-  end;
-
-  if (Length(Result) > 0) and ({ModGroupsEnabled or }AnyHidden) or IsNonOverride then begin
-
+  if (Length(Result) > 0) and AnyHidden or IsNonOverride then begin
     Records := TStringList.Create;
     try
       if IsNonOverride then begin
@@ -228,48 +151,6 @@ begin
           Records.AddObject(Rec._File.FileName, Pointer(Rec));
         end;
       end;
-
-      {f ModGroupsEnabled then repeat
-        MadeChanges := False;
-        sl := TStringList.Create;
-        try
-          for i := 0 to Pred(ModGroups.Count) do begin
-            sl.Assign(TStrings(ModGroups.Objects[i]));
-            for j := Pred(sl.Count) downto 0 do begin
-              k := Records.IndexOf(sl[j]);
-              if K > 0 then // >, not >=, never hide the original master
-                sl.Objects[j] := TObject(k)
-              else
-                sl.Delete(j);
-            end;
-            if sl.Count > 1 then begin
-              k := Integer(sl.Objects[0]);
-              j := 1;
-              if k = 0 then begin
-                while (j < sl.Count) and (Integer(sl.Objects[j]) = k + 1) do begin
-                  Records.Objects[Integer(sl.Objects[Pred(j)])] := nil;
-                  Inc(k);
-                  Inc(j);
-                end;
-                Inc(j);
-              end;
-              while (j < sl.Count) do begin
-                Records.Objects[Integer(sl.Objects[Pred(j)])] := nil;
-                Inc(j);
-              end;
-              for j := Pred(Records.Count) downto 0 do
-                if Records.Objects[j] = nil then begin
-                  Records.Delete(j);
-                  MadeChanges := True;
-                end;
-            end;
-            if Records.Count < 2 then
-              Break;
-          end;
-        finally
-          sl.Free;
-        end;
-      until not MadeChanges;}
 
       i := 0;
       while (i < Records.Count) and (Records.Count > 1) do
