@@ -51,8 +51,8 @@ exports
   GetGamePath, SetGamePath, SetLanguage, SetGameMode, GetLoadOrder, GetActivePlugins,
   LoadPlugins, LoadPlugin, BuildReferences, GetLoaderDone, UnloadPlugin,
   // FILE HANDLING METHODS
-  AddFile, FileByIndex, FileByLoadOrder, FileByName, FileByAuthor, SaveFile,
-  OverrideRecordCount, MD5Hash, CRCHash, SortEditorIDs, SortNames,
+  AddFile, FileByIndex, FileByLoadOrder, FileByName, FileByAuthor, RenameFile,
+  SaveFile, OverrideRecordCount, MD5Hash, CRCHash, SortEditorIDs, SortNames,
   // MASTER HANDLING METHODS
   CleanMasters, SortMasters, AddMaster, AddMasters, GetMasters, GetRequiredBy,
   // ELEMENT HANDLING METHODS

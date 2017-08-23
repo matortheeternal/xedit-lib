@@ -21,6 +21,7 @@ uses
   function FileByLoadOrder(loadOrder: Integer; _res: PCardinal): WordBool; cdecl;
   function FileByName(name: PWideChar; _res: PCardinal): WordBool; cdecl;
   function FileByAuthor(author: PWideChar; _res: PCardinal): WordBool; cdecl;
+  function RenameFile(_id: Cardinal; filename: PWideChar): WordBool; cdecl;
   function SaveFile(_id: Cardinal): WordBool; cdecl;
   function MD5Hash(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function CRCHash(_id: Cardinal; len: PInteger): WordBool; cdecl;
@@ -190,6 +191,21 @@ begin
   Result := False;
   try
     _res^ := Store(NativeFileByAuthor(string(author)));
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function RenameFile(_id: Cardinal; filename: PWideChar): WordBool; cdecl;
+var
+  _file: IwbFile;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbFile, _file) then
+      raise Exception.Create('Interface must be a file.');
+    _file.FileName := string(filename);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
