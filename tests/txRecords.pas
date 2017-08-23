@@ -338,26 +338,33 @@ begin
         begin
           It('Should return a handle if argument is record', procedure
             begin
-              ExpectSuccess(GetNodes(kw1, @h));
-              ExpectSuccess(ReleaseNodes(h));
+              ExpectSuccess(GetNodes(kw1, @n1));
+              ExpectSuccess(ReleaseNodes(n1));
             end);
 
           It('Should work with records with overrides', procedure
             begin
-              ExpectSuccess(GetNodes(ar1, @h));
-              ExpectSuccess(ReleaseNodes(h));
+              ExpectSuccess(GetNodes(ar1, @n1));
+              ExpectSuccess(ReleaseNodes(n1));
+            end);
+
+          It('Should work with file headers', procedure
+            begin
+              ExpectSuccess(GetElement(skyrim, 'File Header', @h));
+              ExpectSuccess(GetNodes(h, @n1));
+              ExpectSuccess(ReleaseNodes(n1));
             end);
 
           It('Should fail on elements that are not records', procedure
             begin
-              ExpectFailure(GetNodes(skyrim, @h));
-              ExpectFailure(GetNodes(armo, @h));
-              ExpectFailure(GetNodes(dnam, @h));
+              ExpectFailure(GetNodes(skyrim, @n1));
+              ExpectFailure(GetNodes(armo, @n1));
+              ExpectFailure(GetNodes(dnam, @n1));
             end);
 
           It('Should fail if a null handle is passed', procedure
             begin
-              ExpectFailure(GetNodes(0, @h));
+              ExpectFailure(GetNodes(0, @n1));
             end);
         end);
 
@@ -395,10 +402,12 @@ begin
               TestGetConflictData(n3, ar1, 'OBND - Object Bounds\X1', caConflict, ctMaster);
             end);
 
-          AfterAll(procedure
+          It('Should work on file headers', procedure
             begin
-              ExpectSuccess(ReleaseNodes(n1));
-              ExpectSuccess(ReleaseNodes(n2));
+              ExpectSuccess(GetElement(skyrim, 'File Header', @h));
+              ExpectSuccess(GetNodes(h, @n1));
+              TestGetConflictData(n1, h, 'CNAM - Author', caOnlyOne, ctOnlyOne);
+              TestGetConflictData(n1, h, 'HEDR - Header\Version', caOnlyOne, ctOnlyOne);
             end);
         end);
     end);
