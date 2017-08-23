@@ -766,6 +766,7 @@ type
   IwbFile = interface(IwbContainer)
     ['{38AA15A6-F652-45C7-B875-9CB502E5DA92}']
     function GetFileName: string;
+    procedure SetFileName(const aNewName: string);
     function GetUnsavedSince: TDateTime;
     function GetMaster(aIndex: Integer): IwbFile;
     function GetMasterCount: Integer;
@@ -820,7 +821,8 @@ type
     function NamesSorted(aSignature: String): Boolean;
 
     property FileName: string
-      read GetFileName;
+      read GetFileName
+      write SetFileName;
     property UnsavedSince: TDateTime
       read GetUnsavedSince;
 
