@@ -82,6 +82,7 @@ end;
 
 function ResolveNodes(_id: Cardinal): TDynViewNodeDatas;
 begin
+  if _id = 0 then raise Exception.Create('ERROR: Cannot resolve NULL reference.');
   Result := _nodesStore[_id];
 end;
 
@@ -255,6 +256,7 @@ begin
   _nodesStore := TList<TDynViewNodeDatas>.Create;
   _releasedIDs := TList<Cardinal>.Create;
   _store.Add(nil);
+  _nodesStore.Add(nil);
   ExceptionMessage := '';
   resultStr := '';
 
