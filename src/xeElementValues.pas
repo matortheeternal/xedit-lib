@@ -144,8 +144,12 @@ begin
       else
         Result := group.ShortName;
     end
-    else if Supports(element, IwbMainRecord, rec) then
-      Result := HexFormID(rec)
+    else if Supports(element, IwbMainRecord, rec) then begin
+      if rec.Signature = 'TES4' then
+        Result := 'File Header'
+      else
+        Result := HexFormID(rec);
+    end
     else if IsArray(parent) then
       Result := Format('[%d]', [element.Container.IndexOf(element)])
     else

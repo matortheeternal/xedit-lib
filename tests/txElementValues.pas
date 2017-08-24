@@ -220,6 +220,11 @@ begin
               ExpectSuccess(Path(refr, true, false, @len));
               ExpectEqual(grs(len), 'xtest-2.esp\000170F0');
             end);
+          It('Should resolve file headers', procedure
+            begin
+              ExpectSuccess(Path(fileFlags, false, false,  @len));
+              ExpectEqual(grs(len), 'xtest-2.esp\File Header\Record Header\Record Flags');
+            end);
           It('Should resolve element names', procedure
             begin
               ExpectSuccess(Path(element, true, false, @len));
