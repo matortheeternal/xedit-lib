@@ -2674,6 +2674,7 @@ begin
     raise Exception.Create(Format('Cannot set filename to "%s", file ' +
       'already exists with this name at "%s"', [aNewName, newFilePath]));
   flFileName := newFilePath;
+  (self as IwbElementInternal).Modified := True;
 end;
 
 function TwbFile.GetFileStates: TwbFileStates;
