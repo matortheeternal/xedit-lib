@@ -659,19 +659,33 @@ begin
     Result := def.Name;
 end;
 
-procedure NativeGetDefNames(def: IwbNamedDef; var sl: TStringList);
+function DecideUnion(const e: IwbElement; const unionDef: IwbUnionDef): IwbValueDef;
+var
+  d: IwbDataContainer;
+begin
+  d := e as IwbDataContainer;
+  Result := unionDef.Decide(d.DataBasePtr, d.DataEndPtr, e);
+end;
+
+procedure NativeGetDefNames(element: IwbElement; var sl: TStringList);
 var
   i: Integer;
+  def: IwbNamedDef;
   subDef: IwbSubRecordDef;
+  unionDef: IwbUnionDef;
   recDef: IwbRecordDef;
   RecordDef: PwbRecordDef;
   structDef: IwbStructDef;
   sraDef: IwbSubRecordArrayDef;
   aDef: IwbArrayDef;
 begin
+  def := element.Def;
   // traverse into subrecord defs
   if Supports(def, IwbSubRecordDef, subDef) then
     def := subDef.Value;
+  // handle union defs
+  if Supports(def, IwbUnionDef, unionDef) then
+    def := DecideUnion(element, unionDef);
   // try IwbRecordDef
   if Supports(def, IwbRecordDef, recDef) then begin
     if wbFindRecordDef(recDef.Signatures[0], RecordDef) then
@@ -688,7 +702,9 @@ begin
     sl.Add(GetDefName(sraDef.Element))
   // try IwbArrayDef
   else if Supports(def, IwbArrayDef, aDef) then
-    sl.Add(GetDefName(aDef.Element));
+    sl.Add(GetDefName(aDef.Element))
+  else
+    sl.Add(GetDefName(def));
 end;
 
 function NativeContainer(element: IwbElement): IwbContainer;
@@ -1015,11 +1031,14 @@ function GetValueType(element: IwbElement): TValueType;
 var
   def: IwbNamedDef;
   subDef: IwbSubRecordDef;
+  unionDef: IwbUnionDef;
   intDef: IwbIntegerDef;
 begin
   def := element.Def;
   if Supports(def, IwbSubRecordDef, subDef) then
     def := subDef.Value;
+  if Supports(def, IwbUnionDef, unionDef) then
+    def := DecideUnion(element, unionDef);
 
   case def.DefType of
     dtSubRecordArray, dtArray:
@@ -1184,7 +1203,7 @@ begin
       raise Exception.Create('Interface cannot be a file or group.');
     sl := TStringList.Create;
     try
-      NativeGetDefNames(element.Def, sl);
+      NativeGetDefNames(element, sl);
       resultStr := sl.Text;
       Delete(resultStr, Length(resultStr) - 1, 2);
       len^ := Length(resultStr);

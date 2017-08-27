@@ -663,8 +663,14 @@ begin
 
           It('Should work with structs', procedure
             begin
-              ExpectSuccess(GetElement( ar1, 'OBND', @h));
+              ExpectSuccess(GetElement(ar1, 'OBND', @h));
               TestGetDefNames(h, TStringArray.Create('X1', 'Y1', 'Z1', 'X2', 'Y2', 'Z2'));
+            end);
+
+          It('Should work with unions', procedure
+            begin
+              ExpectSuccess(GetElement(skyrim, '00000DD6\DATA', @h));
+              TestGetDefNames(h, TStringArray.Create('Float'));
             end);
         end);
       
@@ -1211,13 +1217,6 @@ begin
 
       Describe('ValueType', procedure
         begin
-          // I'd really like it to NOT do this.  To return the type of the actual
-          // element the union decided on.  Not sure how currently.
-          It('Should return vtUnknown for certain unions', procedure
-            begin
-              TestValueType(skyrim, '00000DD6\DATA', vtUnknown);
-            end);
-
           It('Should return vtBytes for byte array elements', procedure
             begin
               TestValueType(ar1, 'Male world model\MO2T', vtBytes);
@@ -1280,6 +1279,11 @@ begin
               TestValueType(ar1, 'OBND', vtStruct);
               TestValueType(ar1, 'DATA', vtStruct);
               TestValueType(ar1, 'Record Header', vtStruct);
+            end);
+
+          It('Should resolve union defs correctly', procedure
+            begin
+              TestValueType(skyrim, '00000DD6\DATA', vtNumber);
             end);
 
           It('Should fail on files, groups, and main records', procedure
