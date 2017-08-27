@@ -1020,8 +1020,6 @@ begin
   def := element.Def;
   if Supports(def, IwbSubRecordDef, subDef) then
     def := subDef.Value;
-  if Supports(def, IwbUnionDef) then
-    def := element.ValueDef;
 
   case def.DefType of
     dtSubRecordArray, dtArray:
@@ -1050,7 +1048,7 @@ begin
         else if Supports(intDef.Formater[element], IwbEnumDef) then
           Result := vtEnum;
       end;
-    end
+    end;
     else
       Result := vtUnknown;
   end;
@@ -1624,6 +1622,8 @@ begin
   try
     if not Supports(Resolve(_id), IwbElement, element) then
       raise Exception.Create('Interface is not an element.');
+    if Supports(element, IwbFile) or Supports(element, IwbGroupRecord) or Supports(element, IwbMainRecord) then
+      raise Exception.Create('Interface cannot be a file, group, or main record.');
     enum^ := Ord(GetValueType(element));
     Result := True;
   except
