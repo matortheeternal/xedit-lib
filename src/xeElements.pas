@@ -38,7 +38,7 @@ type
   function CopyElementToFile(const aSource: IwbElement; aFile: IwbFile; aAsNew, aDeepCopy: Boolean): IwbElement;
   function CopyElementToRecord(const aSource: IwbElement; aMainRecord: IwbMainRecord; aAsNew, aDeepCopy: Boolean): IwbElement;
   function IsChildGroup(group: IwbGroupRecord): Boolean;
-  function IsSorted(e: IwbElement): Boolean;
+  function NativeIsSorted(e: IwbElement): Boolean;
   function NativeIsFlags(e: IwbElement): Boolean;
   function IsArray(element: IwbElement): Boolean;
   function IsFormID(element: IwbElement): Boolean;
@@ -81,6 +81,7 @@ type
   function DefType(_id: Cardinal; enum: PByte): WordBool; cdecl;
   function SmashType(_id: Cardinal; enum: PByte): WordBool; cdecl;
   function ValueType(_id: Cardinal; enum: PByte): WordBool; cdecl;
+  function IsSorted(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
   {$endregion}
 
 implementation
@@ -810,7 +811,7 @@ begin
   container := element.Container as IwbContainerElementRef;
   if not IsArray(container) then
     raise Exception.Create('Cannot move elements in non-array containers.');
-  if IsSorted(container) then
+  if NativeIsSorted(container) then
     raise Exception.Create('Cannot move elements in sorted arrays.');
   if index > container.IndexOf(element) then
     Dec(index);
@@ -896,7 +897,7 @@ begin
 end;
 
 { Returns true if @e is a sorted container }
-function IsSorted(e: IwbElement): Boolean;
+function NativeIsSorted(e: IwbElement): Boolean;
 var
   Container: IwbSortableContainer;
 begin
@@ -1003,7 +1004,7 @@ begin
     dtFloat:
       Result := stFloat;
     dtSubRecordArray, dtArray: begin
-      bIsSorted := IsSorted(element);
+      bIsSorted := NativeIsSorted(element);
       bHasStructChildren := HasStructChildren(element);
       if bIsSorted then begin
         if bHasStructChildren then
@@ -1659,6 +1660,21 @@ begin
     if not Supports(Resolve(_id), IwbElement, element) then
       raise Exception.Create('Interface is not an element.');
     bool^ := NativeIsFlags(element);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function IsSorted(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
+var
+  element: IwbElement;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    bool^ := NativeIsSorted(element);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
