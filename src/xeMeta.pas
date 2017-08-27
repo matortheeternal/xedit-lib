@@ -5,6 +5,9 @@ interface
 uses
   Classes, SysUtils, Generics.Collections, wbInterface, xeTypes, mteConflict;
 
+type
+  TDataFunction = function(e: IInterface): String;
+
   {$region 'Native functions'}
   function Resolve(_id: Cardinal): IInterface;
   function ResolveNodes(_id: Cardinal): TDynViewNodeDatas;
@@ -144,30 +147,33 @@ begin
     Result := '';
 end;
 
+function GetSortDataFunction: TDataFunction;
+begin
+  case SortBy of
+    sortByFormID: Result := FormData;
+    sortByEditorID: Result := EditorData;
+    sortByName: Result := NameData;
+  end;
+end;
+
 procedure SortResultArray;
 var
   sl: TFastStringList;
   i, count: Integer;
+  dataFunction: TDataFunction;
 begin
   if SortBy = 0 then exit;
   sl := TFastStringList.Create;
   try
     sl.Sorted := True;
     sl.Duplicates := dupAccept;
-    case SortBy of
-      sortByFormID:
-        for i := Low(resultArray) to High(resultArray) do
-          sl.AddObject(FormData(_store[resultArray[i]]), TObject(resultArray[i]));
-      sortByEditorID:
-        for i := Low(resultArray) to High(resultArray) do
-          sl.AddObject(EditorData(_store[resultArray[i]]), TObject(resultArray[i]));
-      sortByName:
-        for i := Low(resultArray) to High(resultArray) do
-          sl.AddObject(NameData(_store[resultArray[i]]), TObject(resultArray[i]));
-    end;
-    Assert(High(resultArray) = Pred(sl.Count));
+    dataFunction := GetSortDataFunction;
+    // add elements to stringlist to sort them
+    for i := Low(resultArray) to High(resultArray) do
+      sl.AddObject(FormData(_store[resultArray[i]]), TObject(resultArray[i]));
+    // put elements back into the resultArray in sorted order
+    count := sl.Count;
     if reverse then begin
-      count := sl.Count;
       for i := Low(resultArray) to High(resultArray) do
         resultArray[count - i - 1] := Cardinal(sl.Objects[i]);
     end
@@ -183,35 +189,28 @@ procedure GetSortedElements(container: IwbContainer; var elements: TDynElements)
 var
   sl: TFastStringList;
   i, count: Integer;
+  dataFunction: TDataFunction;
 begin
   if SortBy = 0 then begin
     SetLength(elements, container.ElementCount);
     for i := Low(elements) to High(elements) do
       elements[i] := container.Elements[i];
-      exit;
+    exit;
   end;
   sl := TFastStringList.Create;
   try
     sl.Sorted := True;
     sl.Duplicates := dupAccept;
-    case sortBy of
-      sortByFormID:
-        for i := 0 to Pred(container.ElementCount) do
-          sl.AddObject(FormData(container.Elements[i]), Pointer(container.Elements[i]));
-      sortByEditorID:
-        for i := 0 to Pred(container.ElementCount) do
-          sl.AddObject(EditorData(container.Elements[i]), Pointer(container.Elements[i]));
-      sortByName:
-        for i := 0 to Pred(container.ElementCount) do
-          sl.AddObject(NameData(container.Elements[i]), Pointer(container.Elements[i]));
-    end;
-    SetLength(elements, container.ElementCount);
-    Assert(High(elements) = Pred(sl.Count));
-    if reverse then begin
-      count := sl.Count;
+    dataFunction := GetSortDataFunction;
+    // add elements to stringlist to sort them
+    for i := 0 to Pred(container.ElementCount) do
+      sl.AddObject(dataFunction(container.Elements[i]), Pointer(container.Elements[i]));
+    // put elements in elements array in sorted order
+    count := sl.Count;
+    SetLength(elements, count);
+    if reverse then
       for i := Low(elements) to High(elements) do
-        elements[count - i] := IwbElement(Pointer(sl.Objects[i]));
-    end
+        elements[count - i] := IwbElement(Pointer(sl.Objects[i]))
     else
       for i := Low(elements) to High(elements) do
         elements[i] := IwbElement(Pointer(sl.Objects[i]));
