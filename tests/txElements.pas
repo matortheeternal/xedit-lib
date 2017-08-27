@@ -231,12 +231,23 @@ begin
   ExpectEqual(b, expectedResult);
 end;
 
+procedure TestValueType(h: Cardinal; path: PWideChar; expectedValueType: TValueType);
+var
+  vt: Byte;
+begin
+  if path <> '' then
+    ExpectSuccess(GetElement(h, path, @h));
+  ExpectSuccess(ValueType(h, @vt));
+  ExpectEqual(vt, Ord(expectedValueType));
+end;
+
 procedure BuildElementHandlingTests;
 var
   b: WordBool;
   h, rec, skyrim, xt3, xt5, armo1, ar1, keywords, keyword, dnam, element, armo2,
   ar2, ar3, refr, lvli, entries, armature: Cardinal;
   len: Integer;
+  enum: Byte;
 begin
   Describe('Element Handling', procedure
     begin
@@ -1195,6 +1206,92 @@ begin
           It('Should fail on uneditable files', procedure
             begin
               ExpectFailure(GetAddList(skyrim, @len));
+            end);
+        end);
+
+      Describe('ValueType', procedure
+        begin
+          // I'd really like it to NOT do this.  To return the type of the actual
+          // element the union decided on.  Not sure how currently.
+          It('Should return vtUnknown for certain unions', procedure
+            begin
+              TestValueType(skyrim, '00000DD6\DATA', vtUnknown);
+            end);
+
+          It('Should return vtBytes for byte array elements', procedure
+            begin
+              TestValueType(ar1, 'Male world model\MO2T', vtBytes);
+            end);
+
+          It('Should return vtNumber for numeric elements', procedure
+            begin
+              TestValueType(ar1, 'OBND\X1', vtNumber);
+              TestValueType(ar1, 'DNAM', vtNumber);
+              TestValueType(ar1, 'DATA\Weight', vtNumber);
+            end);
+
+          It('Should return vtString for string elements', procedure
+            begin
+              TestValueType(ar1, 'EDID', vtString);
+              TestValueType(ar1, 'FULL', vtString);
+              TestValueType(ar1, 'Male world model\MOD2', vtString);
+            end);
+
+          It('Should return vtText for multi-line string elements', procedure
+            begin
+              TestValueType(skyrim, '00015475\DESC', vtText);
+              TestValueType(skyrim, '0001362F\Responses\[0]\NAM1', vtText);
+            end);
+
+          It('Should return vtReference for FormID elements', procedure
+            begin
+              TestValueType(ar1, 'KWDA\[0]', vtReference);
+              TestValueType(ar1, 'Armature\[0]', vtReference);
+            end);
+
+          It('Should return vtFlags for flags elements', procedure
+            begin
+              TestValueType(ar1, 'BODT\First Person Flags', vtFlags);
+              TestValueType(ar1, 'BODT\General Flags', vtFlags);
+              TestValueType(ar1, 'Record Header\Record Flags', vtFlags);
+            end);
+
+          It('Should return vtEnum for enumeration elements', procedure
+            begin
+              TestValueType(ar1, 'BODT\Armor Type', vtEnum);
+            end);
+
+          It('Should return vtColor for color elements', procedure
+            begin
+              TestValueType(skyrim, '0000001B\PNAM', vtColor);
+              TestValueType(skyrim, '00027D1C\XCLL\Ambient Color', vtColor);
+            end);
+
+          It('Should return vtArray for array elements', procedure
+            begin
+              TestValueType(ar1, 'KWDA', vtArray);
+              TestValueType(ar1, 'Armature', vtArray);
+              TestValueType(skyrim, '00000E60\Leveled List Entries', vtArray);
+            end);
+
+          It('Should return vtStruct for struct elements', procedure
+            begin
+              TestValueType(ar1, 'Male world model', vtStruct);
+              TestValueType(ar1, 'OBND', vtStruct);
+              TestValueType(ar1, 'DATA', vtStruct);
+              TestValueType(ar1, 'Record Header', vtStruct);
+            end);
+
+          It('Should fail on files, groups, and main records', procedure
+            begin
+              ExpectFailure(ValueType(skyrim, @enum));
+              ExpectFailure(ValueType(armo1, @enum));
+              ExpectFailure(ValueType(ar1, @enum));
+            end);
+
+          It('Should fail on null handles', procedure
+            begin
+              ExpectFailure(ValueType(0, @enum));
             end);
         end);
     end);

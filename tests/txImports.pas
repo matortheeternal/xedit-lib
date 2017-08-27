@@ -6,6 +6,8 @@ type
   CardinalArray = array of Cardinal;
   PCardinalArray = ^CardinalArray;
   TErrorTypeID = ( erITM, erITPO, erDR, erUES, erURR, erUER, erUnknown );
+  TValueType = ( vtUnknown, vtBytes, vtNumber, vtString, vtText, vtReference, vtFlags,
+    vtEnum, vtColor, vtArray, vtStruct );
 
   // META METHODS
   procedure InitXEdit; cdecl; external 'XEditLib.dll';
