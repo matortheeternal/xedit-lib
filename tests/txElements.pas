@@ -103,6 +103,15 @@ begin
   end;
 end;
 
+procedure TestSetElement(h1, h2: Cardinal; path: PWideChar);
+begin
+  if path <> '' then begin
+    ExpectSuccess(GetElement(h1, path, @h1));
+    ExpectSuccess(GetElement(h2, path, @h2));
+  end;
+  ExpectSuccess(SetElement(h1, h2));
+end;
+
 procedure TestElementMatches(h: Cardinal; path, value: PWideChar; expectedValue: WordBool = True);
 var
   b: WordBool;
@@ -576,6 +585,49 @@ begin
           It('Should fail if no element exists at the given path', procedure
             begin
               ExpectFailure(RemoveElement(ar3, 'YNAM'));
+            end);
+        end);
+
+      Describe('SetElement', procedure
+        begin
+          It('Should work with value elements', procedure
+            begin
+              TestSetElement(ar2, ar3, 'EDID');
+              TestSetElement(ar2, ar3, 'DNAM');
+              TestSetElement(ar2, ar3, 'Armature\[0]');
+              TestSetElement(ar2, ar3, 'ZNAM');
+              TestSetElement(ar2, ar3, 'BODT\First Person Flags');
+            end);
+
+          It('Should work with struct elements', procedure
+            begin
+              TestSetElement(ar2, ar3, 'OBND');
+              TestSetElement(ar2, ar3, 'Female world model');
+            end);
+
+          It('Should work with array elements', procedure
+            begin
+              TestSetElement(ar2, ar3, 'KWDA');
+              TestSetElement(ar2, ar3, 'Armature');
+            end);
+
+          It('Should fail if a file, group, or record is passed', procedure
+            begin
+              ExpectFailure(SetElement(xt3, xt3));
+              ExpectFailure(SetElement(armo2, armo2));
+              ExpectFailure(SetElement(ar2, ar2));
+            end);
+
+          It('Should fail if element to assign to is uneditable', procedure
+            begin
+              // TODO
+            end);
+
+          It('Should fail if a null handle is passed', procedure
+            begin
+              ExpectFailure(SetElement(0, 0));
+              ExpectFailure(SetElement(skyrim, 0));
+              ExpectFailure(SetElement(0, skyrim));
             end);
         end);
       
