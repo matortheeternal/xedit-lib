@@ -54,6 +54,7 @@ type
   function AddElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
   function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; cdecl;
   function RemoveElementOrParent(_id: Cardinal): WordBool; cdecl;
+  function SetElement(_id, _id2: Cardinal; _res: PCardinal): WordBool; cdecl;
   function GetElements(_id: Cardinal; key: PWideChar; sort: WordBool; len: PInteger): WordBool; cdecl;
   function GetDefNames(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function GetAddList(_id: Cardinal; len: PInteger): WordBool; cdecl;
@@ -1168,6 +1169,28 @@ begin
     end;
     container.RemoveElement(container.IndexOf(element));
     Result := Release(_id);
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function SetElement(_id, _id2: Cardinal; _res: PCardinal): WordBool; cdecl;
+var
+  e1, e2, element: IwbElement;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, e1) then
+      raise Exception.Create('First interface is not an element.');
+    if not Supports(Resolve(_id2), IwbElement, e2) then
+      raise Exception.Create('Second interface is not an element.');
+    if not e1.CanAssign(0, e2, True) then
+      raise Exception.Create('Second element cannot be assigned to the first.');
+    element := e1.Assign(0, e2, False);
+    if not Assigned(element) then
+      raise Exception.Create('Failed to assign element.');
+    _res^ := Store(element);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
