@@ -147,15 +147,6 @@ begin
     Result := '';
 end;
 
-function GetSortDataFunction: TDataFunction;
-begin
-  case SortBy of
-    sortByFormID: Result := FormData;
-    sortByEditorID: Result := EditorData;
-    sortByName: Result := NameData;
-  end;
-end;
-
 procedure SortResultArray;
 var
   sl: TFastStringList;
@@ -167,10 +158,15 @@ begin
   try
     sl.Sorted := True;
     sl.Duplicates := dupAccept;
-    dataFunction := GetSortDataFunction;
+    case SortBy of
+      sortByFormID: dataFunction := FormData;
+      sortByEditorID: dataFunction := EditorData;
+      sortByName: dataFunction := NameData;
+      else exit;
+    end;
     // add elements to stringlist to sort them
     for i := Low(resultArray) to High(resultArray) do
-      sl.AddObject(FormData(_store[resultArray[i]]), TObject(resultArray[i]));
+      sl.AddObject(dataFunction(_store[resultArray[i]]), TObject(resultArray[i]));
     // put elements back into the resultArray in sorted order
     count := sl.Count;
     if reverse then
@@ -200,7 +196,12 @@ begin
   try
     sl.Sorted := True;
     sl.Duplicates := dupAccept;
-    dataFunction := GetSortDataFunction;
+    case SortBy of
+      sortByFormID: dataFunction := FormData;
+      sortByEditorID: dataFunction := EditorData;
+      sortByName: dataFunction := NameData;
+      else exit;
+    end;
     // add elements to stringlist to sort them
     for i := 0 to Pred(container.ElementCount) do
       sl.AddObject(dataFunction(container.Elements[i]), Pointer(container.Elements[i]));
