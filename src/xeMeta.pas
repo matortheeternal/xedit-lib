@@ -173,10 +173,9 @@ begin
       sl.AddObject(FormData(_store[resultArray[i]]), TObject(resultArray[i]));
     // put elements back into the resultArray in sorted order
     count := sl.Count;
-    if reverse then begin
+    if reverse then
       for i := Low(resultArray) to High(resultArray) do
-        resultArray[count - i - 1] := Cardinal(sl.Objects[i]);
-    end
+        resultArray[count - i - 1] := Cardinal(sl.Objects[i])
     else
       for i := Low(resultArray) to High(resultArray) do
         resultArray[i] := Cardinal(sl.Objects[i]);
