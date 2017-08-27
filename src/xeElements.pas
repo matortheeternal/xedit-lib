@@ -54,7 +54,7 @@ type
   function AddElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
   function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; cdecl;
   function RemoveElementOrParent(_id: Cardinal): WordBool; cdecl;
-  function SetElement(_id, _id2: Cardinal; _res: PCardinal): WordBool; cdecl;
+  function SetElement(_id, _id2: Cardinal): WordBool; cdecl;
   function GetElements(_id: Cardinal; key: PWideChar; sort: WordBool; len: PInteger): WordBool; cdecl;
   function GetDefNames(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function GetAddList(_id: Cardinal; len: PInteger): WordBool; cdecl;
@@ -1174,9 +1174,9 @@ begin
   end;
 end;
 
-function SetElement(_id, _id2: Cardinal; _res: PCardinal): WordBool; cdecl;
+function SetElement(_id, _id2: Cardinal): WordBool; cdecl;
 var
-  e1, e2, element: IwbElement;
+  e1, e2: IwbElement;
 begin
   Result := False;
   try
@@ -1184,12 +1184,12 @@ begin
       raise Exception.Create('First interface is not an element.');
     if not Supports(Resolve(_id2), IwbElement, e2) then
       raise Exception.Create('Second interface is not an element.');
-    if not e1.CanAssign(0, e2, True) then
+    if Supports(e1, IwbFile) or Supports(e1, IwbGroupRecord) or Supports(e1, IwbMainRecord)
+    or Supports(e2, IwbFile) or Supports(e2, IwbGroupRecord) or Supports(e2, IwbMainRecord) then
+      raise Exception.Create('Interfaces cannot be a file, group, or record');
+    if not e1.CanAssign(Low(Integer), e2, True) then
       raise Exception.Create('Second element cannot be assigned to the first.');
-    element := e1.Assign(0, e2, False);
-    if not Assigned(element) then
-      raise Exception.Create('Failed to assign element.');
-    _res^ := Store(element);
+    e1.Assign(Low(Integer), e2, False);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
