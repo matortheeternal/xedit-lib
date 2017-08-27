@@ -36,7 +36,7 @@ uses
 procedure ExceptionHandler(x: Exception);
 begin
   if x.Message <> '' then
-    ExceptionMessage := x.Message
+    ExceptionMessage := Copy(x.Message, 1, Length(x.Message))
   else
     ExceptionMessage := 'Unknown exception.';
   AddMessage(ExceptionMessage);
@@ -73,7 +73,7 @@ begin
   try
     if Length(ExceptionMessage) > 0 then begin
       Result := xStrCopy(ExceptionMessage, str, len);
-      //ExceptionMessage := '';
+      ExceptionMessage := '';
     end;
   except
     on x: Exception do ExceptionHandler(x);
