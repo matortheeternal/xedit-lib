@@ -256,7 +256,6 @@ begin
   _releasedIDs := TList<Cardinal>.Create;
   _store.Add(nil);
   _nodesStore.Add(nil);
-  ExceptionMessage := '';
   resultStr := '';
 
   // add welcome message

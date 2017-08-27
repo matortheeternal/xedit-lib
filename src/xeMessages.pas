@@ -23,6 +23,7 @@ const
   LineBreak = #13#10;
 
 var
+  LogPosition: Integer;
   Messages: WideString;
   ExceptionMessage: WideString;
 
@@ -80,27 +81,35 @@ begin
   end;
 end;
 
+{$POINTERMATH ON}
 procedure GetMessagesLength(len: PInteger); cdecl;
 begin
-  len^ := Length(Messages);
+  len^ := Length(PWideChar(Messages) + LogPosition);
 end;
 
 function GetMessages(str: PWideChar; maxLen: Integer): WordBool; cdecl;
 begin
   Result := False;
   try
-    StrLCopy(str, PWideChar(Messages), maxLen);
-    Delete(Messages, 1, maxLen);
+    StrLCopy(str, PWideChar(Messages) + LogPosition, maxLen);
+    Inc(LogPosition, Length(str));
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
 end;
+{$POINTERMATH OFF}
 
 procedure ClearMessages; cdecl;
 begin
+  LogPosition := 0;
   Messages := '';
 end;
 {$endregion}
+
+initialization
+  LogPosition := 0;
+  Messages := '';
+  ExceptionMessage := '';
 
 end.
