@@ -81,6 +81,7 @@
 			<DCCReference Include="lib\xedit\wbLocalization.pas"/>
 			<DCCReference Include="lib\xedit\wbStreams.pas"/>
 			<DCCReference Include="tests\txMeta.pas"/>
+			<DCCReference Include="tests\txMessages.pas"/>
 			<DCCReference Include="tests\txSetup.pas"/>
 			<DCCReference Include="tests\txFiles.pas"/>
 			<DCCReference Include="tests\txMasters.pas"/>

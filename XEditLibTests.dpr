@@ -39,6 +39,7 @@ uses
   wbStreams in 'lib\xedit\wbStreams.pas',
   {$ENDIF}
   txMeta in 'tests\txMeta.pas',
+  txMessages in 'tests\txMessages.pas',
   txSetup in 'tests\txSetup.pas',
   txFiles in 'tests\txFiles.pas',
   txMasters in 'tests\txMasters.pas',
@@ -61,6 +62,7 @@ procedure BuildXETests;
 begin
   BuildSetupTests;
   BuildMetaTests;
+  BuildMessageTests;
   BuildFileHandlingTests;
   BuildMasterHandlingTests;
   BuildElementHandlingTests;

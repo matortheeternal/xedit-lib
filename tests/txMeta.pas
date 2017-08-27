@@ -22,6 +22,7 @@ type
   procedure BuildMetaTests;
   procedure BuildFinalTests;
   function grs(len: Integer): WideString;
+  function gem(len: Integer): WideString;
   function gra(len: Integer): CardinalArray;
 
 implementation
@@ -49,6 +50,20 @@ begin
     Delete(str, Length(str) - 1, 2);
     WriteLn('> ' + StringReplace(str, #13#10, #13#10'> ', [rfReplaceAll]));
   end;
+end;
+
+// gem = Get Exception Message
+function gem(len: Integer): WideString;
+var
+  wcBuffer: PWideChar;
+begin
+  if len = 0 then begin
+    Result := '';
+    exit;
+  end;
+  SetLength(Result, len);
+  wcBuffer := PWideChar(Result);
+  ExpectSuccess(GetExceptionMessage(wcBuffer, len));
 end;
 
 // grs = Get Result String
