@@ -174,10 +174,10 @@ begin
     // put elements back into the resultArray in sorted order
     count := sl.Count;
     if reverse then
-      for i := Low(resultArray) to High(resultArray) do
+      for i := Pred(count) downto 0 do
         resultArray[count - i - 1] := Cardinal(sl.Objects[i])
     else
-      for i := Low(resultArray) to High(resultArray) do
+      for i := 0 to Pred(count) do
         resultArray[i] := Cardinal(sl.Objects[i]);
   finally
     sl.Free;
@@ -208,10 +208,10 @@ begin
     count := sl.Count;
     SetLength(elements, count);
     if reverse then
-      for i := Low(elements) to High(elements) do
-        elements[count - i] := IwbElement(Pointer(sl.Objects[i]))
+      for i := Pred(count) downto 0 do
+        elements[count - i - 1] := IwbElement(Pointer(sl.Objects[i]))
     else
-      for i := Low(elements) to High(elements) do
+      for i := 0 to Pred(count) do
         elements[i] := IwbElement(Pointer(sl.Objects[i]));
   finally
     sl.Free;
