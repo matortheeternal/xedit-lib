@@ -7,7 +7,7 @@ uses
 
   {$region 'Native functions'}
   procedure ExceptionHandler(x: Exception);
-  procedure AddMessage(msg: String);
+  procedure AddMessage(const msg: String);
   procedure SaveMessages;
   {$endregion}
 
@@ -43,7 +43,7 @@ begin
   AddMessage(ExceptionMessage);
 end;
 
-procedure AddMessage(msg: String);
+procedure AddMessage(const msg: String);
 begin
   Messages := Messages + msg + LineBreak;
 end;

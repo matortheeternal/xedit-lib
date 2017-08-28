@@ -6,16 +6,16 @@ uses
   Classes, SysUtils, Generics.Collections, wbInterface, xeTypes, mteConflict;
 
 type
-  TDataFunction = function(e: IInterface): String;
+  TDataFunction = function(const e: IInterface): String;
 
   {$region 'Native functions'}
   function Resolve(_id: Cardinal): IInterface;
   function ResolveNodes(_id: Cardinal): TDynViewNodeDatas;
   procedure StoreList(lst: TList; len: PInteger);
   procedure SortResultArray;
-  procedure GetSortedElements(container: IwbContainer; var elements: TDynElements);
-  procedure StoreIfAssigned(var x: IInterface; var _res: PCardinal; var Success: WordBool);
-  function Store(x: IInterface): Cardinal;
+  procedure GetSortedElements(const container: IwbContainer; var elements: TDynElements);
+  procedure StoreIfAssigned(const x: IInterface; var _res: PCardinal; var Success: WordBool);
+  function Store(const x: IInterface): Cardinal;
   function StoreNodes(nodes: TDynViewNodeDatas): Cardinal; overload;
   function xStrCopy(source: WideString; dest: PWideChar; maxLen: Integer): WordBool;
   {$endregion}
@@ -99,7 +99,7 @@ begin
   len^ := Length(resultArray);
 end;
 
-function FormData(e: IInterface): String;
+function FormData(const e: IInterface): String;
 var
   _file: IwbFile;
   group: IwbGroupRecord;
@@ -115,7 +115,7 @@ begin
     Result := '';
 end;
 
-function EditorData(e: IInterface): String;
+function EditorData(const e: IInterface): String;
 var
   _file: IwbFile;
   group: IwbGroupRecord;
@@ -131,7 +131,7 @@ begin
     Result := '';
 end;
 
-function NameData(e: IInterface): String;
+function NameData(const e: IInterface): String;
 var
   _file: IwbFile;
   group: IwbGroupRecord;
@@ -180,7 +180,7 @@ begin
   end;
 end;
 
-procedure GetSortedElements(container: IwbContainer; var elements: TDynElements);
+procedure GetSortedElements(const container: IwbContainer; var elements: TDynElements);
 var
   sl: TFastStringList;
   i, count: Integer;
@@ -219,7 +219,7 @@ begin
   end;
 end;
 
-procedure StoreIfAssigned(var x: IInterface; var _res: PCardinal; var Success: WordBool);
+procedure StoreIfAssigned(const x: IInterface; var _res: PCardinal; var Success: WordBool);
 begin
   if Assigned(x) then begin
     _res^ := Store(x);
@@ -227,7 +227,7 @@ begin
   end;
 end;
 
-function Store(x: IInterface): Cardinal;
+function Store(const x: IInterface): Cardinal;
 var
   i: Integer;
 begin

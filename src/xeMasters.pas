@@ -6,8 +6,8 @@ uses
   wbInterface;
 
   {$region 'Native functions'}
-  procedure NativeAddRequiredMasters(element: IwbElement; targetFile: IwbFile; asNew: Boolean);
-  function NativeFileHasMaster(_file, _master: IwbFile): Boolean;
+  procedure NativeAddRequiredMasters(const element: IwbElement; const targetFile: IwbFile; asNew: Boolean);
+  function NativeFileHasMaster(const _file, _master: IwbFile): Boolean;
   {$endregion}
 
   {$region 'API functions'}
@@ -29,13 +29,13 @@ uses
   xeMeta, xeFiles, xeMessages, xeSetup;
 
 {$region 'Native functions'}
-procedure NativeAddMaster(targetFile: IwbFile; masterName: String);
+procedure NativeAddMaster(const targetFile: IwbFile; const masterName: String);
 begin
   NativeFileByNameEx(string(masterName));
   targetFile.AddMasterIfMissing(string(masterName));
 end;
 
-procedure NativeAddRequiredMasters(element: IwbElement; targetFile: IwbFile; asNew: Boolean);
+procedure NativeAddRequiredMasters(const element: IwbElement; const targetFile: IwbFile; asNew: Boolean);
 var
   sl: TStringList;
   i: Integer;
@@ -54,7 +54,7 @@ begin
   end;
 end;
 
-function NativeFileHasMaster(_file, _master: IwbFile): Boolean;
+function NativeFileHasMaster(const _file, _master: IwbFile): Boolean;
 var
   i: Integer;
 begin

@@ -7,7 +7,7 @@ uses
   xeMeta;
 
   {$region 'Native functions'}
-  function EditorIDToFormID(_file: IwbFile; editorID: String): Cardinal;
+  function EditorIDToFormID(const _file: IwbFile; const editorID: String): Cardinal;
   {$endregion}
 
   {$region 'API functions'}
@@ -38,7 +38,7 @@ uses
   xeTypes, xeMessages, xeSetup, xeElements, xeElementValues;
 
 {$region 'Native functions'}
-function EditorIDToFormID(_file: IwbFile; editorID: String): Cardinal;
+function EditorIDToFormID(const _file: IwbFile; const editorID: String): Cardinal;
 var
   rec: IwbMainRecord;
 begin
@@ -48,7 +48,7 @@ begin
   Result := _file.LoadOrderFormIDtoFileFormID(rec.LoadOrderFormID);
 end;
 
-procedure GetSignatures(search: String; signatures: TStringList);
+procedure GetSignatures(const search: String; signatures: TStringList);
 var
   i: Integer;
   str: String;
@@ -76,7 +76,7 @@ begin
   Result := True;
 end;
 
-procedure FindRecords(_file: IwbFile; signatures: TFastStringList; includeOverrides: Boolean; lst: TList); overload;
+procedure FindRecords(const _file: IwbFile; signatures: TFastStringList; includeOverrides: Boolean; lst: TList); overload;
 var
   allRecords: Boolean;
   i, j: Integer;
@@ -104,7 +104,7 @@ begin
   end;
 end;
 
-procedure FindRecords(group: IwbGroupRecord; signatures: TFastStringList; includeOverrides: Boolean; lst: TList); overload;
+procedure FindRecords(const group: IwbGroupRecord; signatures: TFastStringList; includeOverrides: Boolean; lst: TList); overload;
 var
   allRecords: Boolean;
   i: Integer;
@@ -150,14 +150,15 @@ begin
   end;
 end;
 
-function ResolveElementIndex(elements: TDynElements; element: IwbElement): Integer;
+function ResolveElementIndex(elements: TDynElements; const element: IwbElement): Integer;
 begin
   for Result := Low(elements) to High(elements) do
     if elements[Result].Equals(element) then exit;
   Result := -1;
 end;
 
-function NativeFindNextRecord(container: IwbContainer; element: IwbElement; search: String; byEdid, byName, recurse: WordBool): IwbMainRecord;
+function NativeFindNextRecord(container: IwbContainer; const element: IwbElement; const search: String;
+  byEdid, byName, recurse: WordBool): IwbMainRecord;
 var
   i: Integer;
   e: IwbElement;
@@ -190,7 +191,8 @@ begin
   end;
 end;
 
-function NativeFindPreviousRecord(container: IwbContainer; element: IwbElement; search: String; byEdid, byName, recurse: WordBool): IwbMainRecord;
+function NativeFindPreviousRecord(container: IwbContainer; const element: IwbElement; const search: String;
+  byEdid, byName, recurse: WordBool): IwbMainRecord;
 var
   i: Integer;
   e: IwbElement;

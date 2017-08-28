@@ -23,14 +23,14 @@ type
   procedure UpdateFileCount;
   procedure LoadPluginFiles;
   procedure LoadResources;
-  procedure BuildPluginsList(sLoadPath: String; var sl: TStringList);
-  procedure BuildLoadOrder(sLoadPath: String; var slLoadOrder, slPlugins: TStringList);
+  procedure BuildPluginsList(const sLoadPath: String; var sl: TStringList);
+  procedure BuildLoadOrder(const sLoadPath: String; var slLoadOrder, slPlugins: TStringList);
   procedure RemoveCommentsAndEmpty(var sl: TStringList);
   procedure RemoveMissingFiles(var sl: TStringList);
   procedure AddMissingFiles(var sl: TStringList);
   procedure GetPluginDates(var sl: TStringList);
   procedure AddBaseMasters(var sl: TStringList);
-  procedure FixLoadOrder(var sl: TStringList; filename: String; index: Integer);
+  procedure FixLoadOrder(var sl: TStringList; const filename: String; index: Integer);
   function PluginListCompare(List: TStringList; Index1, Index2: Integer): Integer;
   procedure RenameSavedFiles;
   {$endregion}
@@ -119,7 +119,7 @@ begin
   Globals.Values['FileCount'] := IntToStr(Length(xFiles));
 end;
 
-procedure LoadFile(filePath: String; loadOrder: Integer);
+procedure LoadFile(const filePath: String; loadOrder: Integer);
 var
   _file: IwbFile;
 begin
@@ -172,7 +172,7 @@ begin
   end;
 end;
 
-procedure LoadBSAFile(sFileName: String);
+procedure LoadBSAFile(const sFileName: String);
 var
   sFileExt: String;
 begin
@@ -228,14 +228,14 @@ begin
   end;
 end;
 
-function IndexOfFile(_file: IwbFile): Integer;
+function IndexOfFile(const _file: IwbFile): Integer;
 begin
   for Result := Low(xFiles) to High(xFiles) do
     if xFiles[Result] = _file then exit;
   Result := -1;
 end;
 
-procedure ForceClose(_file: IwbFile);
+procedure ForceClose(const _file: IwbFile);
 var
   i, index, len: Integer;
 begin
@@ -252,7 +252,7 @@ end;
 {$endregion}
 
 {$region 'Load order helpers'}
-procedure BuildPluginsList(sLoadPath: String; var sl: TStringList);
+procedure BuildPluginsList(const sLoadPath: String; var sl: TStringList);
 var
   sPath: String;
 begin
@@ -267,7 +267,7 @@ begin
   RemoveMissingFiles(sl);
 end;
 
-procedure BuildLoadOrder(sLoadPath: String; var slLoadOrder, slPlugins: TStringList);
+procedure BuildLoadOrder(const sLoadPath: String; var slLoadOrder, slPlugins: TStringList);
 var
   sPath: String;
 begin
@@ -394,7 +394,7 @@ begin
 end;
 
 { Forces a plugin to load at a specific position }
-procedure FixLoadOrder(var sl: TStringList; filename: String; index: Integer);
+procedure FixLoadOrder(var sl: TStringList; const filename: String; index: Integer);
 var
   oldIndex: Integer;
 begin

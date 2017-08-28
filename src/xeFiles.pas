@@ -6,12 +6,12 @@ uses
   Classes, wbInterface;
 
   {$region 'Native functions'}
-  function NativeAddFile(filename: string): IwbFile;
+  function NativeAddFile(const filename: string): IwbFile;
   function NativeFileByIndex(index: Integer): IwbFile;
   function NativeFileByLoadOrder(loadOrder: Integer): IwbFile;
-  function NativeFileByName(name: String): IwbFile;
-  function NativeFileByNameEx(name: String): IwbFile;
-  function IndexOfFile(_file: IWbFile): Integer;
+  function NativeFileByName(const name: String): IwbFile;
+  function NativeFileByNameEx(const name: String): IwbFile;
+  function IndexOfFile(const _file: IwbFile): Integer;
   function CompareLoadOrder(List: TStringList; Index1, Index2: Integer): Integer;
   {$endregion}
 
@@ -49,7 +49,7 @@ begin
     Result := Succ(xFiles[High(xFiles)].LoadOrder);
 end;
 
-function NativeAddFile(filename: string): IwbFile;
+function NativeAddFile(const filename: string): IwbFile;
 var
   LoadOrder : Integer;
   _file: IwbFile;
@@ -91,7 +91,7 @@ begin
   raise Exception.Create('Failed to find file with load order: ' + IntToHex(loadOrder, 2));
 end;
 
-function NativeFileByName(name: String): IwbFile;
+function NativeFileByName(const name: String): IwbFile;
 var
   i: Integer;
 begin
@@ -103,14 +103,14 @@ begin
   Result := nil;
 end;
 
-function NativeFileByNameEx(name: String): IwbFile;
+function NativeFileByNameEx(const name: String): IwbFile;
 begin
   Result := NativeFileByName(name);
   if not Assigned(Result) then
     raise Exception.Create('Failed to find file with name: ' + name);
 end;
 
-function NativeFileByAuthor(author: String): IwbFile;
+function NativeFileByAuthor(const author: String): IwbFile;
 var
   i: Integer;
 begin
@@ -122,7 +122,7 @@ begin
   raise Exception.Create('Failed to find file with author: ' + author);
 end;
 
-function IndexOfFile(_file: IwbFile): Integer;
+function IndexOfFile(const _file: IwbFile): Integer;
 begin
   for Result := Low(xFiles) to High(xFiles) do
     if xFiles[Result].Equals(_file) then

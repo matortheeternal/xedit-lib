@@ -7,15 +7,15 @@ uses
   xeTypes;
 
   {$region 'Native functions'}
-  function GetPath(element: IwbElement; short: WordBool = False; local: WordBool = False; curPath: String = ''): String;
-  function GetPathName(element: IwbElement): String;
-  function NativeName(e: IwbElement; quoteFull: Boolean = False): String;
-  function ParseFormIDValue(value: String; var formID: Int64): Boolean;
-  procedure SetElementValue(element: IwbElement; value: String);
-  function IndexOfFlag(flagsDef: IwbFlagsDef; name: String): Integer;
-  procedure NativeSetFlag(element: IwbElement; index: Integer; enabled: WordBool);
-  function NativeSignatureFromName(name: String): String;
-  function NativeNameFromSignature(sig: String): String;
+  function GetPath(const element: IwbElement; short: WordBool = False; local: WordBool = False; curPath: String = ''): String;
+  function GetPathName(const element: IwbElement): String;
+  function NativeName(const e: IwbElement; quoteFull: Boolean = False): String;
+  function ParseFormIDValue(const value: String; var formID: Int64): Boolean;
+  procedure SetElementValue(const element: IwbElement; const value: String);
+  function IndexOfFlag(const flagsDef: IwbFlagsDef; const name: String): Integer;
+  procedure NativeSetFlag(const element: IwbElement; index: Integer; enabled: WordBool);
+  function NativeSignatureFromName(const name: String): String;
+  function NativeNameFromSignature(const sig: String): String;
   procedure BuildSignatureNameMap;
   {$endregion}
 
@@ -61,7 +61,7 @@ uses
 
 {$region 'Native functions'}
 {$region 'Name helpers'}
-function FormString(rec: IwbMainRecord): String;
+function FormString(const rec: IwbMainRecord): String;
 begin
   Result := Format('[%s:%s]', [
     AnsiString(rec.Signature),
@@ -69,7 +69,7 @@ begin
   ]);
 end;
 
-function CellName(rec: IwbMainRecord): String;
+function CellName(const rec: IwbMainRecord): String;
 begin
   Result := Format('%s <%d,%d>', [
     NativeName(rec.ElementByPath['Worldspace'].LinksTo, true),
@@ -78,7 +78,7 @@ begin
   ]);
 end;
 
-function PlacementName(rec: IwbMainRecord): String;
+function PlacementName(const rec: IwbMainRecord): String;
 begin
   Result := Format('Places %s in %s', [
     NativeName(rec.ElementByPath['NAME'].LinksTo, true),
@@ -86,7 +86,7 @@ begin
   ]);
 end;
 
-function NativeName(e: IwbElement; quoteFull: Boolean = False): String;
+function NativeName(const e: IwbElement; quoteFull: Boolean = False): String;
 var
   _file: IwbFile;
   group: IwbGroupRecord;
@@ -120,12 +120,12 @@ end;
 {$endregion}
 
 {$region 'Path helpers'}
-function HexFormID(rec: IwbMainRecord): String;
+function HexFormID(const rec: IwbMainRecord): String;
 begin
   Result := IntToHex(rec.LoadOrderFormID, 8);
 end;
 
-function GetPathName(element: IwbElement): String;
+function GetPathName(const element: IwbElement): String;
 var
   _file: IwbFile;
   group: IwbGroupRecord;
@@ -157,7 +157,7 @@ begin
   end;
 end;
 
-function GetPath(element: IwbElement; short: WordBool = False; local: WordBool = False; curPath: String = ''): String;
+function GetPath(const element: IwbElement; short: WordBool = False; local: WordBool = False; curPath: String = ''): String;
 var
   container: IwbContainer;
 begin
@@ -174,7 +174,7 @@ begin
 end;
 {$endregion}
 
-function NativeSignature(element: IwbElement): String;
+function NativeSignature(const element: IwbElement): String;
 var
   group: IwbGroupRecord;
   e: IwbHasSignature;
@@ -192,7 +192,7 @@ begin
 end;
 
 {$region 'SetValue helpers'}
-function ParseFormIDValue(value: String; var formID: Int64): Boolean;
+function ParseFormIDValue(const value: String; var formID: Int64): Boolean;
 var
   n, len, open: Integer;
 begin
@@ -223,7 +223,7 @@ begin
   Result := TryStrToInt64('$' + value, formID);
 end;
 
-procedure SetElementValue(element: IwbElement; value: String);
+procedure SetElementValue(const element: IwbElement; const value: String);
 var
   formID: Int64;
 begin
@@ -252,14 +252,14 @@ begin
 end;
 {$endregion}
 
-function IndexOfFlag(flagsDef: IwbFlagsDef; name: String): Integer;
+function IndexOfFlag(const flagsDef: IwbFlagsDef; const name: String): Integer;
 begin
   for Result := 0 to Pred(flagsDef.FlagCount) do
     if flagsDef.Flags[Result] = name then exit;
   Result := -1;
 end;
 
-procedure NativeSetFlag(element: IwbElement; index: Integer; enabled: WordBool);
+procedure NativeSetFlag(const element: IwbElement; index: Integer; enabled: WordBool);
 var
   flagVal: UInt64;
 begin
@@ -271,7 +271,7 @@ begin
 end;
 
 {$region 'SignatureNameMap helpers'}
-function NativeSignatureFromName(name: String): String;
+function NativeSignatureFromName(const name: String): String;
 var
   i: Integer;
 begin
@@ -282,7 +282,7 @@ begin
   Result := slSignatureNameMap.Names[i];
 end;
 
-function NativeNameFromSignature(sig: String): String;
+function NativeNameFromSignature(const sig: String): String;
 var
   i: Integer;
 begin

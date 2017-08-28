@@ -7,12 +7,12 @@ uses
   wbInterface;
 
   {$region 'Native functions'}
-  procedure JsonToElement(element: IwbElement; obj: TJSONObject; path: String);
-  procedure JsonToElements(container: IwbContainerElementRef; obj: TJSONObject; const excludedPaths: array of string);
-  procedure JsonToGroup(group: IwbGroupRecord; obj: TJSONObject); overload;
-  procedure JsonToGroup(group: IwbGroupRecord; obj: TJSONObject; key: String); overload;
-  function NativeElementToJson(element: IwbElement): TJSONValue;
-  function GroupToJson(group: IwbGroupRecord; obj: TJSONObject): TJSONObject;
+  procedure JsonToElement(const element: IwbElement; obj: TJSONObject; const path: String);
+  procedure JsonToElements(const container: IwbContainerElementRef; obj: TJSONObject; const excludedPaths: array of string);
+  procedure JsonToGroup(const group: IwbGroupRecord; obj: TJSONObject); overload;
+  procedure JsonToGroup(const group: IwbGroupRecord; obj: TJSONObject; const key: String); overload;
+  function NativeElementToJson(const element: IwbElement): TJSONValue;
+  function GroupToJson(const group: IwbGroupRecord; obj: TJSONObject): TJSONObject;
   {$endregion}
 
   {$region 'API functions'}
@@ -29,7 +29,7 @@ uses
 
 {$region 'Native functions'}
 {$region 'ElementToJSON helpers'}
-function ValueToJson(element: IwbElement): TJSONValue;
+function ValueToJson(const element: IwbElement): TJSONValue;
 var
   v: Variant;
   ref: IwbMainRecord;
@@ -63,7 +63,7 @@ begin
   end;
 end;
 
-function StructToJson(container: IwbContainerElementRef): TJSONValue;
+function StructToJson(const container: IwbContainerElementRef): TJSONValue;
 var
   obj: TJSONObject;
   i: Integer;
@@ -78,7 +78,7 @@ begin
   Result.Put(obj);
 end;
 
-function ArrayToJson(container: IwbContainerElementRef): TJSONValue;
+function ArrayToJson(const container: IwbContainerElementRef): TJSONValue;
 var
   ary: TJSONArray;
   i: Integer;
@@ -90,7 +90,7 @@ begin
   Result.Put(ary);
 end;
 
-function NativeElementToJson(element: IwbElement): TJSONValue;
+function NativeElementToJson(const element: IwbElement): TJSONValue;
 var
   container: IwbContainerElementRef;
 begin
@@ -105,7 +105,7 @@ begin
     Result := ValueToJSON(element);
 end;
 
-function RecordHeaderToJSON(recHeader: IwbElement): TJSONObject;
+function RecordHeaderToJSON(const recHeader: IwbElement): TJSONObject;
 var
   container: IwbContainerElementRef;
   flags: IwbElement;
@@ -122,7 +122,7 @@ begin
   Result.S['FormID'] := IntToHex(formID, 8);
 end;
 
-function RecordToJson(rec: IwbMainRecord): TJSONObject;
+function RecordToJson(const rec: IwbMainRecord): TJSONObject;
 var
   container: IwbContainerElementRef;
   i: Integer;
@@ -150,7 +150,7 @@ begin
     GroupToJson(rec.ChildGroup, Result);
 end;
 
-function GroupToJson(group: IwbGroupRecord; obj: TJSONObject): TJSONObject;
+function GroupToJson(const group: IwbGroupRecord; obj: TJSONObject): TJSONObject;
 var
   name: String;
   i: Integer;
@@ -185,7 +185,7 @@ begin
   end;
 end;
 
-function FileToJson(_file: IwbFile): TJSONObject;
+function FileToJson(const _file: IwbFile): TJSONObject;
 var
   group: IwbGroupRecord;
   i: Integer;
@@ -203,14 +203,14 @@ end;
 {$endregion}
 
 {$region 'ElementFromJSON helpers'}
-function AddElementIfMissing(container: IwbContainerElementRef; path: String): IwbElement;
+function AddElementIfMissing(const container: IwbContainerElementRef; const path: String): IwbElement;
 begin
   Result := container.ElementByPath[path];
   if not Assigned(Result) then
     Result := container.Add(path);
 end;
 
-function AssignElementIfMissing(container: IwbContainerElementRef; index: Integer): IwbElement;
+function AssignElementIfMissing(const container: IwbContainerElementRef; index: Integer): IwbElement;
 begin
   if container.ElementCount > index then
     Result := container.Elements[index]
@@ -218,7 +218,7 @@ begin
     Result := container.Assign(High(integer), nil, False);
 end;
 
-procedure JsonToArrayElement(element: IwbElement; ary: TJSONArray; index: Integer);
+procedure JsonToArrayElement(const element: IwbElement; ary: TJSONArray; index: Integer);
 var
   v: TJSONValue;
 begin
@@ -233,7 +233,7 @@ begin
   end;
 end;
 
-procedure JsonToFlags(element: IwbElement; flagsDef: IwbFlagsDef; obj: TJSONObject);
+procedure JsonToFlags(const element: IwbElement; const flagsDef: IwbFlagsDef; obj: TJSONObject);
 var
   flagVal: UInt64;
   i, index: Integer;
@@ -248,7 +248,7 @@ begin
   element.NativeValue := flagVal;
 end;
 
-procedure JsonToElement(element: IwbElement; obj: TJSONObject; path: String);
+procedure JsonToElement(const element: IwbElement; obj: TJSONObject; const path: String);
 var
   container: IwbContainerElementRef;
   childElement: IwbElement;
@@ -284,7 +284,7 @@ begin
   end;
 end;
 
-procedure JsonToElements(container: IwbContainerElementRef; obj: TJSONObject; const excludedPaths: array of string);
+procedure JsonToElements(const container: IwbContainerElementRef; obj: TJSONObject; const excludedPaths: array of string);
 var
   element: IwbElement;
   path: string;
@@ -321,7 +321,7 @@ begin
   end;
 end;
 
-procedure JsonToRecordHeader(header: IwbElement; obj: TJSONObject);
+procedure JsonToRecordHeader(const header: IwbElement; obj: TJSONObject);
 var
   container: IwbContainerElementRef;
   recordSig, objSig: String;
@@ -343,7 +343,7 @@ begin
   JsonToElements(container, obj, ['Signature', 'Data Size', 'FormID', 'Form Version']);
 end;
 
-procedure JsonToRecord(rec: IwbMainRecord; obj: TJSONObject);
+procedure JsonToRecord(const rec: IwbMainRecord; obj: TJSONObject);
 var
   i: Integer;
   path: String;
@@ -365,7 +365,7 @@ begin
   end;
 end;
 
-function GetObjString(obj: TJSONObject; key: String; var value: String): Boolean;
+function GetObjString(obj: TJSONObject; const key: String; var value: String): Boolean;
 begin
   Result := obj.HasKey(key);
   if Result then
@@ -397,7 +397,7 @@ begin
     Result := '"' + str + '"';
 end;
 
-function GetAddSignature(obj: TJSONObject; group: IwbGroupRecord): String;
+function GetAddSignature(obj: TJSONObject; const group: IwbGroupRecord): String;
 var
   recHeader: TJSONObject;
 begin
@@ -414,7 +414,7 @@ begin
   end;
 end;
 
-procedure JsonToRecords(group: IwbGroupRecord; ary: TJSONArray);
+procedure JsonToRecords(const group: IwbGroupRecord; ary: TJSONArray);
 var
   recObj: TJSONObject;
   key, sig: String;
@@ -449,7 +449,7 @@ begin
   end;
 end;
 
-procedure JsonToGroup(group: IwbGroupRecord; obj: TJSONObject); overload;
+procedure JsonToGroup(const group: IwbGroupRecord; obj: TJSONObject); overload;
 var
   i: Integer;
   key: String;
@@ -468,7 +468,7 @@ begin
   end;
 end;
 
-procedure JsonToGroup(group: IwbGroupRecord; obj: TJSONObject; key: String); overload;
+procedure JsonToGroup(const group: IwbGroupRecord; obj: TJSONObject; const key: String); overload;
 var
   v: TJSONValue;
 begin
@@ -479,7 +479,7 @@ begin
     JsonToGroup(group, v.AsObject);
 end;
 
-procedure JsonToFileHeader(header: IwbMainRecord; obj: TJSONObject);
+procedure JsonToFileHeader(const header: IwbMainRecord; obj: TJSONObject);
 const
   ExcludedPaths: array[0..3] of string = (
     'Record Header',
@@ -507,7 +507,7 @@ begin
   JsonToElements(container, obj, ExcludedPaths);
 end;
 
-procedure JsonToFile(_file: IwbFile; obj: TJSONObject);
+procedure JsonToFile(const _file: IwbFile; obj: TJSONObject);
 var
   groups: TJSONObject;
   group: IwbGroupRecord;

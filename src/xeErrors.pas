@@ -27,12 +27,10 @@ type
     name: string;
     path: string;
     data: string;
-    constructor Create(rec: IwbMainRecord; id: TErrorTypeID); overload;
-    constructor Create(rec: IwbMainRecord; id: TErrorTypeID;
-      error: string); overload;
-    constructor Create(rec: IwbMainRecord; element: IwbElement;
-      error: string); overload;
-    procedure Init(rec: IwbMainRecord);
+    constructor Create(const rec: IwbMainRecord; id: TErrorTypeID); overload;
+    constructor Create(const rec: IwbMainRecord; id: TErrorTypeID; const error: string); overload;
+    constructor Create(const rec: IwbMainRecord; const element: IwbElement; const error: string); overload;
+    procedure Init(const rec: IwbMainRecord);
   end;
   TErrorCheckThread = class(TThread)
   protected
@@ -84,7 +82,7 @@ var
 
 {$region 'Native functions'}
 {$region 'CheckForErrors helpers'}
-procedure CheckForSubrecordErrors(rec: IwbMainRecord);
+procedure CheckForSubrecordErrors(const rec: IwbMainRecord);
 var
   error: String;
 begin
@@ -93,7 +91,7 @@ begin
     errors.Add(TRecordError.Create(rec, erUES, Error));
 end;  
 
-procedure CheckForIdenticalErrors(rec: IwbMainRecord);
+procedure CheckForIdenticalErrors(const rec: IwbMainRecord);
 begin
   if rec.IsMaster or rec.Master.IsInjected then exit;
   if IsITM(rec) then
@@ -102,7 +100,7 @@ begin
     errors.Add(TRecordError.Create(rec, erITPO));
 end;
 
-procedure CheckForDeletedErrors(rec: IwbMainRecord);
+procedure CheckForDeletedErrors(const rec: IwbMainRecord);
 var
   sig: String;
 begin
@@ -113,7 +111,7 @@ begin
     errors.Add(TRecordError.Create(rec, erDR));
 end;
 
-function NativeCheckForErrors(element: IwbElement; lastRecord: IwbMainRecord): IwbMainRecord;
+function NativeCheckForErrors(const element: IwbElement; const lastRecord: IwbMainRecord): IwbMainRecord;
 var
   rec: IwbMainRecord;
   error: String;            
@@ -188,7 +186,7 @@ end;
 {$endregion}
 
 {$region 'Error parsing'}
-function MatchesError(error: string; errorID: TErrorTypeID;
+function MatchesError(const error: string; errorID: TErrorTypeID;
   i1, i2: Integer; var &type: TErrorType; var data: string): boolean;
 var
   errorType: TErrorType;
@@ -212,7 +210,7 @@ begin
   end;
 end;
 
-procedure ParseError(error: string; var &type: TErrorType;
+procedure ParseError(const error: string; var &type: TErrorType;
   var data: string);
 begin
   // test errors with regex expressions, and if they match use
@@ -230,22 +228,20 @@ end;
 {$endregion}
 
 {$region 'TRecordError'}
-constructor TRecordError.Create(rec: IwbMainRecord; id: TErrorTypeID);
+constructor TRecordError.Create(const rec: IwbMainRecord; id: TErrorTypeID);
 begin
   Init(rec);
   &type := ErrorTypes[Ord(id)];
 end;
 
-constructor TRecordError.Create(rec: IwbMainRecord; id: TErrorTypeID;
-  error: string);
+constructor TRecordError.Create(const rec: IwbMainRecord; id: TErrorTypeID; const error: string);
 begin
   Init(rec);
   &type := ErrorTypes[Ord(id)];
   data := error;
 end;
 
-constructor TRecordError.Create(rec: IwbMainRecord; element: IwbElement;
-  error: string);
+constructor TRecordError.Create(const rec: IwbMainRecord; const element: IwbElement; const error: string);
 begin
   Init(rec);
   if not Supports(element, IwbMainRecord) then
@@ -253,7 +249,7 @@ begin
   ParseError(error, &type, data);
 end;
 
-procedure TRecordError.Init(rec: IwbMainRecord);
+procedure TRecordError.Init(const rec: IwbMainRecord);
 begin
   handle := Store(rec);
   signature := rec.signature;
