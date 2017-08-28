@@ -22,7 +22,7 @@ uses
   function FileByName(name: PWideChar; _res: PCardinal): WordBool; cdecl;
   function FileByAuthor(author: PWideChar; _res: PCardinal): WordBool; cdecl;
   function RenameFile(_id: Cardinal; filename: PWideChar): WordBool; cdecl;
-  function SaveFile(_id: Cardinal): WordBool; cdecl;
+  function SaveFile(_id: Cardinal; filePath: PWideChar): WordBool; cdecl;
   function MD5Hash(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function CRCHash(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function OverrideRecordCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
@@ -214,7 +214,7 @@ begin
   end;
 end;
 
-function SaveFile(_id: Cardinal): WordBool; cdecl;
+function SaveFile(_id: Cardinal; filePath: PWideChar): WordBool; cdecl;
 var
   _file: IwbFile;
   FileStream: TFileStream;
@@ -224,7 +224,12 @@ begin
   try
     if not Supports(Resolve(_id), IwbFile, _file) then
       raise Exception.Create('Interface must be a file.');
-    path := wbDataPath + _file.FileName + '.save';
+    if filePath <> '' then begin
+      ForceDirectories(filePath);
+      path := filePath;
+    end
+    else
+      path := wbDataPath + _file.FileName + '.save';
     FileStream := TFileStream.Create(path, fmCreate);
     try
       _file.WritetoStream(FileStream, False);

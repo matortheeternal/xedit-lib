@@ -49,7 +49,7 @@ begin
   if FileExists(filePath) then
     DeleteFile(filePath);
   ExpectSuccess(FileByName(fileName, @h));
-  ExpectSuccess(SaveFile(h));
+  ExpectSuccess(SaveFile(h, ''));
   Expect(FileExists(filePath), 'Plugin file not found at "' + filePath + '"');
 end;
 
@@ -230,12 +230,12 @@ begin
           It('Should fail if interface is not a file', procedure
             begin
               ExpectSuccess(GetElement(0, 'xtest-2.esp\00012E46', @h));
-              ExpectFailure(SaveFile(h));
+              ExpectFailure(SaveFile(h, ''));
             end);
 
           It('Should fail if the handle is invalid', procedure
             begin
-              ExpectFailure(SaveFile(999));
+              ExpectFailure(SaveFile(999, ''));
             end);
         end);
     end);
