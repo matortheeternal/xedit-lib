@@ -197,7 +197,7 @@ begin
   end;
 end;
 
-function RenameFile(_id: Cardinal; filename: PWideChar): WordBool; cdecl;
+function RenameFile(_id: Cardinal; fileName: PWideChar): WordBool; cdecl;
 var
   _file: IwbFile;
 begin
@@ -205,7 +205,9 @@ begin
   try
     if not Supports(Resolve(_id), IwbFile, _file) then
       raise Exception.Create('Interface must be a file.');
-    _file.FileName := string(filename);
+    if not FileNameValid(fileName) then
+      raise Exception.Create('Filename has invalid characters.');
+    _file.FileName := string(fileName);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
