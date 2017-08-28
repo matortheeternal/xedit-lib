@@ -4,7 +4,7 @@ interface
 
 uses
   classes,
-  SysUtils;
+  Windows, SysUtils;
 
 type
   CardinalArray = array of Cardinal;
@@ -162,6 +162,26 @@ var
 begin
   ExpectSuccess(GetGlobal('DataPath', @len));
   Result := grs(len);
+end;
+
+function GetBackupPath(fileName: String): String;
+var
+  BackupFolder: String;
+  sr: TSearchRec;
+  aTime: TDateTime;
+begin
+  Result := '';
+  aTime := 0;
+  BackupFolder := GetDataPath + 'zEdit Backups\';
+  if FindFirst(BackupFolder + '*.bak', faAnyFile, sr) = 0 then begin
+    repeat
+      if (Pos(fileName, sr.Name) = 1) and (sr.TimeStamp > aTime) then begin
+        aTime := sr.TimeStamp;
+        Result := BackupFolder + sr.Name;
+      end;
+    until FindNext(sr) <> 0;
+    FindClose(sr);
+  end;
 end;
 
 procedure TestRename(const fileName: String);
@@ -333,9 +353,11 @@ begin
       AfterAll(procedure
         begin
           DeleteFile(GetDataPath + 'xtest-6.esp');
+          DeleteFile(GetDataPath + 'xtest-5.esp');
+          SysUtils.RenameFile(GetBackupPath('xtest-5.esp'), GetDataPath + 'xtext-5.esp');
         end);
 
-      It('Should rename saved files', procedure
+      It('Should rename .save files', procedure
         begin
           TestRename('xtest-6.esp');
           TestRename('xtest-5.esp');
@@ -343,7 +365,7 @@ begin
 
       It('Should create backups', procedure
         begin
-          // TODO
+          Expect(GetBackupPath('xtest-5.esp') <> '');
         end);
     end);
 end;
