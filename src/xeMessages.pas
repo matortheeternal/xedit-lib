@@ -75,6 +75,7 @@ begin
     if Length(ExceptionMessage) > 0 then begin
       Result := xStrCopy(ExceptionMessage, str, len);
       ExceptionMessage := '';
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
