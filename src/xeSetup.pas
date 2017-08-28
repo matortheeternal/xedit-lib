@@ -38,6 +38,7 @@ type
   {$region 'API functions'}
   function SetGamePath(path: PWideChar): WordBool; cdecl;
   function SetLanguage(lang: PWideChar): WordBool; cdecl;
+  function SetBackupPath(path: PWideChar): WordBool; cdecl;
   function SetGameMode(mode: Integer): WordBool; cdecl;
   function GetGamePath(mode: Integer; len: PInteger): WordBool; cdecl;
   function GetLoadOrder(len: PInteger): WordBool; cdecl;
@@ -450,7 +451,7 @@ procedure BackupFile(const path: String);
 var
   bakPath: String;
 begin
-  bakPath := path + '.' + FileTimeStr + '.bak';
+  bakPath := BackupPath + ExtractFileName(path) + '.' + FileTimeStr + '.bak';
   if not RenameFile(path, bakPath) then
     RaiseLastOSError;
 end;
@@ -470,6 +471,7 @@ procedure RenameSavedFiles;
 var
   i: Integer;
 begin
+  ForceDirectories(BackupPath);
   DateTimeToString(FileTimeStr, 'yymmdd_hhnnss', Now);
   for i := 0 to Pred(slSavedFiles.Count) do try
     RenameSavedFile(slSavedFiles[i]);
@@ -498,6 +500,17 @@ begin
   Result := False;
   try
     Language := string(lang);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function SetBackupPath(path: PWideChar): WordBool; cdecl;
+begin
+  Result := False;
+  try
+    BackupPath := string(path);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);

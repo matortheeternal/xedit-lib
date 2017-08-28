@@ -39,8 +39,7 @@ type
 var
   ProgramStatus: TProgramStatus;
   Globals: TStringList;
-  wbAppDataPath: String;
-  wbMyGamesPath: String;
+  wbAppDataPath, wbMyGamesPath, BackupPath: String;
   GamePath, Language: String;
   HideChildGroups: Boolean;
 
@@ -127,10 +126,12 @@ begin
   if not DirectoryExists(dataPath) then
     raise Exception.Create(Format('Game Data Path "%s" does not exist.', [dataPath]));
 
-  // update our vars
-  ProgramStatus.GameMode := GameArray[id];
+  // default backup path
+  if BackupPath = '' then
+    BackupPath := dataPath + 'zEdit Backups\';
 
   // update xEdit vars
+  ProgramStatus.GameMode := GameArray[id];
   wbGameName := ProgramStatus.GameMode.gameName;
   wbGameName2 := ProgramStatus.GameMode.regName;
   wbGameMode := ProgramStatus.GameMode.gameMode;
