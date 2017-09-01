@@ -74,8 +74,9 @@ exports
   SignatureFromName, NameFromSignature, GetSignatureNameMap,
   // RECORD HANDLING METHODS
   GetFormID, SetFormID, GetRecords, GetOverrides, GetReferencedBy, GetMaster,
-  FindNextRecord, FindPreviousRecord, ExchangeReferences, IsMaster, IsInjected,
-  IsOverride, IsWinningOverride, GetNodes, GetConflictData, GetNodeElements;
+  FindNextRecord, FindPreviousRecord, FindValidReferences, ExchangeReferences,
+  IsMaster, IsInjected, IsOverride, IsWinningOverride, GetNodes, GetConflictData,
+  GetNodeElements;
 
 begin
   IsMultiThread := True;

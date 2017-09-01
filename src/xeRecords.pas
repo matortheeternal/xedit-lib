@@ -6,6 +6,9 @@ uses
   wbInterface,
   xeMeta;
 
+type
+  TDynSignatures = array of TwbSignature;
+
   {$region 'Native functions'}
   function EditorIDToFormID(const _file: IwbFile; const editorID: String): Cardinal;
   {$endregion}
@@ -18,6 +21,7 @@ uses
   function GetMaster(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function FindNextRecord(_id: Cardinal; search: PWideChar; byEdid, byName: WordBool; _res: PCardinal): WordBool; cdecl;
   function FindPreviousRecord(_id: Cardinal; search: PWideChar; byEdid, byName: Wordbool; _res: PCardinal): WordBool; cdecl;
+  function FindValidReferences(_id: Cardinal; search: PWideChar; limitTo: Integer; len: PInteger): WordBool; cdecl;
   function GetReferencedBy(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function ExchangeReferences(_id, oldFormID, newFormID: Cardinal): WordBool; cdecl;
   function IsMaster(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
@@ -225,6 +229,71 @@ begin
       Result := NativeFindPreviousRecord(container, e, search, byEdid, byName, true);
   end;
 end;
+
+// used for searching purposes.  returns an array where the first entry is the file passed
+// and following entries are that file's masters in reverse order
+function GetFilesArray(const _file: IwbFile): TDynFiles;
+var
+  count, i: Integer;
+begin
+  count := _file.MasterCount;
+  SetLength(Result, count + 1);
+  Result[0] := _file;
+  for i := 0 to Pred(count) do
+    Result[count - i] := _file.Masters[i];
+end;
+
+function SignatureInArray(sig: TwbSignature; ary: TDynSignatures): Boolean;
+var
+  i: Integer;
+begin
+  Result := False;
+  for i := Low(ary) to High(ary) do
+    if ary[i] = sig then begin
+      Result := True;
+      exit;
+    end;
+end;
+
+function NativeFindValidReferences(const element: IwbElement; const search: String; limitTo: Integer): String;
+var
+  files: TDynFiles;
+  currentRec, rec: IwbMainRecord;
+  integerDef: IwbIntegerDef;
+  formDef: IwbFormIDChecked;
+  counter, i, j: Integer;
+  _file: IwbFile;
+  CheckSignatures: Boolean;
+  AllowedSignatures: TDynSignatures;
+begin
+  Result := '';
+  if not Supports(element.Def, IwbIntegerDef, integerDef) then exit;
+  // get record context
+  files := GetFilesArray(element._File);
+  currentRec := element.ContainingMainRecord;
+  // determine allowed signatures
+  CheckSignatures := False;
+  if Supports(integerDef.Formater[element], IwbFormIDChecked, formDef) then begin
+    CheckSignatures := True;
+    SetLength(AllowedSignatures, formDef.SignatureCount);
+    for i := 0 to Pred(formDef.SignatureCount) do
+      AllowedSignatures[i] := formDef.Signatures[i];
+  end;
+  // perform the search across file and its masters
+  counter := 0;
+  for i := Low(files) to High(files) do begin
+    _file := files[i];
+    for j := 0 to Pred(_file.RecordCount) do begin
+      rec := _file.Records[j];
+      if ((not CheckSignatures) or SignatureInArray(rec.Signature, AllowedSignatures)) and (Pos(search, rec.Name) > 0) then begin
+        if rec.Equals(currentRec) then continue;
+        Result := Result + rec.Name + #13#10;
+        Inc(counter);
+        if counter = limitTo then exit;
+      end;
+    end;
+  end;
+end;
 {$endregion}
 
 {$region 'API functions'}
@@ -344,7 +413,7 @@ begin
     // else if element is a group record or a file, iterate through it
     if _id = 0 then
       element := xFiles[Low(xFiles)]
-    else if not Supports(Resolve(_id), IwbContainer, element) then
+    else if not Supports(Resolve(_id), IwbElement, element) then
       raise Exception.Create('Input interface is not an element.');
     if not Supports(element, IwbContainer, container) then
       raise Exception.Create('Input element is not a container.');
@@ -376,7 +445,7 @@ begin
     // else if element is a group record or a file, iterate through it
     if _id = 0 then
       element := xFiles[High(xFiles)]
-    else if not Supports(Resolve(_id), IwbContainer, element) then
+    else if not Supports(Resolve(_id), IwbElement, element) then
       raise Exception.Create('Input interface is not an element.');
     if not Supports(element, IwbContainer, container) then
       raise Exception.Create('Input element is not a container.');
@@ -390,6 +459,25 @@ begin
       _res^ := Store(rec);
       Result := True;
     end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function FindValidReferences(_id: Cardinal; search: PWideChar; limitTo: Integer; len: PInteger): WordBool; cdecl;
+var
+  element: IwbElement;
+  str: String;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Input interface is not an element.');
+    if not IsFormID(element) then
+      raise Exception.Create('Input element doesn''t hold references.');
+    resultStr := NativeFindValidReferences(element, string(search), limitTo);
+    len^ := Length(resultStr);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
