@@ -88,7 +88,7 @@ type
 implementation
 
 uses
-  Variants, SysUtils,
+  Variants, SysUtils, StrUtils,
   // mte units
   mteHelpers,
   // xedit units
@@ -96,6 +96,11 @@ uses
   // xelib units
   xeConfiguration, xeMessages, xeFiles, xeMasters, xeRecords, xeElementValues,
   xeSetup;
+
+const
+  textElements: array[0..4] of string = (
+    'Response Text', 'Description', 'Book Text', 'Magic Item Description', 'Log Entry'
+  );
 
 {$region 'Native functions'}
 {$region 'Path parsing'}
@@ -1050,10 +1055,8 @@ begin
         Result := vtColor
       else
         Result := vtStruct;
-    dtString, dtLenString:
-      Result := vtString;
-    dtLString:
-      if Pos('Name', element.Name) = 0 then
+    dtString, dtLenString, dtLString:
+      if MatchText(element.Def.Name, textElements) then
         Result := vtText
       else
         Result := vtString;

@@ -1325,6 +1325,9 @@ begin
             begin
               TestValueType(skyrim, '00015475\DESC', vtText);
               TestValueType(skyrim, '0001362F\Responses\[0]\NAM1', vtText);
+              TestValueType(0, 'xtest-1.esp\File Header\SNAM', vtText);
+              TestValueType(skyrim, '0000014C\DNAM', vtText);
+              TestValueType(skyrim, '00015D24\Stages\[1]\Log Entries\[0]\CNAM', vtText);
             end);
 
           It('Should return vtReference for FormID elements', procedure
