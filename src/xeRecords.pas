@@ -475,9 +475,11 @@ begin
     if not IsFormID(element) then
       raise Exception.Create('Input element doesn''t hold references.');
     resultStr := NativeFindValidReferences(element, string(search), limitTo);
-    len^ := Length(resultStr) - 2;
-    if len^ > 0 then
-      Delete(resultStr, len^, 2);
+    len^ := Length(resultStr);
+    if len^ > 0 then begin
+      Delete(resultStr, len^ - 1, 2);
+      len^ := len^ - 2;
+    end;
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
