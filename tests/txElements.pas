@@ -240,6 +240,16 @@ begin
   ExpectEqual(b, expectedResult);
 end;
 
+procedure TestGetIsEditable(h: Cardinal; path: PWideChar; expectedResult: WordBool);
+var
+  b: WordBool;
+begin
+  if path <> '' then
+    ExpectSuccess(GetElement(h, path, @h));
+  ExpectSuccess(GetIsEditable(h, @b));
+  ExpectEqual(b, expectedResult);
+end;
+
 procedure TestValueType(h: Cardinal; path: PWideChar; expectedValueType: TValueType);
 var
   vt: Byte;
@@ -1210,6 +1220,29 @@ begin
           It('Should raise an exception if element can''t hold formIDs', procedure
             begin
               ExpectFailure(GetSignatureAllowed(dnam, 'ARMO', @b));
+            end);
+        end);
+
+      Describe('GetIsEditable', procedure
+        begin
+          It('Should return false for uneditable files', procedure
+            begin
+              TestGetIsEditable(skyrim, '', False);
+            end);
+
+          It('Should return false for uneditable records', procedure
+            begin
+              TestGetIsEditable(ar1, '', False);
+            end);
+
+          It('Should return true for editable files', procedure
+            begin
+              TestGetIsEditable(xt3, '', True);
+            end);
+
+          It('Should return true for editable records', procedure
+            begin
+              TestGetIsEditable(ar2, '', True);
             end);
         end);
 
