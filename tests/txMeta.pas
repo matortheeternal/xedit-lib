@@ -353,8 +353,8 @@ begin
       AfterAll(procedure
         begin
           DeleteFile(GetDataPath + 'xtest-6.esp');
-          DeleteFile(GetDataPath + 'xtest-5.esp');
-          SysUtils.RenameFile(GetBackupPath('xtest-5.esp'), GetDataPath + 'xtext-5.esp');
+          {DeleteFile(GetDataPath + 'xtest-5.esp');
+          SysUtils.RenameFile(GetBackupPath('xtest-5.esp'), GetDataPath + 'xtext-5.esp');}
         end);
 
       It('Should rename .save files', procedure
