@@ -34,7 +34,7 @@ type
 implementation
 
 uses
-  Mahogany,
+  classes, Mahogany,
   {$IFDEF USE_DLL}
   txImports,
   {$ENDIF}
@@ -43,15 +43,12 @@ uses
   {$ENDIF}
   txMeta;
 
-procedure TestGetRecords(context: Cardinal; path, search: PWideChar; includeOverrides: WordBool; expectedCount: Integer);
+procedure TestGetRecords(h: Cardinal; path, search: PWideChar; includeOverrides: WordBool; expectedCount: Integer);
 var
-  h: Cardinal;
   len: Integer;
 begin
   if path <> '' then
-    ExpectSuccess(GetElement(context, path, @h))
-  else
-    h := context;
+    ExpectSuccess(GetElement(h, path, @h));
   ExpectSuccess(GetRecords(h, search, includeOverrides, @len));
   ExpectEqual(len, expectedCount);
   gra(len);
@@ -65,6 +62,26 @@ begin
   Expect(Result > 0, 'Should return a handle');
   ExpectSuccess(GetValue(Result, 'EDID', @len));
   ExpectEqual(grs(len), expectedEDID);
+end;
+
+procedure TestFindValidReferences(h: Cardinal; path: PWideChar; search: PWideChar; expectedResults: TStringArray);
+var
+  len: Integer;
+  sl: TStringList;
+  i: Integer;
+begin
+  if path <> '' then
+    ExpectSuccess(GetElement(h, path, @h));
+  ExpectSuccess(FindValidReferences(h, search, Length(expectedResults), @len));
+  sl := TStringList.Create;
+  try
+    sl.Text := grs(len);
+    ExpectEqual(Length(expectedResults), sl.Count);
+    for i := Low(expectedResults) to High(expectedResults) do
+      ExpectEqual(sl[i], expectedResults[i]);
+  finally
+    sl.Free;
+  end;
 end;
 
 procedure TestIsMaster(rec: Cardinal; expectedValue: WordBool);
@@ -205,6 +222,20 @@ begin
           It('Should work from record handle', procedure
             begin
               h := TestFindNextRecord(h, 'Armor', True, False, 'FortifySkillHeavyArmor02');
+            end);
+        end);
+
+      Describe('FindValidReferences', procedure
+        begin
+          It('Should work on checked FormIDs', procedure
+            begin
+              TestFindValidReferences(0, 'Update.esm\0001392A\KWDA\[0]', 'a', TStringArray.Create(
+                'DA15WabbajackExcludedKeyword [KYWD:01000997]',
+                'ImmuneDragonPairedKill [KYWD:010009A2]',
+                'ArmorMaterialForsworn [KYWD:010009B9]',
+                'ArmorMaterialMS02Forsworn [KYWD:010009BA]',
+                'ArmorMaterialPenitus [KYWD:010009BB]'
+              ));
             end);
         end);
 
