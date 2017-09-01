@@ -467,7 +467,6 @@ end;
 function FindValidReferences(_id: Cardinal; search: PWideChar; limitTo: Integer; len: PInteger): WordBool; cdecl;
 var
   element: IwbElement;
-  str: String;
 begin
   Result := False;
   try
@@ -476,7 +475,9 @@ begin
     if not IsFormID(element) then
       raise Exception.Create('Input element doesn''t hold references.');
     resultStr := NativeFindValidReferences(element, string(search), limitTo);
-    len^ := Length(resultStr);
+    len^ := Length(resultStr) - 2;
+    if len^ > 0 then
+      Delete(resultStr, len^, 2);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
