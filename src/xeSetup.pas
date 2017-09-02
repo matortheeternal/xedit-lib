@@ -29,8 +29,8 @@ type
   procedure RemoveMissingFiles(var sl: TStringList);
   procedure AddMissingFiles(var sl: TStringList);
   procedure GetPluginDates(var sl: TStringList);
-  procedure AddBaseMasters(var sl: TStringList; forceAdd: Boolean = False);
-  procedure FixLoadOrder(var sl: TStringList; const filename: String; index: Integer; forceAdd: Boolean);
+  procedure AddBaseMasters(var sl: TStringList);
+  procedure FixLoadOrder(var sl: TStringList; const filename: String; index: Integer);
   function PluginListCompare(List: TStringList; Index1, Index2: Integer): Integer;
   procedure RenameSavedFiles;
   {$endregion}
@@ -369,32 +369,32 @@ begin
     sl.Objects[i] := TObject(FileAge(wbDataPath + sl[i]));
 end;
 
-procedure AddBaseMasters(var sl: TStringList; forceAdd: Boolean = False);
+procedure AddBaseMasters(var sl: TStringList);
 begin
   if (wbGameMode = gmTES5) then begin
-    FixLoadOrder(sl, 'Skyrim.esm', 0, forceAdd);
-    FixLoadOrder(sl, 'Update.esm', 1, forceAdd);
+    FixLoadOrder(sl, 'Skyrim.esm', 0);
+    FixLoadOrder(sl, 'Update.esm', 1);
   end
   else if (wbGameMode = gmSSE) then begin
-    FixLoadOrder(sl, 'Skyrim.esm', 0, forceAdd);
-    FixLoadOrder(sl, 'Update.esm', 1, forceAdd);
-    FixLoadOrder(sl, 'Dawnguard.esm', 2, forceAdd);
-    FixLoadOrder(sl, 'HearthFires.esm', 3, forceAdd);
-    FixLoadOrder(sl, 'Dragonborn.esm', 4, forceAdd);
+    FixLoadOrder(sl, 'Skyrim.esm', 0);
+    FixLoadOrder(sl, 'Update.esm', 1);
+    FixLoadOrder(sl, 'Dawnguard.esm', 2);
+    FixLoadOrder(sl, 'HearthFires.esm', 3);
+    FixLoadOrder(sl, 'Dragonborn.esm', 4);
   end
   else if (wbGameMode = gmFO4) then begin
-    FixLoadOrder(sl, 'Fallout4.esm', 0, forceAdd);
-    FixLoadOrder(sl, 'DLCRobot.esm', 1, forceAdd);
-    FixLoadOrder(sl, 'DLCworkshop01.esm', 2, forceAdd);
-    FixLoadOrder(sl, 'DLCCoast.esm', 3, forceAdd);
-    FixLoadOrder(sl, 'DLCworkshop02.esm', 4, forceAdd);
-    FixLoadOrder(sl, 'DLCworkshop03.esm', 5, forceAdd);
-    FixLoadOrder(sl, 'DLCNukaworld.esm', 6, forceAdd);
+    FixLoadOrder(sl, 'Fallout4.esm', 0);
+    FixLoadOrder(sl, 'DLCRobot.esm', 1);
+    FixLoadOrder(sl, 'DLCworkshop01.esm', 2);
+    FixLoadOrder(sl, 'DLCCoast.esm', 3);
+    FixLoadOrder(sl, 'DLCworkshop02.esm', 4);
+    FixLoadOrder(sl, 'DLCworkshop03.esm', 5);
+    FixLoadOrder(sl, 'DLCNukaworld.esm', 6);
   end;
 end;
 
 { Forces a plugin to load at a specific position }
-procedure FixLoadOrder(var sl: TStringList; const filename: String; index: Integer; forceAdd: Boolean);
+procedure FixLoadOrder(var sl: TStringList; const filename: String; index: Integer);
 var
   oldIndex: Integer;
 begin
@@ -404,7 +404,7 @@ begin
     sl.Delete(oldIndex);
     sl.Insert(index, filename);
   end
-  else if forceAdd then
+  else if FileExists(wbDataPath + filename) then
     sl.Insert(index, filename);
 end;
 
@@ -610,7 +610,7 @@ begin
     try
       sLoadPath := Globals.Values['AppDataPath'];
       BuildPluginsList(sLoadPath, slPlugins);
-      AddBaseMasters(slPlugins, True);
+      AddBaseMasters(slPlugins);
 
       // SET RESULT STRING
       resultStr := slPlugins.Text;
