@@ -379,7 +379,7 @@ begin
     FixLoadOrder(sl, 'Skyrim.esm', 0);
     FixLoadOrder(sl, 'Update.esm', 1);
     FixLoadOrder(sl, 'Dawnguard.esm', 2);
-    FixLoadOrder(sl, 'Hearthfires.esm', 3);
+    FixLoadOrder(sl, 'HearthFires.esm', 3);
     FixLoadOrder(sl, 'Dragonborn.esm', 4);
   end
   else if (wbGameMode = gmFO4) then begin
@@ -399,10 +399,11 @@ var
   oldIndex: Integer;
 begin
   oldIndex := sl.IndexOf(filename);
-  if (oldIndex > -1) and (oldIndex <> index) then begin
+  if (oldIndex > -1) then begin
+    if oldIndex = index then exit;
     sl.Delete(oldIndex);
-    sl.Insert(index, filename);
   end;
+  sl.Insert(index, filename);
 end;
 
 { Compare function for sorting load order by date modified/esms }
