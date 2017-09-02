@@ -5,6 +5,7 @@ interface
 type
   CardinalArray = array of Cardinal;
   PCardinalArray = ^CardinalArray;
+  TLoaderState = ( lsInactive, lsActive, lsDone, lsError );
   TErrorTypeID = ( erITM, erITPO, erDR, erUES, erURR, erUER, erUnknown );
   TValueType = ( vtUnknown, vtBytes, vtNumber, vtString, vtText, vtReference, vtFlags,
     vtEnum, vtColor, vtArray, vtStruct );
@@ -34,10 +35,10 @@ type
   function GetGamePath(gameMode: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetLoadOrder(len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetActivePlugins(len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
-  function LoadPlugins(loadOrder: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
-  function LoadPlugin(filename: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
+  function LoadPlugins(loadOrder: PWideChar; smartLoad: WordBool): WordBool; cdecl; external 'XEditLib.dll';
+  function LoadPlugin(fileName: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
   function BuildReferences(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function GetLoaderDone: WordBool; cdecl; external 'XEditLib.dll';
+  function GetLoaderStatus(status: PByte): WordBool; cdecl; external 'XEditLib.dll';
   function UnloadPlugin(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
 
   // FILE HANDLING METHODS

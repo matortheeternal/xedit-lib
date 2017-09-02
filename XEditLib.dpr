@@ -49,7 +49,7 @@ exports
   GetExceptionMessage,
   // LOADING AND SET UP METHODS
   GetGamePath, SetGamePath, SetLanguage, SetBackupPath, SetGameMode, GetLoadOrder,
-  GetActivePlugins, LoadPlugins, LoadPlugin, BuildReferences, GetLoaderDone,
+  GetActivePlugins, LoadPlugins, LoadPlugin, BuildReferences, GetLoaderStatus,
   UnloadPlugin,
   // FILE HANDLING METHODS
   AddFile, FileByIndex, FileByLoadOrder, FileByName, FileByAuthor, RenameFile,

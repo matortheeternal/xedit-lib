@@ -48,14 +48,17 @@ end;
 
 procedure TestLoader(expectedTime: Double);
 var
+  status: Byte;
   n: Integer;
 begin
-  Expect(not GetLoaderDone, 'Loader should take time');
+  ExpectSuccess(GetLoaderStatus(@status));
+  Expect(status = Ord(lsActive), 'Loader should take time');
   n := 0;
-  while not GetLoaderDone do begin
+  while status = Ord(lsActive) do begin
     WriteMessages;
     Inc(n);
     Sleep(100);
+    GetLoaderStatus(@status)
   end;
   Expect(n < expectedTime * 10, 'Loader should complete in under ' + FloatToStr(expectedTime) + ' seconds');
   WriteMessages;
@@ -183,7 +186,7 @@ begin
           It('Should load plugins based on input load order', procedure
             begin
               WriteLn(' ');
-              ExpectSuccess(LoadPlugins(TestLoadOrder));
+              ExpectSuccess(LoadPlugins(TestLoadOrder, False));
               TestLoader(10);
               WriteLn(' ');
             end);
