@@ -350,6 +350,7 @@ begin
           CloseXEdit;
         end);
 
+      {$IFNDEF SSE}
       AfterAll(procedure
         begin
           DeleteFile(GetDataPath + 'xtest-6.esp');
@@ -367,6 +368,7 @@ begin
         begin
           Expect(GetBackupPath('xtest-5.esp') <> '');
         end);
+      {$ENDIF}
     end);
 end;
 

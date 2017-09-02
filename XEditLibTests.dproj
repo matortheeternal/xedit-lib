@@ -4,7 +4,7 @@
 			<MainSource>XEditLibTests.dpr</MainSource>
 			<ProjectVersion>12.3</ProjectVersion>
 			<Base>True</Base>
-			<Config Condition="'$(Config)'==''">Debug</Config>
+			<Config Condition="'$(Config)'==''">SSE Debug</Config>
 			<Platform>Win32</Platform>
 			<AppType>Console</AppType>
 			<FrameworkType>None</FrameworkType>
@@ -20,6 +20,11 @@
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Config)'=='Release' or '$(Cfg_2)'!=''">
 			<Cfg_2>true</Cfg_2>
+			<CfgParent>Base</CfgParent>
+			<Base>true</Base>
+		</PropertyGroup>
+		<PropertyGroup Condition="'$(Config)'=='SSE Debug' or '$(Cfg_3)'!=''">
+			<Cfg_3>true</Cfg_3>
 			<CfgParent>Base</CfgParent>
 			<Base>true</Base>
 		</PropertyGroup>
@@ -46,6 +51,9 @@
 			<DCC_Define>RELEASE;USE_DLL;$(DCC_Define)</DCC_Define>
 			<DCC_SymbolReferenceInfo>0</DCC_SymbolReferenceInfo>
 			<DCC_DebugInformation>false</DCC_DebugInformation>
+		</PropertyGroup>
+		<PropertyGroup Condition="'$(Cfg_3)'!=''">
+			<DCC_Define>SSE;$(DCC_Define)</DCC_Define>
 		</PropertyGroup>
 		<ItemGroup>
 			<DelphiCompile Include="XEditLibTests.dpr">
@@ -95,6 +103,10 @@
 			<DCCReference Include="lib\mahogany\Mahogany.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
+				<CfgParent>Base</CfgParent>
+			</BuildConfiguration>
+			<BuildConfiguration Include="SSE Debug">
+				<Key>Cfg_3</Key>
 				<CfgParent>Base</CfgParent>
 			</BuildConfiguration>
 			<BuildConfiguration Include="Base">

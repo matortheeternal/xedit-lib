@@ -60,6 +60,7 @@ const
 
 procedure BuildXETests;
 begin
+  {$IFNDEF SSE}
   BuildSetupTests;
   BuildMetaTests;
   BuildMessageTests;
@@ -71,6 +72,11 @@ begin
   BuildSerializationTests;
   BuildPluginErrorTests;
   BuildFinalTests;
+  {$ENDIF}
+  {$IFDEF SSE}
+  BuildSetupTests;
+  BuildFinalTests;
+  {$ENDIF}
 end;
 
 procedure RunXETests;
