@@ -25,8 +25,8 @@ type
   procedure UpdateFileCount;
   procedure LoadPluginFiles;
   procedure LoadResources;
-  procedure BuildPluginsList(const sLoadPath: String; var sl: TStringList);
-  procedure BuildLoadOrder(const sLoadPath: String; var slLoadOrder, slPlugins: TStringList);
+  procedure LoadPluginsList(const sLoadPath: String; var sl: TStringList);
+  procedure LoadLoadOrder(const sLoadPath: String; var slLoadOrder, slPlugins: TStringList);
   procedure RemoveCommentsAndEmpty(var sl: TStringList);
   procedure RemoveMissingFiles(var sl: TStringList);
   procedure AddMissingFiles(var sl: TStringList);
@@ -45,7 +45,7 @@ type
   function GetGamePath(mode: Integer; len: PInteger): WordBool; cdecl;
   function GetLoadOrder(len: PInteger): WordBool; cdecl;
   function GetActivePlugins(len: PInteger): WordBool; cdecl;
-  function LoadPlugins(loadOrder: PWideChar): WordBool; cdecl;
+  function LoadPlugins(loadOrder: PWideChar; smartLoad: WordBool): WordBool; cdecl;
   function LoadPlugin(filename: PWideChar): WordBool; cdecl;
   function BuildReferences(_id: Cardinal): WordBool; cdecl;
   function GetLoaderStatus(status: PByte): WordBool; cdecl;
@@ -138,7 +138,6 @@ var
   _file: IwbFile;
 begin
   _file := wbFile(filePath, loadOrder, '', False, False);
-  _file._AddRef;
   SetLength(xFiles, Length(xFiles) + 1);
   xFiles[High(xFiles)] := _file;
 end;
@@ -148,7 +147,6 @@ var
   _file: IwbFile;
 begin
   _file := wbFile(Globals.Values['ProgramPath'] + wbGameName + wbHardcodedDat, 0);
-  _file._AddRef;
   SetLength(xFiles, Length(xFiles) + 1);
   xFiles[High(xFiles)] := _file;
 end;
@@ -266,8 +264,42 @@ begin
 end;
 {$endregion}
 
-{$region 'Load order helpers'}
-procedure BuildPluginsList(const sLoadPath: String; var sl: TStringList);
+{$region 'Load order helpers'}  
+function LoadFileHeader(const filePath: String): IwbFile;
+begin
+  Result := wbFile(filePath, -1, '', False, True);
+end;
+
+procedure AddToLoadOrder(const filePath: String);
+var
+  _file: IwbFile;
+  masterNames: TDynStrings;
+  i: Integer;
+begin
+  _file := LoadFileHeader(filePath);
+  masterNames := GetMasterFileNames(_file);
+  for i := Low(masterNames) to High(masterNames) do
+    if slLoadOrder.IndexOf(masterNames[i]) = -1 then
+      AddToLoadOrder(masterNames[i]);
+  slLoadOrder.Add(filePath);
+end;
+
+procedure BuildLoadOrder(const loadOrder: String);
+var
+  slFiles: TStringList;
+  i: Integer;
+begin
+  slFiles := TStringList.Create;
+  try        
+    slFiles.Text := loadOrder;
+    for i := 0 to Pred(slFiles.Count) do
+      AddToLoadOrder(slFiles[i]);
+  finally
+    slFiles.Free;
+  end;
+end;
+
+procedure LoadPluginsList(const sLoadPath: String; var sl: TStringList);
 var
   sPath: String;
 begin
@@ -282,7 +314,7 @@ begin
   RemoveMissingFiles(sl);
 end;
 
-procedure BuildLoadOrder(const sLoadPath: String; var slLoadOrder, slPlugins: TStringList);
+procedure LoadLoadOrder(const sLoadPath: String; var slLoadOrder, slPlugins: TStringList);
 var
   sPath: String;
 begin
@@ -585,8 +617,8 @@ begin
 
     try
       sLoadPath := Globals.Values['AppDataPath'];
-      BuildPluginsList(sLoadPath, slPlugins);
-      BuildLoadOrder(sLoadPath, slLoadOrder, slPlugins);
+      LoadPluginsList(sLoadPath, slPlugins);
+      LoadLoadOrder(sLoadPath, slLoadOrder, slPlugins);
 
       // add base masters if missing
       AddBaseMasters(slPlugins);
@@ -624,7 +656,7 @@ begin
 
     try
       sLoadPath := Globals.Values['AppDataPath'];
-      BuildPluginsList(sLoadPath, slPlugins);
+      LoadPluginsList(sLoadPath, slPlugins);
       AddBaseMasters(slPlugins);
 
       // SET RESULT STRING
@@ -640,7 +672,7 @@ begin
   end;
 end;
 
-function LoadPlugins(loadOrder: PWideChar): WordBool; cdecl;
+function LoadPlugins(loadOrder: PWideChar; smartLoad: WordBool): WordBool; cdecl;
 begin
   Result := False;
   try
@@ -651,18 +683,24 @@ begin
     
     // prepare load order
     slLoadOrder := TStringList.Create;
-    slLoadOrder.Text := loadOrder;
+    if smartLoad then
+      BuildLoadOrder(loadOrder)
+    else
+      slLoadOrder.Text := loadOrder;
 
     // start loader thread
     SetLoaderState(lsActive);
     LoaderThread := TLoaderThread.Create;
     Result := True;
   except
-    on x: Exception do ExceptionHandler(x);
+    on x: Exception do begin  
+      slLoadOrder.Free;
+      ExceptionHandler(x);
+    end;
   end;
 end;
 
-function LoadPlugin(filename: PWideChar): WordBool; cdecl;
+function LoadPlugin(fileName: PWideChar): WordBool; cdecl;
 begin
   Result := False;
   try
@@ -675,7 +713,10 @@ begin
     LoaderThread := TLoaderThread.Create;
     Result := True;
   except
-    on x: Exception do ExceptionHandler(x);
+    on x: Exception do begin 
+      slLoadOrder.Free;
+      ExceptionHandler(x);
+    end;
   end;
 end;
 
