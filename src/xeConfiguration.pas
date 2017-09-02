@@ -22,13 +22,6 @@ type
     appIDs: string;
     abbrName: string;
   end;
-  TProgramStatus = class(TObject)
-  public
-    bLoaderDone: boolean;
-    ProgramVersion: string;
-    GameMode: TGameMode;
-    constructor Create; virtual;
-  end;
   {$endregion}
 
   {$region 'Functions'}
@@ -37,10 +30,10 @@ type
   {$endregion}
 
 var
-  ProgramStatus: TProgramStatus;
   Globals: TStringList;
   wbAppDataPath, wbMyGamesPath, BackupPath: String;
-  GamePath, Language: String;
+  GameMode: TGameMode;
+  ProgramVersion, GamePath, Language: String;
   HideChildGroups: Boolean;
 
 const
@@ -71,14 +64,6 @@ implementation
 
 uses
   StrUtils, Rtti, TypInfo;
-
-{$region 'TProgramStatus'}
-constructor TProgramStatus.Create;
-begin
-  bLoaderDone := False;
-  ProgramVersion := GetVersionMem;
-end;
-{$endregion}
 
 {$region 'SetGame'}
 function GetMyGamesPath: String;
@@ -131,11 +116,11 @@ begin
     BackupPath := dataPath + 'zEdit Backups\';
 
   // update xEdit vars
-  ProgramStatus.GameMode := GameArray[id];
-  wbGameName := ProgramStatus.GameMode.gameName;
-  wbGameName2 := ProgramStatus.GameMode.regName;
-  wbGameMode := ProgramStatus.GameMode.gameMode;
-  wbAppName := ProgramStatus.GameMode.appName;
+  GameMode := GameArray[id];
+  wbGameName := GameMode.gameName;
+  wbGameName2 := GameMode.regName;
+  wbGameMode := GameMode.gameMode;
+  wbAppName := GameMode.appName;
   wbDataPath := dataPath;
   wbVWDInTemporary := wbGameMode in [gmSSE, gmTES5, gmFO3, gmFNV];
   wbVWDAsQuestChildren := wbGameMode = gmFO4;
@@ -210,18 +195,13 @@ begin
 end;
 
 initialization
-begin
-  ProgramStatus := TProgramStatus.Create;
+  ProgramVersion := GetVersionMem;
   Globals := TStringList.Create;
   GamePath := '';
   HideChildGroups := True;
   Language := 'English';
-end;
 
 finalization
-begin
-  ProgramStatus.Free;
   Globals.Free;
-end;
 
 end.

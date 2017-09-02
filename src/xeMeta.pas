@@ -259,11 +259,11 @@ begin
   resultStr := '';
 
   // add welcome message
-  AddMessage('XEditLib v' + ProgramStatus.ProgramVersion);
+  AddMessage('XEditLib v' + ProgramVersion);
 
   // store global values
   Globals.Values['ProgramPath'] := ExtractFilePath(ParamStr(0));
-  Globals.Values['Version'] := ProgramStatus.ProgramVersion;
+  Globals.Values['Version'] := ProgramVersion;
 end;
 
 procedure CloseXEdit; cdecl;

@@ -17,9 +17,11 @@ type
   protected
     procedure Execute; override;
   end;
+  TLoaderState = ( lsInactive, lsActive, lsDone, lsError );
   {$endregion}
 
   {$region 'Native functions}
+  procedure SetLoaderState(state: TLoaderState);
   procedure UpdateFileCount;
   procedure LoadPluginFiles;
   procedure LoadResources;
@@ -46,7 +48,7 @@ type
   function LoadPlugins(loadOrder: PWideChar): WordBool; cdecl;
   function LoadPlugin(filename: PWideChar): WordBool; cdecl;
   function BuildReferences(_id: Cardinal): WordBool; cdecl;
-  function GetLoaderDone: WordBool; cdecl;
+  function GetLoaderStatus(status: PByte): WordBool; cdecl;
   function UnloadPlugin(_id: Cardinal): WordBool; cdecl;
   {$endregion}
 
@@ -55,6 +57,7 @@ var
   slLoadOrder, slSavedFiles: TStringList;
   LoaderThread: TLoaderThread;
   RefThread: TRefThread;
+  LoaderState: TLoaderState;
   BaseFileIndex: Integer;
 
 implementation
@@ -69,18 +72,19 @@ uses
 {$region 'TLoaderThread'}
 procedure TLoaderThread.Execute;
 begin
-  try
+  try     
     LoadPluginFiles;
     LoadResources;
     UpdateFileCount;
 
     // done loading
-    ProgramStatus.bLoaderDone := True;
+    slLoadOrder.Free;
     AddMessage('Done loading files.');
+    SetLoaderState(lsDone);
   except
-    on E: Exception do begin
-      AddMessage('Fatal Error: <' + e.ClassName + ': ' + e.Message + '>');
-      wbLoaderError := True;
+    on e: Exception do begin
+      AddMessage('Fatal Error: ' + e.Message);
+      SetLoaderState(lsError);
     end;
   end;
 end;
@@ -101,18 +105,28 @@ begin
 
     // done loading
     SetLength(rFiles, 0);
-    ProgramStatus.bLoaderDone := True;
     AddMessage('Done building references.');
+    SetLoaderState(lsDone);
   except
     on E: Exception do begin
       AddMessage('Fatal Error: <' + e.ClassName + ': ' + e.Message + '>');
-      wbLoaderError := True;
+      SetLoaderState(lsError);
     end;
   end;
 end;
 {$endregion}
 
 {$region 'Native functions'}
+procedure SetLoaderState(state: TLoaderState);
+begin
+  LoaderState := state;
+  case state of
+    lsActive: wbLoaderdone := False;
+    lsDone: wbLoaderdone := True;
+    lsError: wbLoaderError := True;
+  end;
+end;
+
 {$region 'File loading'}
 procedure UpdateFileCount;
 begin
@@ -139,6 +153,12 @@ begin
   xFiles[High(xFiles)] := _file;
 end;
 
+procedure ThreadException(const msg: String);
+begin
+  AddMessage(msg);
+  raise Exception.Create(msg);
+end;
+
 procedure LoadPluginFiles;
 var
   i: Integer;
@@ -153,21 +173,16 @@ begin
     try
       LoadFile(wbDataPath + sFileName, BaseFileIndex + i);
     except
-      on x: Exception do begin
-        AddMessage('Exception loading ' + sFileName);
-        AddMessage(x.Message);
-        raise x;
-      end;
+      on x: Exception do
+        ThreadException('Exception loading ' + sFileName + ': ' + x.Message);
     end;
 
     // load hardcoded dat
     if (i = 0) and (sFileName = wbGameName + '.esm') then try
       LoadHardCodedDat;
     except
-      on x: Exception do begin
-        AddMessage('Exception loading ' + wbGameName + wbHardcodedDat);
-        raise x;
-      end;
+      on x: Exception do
+        ThreadException('Exception loading ' + wbGameName + wbHardcodedDat + ': ' + x.Message);
     end;
   end;
 end;
@@ -530,9 +545,9 @@ begin
     // log message
     AddMessage(Format('Game: %s, DataPath: %s', [wbGameName, wbDataPath]));
     // set global values
-    Globals.Values['GameName'] := ProgramStatus.GameMode.gameName;
-    Globals.Values['AppName'] := ProgramStatus.GameMode.appName;
-    Globals.Values['LongGameName'] := ProgramStatus.GameMode.longName;
+    Globals.Values['GameName'] := GameMode.gameName;
+    Globals.Values['AppName'] := GameMode.appName;
+    Globals.Values['LongGameName'] := GameMode.longName;
     Globals.Values['DataPath'] := wbDataPath;
     Globals.Values['AppDataPath'] := wbAppDataPath;
     Globals.Values['MyGamesPath'] := wbMyGamesPath;
@@ -629,16 +644,17 @@ function LoadPlugins(loadOrder: PWideChar): WordBool; cdecl;
 begin
   Result := False;
   try
-    // exit if we have already started loading plugins
-    if Assigned(slLoadOrder) then
-      raise Exception.Create('Already loading plugins.');
+    // exit if loader is already active
+    if LoaderState in [lsActive, lsDone, lsError] then
+      raise Exception.Create('Error: You can only call LoadPlugins once per session. ' +
+        'Use LoadPlugin to load additional plugins.');
     
-    // store load order we're going to use in slLoadOrder
-    ProgramStatus.bLoaderDone := False;
+    // prepare load order
     slLoadOrder := TStringList.Create;
     slLoadOrder.Text := loadOrder;
 
     // start loader thread
+    SetLoaderState(lsActive);
     LoaderThread := TLoaderThread.Create;
     Result := True;
   except
@@ -650,12 +666,12 @@ function LoadPlugin(filename: PWideChar): WordBool; cdecl;
 begin
   Result := False;
   try
-    // update load order
-    ProgramStatus.bLoaderDone := False;
+    // prepare load order
     slLoadOrder := TStringList.Create;
     slLoadOrder.Add(fileName);
 
     // start loader thread
+    SetLoaderState(lsActive);
     LoaderThread := TLoaderThread.Create;
     Result := True;
   except
@@ -669,7 +685,6 @@ var
 begin
   Result := False;
   try
-    ProgramStatus.bLoaderDone := False;
     if _id = 0 then
       rFiles := Copy(xFiles, 0, MaxInt)
     else begin
@@ -678,6 +693,9 @@ begin
       SetLength(rFiles, 1);
       rFiles[0] := _file;
     end;
+
+    // start reference building thread
+    SetLoaderState(lsActive);
     RefThread := TRefThread.Create;
     Result := True;
   except
@@ -685,13 +703,14 @@ begin
   end;
 end;
 
-function GetLoaderDone: WordBool; cdecl;
+function GetLoaderStatus(status: PByte): WordBool; cdecl;
 begin
-  Result := ProgramStatus.bLoaderDone;
-  if Result then begin
-    if Assigned(LoaderThread) then FreeAndNil(LoaderThread);
-    if Assigned(RefThread)    then FreeAndNil(RefThread);
-    if Assigned(slLoadOrder)  then FreeAndNil(slLoadOrder);
+  Result := False;
+  try
+    status^ := Ord(LoaderState);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
   end;
 end;
 
@@ -721,6 +740,8 @@ end;
 
 initialization
   slSavedFiles := TStringList.Create;
+  LoaderState := lsInactive;
+
 finalization
   slSavedFiles.Free;
 
