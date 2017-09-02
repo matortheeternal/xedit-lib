@@ -6,6 +6,7 @@ uses
   wbInterface;
 
   {$region 'Native functions'}
+  function GetMasterFileNames(const _file: IwbFile): TDynStrings;
   procedure NativeAddRequiredMasters(const element: IwbElement; const targetFile: IwbFile; asNew: Boolean);
   function NativeFileHasMaster(const _file, _master: IwbFile): Boolean;
   {$endregion}
@@ -29,6 +30,20 @@ uses
   xeMeta, xeFiles, xeMessages, xeSetup;
 
 {$region 'Native functions'}
+function GetMasterFileNames(const _file: IwbFile): TDynStrings;
+var
+  masters, master: IwbContainer;
+  i: Integer;
+
+begin
+  masters := _file.Header.ElementByPath['Master Files'] as IwbContainer;
+  SetLength(Result, masters.ElementCount);
+  for i := 0 to Pred(masters.ElementCount) do begin
+    master := masters.Elements[i] as IwbContainer;
+    Result[i] := master.ElementEditValues['MAST'];
+  end;
+end;
+
 procedure NativeAddMaster(const targetFile: IwbFile; const masterName: String);
 begin
   NativeFileByNameEx(string(masterName));
