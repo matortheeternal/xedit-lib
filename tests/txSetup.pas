@@ -20,8 +20,6 @@ uses
 
 const
   TestLoadOrder =
-    'Skyrim.esm'#13 +
-    'Update.esm'#13 +
     {$IFDEF LOAD_DLC}
     'Dawnguard.esm'#13 +
     'HearthFires.esm'#13 +
@@ -186,7 +184,7 @@ begin
           It('Should load plugins based on input load order', procedure
             begin
               WriteLn(' ');
-              ExpectSuccess(LoadPlugins(TestLoadOrder, False));
+              ExpectSuccess(LoadPlugins(TestLoadOrder, True));
               TestLoader(10);
               WriteLn(' ');
             end);
