@@ -119,7 +119,6 @@ end;
 procedure TestGetConflictData(nodes, element: Cardinal; path: PWideChar; ca: TConflictAll; ct: TConflictTHis);
 var
   caResult, ctResult: Byte;
-  h: Cardinal;
 begin
   if path <> '' then
     ExpectSuccess(GetElement(element, path, @element));

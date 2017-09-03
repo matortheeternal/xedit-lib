@@ -52,8 +52,6 @@ implementation
 
 uses
   Classes, SysUtils, Variants,
-  // mte modules
-  mteHelpers,
   // xedit modules
   wbImplementation,
   // xelib modules

@@ -89,8 +89,6 @@ implementation
 
 uses
   Variants, SysUtils, StrUtils,
-  // mte units
-  mteHelpers,
   // xedit units
   wbImplementation,
   // xelib units

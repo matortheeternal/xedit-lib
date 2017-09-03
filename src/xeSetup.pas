@@ -47,6 +47,7 @@ type
   function GetActivePlugins(len: PInteger): WordBool; cdecl;
   function LoadPlugins(loadOrder: PWideChar; smartLoad: WordBool): WordBool; cdecl;
   function LoadPlugin(filename: PWideChar): WordBool; cdecl;
+  function LoadPluginHeader(fileName: PWideChar; _res: PCardinal): WordBool; cdecl;
   function BuildReferences(_id: Cardinal): WordBool; cdecl;
   function GetLoaderStatus(status: PByte): WordBool; cdecl;
   function UnloadPlugin(_id: Cardinal): WordBool; cdecl;
@@ -64,8 +65,6 @@ implementation
 
 uses
   Windows, SysUtils, ShlObj,
-  // mte units
-  mteHelpers,
   // xelib units
   xeMeta, xeConfiguration, xeMessages, xeMasters;
 
@@ -253,18 +252,18 @@ var
   i, index, len: Integer;
 begin
   index := IndexOfFile(_file);
-  len := Length(xFiles);
-  Assert(index > -1);
-  Assert(index < len);
-  for i := index + 1 to Pred(len) do
-    xFiles[i - 1] := xFiles[i];
-  SetLength(xFiles, len - 1);
+  if index > -1 then begin
+    len := Length(xFiles);
+    for i := index + 1 to Pred(len) do
+      xFiles[i - 1] := xFiles[i];
+    SetLength(xFiles, len - 1);
+    UpdateFileCount;
+  end;
   wbFileForceClosed(_file);
-  UpdateFileCount;
 end;
 {$endregion}
 
-{$region 'Load order helpers'}  
+{$region 'Load order helpers'}
 function LoadFileHeader(const filePath: String): IwbFile;
 begin
   Result := wbFile(filePath, -1, '', False, True);
@@ -277,7 +276,7 @@ var
   i: Integer;
 begin
   _file := LoadFileHeader(filePath);
-  masterNames := GetMasterFileNames(_file);
+  masterNames := NativeGetMasterNames(_file);
   for i := Low(masterNames) to High(masterNames) do
     if slLoadOrder.IndexOf(masterNames[i]) = -1 then
       AddToLoadOrder(masterNames[i]);
@@ -295,6 +294,7 @@ begin
     for i := 0 to Pred(slFiles.Count) do
       AddToLoadOrder(slFiles[i]);
   finally
+    wbFileForceClosed;
     slFiles.Free;
   end;
 end;
@@ -677,7 +677,7 @@ begin
   Result := False;
   try
     // exit if loader is already active
-    if LoaderState in [lsActive, lsDone, lsError] then
+    if LoaderState <> lsInactive then
       raise Exception.Create('Error: You can only call LoadPlugins once per session. ' +
         'Use LoadPlugin to load additional plugins.');
     
@@ -717,6 +717,21 @@ begin
       slLoadOrder.Free;
       ExceptionHandler(x);
     end;
+  end;
+end;
+
+function LoadPluginHeader(fileName: PWideChar; _res: PCardinal): WordBool; cdecl;
+var
+  _file: IwbFile;
+begin
+  Result := False;
+  try
+    _file := LoadFileHeader(fileName);
+    _res^ := Store(_file);
+    Result := True;
+  except
+    on x: Exception do
+      ExceptionHandler(x);
   end;
 end;
 

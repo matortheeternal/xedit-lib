@@ -6,7 +6,7 @@ uses
   wbInterface;
 
   {$region 'Native functions'}
-  function GetMasterFileNames(const _file: IwbFile): TDynStrings;
+  function NativeGetMasterNames(const _file: IwbFile): TDynStrings;
   procedure NativeAddRequiredMasters(const element: IwbElement; const targetFile: IwbFile; asNew: Boolean);
   function NativeFileHasMaster(const _file, _master: IwbFile): Boolean;
   {$endregion}
@@ -18,6 +18,7 @@ uses
   function AddMasters(_id: Cardinal; masters: PWideChar): WordBool; cdecl;
   function GetMasters(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function GetRequiredBy(_id: Cardinal; len: PInteger): WordBool; cdecl;
+  function GetMasterNames(_id: Cardinal; len: PInteger): WordBool; cdecl;
   {$endregion}
 
 implementation
@@ -27,16 +28,16 @@ uses
   // xedit modules
   wbImplementation,
   // xelib modules
-  xeMeta, xeFiles, xeMessages, xeSetup;
+  xeHelpers, xeMeta, xeFiles, xeMessages, xeSetup;
 
 {$region 'Native functions'}
-function GetMasterFileNames(const _file: IwbFile): TDynStrings;
+function NativeGetMasterNames(const _file: IwbFile): TDynStrings;
 var
   masters, master: IwbContainer;
   i: Integer;
-
 begin
   masters := _file.Header.ElementByPath['Master Files'] as IwbContainer;
+  if not Assigned(masters) then exit;
   SetLength(Result, masters.ElementCount);
   for i := 0 to Pred(masters.ElementCount) do begin
     master := masters.Elements[i] as IwbContainer;
@@ -197,6 +198,24 @@ begin
   end;
 end;
 {$POINTERMATH OFF}
+
+function GetMasterNames(_id: Cardinal; len: PInteger): WordBool; cdecl;
+var
+  _file: IwbFile;
+  masterNames: TDynStrings;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbFile, _file) then
+      raise Exception.Create('Interface must be a file.');
+    masterNames := NativeGetMasterNames(_file);
+    resultStr := StrArrayJoin(masterNames, #13#10);
+    len^ := Length(resultStr);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
 {$endregion}
 
 end.

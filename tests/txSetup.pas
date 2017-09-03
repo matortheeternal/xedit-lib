@@ -46,13 +46,14 @@ end;
 
 procedure TestLoader(expectedTime: Double);
 var
-  status: Byte;
+  status, activeByte: Byte;
   n: Integer;
 begin
   ExpectSuccess(GetLoaderStatus(@status));
-  Expect(status = Ord(lsActive), 'Loader should take time');
+  activeByte := Byte(Ord(lsActive));
+  Expect(status = activeByte, 'Loader should take time');
   n := 0;
-  while status = Ord(lsActive) do begin
+  while (status = activeByte) do begin
     WriteMessages;
     Inc(n);
     Sleep(100);

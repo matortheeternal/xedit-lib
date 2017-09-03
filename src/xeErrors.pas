@@ -68,10 +68,8 @@ implementation
 
 uses
   SysUtils, StrUtils, Masks, RegularExpressions,
-  // mte units
-  mteConflict,
   // xelib units
-  xeMessages, xeElementValues,
+  xeConflict, xeMessages, xeElementValues,
   // library units
   Argo;
 

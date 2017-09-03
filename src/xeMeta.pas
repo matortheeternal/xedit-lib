@@ -3,7 +3,7 @@ unit xeMeta;
 interface
 
 uses
-  Classes, SysUtils, Generics.Collections, wbInterface, xeTypes, mteConflict;
+  Classes, SysUtils, Generics.Collections, wbInterface, xeTypes, xeConflict;
 
 type
   TDataFunction = function(const e: IInterface): String;
@@ -49,8 +49,6 @@ implementation
 
 uses
   wbImplementation,
-  // mte modules
-  mteHelpers,
   // xelib modules
   xeConfiguration, xeMessages, xeSetup, xeFiles;
 

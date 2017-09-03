@@ -71,10 +71,6 @@
 			<DCCReference Include="src\xeErrors.pas"/>
 			<DCCReference Include="src\xeRecords.pas"/>
 			<DCCReference Include="src\xeSerialization.pas"/>
-			<DCCReference Include="lib\mte\mteHelpers.pas"/>
-			<DCCReference Include="lib\mte\mteConflict.pas"/>
-			<DCCReference Include="lib\mte\CRC32.pas"/>
-			<DCCReference Include="lib\mte\RttiIni.pas"/>
 			<DCCReference Include="lib\xedit\wbImplementation.pas"/>
 			<DCCReference Include="lib\xedit\wbInterface.pas"/>
 			<DCCReference Include="lib\xedit\wbBSA.pas"/>

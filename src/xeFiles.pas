@@ -34,12 +34,10 @@ implementation
 
 uses
   SysUtils,
-  // mte modules
-  mteHelpers,
   // xedit modules
   wbImplementation, wbHelpers,
   // xelib modules
-  xeMessages, xeMeta, xeSetup;
+  xeHelpers, xeMessages, xeMeta, xeSetup;
 
 {$region 'Native functions'}
 function NextLoadOrder: Integer;

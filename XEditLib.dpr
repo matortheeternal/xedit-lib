@@ -1,7 +1,7 @@
 library XEditLib;
 
 uses
-  ShareMem,
+  xeHelpers in 'src\xeHelpers.pas',
   xeTypes in 'src\xeTypes.pas',
   xeMessages in 'src\xeMessages.pas',
   xeConfiguration in 'src\xeConfiguration.pas',
@@ -14,10 +14,7 @@ uses
   xeErrors in 'src\xeErrors.pas',
   xeRecords in 'src\xeRecords.pas',
   xeSerialization in 'src\xeSerialization.pas',
-  mteHelpers in 'lib\mte\mteHelpers.pas',
-  mteConflict in 'lib\mte\mteConflict.pas',
-  CRC32 in 'lib\mte\CRC32.pas',
-  RttiIni in 'lib\mte\RttiIni.pas',
+  xeConflict in 'src\xeConflict.pas',
   wbImplementation in 'lib\xedit\wbImplementation.pas',
   wbInterface in 'lib\xedit\wbInterface.pas',
   wbBSA in 'lib\xedit\wbBSA.pas',
@@ -49,13 +46,14 @@ exports
   GetExceptionMessage,
   // LOADING AND SET UP METHODS
   GetGamePath, SetGamePath, SetLanguage, SetBackupPath, SetGameMode, GetLoadOrder,
-  GetActivePlugins, LoadPlugins, LoadPlugin, BuildReferences, GetLoaderStatus,
-  UnloadPlugin,
+  GetActivePlugins, LoadPlugins, LoadPlugin, LoadPluginHeader, BuildReferences,
+  GetLoaderStatus, UnloadPlugin,
   // FILE HANDLING METHODS
   AddFile, FileByIndex, FileByLoadOrder, FileByName, FileByAuthor, RenameFile,
   SaveFile, OverrideRecordCount, MD5Hash, CRCHash, SortEditorIDs, SortNames,
   // MASTER HANDLING METHODS
   CleanMasters, SortMasters, AddMaster, AddMasters, GetMasters, GetRequiredBy,
+  GetMasterNames,
   // ELEMENT HANDLING METHODS
   HasElement, GetElement, AddElement, RemoveElement, RemoveElementOrParent,
   SetElement, GetElements, GetDefNames, GetAddList, GetContainer, GetElementFile,

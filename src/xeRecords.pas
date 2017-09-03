@@ -37,9 +37,8 @@ implementation
 
 uses
   Classes, SysUtils,
-  mteConflict,
   wbImplementation,
-  xeTypes, xeMessages, xeSetup, xeElements, xeElementValues;
+  xeConflict, xeTypes, xeMessages, xeSetup, xeElements, xeElementValues;
 
 {$region 'Native functions'}
 function EditorIDToFormID(const _file: IwbFile; const editorID: String): Cardinal;

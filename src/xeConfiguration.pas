@@ -4,8 +4,6 @@ interface
 
 uses
   SysUtils, Classes, ShlObj,
-  // mte units
-  mteHelpers, CRC32,
   // xedit units
   wbInterface, wbBSA, wbDefinitionsFO4, wbDefinitionsTES5, wbDefinitionsTES4,
   wbDefinitionsFNV, wbDefinitionsFO3;
@@ -63,7 +61,8 @@ const
 implementation
 
 uses
-  StrUtils, Rtti, TypInfo;
+  StrUtils, Rtti, TypInfo,
+  xeHelpers;
 
 {$region 'SetGame'}
 function GetMyGamesPath: String;

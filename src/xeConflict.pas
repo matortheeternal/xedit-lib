@@ -1,11 +1,9 @@
-unit mteConflict;
+unit xeConflict;
 
 interface
 
 uses
   Classes, SysUtils,
-  // mte units
-  mteBase,
   // xEdit units
   wbInterface, wbImplementation, wbHelpers;
 
@@ -109,19 +107,10 @@ end;
 
 function NodeDatasForMainRecord(const aMainRecord: IwbMainRecord): TDynViewNodeDatas;
 var
-  Master        : IwbMainRecord;
-  Rec           : IwbMainRecord;
-  i, j          : Integer;
-  Records       : TStringList;
-  AnyHidden     : Boolean;
-  IsNonOverride : Boolean;
-  EditorID      : string;
-  FormID        : Cardinal;
-  LoadOrder     : Integer;
-  Group         : IwbGroupRecord;
-  Signature     : TwbSignature;
-  plugin        : TBasePlugin;
-  aFile         : IwbFile;
+  Master, Rec: IwbMainRecord;
+  i: Integer;
+  Records: TStringList;
+  AnyHidden, IsNonOverride: Boolean;
 begin
   Assert(wbLoaderDone);
   IsNonOverride := False;
