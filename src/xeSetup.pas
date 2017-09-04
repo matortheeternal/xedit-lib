@@ -501,7 +501,10 @@ procedure BackupFile(const path: String);
 var
   bakPath: String;
 begin
-  bakPath := BackupPath + ExtractFileName(path) + '.' + FileTimeStr + '.bak';
+  if DirectoryExists(BackupPath) then
+    bakPath := BackupPath + ExtractFileName(path) + '.' + FileTimeStr + '.bak'
+  else
+    bakPath := path + '.bak';
   if not RenameFile(path, bakPath) then
     RaiseLastOSError;
 end;
@@ -517,11 +520,21 @@ begin
     RaiseLastOSError;
 end;
 
+procedure CreateBackupFolder;
+begin
+  try
+    ForceDirectories(BackupPath);
+  except
+    on x: Exception do
+      AddMessage('Error creating backup folder: ' + x.Message);
+  end;
+end;
+
 procedure RenameSavedFiles;
 var
   i: Integer;
 begin
-  ForceDirectories(BackupPath);
+  CreateBackupFolder;
   DateTimeToString(FileTimeStr, 'yymmdd_hhnnss', Now);
   for i := 0 to Pred(slSavedFiles.Count) do try
     RenameSavedFile(slSavedFiles[i]);
