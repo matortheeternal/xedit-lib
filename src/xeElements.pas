@@ -298,8 +298,10 @@ var
   rec: IwbMainRecord;
   group: IwbGroupRecord;
 begin
-  if ParseFormID(key, formID) then
-    Result := _file.RecordByFormID[formID, True]
+  if ParseFormID(key, formID) then begin
+    formID := _file.LoadOrderFormIDtoFileFormID(formID);
+    Result := _file.RecordByFormID[formID, True];
+  end
   else if ParseFullName(key, name) then begin
     _file.FindName(name, rec);
     Result := rec;
@@ -468,10 +470,26 @@ begin
     Result := CreateFromContainer(rec as IwbContainerElementRef, path);
 end;
 
-procedure OverrideRecordIfNecessary(const rec: IwbMainRecord; const targetFile: IwbFile; var output: IInterface);
+function GetLastOverrideBeforeFile(const rec: IwbMainRecord; const targetFile: IwbFile): IwbMainRecord;
+var
+  i: Integer;
 begin
-  if Assigned(rec) and not rec._File.Equals(targetFile) then
-    output := CopyElementToFile(rec, targetFile, false, true);
+  Result := rec;
+  for i := Pred(rec.OverrideCount) downto 0 do begin
+    Result := rec.Overrides[i];
+    if Result._File.LoadOrder < targetFile.LoadOrder then exit;
+  end;
+end;
+
+procedure OverrideRecordIfNecessary(const rec: IwbMainRecord; const targetFile: IwbFile; var output: IInterface);
+var
+  ovr: IwbMainRecord;
+begin
+  if Assigned(rec) and not rec._File.Equals(targetFile) then begin
+    ovr := GetLastOverrideBeforeFile(rec, targetFile);
+    NativeAddRequiredMasters(ovr, targetFile, false);
+    output := CopyElementToFile(ovr, targetFile, false, true);
+  end;
 end;
 
 function CreateRecord(const group: IwbGroupRecord; formID: Cardinal; const nextPath: String): IInterface; overload;
@@ -539,6 +557,7 @@ function CreateRecord(const _file: IwbFile; formID: Cardinal; const nextPath: St
 var
   rec: IwbMainRecord;
 begin
+  formID := _file.LoadOrderFormIDToFileFormID(formID);
   Result := _file.RecordByFormID[formID, true];
   if not Supports(Result, IwbMainRecord, rec) then exit;
   OverrideRecordIfNecessary(rec, _file, Result);
