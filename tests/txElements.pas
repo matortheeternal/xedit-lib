@@ -520,10 +520,20 @@ begin
               TestAddElement(xt3, 'CELL');
             end);
 
+          It('Should be able to override records in files', procedure
+            begin
+              TestAddElement(xt3, '0001392A');
+              TestElementCount(armo2, 2);
+              {$IFDEF LOAD_DLC}
+              ExpectSuccess(AddMaster(xt3, 'Dragonborn.esm'));
+              TestAddElement(xt3, '0403C0F6');
+              {$ENDIF}
+            end);
+
           It('Should be able to add records to groups', procedure
             begin
               TestAddElement(armo2, 'ARMO', False);
-              TestElementCount(armo2, 2);
+              TestElementCount(armo2, 3);
             end);
 
           It('Should be able to create a new element on a record', procedure
@@ -566,6 +576,7 @@ begin
 
           It('Should be able to remove records from groups', procedure
             begin
+              TestRemoveElement(armo2, '[2]');
               TestRemoveElement(armo2, '[1]');
             end);
 
