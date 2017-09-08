@@ -73,10 +73,13 @@ type
   // exposed methods
   function GetRecordNodes(const aMainRecord: IwbMainRecord): TDynViewNodeDatas;
   function FindNodeForElement(const aNodeDatas: TDynViewNodeDatas; const element: IwbElement): PViewNodeData; overload;
-  function IsITPO(rec: IwbMainRecord): Boolean;
-  function IsITM(rec: IwbMainRecord): Boolean;
+  function IsITPO(const rec: IwbMainRecord): Boolean;
+  function IsITM(const rec: IwbMainRecord): Boolean;
 
 implementation
+
+uses
+  xeMasters;
 
 procedure AppendToNodeDatas(var NodeDatas: TDynViewNodeDatas; e: IwbElement);
 var
@@ -808,25 +811,29 @@ begin
   if Assigned(elementNode) then Result := elementNode;
 end;
 
-function IsITPO(rec: IwbMainRecord): Boolean;
+function GetPreviousOverride(const rec: IwbMainRecord): IwbMainRecord;
 var
-  mRec, prevOvr, ovr: IwbMainRecord;
   i: Integer;
+  _file: IwbFile;
 begin
-  // get previous override
-  mRec := rec.MasterOrSelf;
-  prevovr := mRec;
-  for i := 0 to Pred(mRec.OverrideCount) do begin
-    ovr := mRec.Overrides[i];
-    if ovr.Equals(rec) then
-      Break;
-    prevovr := ovr;
+  _file := rec._File;
+  for i := Pred(rec.OverrideCount) downto 0 do begin
+    Result := rec.Overrides[i];
+    if NativeFileHasMaster(_file, Result._File) then exit;
   end;
-  
+  Result := rec.MasterOrSelf;
+end;
+
+function IsITPO(const rec: IwbMainRecord): Boolean;
+var
+  mRec, prevOvr: IwbMainRecord;
+begin
+  mRec := rec.MasterOrSelf;
+  prevOvr := GetPreviousOverride(rec);
   Result := ConflictAllForElements(prevovr, rec, False, False) <= caNoConflict;
 end;
 
-function IsITM(rec: IwbMainRecord): Boolean;
+function IsITM(const rec: IwbMainRecord): Boolean;
 const
   ITMConflictArray: set of TConflictThis = [
     ctIdenticalToMaster,
