@@ -62,8 +62,8 @@ exports
   HasArrayItem, GetArrayItem, AddArrayItem, RemoveArrayItem, MoveArrayItem,
   CopyElement, GetSignatureAllowed, GetIsModified, GetIsEditable, GetIsRemoveable,
   GetCanAdd, SortKey, ElementType, DefType, SmashType, ValueType, IsSorted,
-  // ERROR CHECKING METHODS
-  CheckForErrors, GetErrorThreadDone, GetErrors,
+  // PLUGIN ERROR METHODS
+  CheckForErrors, GetErrorThreadDone, GetErrors, RemoveIdenticalRecords,
   // SERIALIZATION METHODS
   ElementToJson, ElementFromJson,
   // ELEMENT VALUE METHODS

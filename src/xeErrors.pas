@@ -38,10 +38,15 @@ type
   end;
   {$endregion}
 
+  {$region 'Native functions'}
+  procedure RemoveIdenticalRecord(const rec: IwbMainRecord);
+  {$endregion}
+
   {$region 'API functions'}
   function CheckForErrors(_id: Cardinal): WordBool; cdecl;
   function GetErrorThreadDone: WordBool; cdecl;
   function GetErrors(len: PInteger): WordBool; cdecl;
+  function RemoveIdenticalRecords(_id: Cardinal): WordBool; cdecl;
   {$endregion}
 
 const
@@ -255,6 +260,35 @@ begin
   name := rec.Name;
 end;
 {$endregion}
+
+{$region 'Remove identical records helpers'}
+procedure RemoveEmptyIdenticalContainers(const container: IwbContainer);
+var
+  rec: IwbMainRecord;
+  parentContainer: IwbContainer;
+begin
+  if container.ElementCount = 0 then begin
+    parentContainer := container.container;
+    if Supports(container, IwbMainRecord, rec) then
+      RemoveIdenticalRecord(rec)
+    else
+      container.Remove;
+    if Assigned(container) then
+      RemoveEmptyIdenticalContainers(parentContainer);
+  end;
+end;
+
+procedure RemoveIdenticalRecord(const rec: IwbMainRecord);
+var
+  container: IwbContainer;
+begin
+  if IsITM(rec) or IsITPO(rec) then begin
+    container := rec.Container;
+    rec.Remove;
+    RemoveEmptyIdenticalContainers(container);
+  end;
+end;
+{$endregion}
 {$endregion}
 
 {$region 'API functions'}
@@ -303,6 +337,26 @@ begin
       Result := True;
     finally
       obj.Free;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function RemoveIdenticalRecords(_id: Cardinal): WordBool; cdecl;
+var
+  _file: IwbFile;
+  i: Integer;
+  rec: IwbMainRecord;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbFile, _file) then
+      raise Exception.Create('Input interface must be a file.');
+    for i := 0 to Pred(_file.RecordCount) do begin
+      rec := _file.Records[i];
+      if rec.IsMaster then continue;
+      RemoveIdenticalRecord(rec);
     end;
   except
     on x: Exception do ExceptionHandler(x);
