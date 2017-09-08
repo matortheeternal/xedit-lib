@@ -49,8 +49,9 @@ exports
   GetActivePlugins, LoadPlugins, LoadPlugin, LoadPluginHeader, BuildReferences,
   GetLoaderStatus, UnloadPlugin,
   // FILE HANDLING METHODS
-  AddFile, FileByIndex, FileByLoadOrder, FileByName, FileByAuthor, RenameFile,
-  SaveFile, OverrideRecordCount, MD5Hash, CRCHash, SortEditorIDs, SortNames,
+  AddFile, FileByIndex, FileByLoadOrder, FileByName, FileByAuthor, NukeFile,
+  RenameFile, SaveFile, OverrideRecordCount, MD5Hash, CRCHash, SortEditorIDs,
+  SortNames,
   // MASTER HANDLING METHODS
   CleanMasters, SortMasters, AddMaster, AddMasters, GetMasters, GetRequiredBy,
   GetMasterNames,

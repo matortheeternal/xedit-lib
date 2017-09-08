@@ -21,6 +21,7 @@ uses
   function FileByLoadOrder(loadOrder: Integer; _res: PCardinal): WordBool; cdecl;
   function FileByName(name: PWideChar; _res: PCardinal): WordBool; cdecl;
   function FileByAuthor(author: PWideChar; _res: PCardinal): WordBool; cdecl;
+  function NukeFile(_id: Cardinal): WordBool; cdecl;
   function RenameFile(_id: Cardinal; filename: PWideChar): WordBool; cdecl;
   function SaveFile(_id: Cardinal; filePath: PWideChar): WordBool; cdecl;
   function MD5Hash(_id: Cardinal; len: PInteger): WordBool; cdecl;
@@ -189,6 +190,29 @@ begin
   Result := False;
   try
     _res^ := Store(NativeFileByAuthor(string(author)));
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function NukeFile(_id: Cardinal): WordBool; cdecl;
+var
+  container: IwbContainer;
+  i: Integer;
+  e: IwbHasSignature;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbContainer, container) then
+      raise Exception.Create('Interface must be a container.');
+    if not Supports(container, IwbFile) then
+      raise Exception.Create('Container must be a file.');
+    for i := Pred(container.ElementCount) downto 0 do begin
+      if Supports(container.Elements[i], IwbHasSignature, e)
+      and (e.Signature <> 'TES4') then
+        e.Remove;
+    end;
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
