@@ -474,11 +474,11 @@ function GetLastOverrideBeforeFile(const rec: IwbMainRecord; const targetFile: I
 var
   i: Integer;
 begin
-  Result := rec;
   for i := Pred(rec.OverrideCount) downto 0 do begin
     Result := rec.Overrides[i];
     if Result._File.LoadOrder < targetFile.LoadOrder then exit;
   end;
+  Result := rec;
 end;
 
 procedure OverrideRecordIfNecessary(const rec: IwbMainRecord; const targetFile: IwbFile; var output: IInterface);
