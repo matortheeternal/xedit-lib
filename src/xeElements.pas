@@ -237,10 +237,12 @@ end;
 function ResolveRecord(const group: IwbGroupRecord; const key, nextPath: String): IInterface;
 var
   name: String;
-  formID: Cardinal;
+  formID, fixedFormID: Cardinal;
 begin
-  if ParseFormID(key, formID) then
-    Result := group._File.RecordByFormID[formID, True]
+  if ParseFormID(key, formID) then begin
+    fixedFormID := group._File.LoadOrderFormIDtoFileFormID(formID);
+    Result := group._File.RecordByFormID[fixedFormID, True]
+  end
   else if ParseFullName(key, name) then
     Result := group.MainRecordByName[name]
   else
@@ -252,13 +254,15 @@ end;
 function ResolveGroupOrRecord(const group: IwbGroupRecord; const key, nextPath: String): IInterface; overload;
 var
   name, sig: String;
-  formID: Cardinal;
+  formID, fixedFormID: Cardinal;
   grp: IwbGroupRecord;
   rec: IwbMainRecord;
 begin
   Result := nil;
-  if ParseFormID(key, formID) then
-    Result := group._File.RecordByFormID[formID, True]
+  if ParseFormID(key, formID) then begin
+    fixedFormID := group._File.LoadOrderFormIDtoFileFormID(formID);
+    Result := group._File.RecordByFormID[fixedFormID, True];
+  end
   else if ParseFullName(key, name) then
     Result := group.MainRecordByName[name]
   else begin
@@ -470,24 +474,12 @@ begin
     Result := CreateFromContainer(rec as IwbContainerElementRef, path);
 end;
 
-function GetLastOverrideBeforeFile(const rec: IwbMainRecord; const targetFile: IwbFile): IwbMainRecord;
-var
-  i: Integer;
-begin
-  for i := Pred(rec.OverrideCount) downto 0 do begin
-    Result := rec.Overrides[i];
-    if Result._File.LoadOrder < targetFile.LoadOrder then exit;
-  end;
-  Result := rec;
-end;
-
 procedure OverrideRecordIfNecessary(const rec: IwbMainRecord; const targetFile: IwbFile; var output: IInterface);
 var
   ovr: IwbMainRecord;
 begin
   if Assigned(rec) and not rec._File.Equals(targetFile) then begin
-    ovr := GetLastOverrideBeforeFile(rec, targetFile);
-    NativeAddRequiredMasters(ovr, targetFile, false);
+    ovr := GetPreviousOverride(rec, targetFile);
     output := CopyElementToFile(ovr, targetFile, false, true);
   end;
 end;
