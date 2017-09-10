@@ -59,6 +59,7 @@ type
   function GetDefNames(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function GetAddList(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function GetLinksTo(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
+  function SetLinksTo(_id, _id2: Cardinal; key: PWideChar): WordBool; cdecl;
   function GetElementIndex(_id: Cardinal; index: PInteger): WordBool; cdecl;
   function GetContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function GetElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
@@ -1276,14 +1277,37 @@ end;
 
 function GetLinksTo(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
-  linkedElement: IwbElement;
+  element, linkedElement: IwbElement;
 begin
   Result := False;
   try
-    linkedElement := NativeGetElementEx(_id, key).LinksTo;
+    element := NativeGetElementEx(_id, key);
+    if not IsFormID(element) then
+      raise Exception.Create('Element cannot hold references.');
+    linkedElement := element.LinksTo;
     if not Assigned(linkedElement) then
       raise Exception.Create('Failed to resolve linked element.');
     _res^ := Store(linkedElement);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function SetLinksTo(_id, _id2: Cardinal; key: PWideChar): WordBool; cdecl;
+var
+  element: IwbElement;
+  rec: IwbMainRecord;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('First interface is not an element.');
+    if not Supports(Resolve(_id), IwbMainRecord, rec) then
+      raise Exception.Create('Second interface is not a record.');
+    if not IsFormID(element) then
+      raise Exception.Create('Element cannot hold references.');
+    element.NativeValue := element._File.LoadOrderFormIDtoFileFormID(rec.LoadOrderFormID);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
