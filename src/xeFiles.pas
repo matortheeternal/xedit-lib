@@ -29,6 +29,7 @@ uses
   function OverrideRecordCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
   function SortEditorIDs(_id: Cardinal; sig: PWideChar): WordBool; cdecl;
   function SortNames(_id: Cardinal; sig: PWideChar): WordBool; cdecl;
+  function GetFileLoadOrder(_id: Cardinal; loadOrder: PInteger): WordBool; cdecl;
   {$endregion}
 
 implementation
@@ -352,6 +353,21 @@ begin
       _file.SortNames(string(sig))
     else
       raise Exception.Create('Interface must be a file.');
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetFileLoadOrder(_id: Cardinal; loadOrder: PInteger): WordBool; cdecl;
+var
+  _file: IwbFile;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbFile, _file) then
+      raise Exception.Create('Interface must be a file.');
+    loadOrder^ := _file.LoadOrder;
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
