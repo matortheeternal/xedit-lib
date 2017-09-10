@@ -43,6 +43,12 @@ uses
   {$ENDIF}
   txMeta;
 
+function TestGetRecord(h: Cardinal; formID: Cardinal): Cardinal;
+begin
+  ExpectSuccess(GetRecord(h, formID, @Result));
+  Expect(Result > 0, 'Should return a handle');
+end;
+
 procedure TestGetRecords(h: Cardinal; path, search: PWideChar; includeOverrides: WordBool; expectedCount: Integer);
 var
   len: Integer;
@@ -130,7 +136,7 @@ end;
 procedure BuildRecordHandlingTests;
 var
   b: WordBool;
-  skyrim, armo, ar1, dnam, ar2, ar3, kw1, kw2, kw3, h, n1, n2, n3: Cardinal;
+  skyrim, armo, ar1, dnam, xt1, xt2, xt4, ar2, ar3, kw1, kw2, kw3, h, n1, n2, n3: Cardinal;
 begin
   Describe('Record Handling', procedure
     begin
@@ -140,11 +146,49 @@ begin
           ExpectSuccess(GetElement(skyrim, 'ARMO', @armo));
           ExpectSuccess(GetElement(armo, '00012E46', @ar1));
           ExpectSuccess(GetElement(ar1, 'DNAM', @dnam));
+          ExpectSuccess(GetElement(0, 'xtest-1.esp', @xt1));
+          ExpectSuccess(GetElement(0, 'xtest-2.esp', @xt2));
+          ExpectSuccess(GetElement(0, 'xtest-4.esp', @xt4));
           ExpectSuccess(GetElement(0, 'xtest-2.esp\00012E46', @ar2));
           ExpectSuccess(GetElement(0, 'xtest-3.esp\00012E46', @ar3));
           ExpectSuccess(GetElement(0, 'xtest-1.esp\00C23800', @kw1));
           ExpectSuccess(GetElement(0, 'xtest-1.esp\00C23801', @kw2));
           ExpectSuccess(GetElement(0, 'xtest-4.esp\00C23801', @kw3));
+        end);
+
+      Describe('GetRecord', procedure
+        begin
+          It('Should be able to resolve records from root', procedure
+            begin
+              TestGetRecord(0, $01000800);
+              TestGetRecord(0, $03000800);
+              TestGetRecord(0, $05000800);
+            end);
+
+          It('Should be able to resolve injected records from root', procedure
+            begin
+              TestGetRecord(0, $00C23800);
+              TestGetRecord(0, $00C23801);
+              TestGetRecord(0, $00C23802);
+            end);
+
+          It('Should be able to resolve overrides by local FormID', procedure
+            begin
+              TestGetRecord(xt2, $0007F82A);
+              TestGetRecord(xt2, $00012E46);
+            end);
+
+          It('Should be able to new records by local FormID', procedure
+            begin
+              TestGetRecord(xt2, $03000800);
+              TestGetRecord(xt4, $03000800);
+            end);
+
+          It('Should be able to resolve injections by local FormID', procedure
+            begin
+              TestGetRecord(xt1, $00C23800);
+              TestGetRecord(xt1, $00C23801);
+            end);
         end);
 
       Describe('GetRecords', procedure
