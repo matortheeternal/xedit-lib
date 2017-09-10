@@ -365,14 +365,14 @@ begin
     if _id = 0 then begin
       fileOrdinal := formID shr 24;
       _file := NativeFileByLoadOrder(fileOrdinal);
-      formID := formID and $00FFFFFF;
+      formID := _file.LoadOrderFormIDtoFileFormID(formID);
     end
     else
       if not Supports(Resolve(_id), IwbFile, _file) then
         raise Exception.Create('Interface must be a file.');
     rec := _file.RecordByFormID[formID, True];
     if not Assigned(rec) then
-      raise Exception.Create('Failed to find record with FormID: ' + IntToHex(_id, 8));
+      raise Exception.Create('Failed to find record with FormID: ' + IntToHex(formID, 8));
     _res^ := Store(rec);
     Result := True;
   except
