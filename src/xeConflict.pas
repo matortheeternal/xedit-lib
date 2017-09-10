@@ -79,7 +79,7 @@ type
 implementation
 
 uses
-  xeMasters;
+  xeRecords;
 
 procedure AppendToNodeDatas(var NodeDatas: TDynViewNodeDatas; e: IwbElement);
 var
@@ -811,25 +811,12 @@ begin
   if Assigned(elementNode) then Result := elementNode;
 end;
 
-function GetPreviousOverride(const rec: IwbMainRecord): IwbMainRecord;
-var
-  i: Integer;
-  _file: IwbFile;
-begin
-  _file := rec._File;
-  for i := Pred(rec.OverrideCount) downto 0 do begin
-    Result := rec.Overrides[i];
-    if NativeFileHasMaster(_file, Result._File) then exit;
-  end;
-  Result := rec.MasterOrSelf;
-end;
-
 function IsITPO(const rec: IwbMainRecord): Boolean;
 var
   mRec, prevOvr: IwbMainRecord;
 begin
   mRec := rec.MasterOrSelf;
-  prevOvr := GetPreviousOverride(rec);
+  prevOvr := GetPreviousOverride(rec, rec._File);
   Result := ConflictAllForElements(prevovr, rec, False, False) <= caNoConflict;
 end;
 

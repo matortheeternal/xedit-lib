@@ -11,6 +11,7 @@ type
 
   {$region 'Native functions'}
   function EditorIDToFormID(const _file: IwbFile; const editorID: String): Cardinal;
+  function GetPreviousOverride(const rec: IwbMainRecord; const targetFile: IwbFile): IwbMainRecord;
   {$endregion}
 
   {$region 'API functions'}
@@ -38,7 +39,7 @@ implementation
 uses
   Classes, SysUtils,
   wbImplementation,
-  xeConflict, xeTypes, xeMessages, xeSetup, xeElements, xeElementValues;
+  xeConflict, xeTypes, xeMessages, xeFiles, xeMasters, xeSetup, xeElements, xeElementValues;
 
 {$region 'Native functions'}
 function EditorIDToFormID(const _file: IwbFile; const editorID: String): Cardinal;
@@ -49,6 +50,17 @@ begin
   if not Assigned(rec) then
     raise Exception.Create('Failed to find record with Editor ID: ' + editorID + ' in file ' + _file.FileName);
   Result := _file.LoadOrderFormIDtoFileFormID(rec.LoadOrderFormID);
+end;
+
+function GetPreviousOverride(const rec: IwbMainRecord; const targetFile: IwbFile): IwbMainRecord;
+var
+  i: Integer;
+begin
+  for i := Pred(rec.OverrideCount) downto 0 do begin
+    Result := rec.Overrides[i];
+    if NativeFileHasMaster(targetFile, Result._File) then exit;
+  end;
+  Result := rec.MasterOrSelf;
 end;
 
 procedure GetSignatures(const search: String; signatures: TStringList);
