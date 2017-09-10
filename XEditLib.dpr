@@ -51,7 +51,7 @@ exports
   // FILE HANDLING METHODS
   AddFile, FileByIndex, FileByLoadOrder, FileByName, FileByAuthor, NukeFile,
   RenameFile, SaveFile, OverrideRecordCount, MD5Hash, CRCHash, SortEditorIDs,
-  SortNames,
+  SortNames, GetFileLoadOrder,
   // MASTER HANDLING METHODS
   CleanMasters, SortMasters, AddMaster, AddMasters, GetMasters, GetRequiredBy,
   GetMasterNames,
