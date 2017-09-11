@@ -52,6 +52,7 @@ type
   function HasElement(_id: Cardinal; key: PWideChar; bool: PWordBool): WordBool; cdecl;
   function GetElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
   function AddElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
+  function AddElementValue(_id: Cardinal; key, value: PWideChar; _res: PCardinal): WordBool; cdecl;
   function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; cdecl;
   function RemoveElementOrParent(_id: Cardinal): WordBool; cdecl;
   function SetElement(_id, _id2: Cardinal): WordBool; cdecl;
@@ -1131,6 +1132,23 @@ begin
     element := NativeAddElement(_id, string(key));
     if not Assigned(element) then
       raise Exception.Create('Failed to add element at path: ' + string(key));
+    _res^ := Store(element);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function AddElementValue(_id: Cardinal; key, value: PWideChar; _res: PCardinal): WordBool; cdecl;
+var
+  element: IInterface;
+begin
+  Result := False;
+  try
+    element := NativeAddElement(_id, string(key));
+    if not Assigned(element) then
+      raise Exception.Create('Failed to add element at path: ' + string(key));
+    SetElementValue(element as IwbElement, string(value));
     _res^ := Store(element);
     Result := True;
   except

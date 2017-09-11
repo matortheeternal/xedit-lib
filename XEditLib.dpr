@@ -56,13 +56,13 @@ exports
   CleanMasters, SortMasters, AddMaster, AddMasters, GetMasters, GetRequiredBy,
   GetMasterNames,
   // ELEMENT HANDLING METHODS
-  HasElement, GetElement, AddElement, RemoveElement, RemoveElementOrParent,
-  SetElement, GetElements, GetDefNames, GetAddList, GetContainer, GetElementFile,
-  GetElementRecord, GetLinksTo, SetLinksTo, ElementCount, ElementEquals,
-  ElementMatches, HasArrayItem, GetArrayItem, AddArrayItem, RemoveArrayItem,
-  MoveArrayItem, CopyElement, GetSignatureAllowed, GetIsModified, GetIsEditable,
-  GetIsRemoveable, GetCanAdd, SortKey, ElementType, DefType, SmashType, ValueType,
-  IsSorted,
+  HasElement, GetElement, AddElement, AddElementValue, RemoveElement,
+  RemoveElementOrParent, SetElement, GetElements, GetDefNames, GetAddList,
+  GetContainer, GetElementFile, GetElementRecord, GetLinksTo, SetLinksTo,
+  ElementCount, ElementEquals, ElementMatches, HasArrayItem, GetArrayItem,
+  AddArrayItem, RemoveArrayItem, MoveArrayItem, CopyElement, GetSignatureAllowed,
+  GetIsModified, GetIsEditable, GetIsRemoveable, GetCanAdd, SortKey, ElementType,
+  DefType, SmashType, ValueType, IsSorted,
   // PLUGIN ERROR METHODS
   CheckForErrors, GetErrorThreadDone, GetErrors, RemoveIdenticalRecords,
   // SERIALIZATION METHODS
@@ -74,7 +74,7 @@ exports
   SignatureFromName, NameFromSignature, GetSignatureNameMap,
   // RECORD HANDLING METHODS
   GetFormID, SetFormID, GetRecord, GetRecords, GetOverrides, GetReferencedBy,
-  GetMaster, FindNextRecord, FindPreviousRecord,  {FindNextElement,
+  GetMaster, FindNextRecord, FindPreviousRecord, {FindNextElement,
   FindPreviousElement,} FindValidReferences, ExchangeReferences, IsMaster,
   IsInjected, IsOverride, IsWinningOverride, GetNodes, GetConflictData,
   GetNodeElements;
