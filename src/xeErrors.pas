@@ -353,11 +353,12 @@ begin
   try
     if not Supports(Resolve(_id), IwbFile, _file) then
       raise Exception.Create('Input interface must be a file.');
-    for i := 0 to Pred(_file.RecordCount) do begin
+    for i := Pred(_file.RecordCount) downto 0 do begin
       rec := _file.Records[i];
       if rec.IsMaster then continue;
       RemoveIdenticalRecord(rec);
     end;
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;

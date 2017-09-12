@@ -813,9 +813,8 @@ end;
 
 function IsITPO(const rec: IwbMainRecord): Boolean;
 var
-  mRec, prevOvr: IwbMainRecord;
+  prevOvr: IwbMainRecord;
 begin
-  mRec := rec.MasterOrSelf;
   prevOvr := GetPreviousOverride(rec, rec._File);
   Result := ConflictAllForElements(prevovr, rec, False, False) <= caNoConflict;
 end;
