@@ -135,7 +135,7 @@ begin
               It('Should resolve Editor ID, if present', procedure
                 begin
                   ExpectSuccess(Name(refr, @len));
-                  ExpectEqual(grs(len), 'DA09PedestalEmptyRef');
+                  ExpectEqual(grs(len), 'ITPOTest');
                 end);
               It('Should resolve context for cells with no EDID or FULL', procedure
                 begin
@@ -158,51 +158,81 @@ begin
             end);
         end);
 
+      Describe('DisplayName', procedure
+        begin
+          Describe('File names', procedure
+            begin
+              It('Should include filename', procedure
+                begin
+                  ExpectSuccess(DisplayName(xt2, @len));
+                  Expect(Pos('xtest-2.esp', string(grs(len))) > 0);
+                end);
+
+              It('Should include load order', procedure
+                begin
+                  ExpectSuccess(DisplayName(xt2, @len));
+                  Expect(Pos('[03]', string(grs(len))) = 1);
+                end);
+
+              It('Should format hardcoded dat names properly', procedure
+                begin
+                  ExpectSuccess(GetElement(0, 'Skyrim.Hardcoded.dat', @h));
+                  ExpectSuccess(DisplayName(h, @len));
+                  ExpectEqual(grs(len), '[00] Skyrim.exe');
+                end);
+            end);
+        end);
+
       Describe('Path', procedure
         begin
           It('Should resolve file names', procedure
             begin
-              ExpectSuccess(Path(xt2, true, @len));
+              ExpectSuccess(Path(xt2, false, false, @len));
               ExpectEqual(grs(len), 'xtest-2.esp');
             end);
           It('Should resolve group signatures', procedure
             begin
-              ExpectSuccess(Path(armo, true, @len));
+              ExpectSuccess(Path(armo, false, false,  @len));
               ExpectEqual(grs(len), 'xtest-2.esp\ARMO');
             end);
           It('Should resolve block names', procedure
             begin
-              ExpectSuccess(Path(block, true, @len));
+              ExpectSuccess(Path(block, false, false,  @len));
               ExpectEqual(grs(len), 'xtest-2.esp\CELL\Block 0');
             end);
           It('Should resolve sub-block names', procedure
             begin
-              ExpectSuccess(Path(subBlock, true, @len));
+              ExpectSuccess(Path(subBlock, false, false,  @len));
               ExpectEqual(grs(len), 'xtest-2.esp\CELL\Block 0\Sub-Block 0');
             end);
           It('Should resolve child groups', procedure
             begin
-              ExpectSuccess(Path(childGroup, true, @len));
+              ExpectSuccess(Path(childGroup, true, false, @len));
               ExpectEqual(grs(len), 'xtest-2.esp\00027D1C\Child Group');
             end);
           It('Should resolve temporary/persistent groups', procedure
             begin
-              ExpectSuccess(Path(persistentGroup, true, @len));
+              ExpectSuccess(Path(persistentGroup, true, false,  @len));
               ExpectEqual(grs(len), 'xtest-2.esp\00027D1C\Child Group\Persistent');
             end);
           It('Should resolve record FormIDs', procedure
             begin
-              ExpectSuccess(Path(refr, true, @len));
+              ExpectSuccess(Path(refr, true, false, @len));
               ExpectEqual(grs(len), 'xtest-2.esp\000170F0');
+            end);
+          It('Should resolve file headers', procedure
+            begin
+              ExpectSuccess(Path(fileFlags, false, false,  @len));
+              ExpectEqual(grs(len), 'xtest-2.esp\File Header\Record Header\Record Flags');
             end);
           It('Should resolve element names', procedure
             begin
-              ExpectSuccess(Path(element, true, @len));
+              ExpectSuccess(Path(element, true, false, @len));
               ExpectEqual(grs(len), 'xtest-2.esp\00012E46\DNAM - Armor Rating');
             end);
           It('Should resolve array element indexes', procedure
             begin
-              ExpectSuccess(Path(keyword, true, @len));
+              ExpectSuccess(Path(keyword, true, false, @len));
               ExpectEqual(grs(len), 'xtest-2.esp\00012E46\KWDA - Keywords\[1]');
             end);
         end);

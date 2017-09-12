@@ -35,7 +35,7 @@ var
   len, i: Integer;
   masters: CardinalArray;
 begin
-  ExpectSuccess(GetElements(f, 'File Header\Master Files', @len));
+  ExpectSuccess(GetElements(f, 'File Header\Master Files', False, @len));
   masters := gra(len);
   ExpectEqual(Length(masters), Length(masterNames));
   for i := 0 to len - 1 do begin

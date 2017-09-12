@@ -20,8 +20,6 @@ uses
 
 const
   TestLoadOrder =
-    'Skyrim.esm'#13 +
-    'Update.esm'#13 +
     {$IFDEF LOAD_DLC}
     'Dawnguard.esm'#13 +
     'HearthFires.esm'#13 +
@@ -36,31 +34,36 @@ const
 procedure BackupFile(filePath: String);
 begin
   if FileExists(filePath) then
-    RenameFile(filePath, filePath + '.bak');
+    SysUtils.RenameFile(filePath, filePath + '.bak');
 end;
 
 procedure RestoreFile(filePath: String);
 begin
   DeleteFile(filePath);
   if FileExists(filePath + '.bak') then
-    RenameFile(filePath + '.bak', filePath);
+    SysUtils.RenameFile(filePath + '.bak', filePath);
 end;
 
 procedure TestLoader(expectedTime: Double);
 var
+  status, activeByte: Byte;
   n: Integer;
 begin
-  Expect(not GetLoaderDone, 'Loader should take time');
+  ExpectSuccess(GetLoaderStatus(@status));
+  activeByte := Byte(Ord(lsActive));
+  Expect(status = activeByte, 'Loader should take time');
   n := 0;
-  while not GetLoaderDone do begin
+  while (status = activeByte) do begin
     WriteMessages;
     Inc(n);
     Sleep(100);
+    GetLoaderStatus(@status)
   end;
   Expect(n < expectedTime * 10, 'Loader should complete in under ' + FloatToStr(expectedTime) + ' seconds');
   WriteMessages;
 end;
 
+{$IFNDEF SSE}
 procedure BuildSetupTests;
 var
   appDataPath, loadOrder, plugins: String;
@@ -172,8 +175,8 @@ begin
 
           It('Should add required plugins', procedure
             begin
-              Expect(Pos('Skyrim.esm', loadOrder) > 0, 'Skyrim.esm should be present');
-              Expect(Pos('Update.esm', loadOrder) > 0, 'Skyrim.esm should be present');
+              Expect(Pos('Skyrim.esm', plugins) > 0, 'Skyrim.esm should be present');
+              Expect(Pos('Update.esm', plugins) > 0, 'Update.esm should be present');
             end);
         end);
 
@@ -182,7 +185,7 @@ begin
           It('Should load plugins based on input load order', procedure
             begin
               WriteLn(' ');
-              ExpectSuccess(LoadPlugins(TestLoadOrder));
+              ExpectSuccess(LoadPlugins(TestLoadOrder, True));
               TestLoader(10);
               WriteLn(' ');
             end);
@@ -253,5 +256,76 @@ begin
         end);
     end);
 end;
+{$ENDIF}
+
+{$IFDEF SSE}
+procedure BuildSetupTests;
+var
+  appDataPath, plugins: String;
+  len: Integer;
+begin
+  Describe('Setup', procedure
+    begin
+      Describe('SetGameMode', procedure
+        begin
+          AfterAll(procedure
+            begin
+              ExpectSuccess(GetGlobal('AppDataPath', @len));
+              appDataPath := grs(len);
+            end);
+
+          It('Should succeed for the first time for Skyrim SE game mode', procedure
+            begin
+              ExpectSuccess(SetGameMode(4));
+            end);
+
+          It('Should fail the second time', procedure
+            begin
+              ExpectFailure(SetGameMode(5));
+            end);
+        end);
+
+      Describe('GetActivePlugins', procedure
+        begin
+          BeforeAll(procedure
+            begin
+              BackupFile(appDataPath + 'plugins.txt');
+            end);
+
+          AfterAll(procedure
+            begin
+              RestoreFile(appDataPath + 'plugins.txt');
+            end);
+
+          It('Should get list of active plugins from plugins.txt', procedure
+            begin
+              WriteStringToFile(' '#13#10'# comment'#13#10'*NonExistingPlugin.esp', appDataPath + 'plugins.txt');
+              ExpectSuccess(GetActivePlugins(@len));
+              plugins := grs(len);
+            end);
+
+          It('Should remove comments and empty lines', procedure
+            begin
+              Expect(Pos(' '#13#10, plugins) = 0, 'Empty line should not be present');
+              Expect(Pos('# comment', plugins) = 0, 'Comment should not be present');
+            end);
+
+          It('Should remove files that do not exist', procedure
+            begin
+              Expect(Pos('NonExistingPlugin.esp', plugins) = 0, 'Should not contain NonExistingPlugin.esp');
+            end);
+
+          It('Should add required plugins', procedure
+            begin
+              Expect(Pos('Skyrim.esm', plugins) > 0, 'Skyrim.esm should be present');
+              Expect(Pos('Update.esm', plugins) > 0, 'Update.esm should be present');
+              Expect(Pos('Dawnguard.esm', plugins) > 0, 'Dawnguard.esm should be present');
+              Expect(Pos('HearthFires.esm', plugins) > 0, 'HearthFires.esm should be present');
+              Expect(Pos('Dragonborn.esm', plugins) > 0, 'Dragonborn.esm should be present');
+            end);
+        end);
+    end);
+end;
+{$ENDIF}
 
 end.

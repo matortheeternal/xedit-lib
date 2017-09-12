@@ -7,15 +7,15 @@ uses
   xeTypes;
 
   {$region 'Native functions'}
-  function GetPath(element: IwbElement; full: WordBool = True; curPath: String = ''): String;
-  function GetPathName(element: IwbElement): String;
-  function NativeName(e: IwbElement; quoteFull: Boolean = False): String;
-  function ParseFormIDValue(value: String; var formID: Int64): Boolean;
-  procedure SetElementValue(element: IwbElement; value: String);
-  function IndexOfFlag(flagsDef: IwbFlagsDef; name: String): Integer;
-  procedure NativeSetFlag(element: IwbElement; index: Integer; enabled: WordBool);
-  function NativeSignatureFromName(name: String): String;
-  function NativeNameFromSignature(sig: String): String;
+  function GetPath(const element: IwbElement; short: WordBool = False; local: WordBool = False; curPath: String = ''): String;
+  function GetPathName(const element: IwbElement): String;
+  function NativeName(const e: IwbElement; quoteFull: Boolean = False): String;
+  function ParseFormIDValue(const value: String; var formID: Int64): Boolean;
+  procedure SetElementValue(const element: IwbElement; const value: String);
+  function IndexOfFlag(const flagsDef: IwbFlagsDef; const name: String): Integer;
+  procedure NativeSetFlag(const element: IwbElement; index: Integer; enabled: WordBool);
+  function NativeSignatureFromName(const name: String): String;
+  function NativeNameFromSignature(const sig: String): String;
   procedure BuildSignatureNameMap;
   {$endregion}
 
@@ -23,7 +23,7 @@ uses
   function Name(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function LongName(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function DisplayName(_id: Cardinal; len: PInteger): WordBool; cdecl;
-  function Path(_id: Cardinal; full: WordBool; len: PInteger): WordBool; cdecl;
+  function Path(_id: Cardinal; short, local: WordBool; len: PInteger): WordBool; cdecl;
   function Signature(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function GetValue(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
   function SetValue(_id: Cardinal; path, value: PWideChar): WordBool; cdecl;
@@ -38,6 +38,7 @@ uses
   function GetAllFlags(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
   function GetEnabledFlags(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
   function SetEnabledFlags(_id: Cardinal; path, flags: PWideChar): WordBool; cdecl;
+  function GetEnumOptions(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
   function SignatureFromName(name: PWideChar; len: PInteger): WordBool; cdecl;
   function NameFromSignature(sig: PWideChar; len: PInteger): WordBool; cdecl;
   function GetSignatureNameMap(len: PInteger): WordBool; cdecl;
@@ -51,8 +52,6 @@ implementation
 
 uses
   Classes, SysUtils, Variants,
-  // mte modules
-  mteHelpers,
   // xedit modules
   wbImplementation,
   // xelib modules
@@ -60,7 +59,7 @@ uses
 
 {$region 'Native functions'}
 {$region 'Name helpers'}
-function FormString(rec: IwbMainRecord): String;
+function FormString(const rec: IwbMainRecord): String;
 begin
   Result := Format('[%s:%s]', [
     AnsiString(rec.Signature),
@@ -68,7 +67,7 @@ begin
   ]);
 end;
 
-function CellName(rec: IwbMainRecord): String;
+function CellName(const rec: IwbMainRecord): String;
 begin
   Result := Format('%s <%d,%d>', [
     NativeName(rec.ElementByPath['Worldspace'].LinksTo, true),
@@ -77,7 +76,7 @@ begin
   ]);
 end;
 
-function PlacementName(rec: IwbMainRecord): String;
+function PlacementName(const rec: IwbMainRecord): String;
 begin
   Result := Format('Places %s in %s', [
     NativeName(rec.ElementByPath['NAME'].LinksTo, true),
@@ -85,7 +84,7 @@ begin
   ]);
 end;
 
-function NativeName(e: IwbElement; quoteFull: Boolean = False): String;
+function NativeName(const e: IwbElement; quoteFull: Boolean = False): String;
 var
   _file: IwbFile;
   group: IwbGroupRecord;
@@ -109,7 +108,9 @@ begin
     else if rec.ElementExists['NAME'] then
       Result := PlacementName(rec)
     else if rec.Signature = 'TES4' then
-      Result := 'File Header';
+      Result := 'File Header'
+    else
+      Result := FormString(rec);
   end
   else
     Result := e.Name;
@@ -117,12 +118,12 @@ end;
 {$endregion}
 
 {$region 'Path helpers'}
-function HexFormID(rec: IwbMainRecord): String;
+function HexFormID(const rec: IwbMainRecord): String;
 begin
   Result := IntToHex(rec.LoadOrderFormID, 8);
 end;
 
-function GetPathName(element: IwbElement): String;
+function GetPathName(const element: IwbElement): String;
 var
   _file: IwbFile;
   group: IwbGroupRecord;
@@ -141,8 +142,12 @@ begin
       else
         Result := group.ShortName;
     end
-    else if Supports(element, IwbMainRecord, rec) then
-      Result := HexFormID(rec)
+    else if Supports(element, IwbMainRecord, rec) then begin
+      if rec.Signature = 'TES4' then
+        Result := 'File Header'
+      else
+        Result := HexFormID(rec);
+    end
     else if IsArray(parent) then
       Result := Format('[%d]', [element.Container.IndexOf(element)])
     else
@@ -150,24 +155,24 @@ begin
   end;
 end;
 
-function GetPath(element: IwbElement; full: WordBool = True; curPath: String = ''): String;
+function GetPath(const element: IwbElement; short: WordBool = False; local: WordBool = False; curPath: String = ''): String;
 var
   container: IwbContainer;
 begin
   Result := GetPathName(element);
   if curPath <> '' then
     Result := Format('%s\%s', [Result, curPath]);
-  if Supports(element, IwbMainRecord) then
-    Result := GetPath(element._File as IwbElement, full, Result)
+  if Supports(element, IwbMainRecord) and short then
+    Result := GetPath(element._File as IwbElement, short, local, Result)
   else if not Supports(element, IwbFile) then begin
     container := NativeContainer(element);
-    if Supports(container, IwbMainRecord) and not full then exit;
-    Result := GetPath(container as IwbElement, full, Result);
+    if Supports(container, IwbMainRecord) and local then exit;
+    Result := GetPath(container as IwbElement, short, local, Result);
   end;
 end;
 {$endregion}
 
-function NativeSignature(element: IwbElement): String;
+function NativeSignature(const element: IwbElement): String;
 var
   group: IwbGroupRecord;
   e: IwbHasSignature;
@@ -185,7 +190,7 @@ begin
 end;
 
 {$region 'SetValue helpers'}
-function ParseFormIDValue(value: String; var formID: Int64): Boolean;
+function ParseFormIDValue(const value: String; var formID: Int64): Boolean;
 var
   n, len, open: Integer;
 begin
@@ -216,7 +221,7 @@ begin
   Result := TryStrToInt64('$' + value, formID);
 end;
 
-procedure SetElementValue(element: IwbElement; value: String);
+procedure SetElementValue(const element: IwbElement; const value: String);
 var
   formID: Int64;
 begin
@@ -235,31 +240,24 @@ end;
 
 {$region 'Native value helpers'}
 function GetNativeValue(_id: Cardinal; path: PWideChar): Variant;
-var
-  element: IwbElement;
 begin
-  Result := Variants.Null;
-  element := NativeGetElementEx(_id, path);
-  Result := element.NativeValue;
+  Result := NativeGetElementEx(_id, path).NativeValue;
 end;
 
 procedure SetNativeValue(_id: Cardinal; path: PWideChar; value: Variant);
-var
-  element: IwbElement;
 begin
-  element := NativeGetElementEx(_id, path);
-  element.NativeValue := value;
+  NativeGetElementEx(_id, path).NativeValue := value;
 end;
 {$endregion}
 
-function IndexOfFlag(flagsDef: IwbFlagsDef; name: String): Integer;
+function IndexOfFlag(const flagsDef: IwbFlagsDef; const name: String): Integer;
 begin
   for Result := 0 to Pred(flagsDef.FlagCount) do
     if flagsDef.Flags[Result] = name then exit;
   Result := -1;
 end;
 
-procedure NativeSetFlag(element: IwbElement; index: Integer; enabled: WordBool);
+procedure NativeSetFlag(const element: IwbElement; index: Integer; enabled: WordBool);
 var
   flagVal: UInt64;
 begin
@@ -271,7 +269,7 @@ begin
 end;
 
 {$region 'SignatureNameMap helpers'}
-function NativeSignatureFromName(name: String): String;
+function NativeSignatureFromName(const name: String): String;
 var
   i: Integer;
 begin
@@ -282,7 +280,7 @@ begin
   Result := slSignatureNameMap.Names[i];
 end;
 
-function NativeNameFromSignature(sig: String): String;
+function NativeNameFromSignature(const sig: String): String;
 var
   i: Integer;
 begin
@@ -361,7 +359,7 @@ begin
 end;
 {$endregion}
 
-function Path(_id: Cardinal; full: WordBool; len: PInteger): WordBool; cdecl;
+function Path(_id: Cardinal; short, local: WordBool; len: PInteger): WordBool; cdecl;
 var
   element: IwbElement;
 begin
@@ -369,7 +367,7 @@ begin
   try
     if not Supports(Resolve(_id), IwbElement, element) then
       raise Exception.Create('Interface is not an element.');
-    resultStr := GetPath(element, full);
+    resultStr := GetPath(element, short, local);
     len^ := Length(resultStr);
     Result := True;
   except
@@ -634,6 +632,40 @@ begin
       Result := True;
     finally
       slFlags.Free;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+{$endregion}
+
+{$region 'Enum functions'}
+function GetEnumOptions(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
+var
+  slOptions: TStringList;
+  element: IwbElement;
+  enumDef: IwbEnumDef;
+  i: Integer;
+begin
+  Result := False;
+  try
+    slOptions := TStringList.Create;
+    slOptions.StrictDelimiter := True;
+    slOptions.Delimiter := ',';
+
+    try
+      element := NativeGetElementEx(_id, path);
+      if not GetEnumDef(element, enumDef) then
+        raise Exception.Create('Element does not have enumeration');
+      for i := 0 to Pred(enumDef.NameCount) do
+        slOptions.Add(enumDef.Names[i]);
+
+      // set output
+      resultStr := slOptions.DelimitedText;
+      len^ := Length(resultStr);
+      Result := True;
+    finally
+      slOptions.Free;
     end;
   except
     on x: Exception do ExceptionHandler(x);

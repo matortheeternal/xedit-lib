@@ -7,16 +7,16 @@ uses
   wbInterface;
 
   {$region 'Native functions'}
-  procedure JsonToElement(element: IwbElement; obj: TJSONObject; path: String);
-  procedure JsonToElements(container: IwbContainerElementRef; obj: TJSONObject; const excludedPaths: array of string);
-  procedure JsonToGroup(group: IwbGroupRecord; obj: TJSONObject); overload;
-  procedure JsonToGroup(group: IwbGroupRecord; obj: TJSONObject; key: String); overload;
-  function NativeElementToJson(element: IwbElement): TJSONValue;
-  function GroupToJson(group: IwbGroupRecord; obj: TJSONObject): TJSONObject;
+  procedure JsonToElement(const element: IwbElement; obj: TJSONObject; const path: String);
+  procedure JsonToElements(const container: IwbContainerElementRef; obj: TJSONObject; const excludedPaths: array of string);
+  procedure JsonToGroup(const group: IwbGroupRecord; obj: TJSONObject); overload;
+  procedure JsonToGroup(const group: IwbGroupRecord; obj: TJSONObject; const key: String); overload;
+  function NativeElementToJson(const element: IwbElement): TJSONValue;
+  function GroupToJson(const group: IwbGroupRecord; obj: TJSONObject): TJSONObject;
   {$endregion}
 
   {$region 'API functions'}
-  function ElementToJson(_id: Cardinal; len: PInteger; editValues: WordBool): WordBool; cdecl;
+  function ElementToJson(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function ElementFromJson(_id: Cardinal; path: PWideChar; json: PWideChar): WordBool; cdecl;
   {$endregion}
 
@@ -27,47 +27,43 @@ uses
   wbImplementation,
   xeMeta, xeFiles, xeElements, xeElementValues, xeMessages;
 
-var
-  SerializeEditValues: Boolean;
-
 {$region 'Native functions'}
-function IsFlags(element: IwbElement): Boolean;
-var
-  def: IwbNamedDef;
-  subDef: IwbSubrecordDef;
-  intDef: IwbIntegerDef;
-begin
-  def := element.Def;
-  if Supports(def, IwbSubrecordDef, subDef) then
-    def := subDef.Value;
-  Result := Supports(def, IwbIntegerDef, intDef)
-    and Supports(intDef.Formater[element], IwbFlagsDef);
-end;
-
 {$region 'ElementToJSON helpers'}
-function ValueToJson(element: IwbElement): TJSONValue;
+function ValueToJson(const element: IwbElement): TJSONValue;
 var
   v: Variant;
+  ref: IwbMainRecord;
+  n: Int64;
+  vt: TVarType;
 begin
   Result := TJSONValue.Create;
-  if SerializeEditValues then
-    Result.Put(element.EditValue)
+  if IsFormID(element) and Supports(element.LinksTo, IwbMainRecord, ref) then begin
+    if ref.ElementExists['EDID'] then
+      Result.Put(ref.ElementEditValues['EDID'])
+    else
+      Result.Put(IntToHex(element.NativeValue, 8));
+  end
   else begin
     v := element.NativeValue;
-    case VarType(v) of
-      varSmallInt, varInteger, varInt64, varByte, varWord, varLongWord:
-        Result.Put(LongWord(v));
+    vt := VarType(v);
+    case vt of
+      varByte, varSmallint, varInteger, varInt64, varWord, varLongWord: begin
+        n := v;
+        Result.Put(n);
+      end;
       varSingle, varDouble:
         Result.Put(Double(v));
       varBoolean:
         Result.Put(Boolean(v));
-    else
+      varUString:
+        Result.Put(String(v));
+    else // byte array
       Result.Put(element.EditValue);
     end;
   end;
 end;
 
-function StructToJson(container: IwbContainerElementRef): TJSONValue;
+function StructToJson(const container: IwbContainerElementRef): TJSONValue;
 var
   obj: TJSONObject;
   i: Integer;
@@ -82,7 +78,7 @@ begin
   Result.Put(obj);
 end;
 
-function ArrayToJson(container: IwbContainerElementRef): TJSONValue;
+function ArrayToJson(const container: IwbContainerElementRef): TJSONValue;
 var
   ary: TJSONArray;
   i: Integer;
@@ -94,12 +90,12 @@ begin
   Result.Put(ary);
 end;
 
-function NativeElementToJson(element: IwbElement): TJSONValue;
+function NativeElementToJson(const element: IwbElement): TJSONValue;
 var
   container: IwbContainerElementRef;
 begin
   if Supports(element, IwbContainerElementRef, container)
-  and ((container.ElementCount > 0) or IsFlags(element)) then begin
+  and ((container.ElementCount > 0) or NativeIsFlags(element)) then begin
     if IsArray(element) then
       Result := ArrayToJson(container)
     else
@@ -109,25 +105,52 @@ begin
     Result := ValueToJSON(element);
 end;
 
-function RecordToJson(rec: IwbMainRecord): TJSONObject;
+function RecordHeaderToJSON(const recHeader: IwbElement): TJSONObject;
 var
+  container: IwbContainerElementRef;
+  flags: IwbElement;
+  formID: Cardinal;
+begin
+  Result := TJSONObject.Create;
+  if not Supports(recHeader, IwbContainerElementRef, container) then
+    raise Exception.Create('Failed to serialize record header.');
+  // serialize record header elements
+  Result.S['Signature'] := container.ElementEditValues['Signature'];
+  flags := container.ElementByPath['Record Flags'];
+  Result['Record Flags'] := StructToJSON(flags as IwbContainerElementRef);
+  formID := container.ElementNativeValues['FormID'];
+  Result.S['FormID'] := IntToHex(formID, 8);
+end;
+
+function RecordToJson(const rec: IwbMainRecord): TJSONObject;
+var
+  container: IwbContainerElementRef;
   i: Integer;
   element: IwbElement;
   path: String;
+  recHeaderProcessed: Boolean;
 begin
   Result := TJSONObject.Create;
+  recHeaderProcessed := False;
   // serialize elements
-  for i := 0 to Pred(rec.ElementCount) do begin
-    element := rec.Elements[i];
+  if not Supports(rec, IwbContainerElementRef, container) then
+    raise Exception.Create('Failed to serialize record.');
+  for i := 0 to Pred(container.ElementCount) do begin
+    element := container.Elements[i];
     path := element.Name;
-    Result[path] := NativeElementToJson(element);
+    if (not recHeaderProcessed) and (path = 'Record Header') then begin
+      recHeaderProcessed := true;
+      Result.O[path] := RecordHeaderToJSON(element);
+    end
+    else
+      Result[path] := NativeElementToJSON(element);
   end;
   // serialize child group
   if Assigned(rec.ChildGroup) then
     GroupToJson(rec.ChildGroup, Result);
 end;
 
-function GroupToJson(group: IwbGroupRecord; obj: TJSONObject): TJSONObject;
+function GroupToJson(const group: IwbGroupRecord; obj: TJSONObject): TJSONObject;
 var
   name: String;
   i: Integer;
@@ -162,7 +185,7 @@ begin
   end;
 end;
 
-function FileToJson(_file: IwbFile): TJSONObject;
+function FileToJson(const _file: IwbFile): TJSONObject;
 var
   group: IwbGroupRecord;
   i: Integer;
@@ -180,14 +203,14 @@ end;
 {$endregion}
 
 {$region 'ElementFromJSON helpers'}
-function AddElementIfMissing(container: IwbContainerElementRef; path: String): IwbElement;
+function AddElementIfMissing(const container: IwbContainerElementRef; const path: String): IwbElement;
 begin
   Result := container.ElementByPath[path];
   if not Assigned(Result) then
     Result := container.Add(path);
 end;
 
-function AssignElementIfMissing(container: IwbContainerElementRef; index: Integer): IwbElement;
+function AssignElementIfMissing(const container: IwbContainerElementRef; index: Integer): IwbElement;
 begin
   if container.ElementCount > index then
     Result := container.Elements[index]
@@ -195,7 +218,7 @@ begin
     Result := container.Assign(High(integer), nil, False);
 end;
 
-procedure JsonToArrayElement(element: IwbElement; ary: TJSONArray; index: Integer);
+procedure JsonToArrayElement(const element: IwbElement; ary: TJSONArray; index: Integer);
 var
   v: TJSONValue;
 begin
@@ -210,7 +233,7 @@ begin
   end;
 end;
 
-procedure JsonToFlags(element: IwbElement; flagsDef: IwbFlagsDef; obj: TJSONObject);
+procedure JsonToFlags(const element: IwbElement; const flagsDef: IwbFlagsDef; obj: TJSONObject);
 var
   flagVal: UInt64;
   i, index: Integer;
@@ -225,7 +248,7 @@ begin
   element.NativeValue := flagVal;
 end;
 
-procedure JsonToElement(element: IwbElement; obj: TJSONObject; path: String);
+procedure JsonToElement(const element: IwbElement; obj: TJSONObject; const path: String);
 var
   container: IwbContainerElementRef;
   childElement: IwbElement;
@@ -261,7 +284,7 @@ begin
   end;
 end;
 
-procedure JsonToElements(container: IwbContainerElementRef; obj: TJSONObject; const excludedPaths: array of string);
+procedure JsonToElements(const container: IwbContainerElementRef; obj: TJSONObject; const excludedPaths: array of string);
 var
   element: IwbElement;
   path: string;
@@ -298,7 +321,7 @@ begin
   end;
 end;
 
-procedure JsonToRecordHeader(header: IwbElement; obj: TJSONObject);
+procedure JsonToRecordHeader(const header: IwbElement; obj: TJSONObject);
 var
   container: IwbContainerElementRef;
   recordSig, objSig: String;
@@ -320,7 +343,7 @@ begin
   JsonToElements(container, obj, ['Signature', 'Data Size', 'FormID', 'Form Version']);
 end;
 
-procedure JsonToRecord(rec: IwbMainRecord; obj: TJSONObject);
+procedure JsonToRecord(const rec: IwbMainRecord; obj: TJSONObject);
 var
   i: Integer;
   path: String;
@@ -342,7 +365,7 @@ begin
   end;
 end;
 
-function GetObjString(obj: TJSONObject; key: String; var value: String): Boolean;
+function GetObjString(obj: TJSONObject; const key: String; var value: String): Boolean;
 begin
   Result := obj.HasKey(key);
   if Result then
@@ -374,7 +397,7 @@ begin
     Result := '"' + str + '"';
 end;
 
-function GetAddSignature(obj: TJSONObject; group: IwbGroupRecord): String;
+function GetAddSignature(obj: TJSONObject; const group: IwbGroupRecord): String;
 var
   recHeader: TJSONObject;
 begin
@@ -391,7 +414,7 @@ begin
   end;
 end;
 
-procedure JsonToRecords(group: IwbGroupRecord; ary: TJSONArray);
+procedure JsonToRecords(const group: IwbGroupRecord; ary: TJSONArray);
 var
   recObj: TJSONObject;
   key, sig: String;
@@ -426,7 +449,7 @@ begin
   end;
 end;
 
-procedure JsonToGroup(group: IwbGroupRecord; obj: TJSONObject); overload;
+procedure JsonToGroup(const group: IwbGroupRecord; obj: TJSONObject); overload;
 var
   i: Integer;
   key: String;
@@ -445,7 +468,7 @@ begin
   end;
 end;
 
-procedure JsonToGroup(group: IwbGroupRecord; obj: TJSONObject; key: String); overload;
+procedure JsonToGroup(const group: IwbGroupRecord; obj: TJSONObject; const key: String); overload;
 var
   v: TJSONValue;
 begin
@@ -456,7 +479,7 @@ begin
     JsonToGroup(group, v.AsObject);
 end;
 
-procedure JsonToFileHeader(header: IwbMainRecord; obj: TJSONObject);
+procedure JsonToFileHeader(const header: IwbMainRecord; obj: TJSONObject);
 const
   ExcludedPaths: array[0..3] of string = (
     'Record Header',
@@ -484,7 +507,7 @@ begin
   JsonToElements(container, obj, ExcludedPaths);
 end;
 
-procedure JsonToFile(_file: IwbFile; obj: TJSONObject);
+procedure JsonToFile(const _file: IwbFile; obj: TJSONObject);
 var
   groups: TJSONObject;
   group: IwbGroupRecord;
@@ -519,7 +542,7 @@ end;
 {$endregion}
 
 {$region 'API functions'}
-function ElementToJson(_id: Cardinal; len: PInteger; editValues: WordBool): WordBool; cdecl;
+function ElementToJson(_id: Cardinal; len: PInteger): WordBool; cdecl;
 var
   e: IInterface;
   _file: IwbFile;
@@ -530,7 +553,6 @@ var
 begin
   Result := False;
   try
-    SerializeEditValues := editValues;
     e := Resolve(_id);
     obj := nil;
     // convert input element to JSONObject

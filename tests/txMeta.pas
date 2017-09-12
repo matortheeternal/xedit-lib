@@ -4,11 +4,12 @@ interface
 
 uses
   classes,
-  SysUtils;
+  Windows, SysUtils;
 
 type
   CardinalArray = array of Cardinal;
   PCardinalArray = ^CardinalArray;
+  TStringArray = array of String;
 
   // PUBLIC TESTING INTERFACE
   procedure WriteMessages;
@@ -17,8 +18,11 @@ type
   procedure WriteStringToFile(str, filename: string);
   procedure ExpectSuccess(b: WordBool);
   procedure ExpectFailure(b: WordBool);
+  function GetDataPath: String;
   procedure BuildMetaTests;
+  procedure BuildFinalTests;
   function grs(len: Integer): WideString;
+  function gem(len: Integer): WideString;
   function gra(len: Integer): CardinalArray;
 
 implementation
@@ -46,6 +50,20 @@ begin
     Delete(str, Length(str) - 1, 2);
     WriteLn('> ' + StringReplace(str, #13#10, #13#10'> ', [rfReplaceAll]));
   end;
+end;
+
+// gem = Get Exception Message
+function gem(len: Integer): WideString;
+var
+  wcBuffer: PWideChar;
+begin
+  if len = 0 then begin
+    Result := '';
+    exit;
+  end;
+  SetLength(Result, len);
+  wcBuffer := PWideChar(Result);
+  ExpectSuccess(GetExceptionMessage(wcBuffer, len));
 end;
 
 // grs = Get Result String
@@ -138,6 +156,43 @@ begin
   Expect(Length(grs(len)) > 0, 'Should return a string');
 end;
 
+function GetDataPath: String;
+var
+  len: Integer;
+begin
+  ExpectSuccess(GetGlobal('DataPath', @len));
+  Result := grs(len);
+end;
+
+function GetBackupPath(fileName: String): String;
+var
+  BackupFolder: String;
+  sr: TSearchRec;
+  aTime: TDateTime;
+begin
+  Result := '';
+  aTime := 0;
+  BackupFolder := GetDataPath + 'zEdit Backups\';
+  if FindFirst(BackupFolder + '*.bak', faAnyFile, sr) = 0 then begin
+    repeat
+      if (Pos(fileName, sr.Name) = 1) and (sr.TimeStamp > aTime) then begin
+        aTime := sr.TimeStamp;
+        Result := BackupFolder + sr.Name;
+      end;
+    until FindNext(sr) <> 0;
+    FindClose(sr);
+  end;
+end;
+
+procedure TestRename(const fileName: String);
+var
+  filePath: String;
+begin
+  filePath := GetDataPath + fileName;
+  Expect(not FileExists(filePath + '.save'), fileName + '.save should no longer be present');
+  Expect(FileExists(filePath), fileName + ' should exist');
+end;
+
 procedure BuildMetaTests;
 var
   h1, h2: Cardinal;
@@ -203,6 +258,22 @@ begin
             end);
         end);
 
+      Describe('SetSortMode', procedure
+        begin
+          It('Should succeed if sort mode is valid', procedure
+            begin
+              ExpectSuccess(SetSortMode(3, true));
+              ExpectSuccess(SetSortMode(2, false));
+              ExpectSuccess(SetSortMode(1, true));
+              ExpectSuccess(SetSortMode(0, false));
+            end);
+
+          It('Should fail if sort mode is invalid', procedure
+            begin
+              ExpectFailure(SetSortMode(4, false));
+            end);
+        end);
+
       Describe('Release', procedure
         begin
           It('Should fail if handle is not allocated', procedure
@@ -220,7 +291,41 @@ begin
               ExpectSuccess(FileByName('Skyrim.esm', @h1));
               ExpectSuccess(Release(h1));
               ExpectSuccess(FileByName('Skyrim.esm', @h2));
+              ExpectSuccess(Release(h2));
               Expect(h1 = h2, 'Next allocation should use the freed handle');
+            end);
+        end);
+
+      Describe('GetDuplicateHandles', procedure
+        begin
+          BeforeAll(procedure
+            begin
+              ExpectSuccess(ResetStore);
+            end);
+
+          It('Should fail if handle is not allocated', procedure
+            begin
+              ExpectFailure(GetDuplicateHandles(100, @len));
+            end);
+
+          It('Should return an empty array if there are no duplicates', procedure
+            begin
+              ExpectSuccess(FileByName('Skyrim.esm', @h1));
+              ExpectSuccess(GetDuplicateHandles(h1, @len));
+              ExpectSuccess(Release(h1));
+              ExpectEqual(len, 0);
+            end);
+
+          It('Should return duplicates', procedure
+            begin
+              ExpectSuccess(FileByName('Skyrim.esm', @h1));
+              ExpectSuccess(FileByName('Skyrim.esm', @h1));
+              ExpectSuccess(FileByName('Skyrim.esm', @h1));
+              ExpectSuccess(FileByName('Skyrim.esm', @h1));
+              ExpectSuccess(FileByName('Skyrim.esm', @h1));
+              ExpectSuccess(FileByName('Update.esm', @h2));
+              ExpectSuccess(GetDuplicateHandles(h1, @len));
+              ExpectEqual(len, 4);
             end);
         end);
 
@@ -233,6 +338,37 @@ begin
               Expect(h1 = 1, 'First handle allocated after resetting store should be 1');
             end);
         end);
+    end);
+end;
+
+procedure BuildFinalTests;
+begin
+  Describe('CloseXEdit', procedure
+    begin
+      BeforeAll(procedure
+        begin
+          CloseXEdit;
+        end);
+
+      {$IFNDEF SSE}
+      AfterAll(procedure
+        begin
+          DeleteFile(GetDataPath + 'xtest-6.esp');
+          {DeleteFile(GetDataPath + 'xtest-5.esp');
+          SysUtils.RenameFile(GetBackupPath('xtest-5.esp'), GetDataPath + 'xtext-5.esp');}
+        end);
+
+      It('Should rename .save files', procedure
+        begin
+          TestRename('xtest-6.esp');
+          TestRename('xtest-5.esp');
+        end);
+
+      It('Should create backups', procedure
+        begin
+          Expect(GetBackupPath('xtest-5.esp') <> '');
+        end);
+      {$ENDIF}
     end);
 end;
 

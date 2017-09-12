@@ -17,33 +17,39 @@ type
   protected
     procedure Execute; override;
   end;
+  TLoaderState = ( lsInactive, lsActive, lsDone, lsError );
   {$endregion}
 
   {$region 'Native functions}
+  procedure SetLoaderState(state: TLoaderState);
   procedure UpdateFileCount;
   procedure LoadPluginFiles;
   procedure LoadResources;
-  procedure BuildPluginsList(sLoadPath: String; var sl: TStringList);
-  procedure BuildLoadOrder(sLoadPath: String; var slLoadOrder, slPlugins: TStringList);
+  procedure LoadPluginsList(const sLoadPath: String; var sl: TStringList);
+  procedure LoadLoadOrder(const sLoadPath: String; var slLoadOrder, slPlugins: TStringList);
   procedure RemoveCommentsAndEmpty(var sl: TStringList);
   procedure RemoveMissingFiles(var sl: TStringList);
   procedure AddMissingFiles(var sl: TStringList);
   procedure GetPluginDates(var sl: TStringList);
   procedure AddBaseMasters(var sl: TStringList);
-  procedure FixLoadOrder(var sl: TStringList; filename: String; index: Integer);
+  procedure FixLoadOrder(var sl: TStringList; const filename: String; index: Integer);
   function PluginListCompare(List: TStringList; Index1, Index2: Integer): Integer;
   procedure RenameSavedFiles;
   {$endregion}
 
   {$region 'API functions'}
+  function SetGamePath(path: PWideChar): WordBool; cdecl;
+  function SetLanguage(lang: PWideChar): WordBool; cdecl;
+  function SetBackupPath(path: PWideChar): WordBool; cdecl;
   function SetGameMode(mode: Integer): WordBool; cdecl;
   function GetGamePath(mode: Integer; len: PInteger): WordBool; cdecl;
   function GetLoadOrder(len: PInteger): WordBool; cdecl;
   function GetActivePlugins(len: PInteger): WordBool; cdecl;
-  function LoadPlugins(loadOrder: PWideChar): WordBool; cdecl;
+  function LoadPlugins(loadOrder: PWideChar; smartLoad: WordBool): WordBool; cdecl;
   function LoadPlugin(filename: PWideChar): WordBool; cdecl;
+  function LoadPluginHeader(fileName: PWideChar; _res: PCardinal): WordBool; cdecl;
   function BuildReferences(_id: Cardinal): WordBool; cdecl;
-  function GetLoaderDone: WordBool; cdecl;
+  function GetLoaderStatus(status: PByte): WordBool; cdecl;
   function UnloadPlugin(_id: Cardinal): WordBool; cdecl;
   {$endregion}
 
@@ -52,32 +58,32 @@ var
   slLoadOrder, slSavedFiles: TStringList;
   LoaderThread: TLoaderThread;
   RefThread: TRefThread;
+  LoaderState: TLoaderState;
   BaseFileIndex: Integer;
 
 implementation
 
 uses
   Windows, SysUtils, ShlObj,
-  // mte units
-  mteHelpers,
   // xelib units
   xeMeta, xeConfiguration, xeMessages, xeMasters;
 
 {$region 'TLoaderThread'}
 procedure TLoaderThread.Execute;
 begin
-  try
+  try     
     LoadPluginFiles;
     LoadResources;
     UpdateFileCount;
 
     // done loading
-    ProgramStatus.bLoaderDone := True;
+    slLoadOrder.Free;
     AddMessage('Done loading files.');
+    SetLoaderState(lsDone);
   except
-    on E: Exception do begin
-      AddMessage('Fatal Error: <' + e.ClassName + ': ' + e.Message + '>');
-      wbLoaderError := True;
+    on e: Exception do begin
+      AddMessage('Fatal Error: ' + e.Message);
+      SetLoaderState(lsError);
     end;
   end;
 end;
@@ -98,30 +104,39 @@ begin
 
     // done loading
     SetLength(rFiles, 0);
-    ProgramStatus.bLoaderDone := True;
     AddMessage('Done building references.');
+    SetLoaderState(lsDone);
   except
     on E: Exception do begin
       AddMessage('Fatal Error: <' + e.ClassName + ': ' + e.Message + '>');
-      wbLoaderError := True;
+      SetLoaderState(lsError);
     end;
   end;
 end;
 {$endregion}
 
 {$region 'Native functions'}
+procedure SetLoaderState(state: TLoaderState);
+begin
+  LoaderState := state;
+  case state of
+    lsActive: wbLoaderdone := False;
+    lsDone: wbLoaderdone := True;
+    lsError: wbLoaderError := True;
+  end;
+end;
+
 {$region 'File loading'}
 procedure UpdateFileCount;
 begin
   Globals.Values['FileCount'] := IntToStr(Length(xFiles));
 end;
 
-procedure LoadFile(filePath: String; loadOrder: Integer);
+procedure LoadFile(const filePath: String; loadOrder: Integer);
 var
   _file: IwbFile;
 begin
   _file := wbFile(filePath, loadOrder, '', False, False);
-  _file._AddRef;
   SetLength(xFiles, Length(xFiles) + 1);
   xFiles[High(xFiles)] := _file;
 end;
@@ -131,9 +146,14 @@ var
   _file: IwbFile;
 begin
   _file := wbFile(Globals.Values['ProgramPath'] + wbGameName + wbHardcodedDat, 0);
-  _file._AddRef;
   SetLength(xFiles, Length(xFiles) + 1);
   xFiles[High(xFiles)] := _file;
+end;
+
+procedure ThreadException(const msg: String);
+begin
+  AddMessage(msg);
+  raise Exception.Create(msg);
 end;
 
 procedure LoadPluginFiles;
@@ -150,26 +170,21 @@ begin
     try
       LoadFile(wbDataPath + sFileName, BaseFileIndex + i);
     except
-      on x: Exception do begin
-        AddMessage('Exception loading ' + sFileName);
-        AddMessage(x.Message);
-        raise x;
-      end;
+      on x: Exception do
+        ThreadException('Exception loading ' + sFileName + ': ' + x.Message);
     end;
 
     // load hardcoded dat
     if (i = 0) and (sFileName = wbGameName + '.esm') then try
       LoadHardCodedDat;
     except
-      on x: Exception do begin
-        AddMessage('Exception loading ' + wbGameName + wbHardcodedDat);
-        raise x;
-      end;
+      on x: Exception do
+        ThreadException('Exception loading ' + wbGameName + wbHardcodedDat + ': ' + x.Message);
     end;
   end;
 end;
 
-procedure LoadBSAFile(sFileName: String);
+procedure LoadBSAFile(const sFileName: String);
 var
   sFileExt: String;
 begin
@@ -225,31 +240,66 @@ begin
   end;
 end;
 
-function IndexOfFile(_file: IwbFile): Integer;
+function IndexOfFile(const _file: IwbFile): Integer;
 begin
   for Result := Low(xFiles) to High(xFiles) do
     if xFiles[Result] = _file then exit;
   Result := -1;
 end;
 
-procedure ForceClose(_file: IwbFile);
+procedure ForceClose(const _file: IwbFile);
 var
   i, index, len: Integer;
 begin
   index := IndexOfFile(_file);
-  len := Length(xFiles);
-  Assert(index > -1);
-  Assert(index < len);
-  for i := index + 1 to Pred(len) do
-    xFiles[i - 1] := xFiles[i];
-  SetLength(xFiles, len - 1);
+  if index > -1 then begin
+    len := Length(xFiles);
+    for i := index + 1 to Pred(len) do
+      xFiles[i - 1] := xFiles[i];
+    SetLength(xFiles, len - 1);
+    UpdateFileCount;
+  end;
   wbFileForceClosed(_file);
-  UpdateFileCount;
 end;
 {$endregion}
 
 {$region 'Load order helpers'}
-procedure BuildPluginsList(sLoadPath: String; var sl: TStringList);
+function LoadFileHeader(const filePath: String): IwbFile;
+begin
+  Result := wbFile(filePath, -1, '', False, True);
+end;
+
+procedure AddToLoadOrder(const filePath: String);
+var
+  _file: IwbFile;
+  masterNames: TDynStrings;
+  i: Integer;
+begin
+  _file := LoadFileHeader(filePath);
+  masterNames := NativeGetMasterNames(_file);
+  for i := Low(masterNames) to High(masterNames) do
+    if slLoadOrder.IndexOf(masterNames[i]) = -1 then
+      AddToLoadOrder(masterNames[i]);
+  slLoadOrder.Add(filePath);
+end;
+
+procedure BuildLoadOrder(const loadOrder: String);
+var
+  slFiles: TStringList;
+  i: Integer;
+begin
+  slFiles := TStringList.Create;
+  try        
+    slFiles.Text := loadOrder;
+    for i := 0 to Pred(slFiles.Count) do
+      AddToLoadOrder(slFiles[i]);
+  finally
+    wbFileForceClosed;
+    slFiles.Free;
+  end;
+end;
+
+procedure LoadPluginsList(const sLoadPath: String; var sl: TStringList);
 var
   sPath: String;
 begin
@@ -264,7 +314,7 @@ begin
   RemoveMissingFiles(sl);
 end;
 
-procedure BuildLoadOrder(sLoadPath: String; var slLoadOrder, slPlugins: TStringList);
+procedure LoadLoadOrder(const sLoadPath: String; var slLoadOrder, slPlugins: TStringList);
 var
   sPath: String;
 begin
@@ -376,7 +426,7 @@ begin
     FixLoadOrder(sl, 'Skyrim.esm', 0);
     FixLoadOrder(sl, 'Update.esm', 1);
     FixLoadOrder(sl, 'Dawnguard.esm', 2);
-    FixLoadOrder(sl, 'Hearthfires.esm', 3);
+    FixLoadOrder(sl, 'HearthFires.esm', 3);
     FixLoadOrder(sl, 'Dragonborn.esm', 4);
   end
   else if (wbGameMode = gmFO4) then begin
@@ -391,15 +441,18 @@ begin
 end;
 
 { Forces a plugin to load at a specific position }
-procedure FixLoadOrder(var sl: TStringList; filename: String; index: Integer);
+procedure FixLoadOrder(var sl: TStringList; const filename: String; index: Integer);
 var
   oldIndex: Integer;
 begin
   oldIndex := sl.IndexOf(filename);
-  if (oldIndex > -1) and (oldIndex <> index) then begin
+  if (oldIndex > -1) then begin
+    if oldIndex = index then exit;
     sl.Delete(oldIndex);
     sl.Insert(index, filename);
-  end;
+  end
+  else if FileExists(wbDataPath + filename) then
+    sl.Insert(index, filename);
 end;
 
 { Compare function for sorting load order by date modified/esms }
@@ -444,28 +497,89 @@ end;
 var
   FileTimeStr: String;
 
+procedure BackupFile(const path: String);
+var
+  bakPath: String;
+begin
+  if DirectoryExists(BackupPath) then
+    bakPath := BackupPath + ExtractFileName(path) + '.' + FileTimeStr + '.bak'
+  else
+    bakPath := path + '.bak';
+  if not RenameFile(path, bakPath) then
+    RaiseLastOSError;
+end;
+
 procedure RenameSavedFile(const path: String);
 var
   newPath: String;
 begin
-  newPath := ChangeFileExt(path, '');
+  newPath := Copy(path, 1, Length(path) - 5);
   if FileExists(newPath) then
-    RenameFile(newPath, newPath + '.' + FileTimeStr + '.bak');
-  RenameFile(path, newPath);
+    BackupFile(newPath);
+  if not RenameFile(path, newPath) then
+    RaiseLastOSError;
+end;
+
+procedure CreateBackupFolder;
+begin
+  try
+    ForceDirectories(BackupPath);
+  except
+    on x: Exception do
+      AddMessage('Error creating backup folder: ' + x.Message);
+  end;
 end;
 
 procedure RenameSavedFiles;
 var
   i: Integer;
 begin
+  CreateBackupFolder;
   DateTimeToString(FileTimeStr, 'yymmdd_hhnnss', Now);
-  for i := 0 to Pred(slSavedFiles.Count) do
+  for i := 0 to Pred(slSavedFiles.Count) do try
     RenameSavedFile(slSavedFiles[i]);
+  except
+    on x: Exception do
+      AddMessage('Error renaming saved file, ' + x.Message);
+  end;
 end;
 {$endregion}
 {$endregion}
 
 {$region 'API functions'}
+function SetGamePath(path: PWideChar): WordBool; cdecl;
+begin
+  Result := False;
+  try
+    GamePath := string(path);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function SetLanguage(lang: PWideChar): WordBool; cdecl;
+begin
+  Result := False;
+  try
+    Language := string(lang);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function SetBackupPath(path: PWideChar): WordBool; cdecl;
+begin
+  Result := False;
+  try
+    BackupPath := string(path);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
 function SetGameMode(mode: Integer): WordBool; cdecl;
 begin
   Result := False;
@@ -476,9 +590,9 @@ begin
     // log message
     AddMessage(Format('Game: %s, DataPath: %s', [wbGameName, wbDataPath]));
     // set global values
-    Globals.Values['GameName'] := ProgramStatus.GameMode.gameName;
-    Globals.Values['AppName'] := ProgramStatus.GameMode.appName;
-    Globals.Values['LongGameName'] := ProgramStatus.GameMode.longName;
+    Globals.Values['GameName'] := GameMode.gameName;
+    Globals.Values['AppName'] := GameMode.appName;
+    Globals.Values['LongGameName'] := GameMode.longName;
     Globals.Values['DataPath'] := wbDataPath;
     Globals.Values['AppDataPath'] := wbAppDataPath;
     Globals.Values['MyGamesPath'] := wbMyGamesPath;
@@ -516,8 +630,8 @@ begin
 
     try
       sLoadPath := Globals.Values['AppDataPath'];
-      BuildPluginsList(sLoadPath, slPlugins);
-      BuildLoadOrder(sLoadPath, slLoadOrder, slPlugins);
+      LoadPluginsList(sLoadPath, slPlugins);
+      LoadLoadOrder(sLoadPath, slLoadOrder, slPlugins);
 
       // add base masters if missing
       AddBaseMasters(slPlugins);
@@ -555,7 +669,7 @@ begin
 
     try
       sLoadPath := Globals.Values['AppDataPath'];
-      BuildPluginsList(sLoadPath, slPlugins);
+      LoadPluginsList(sLoadPath, slPlugins);
       AddBaseMasters(slPlugins);
 
       // SET RESULT STRING
@@ -571,41 +685,66 @@ begin
   end;
 end;
 
-function LoadPlugins(loadOrder: PWideChar): WordBool; cdecl;
+function LoadPlugins(loadOrder: PWideChar; smartLoad: WordBool): WordBool; cdecl;
 begin
   Result := False;
   try
-    // exit if we have already started loading plugins
-    if Assigned(slLoadOrder) then
-      raise Exception.Create('Already loading plugins.');
+    // exit if loader is already active
+    if LoaderState <> lsInactive then
+      raise Exception.Create('Error: You can only call LoadPlugins once per session. ' +
+        'Use LoadPlugin to load additional plugins.');
     
-    // store load order we're going to use in slLoadOrder
-    ProgramStatus.bLoaderDone := False;
+    // prepare load order
     slLoadOrder := TStringList.Create;
-    slLoadOrder.Text := loadOrder;
+    if smartLoad then
+      BuildLoadOrder(loadOrder)
+    else
+      slLoadOrder.Text := loadOrder;
 
     // start loader thread
+    SetLoaderState(lsActive);
     LoaderThread := TLoaderThread.Create;
     Result := True;
   except
-    on x: Exception do ExceptionHandler(x);
+    on x: Exception do begin  
+      slLoadOrder.Free;
+      ExceptionHandler(x);
+    end;
   end;
 end;
 
-function LoadPlugin(filename: PWideChar): WordBool; cdecl;
+function LoadPlugin(fileName: PWideChar): WordBool; cdecl;
 begin
   Result := False;
   try
-    // update load order
-    ProgramStatus.bLoaderDone := False;
+    // prepare load order
     slLoadOrder := TStringList.Create;
     slLoadOrder.Add(fileName);
 
     // start loader thread
+    SetLoaderState(lsActive);
     LoaderThread := TLoaderThread.Create;
     Result := True;
   except
-    on x: Exception do ExceptionHandler(x);
+    on x: Exception do begin 
+      slLoadOrder.Free;
+      ExceptionHandler(x);
+    end;
+  end;
+end;
+
+function LoadPluginHeader(fileName: PWideChar; _res: PCardinal): WordBool; cdecl;
+var
+  _file: IwbFile;
+begin
+  Result := False;
+  try
+    _file := LoadFileHeader(fileName);
+    _res^ := Store(_file);
+    Result := True;
+  except
+    on x: Exception do
+      ExceptionHandler(x);
   end;
 end;
 
@@ -615,7 +754,6 @@ var
 begin
   Result := False;
   try
-    ProgramStatus.bLoaderDone := False;
     if _id = 0 then
       rFiles := Copy(xFiles, 0, MaxInt)
     else begin
@@ -624,6 +762,9 @@ begin
       SetLength(rFiles, 1);
       rFiles[0] := _file;
     end;
+
+    // start reference building thread
+    SetLoaderState(lsActive);
     RefThread := TRefThread.Create;
     Result := True;
   except
@@ -631,13 +772,14 @@ begin
   end;
 end;
 
-function GetLoaderDone: WordBool; cdecl;
+function GetLoaderStatus(status: PByte): WordBool; cdecl;
 begin
-  Result := ProgramStatus.bLoaderDone;
-  if Result then begin
-    if Assigned(LoaderThread) then FreeAndNil(LoaderThread);
-    if Assigned(RefThread)    then FreeAndNil(RefThread);
-    if Assigned(slLoadOrder)  then FreeAndNil(slLoadOrder);
+  Result := False;
+  try
+    status^ := Ord(LoaderState);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
   end;
 end;
 
@@ -667,6 +809,8 @@ end;
 
 initialization
   slSavedFiles := TStringList.Create;
+  LoaderState := lsInactive;
+
 finalization
   slSavedFiles.Free;
 

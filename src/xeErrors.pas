@@ -11,7 +11,7 @@ uses
 
 type
   {$region 'Types'}
-  TErrorTypeID = ( erITM, erITPO, erUDR, erUES, erURR, erUER, erUnknown );
+  TErrorTypeID = ( erITM, erITPO, erDR, erUES, erURR, erUER, erUnknown );
   TErrorType = record
     id: TErrorTypeID;
     shortName: string[4];
@@ -27,12 +27,10 @@ type
     name: string;
     path: string;
     data: string;
-    constructor Create(rec: IwbMainRecord; id: TErrorTypeID); overload;
-    constructor Create(rec: IwbMainRecord; id: TErrorTypeID;
-      error: string); overload;
-    constructor Create(rec: IwbMainRecord; element: IwbElement;
-      error: string); overload;
-    procedure Init(rec: IwbMainRecord);
+    constructor Create(const rec: IwbMainRecord; id: TErrorTypeID); overload;
+    constructor Create(const rec: IwbMainRecord; id: TErrorTypeID; const error: string); overload;
+    constructor Create(const rec: IwbMainRecord; const element: IwbElement; const error: string); overload;
+    procedure Init(const rec: IwbMainRecord);
   end;
   TErrorCheckThread = class(TThread)
   protected
@@ -40,39 +38,43 @@ type
   end;
   {$endregion}
 
+  {$region 'Native functions'}
+  procedure RemoveIdenticalRecord(const rec: IwbMainRecord);
+  {$endregion}
+
   {$region 'API functions'}
   function CheckForErrors(_id: Cardinal): WordBool; cdecl;
   function GetErrorThreadDone: WordBool; cdecl;
   function GetErrors(len: PInteger): WordBool; cdecl;
-  function GetErrorString(_id: Cardinal; len: PInteger): WordBool; cdecl;
+  function RemoveIdenticalRecords(_id: Cardinal): WordBool; cdecl;
   {$endregion}
 
 const
-  {$region 'ErrorTypes'}
   ErrorTypes: array[0..6] of TErrorType = (
     (id: erITM; shortName: 'ITM'; longName: 'Identical to Master'; expr: ''),
     (id: erITPO; shortName: 'ITPO'; longName: 'Identical to Previous Override';
       expr: ''),
-    (id: erUDR; shortName: 'UDR'; longName: 'Undelete and Disable Reference';
-      expr: 'Record marked as deleted but contains: (\w+)'),
+    (id: erDR; shortName: 'DR'; longName: 'Deleted Record';
+      expr: 'Record marked as deleted but contains: (.+)'),
     (id: erUES; shortName: 'UES'; longName: 'Unexpected Subrecord';
-      expr: 'Error: Record ([a-zA-Z_]+) contains unexpected \(or out of order\) subrecord (\w+)'),
+      expr: 'Error: Record contains unexpected \(or out of order\) subrecord (.+)'),
     (id: erURR; shortName: 'URR'; longName: 'Unresolved Reference';
       expr: '\[([0-9A-F]+)\] \< Error: Could not be resolved \>'),
     (id: erUER; shortName: 'UER'; longName: 'Unexpected Reference';
-      expr: 'Found a ([a-zA-Z_]+) reference, expected: (\w+)'),
+      expr: 'Found a ([a-zA-Z_]+) reference, expected: (.+)'),
     (id: erUnknown; shortName: 'UNK'; longName: 'Unknown'; expr: '')
   );
-  {$endregion}
+  ReferenceSignatures: array[0..10] of String = (
+    'REFR', 'PGRE', 'PMIS', 'ACHR', 'ACRE', 'PARW',
+    'PBAR', 'PBEA', 'PCON', 'PFLA', 'PHZD'
+  );
 
 implementation
 
 uses
-  SysUtils, Masks, RegularExpressions,
-  // mte units
-  mteConflict,
+  SysUtils, StrUtils, Masks, RegularExpressions,
   // xelib units
-  xeMessages, xeElementValues,
+  xeConflict, xeMessages, xeElementValues,
   // library units
   Argo;
 
@@ -83,60 +85,65 @@ var
 
 {$region 'Native functions'}
 {$region 'CheckForErrors helpers'}
-procedure CheckForSubrecordErrors(rec, lastRecord: IwbMainRecord);  
+procedure CheckForSubrecordErrors(const rec: IwbMainRecord);
 var
-  error: String;  
-  errorObj: TRecordError;      
+  error: String;
 begin
   error := rec.GetSubRecordErrors;
-  if error <> '' then begin
-    errorObj := TRecordError.Create(rec, erUES, Error);
-    errorObj.Data := Error;
-    errors.Add(errorObj);
-  end;
+  if error <> '' then
+    errors.Add(TRecordError.Create(rec, erUES, Error));
 end;  
 
-procedure CheckForIdenticalErrors(rec, lastRecord: IwbMainRecord);      
-var
-  errorObj: TRecordError; 
+procedure CheckForIdenticalErrors(const rec: IwbMainRecord);
 begin
-  if rec.IsMaster then exit;
-  if Assigned(rec.ChildGroup) and (rec.ChildGroup.ElementCount > 0) then exit;
-  if IsITM(rec) then begin
-    errorObj := TRecordError.Create(rec, erITM);
-    errors.Add(errorObj);
-  end
-  else if IsITPO(rec) then begin
-    errorObj := TRecordError.Create(rec, erITPO);
-    errors.Add(errorObj);
-  end;
+  if rec.IsMaster or rec.Master.IsInjected then exit;
+  if IsITM(rec) then
+    errors.Add(TRecordError.Create(rec, erITM))
+  else if IsITPO(rec) then
+    errors.Add(TRecordError.Create(rec, erITPO));
 end;
 
-function NativeCheckForErrors(element: IwbElement; lastRecord: IwbMainRecord): IwbMainRecord;
+procedure CheckForDeletedErrors(const rec: IwbMainRecord);
+var
+  sig: String;
+begin
+  sig := string(rec.Signature);
+  if sig = 'NAVM' then
+    errors.Add(TRecordError.Create(rec, erDR))
+  else if MatchStr(sig, ReferenceSignatures) then
+    errors.Add(TRecordError.Create(rec, erDR));
+end;
+
+function NativeCheckForErrors(const element: IwbElement; const lastRecord: IwbMainRecord): IwbMainRecord;
 var
   rec: IwbMainRecord;
-  error: String;                   
-  errorObj: TRecordError;
+  error: String;            
   container: IwbContainerElementRef;
   i: Integer;
 begin
-  // special main record error checks (ITM, ITPO, UES)
+  error := element.Check;
+
+  // special main record error checks (ITM, ITPO, DR)
   if Supports(element, IwbMainRecord, rec) then begin
-    CheckForSubrecordErrors(rec, lastRecord);
-    CheckForIdenticalErrors(rec, lastRecord);
+    CheckForSubrecordErrors(rec);
+    CheckForIdenticalErrors(rec);
+    if (error = '') and rec.isDeleted then
+      CheckForDeletedErrors(rec);
   end;
 
-  // general error checking                   
-  error := element.Check;
+  // general error checking     
   if error <> '' then begin
     Result := element.ContainingMainRecord;
     if Assigned(Result) then begin
       if (Result <> LastRecord) then
-        AddMessage(Format('  %s', [Result.Name]));
-      errorObj := TRecordError.Create(Result, element, error);
-      errors.Add(errorObj);
+        AddMessage(Result.Name);
+      errors.Add(TRecordError.Create(Result, element, error));
     end;
-    AddMessage(Format('  %s -> %s', [element.Path, error]));
+    // print error message to log
+    if not Supports(element, IwbMainRecord) then
+      AddMessage(Format('  %s -> %s', [element.Path, error]))
+    else
+      AddMessage('  ' + error);
   end;
   
   // recursion
@@ -147,7 +154,13 @@ end;
 
 procedure TErrorCheckThread.Execute;
 begin
-  NativeCheckForErrors(elementToCheck, nil);
+  try
+    AddMessage('Checking for errors in ' + NativeName(elementToCheck));
+    NativeCheckForErrors(elementToCheck, nil);
+  except
+    on x: Exception do
+      ExceptionHandler(x);
+  end;      
   bErrorCheckThreadDone := True;
 end;
 {$endregion}
@@ -176,7 +189,7 @@ end;
 {$endregion}
 
 {$region 'Error parsing'}
-function MatchesError(error: string; errorID: TErrorTypeID;
+function MatchesError(const error: string; errorID: TErrorTypeID;
   i1, i2: Integer; var &type: TErrorType; var data: string): boolean;
 var
   errorType: TErrorType;
@@ -200,12 +213,12 @@ begin
   end;
 end;
 
-procedure ParseError(error: string; var &type: TErrorType;
+procedure ParseError(const error: string; var &type: TErrorType;
   var data: string);
 begin
   // test errors with regex expressions, and if they match use
   // their type and parse data from the correct regex groups
-  if MatchesError(error, erUDR, 1, 0, &type, data)
+  if MatchesError(error, erDR, 1, 0, &type, data)
   or MatchesError(error, erUES, 2, 0, &type, data)
   or MatchesError(error, erURR, 1, 0, &type, data)
   or MatchesError(error, erUER, 1, 2, &type, data) then
@@ -218,34 +231,62 @@ end;
 {$endregion}
 
 {$region 'TRecordError'}
-constructor TRecordError.Create(rec: IwbMainRecord; id: TErrorTypeID);
+constructor TRecordError.Create(const rec: IwbMainRecord; id: TErrorTypeID);
 begin
   Init(rec);
   &type := ErrorTypes[Ord(id)];
 end;
 
-constructor TRecordError.Create(rec: IwbMainRecord; id: TErrorTypeID;
-  error: string);
+constructor TRecordError.Create(const rec: IwbMainRecord; id: TErrorTypeID; const error: string);
 begin
   Init(rec);
   &type := ErrorTypes[Ord(id)];
   data := error;
 end;
 
-constructor TRecordError.Create(rec: IwbMainRecord; element: IwbElement;
-  error: string);
+constructor TRecordError.Create(const rec: IwbMainRecord; const element: IwbElement; const error: string);
 begin
   Init(rec);
-  path := GetPath(element, false);
+  if not Supports(element, IwbMainRecord) then
+    path := GetPath(element, false);
   ParseError(error, &type, data);
 end;
 
-procedure TRecordError.Init(rec: IwbMainRecord);
+procedure TRecordError.Init(const rec: IwbMainRecord);
 begin
   handle := Store(rec);
   signature := rec.signature;
   formID := rec.FixedFormID;
   name := rec.Name;
+end;
+{$endregion}
+
+{$region 'Remove identical records helpers'}
+procedure RemoveEmptyIdenticalContainers(const container: IwbContainer);
+var
+  rec: IwbMainRecord;
+  parentContainer: IwbContainer;
+begin
+  if container.ElementCount = 0 then begin
+    parentContainer := container.container;
+    if Supports(container, IwbMainRecord, rec) then
+      RemoveIdenticalRecord(rec)
+    else
+      container.Remove;
+    if Assigned(container) then
+      RemoveEmptyIdenticalContainers(parentContainer);
+  end;
+end;
+
+procedure RemoveIdenticalRecord(const rec: IwbMainRecord);
+var
+  container: IwbContainer;
+begin
+  if IsITM(rec) or IsITPO(rec) then begin
+    container := rec.Container;
+    rec.Remove;
+    RemoveEmptyIdenticalContainers(container);
+  end;
 end;
 {$endregion}
 {$endregion}
@@ -259,13 +300,13 @@ begin
   try
     if not bErrorCheckThreadDone then
       raise Exception.Create('You''re currently checking a plugin for errors.');
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Input interface must be an element.');
     errors := TList.Create;
     bErrorCheckThreadDone := False;
-    if Supports(Resolve(_id), IwbElement, element) then begin
-      elementToCheck := element;
-      TErrorCheckThread.Create;
-      Result := True;
-    end;
+    elementToCheck := element;
+    TErrorCheckThread.Create;
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -302,17 +343,22 @@ begin
   end;
 end;
 
-function GetErrorString(_id: Cardinal; len: PInteger): WordBool; cdecl;
+function RemoveIdenticalRecords(_id: Cardinal): WordBool; cdecl;
 var
-  element: IwbElement;
+  _file: IwbFile;
+  i: Integer;
+  rec: IwbMainRecord;
 begin
   Result := False;
   try
-    if Supports(Resolve(_id), IwbElement, element) then begin
-      resultStr := element.Check;
-      len^ := Length(resultStr);
-      Result := True;
+    if not Supports(Resolve(_id), IwbFile, _file) then
+      raise Exception.Create('Input interface must be a file.');
+    for i := Pred(_file.RecordCount) downto 0 do begin
+      rec := _file.Records[i];
+      if rec.IsMaster then continue;
+      RemoveIdenticalRecord(rec);
     end;
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;

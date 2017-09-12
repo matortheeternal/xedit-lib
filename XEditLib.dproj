@@ -56,6 +56,7 @@
 			<DelphiCompile Include="XEditLib.dpr">
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
+			<DCCReference Include="src\xeHelpers.pas"/>
 			<DCCReference Include="src\xeTypes.pas"/>
 			<DCCReference Include="src\xeMessages.pas"/>
 			<DCCReference Include="src\xeConfiguration.pas"/>
@@ -68,10 +69,7 @@
 			<DCCReference Include="src\xeErrors.pas"/>
 			<DCCReference Include="src\xeRecords.pas"/>
 			<DCCReference Include="src\xeSerialization.pas"/>
-			<DCCReference Include="lib\mte\mteHelpers.pas"/>
-			<DCCReference Include="lib\mte\mteConflict.pas"/>
-			<DCCReference Include="lib\mte\CRC32.pas"/>
-			<DCCReference Include="lib\mte\RttiIni.pas"/>
+			<DCCReference Include="src\xeConflict.pas"/>
 			<DCCReference Include="lib\xedit\wbImplementation.pas"/>
 			<DCCReference Include="lib\xedit\wbInterface.pas"/>
 			<DCCReference Include="lib\xedit\wbBSA.pas"/>
@@ -110,9 +108,9 @@
 						<VersionInfo Name="IncludeVerInfo">True</VersionInfo>
 						<VersionInfo Name="AutoIncBuild">True</VersionInfo>
 						<VersionInfo Name="MajorVer">0</VersionInfo>
-						<VersionInfo Name="MinorVer">0</VersionInfo>
+						<VersionInfo Name="MinorVer">2</VersionInfo>
 						<VersionInfo Name="Release">0</VersionInfo>
-						<VersionInfo Name="Build">442</VersionInfo>
+						<VersionInfo Name="Build">4</VersionInfo>
 						<VersionInfo Name="Debug">False</VersionInfo>
 						<VersionInfo Name="PreRelease">False</VersionInfo>
 						<VersionInfo Name="Special">False</VersionInfo>
@@ -124,13 +122,13 @@
 					<VersionInfoKeys>
 						<VersionInfoKeys Name="CompanyName"/>
 						<VersionInfoKeys Name="FileDescription"/>
-						<VersionInfoKeys Name="FileVersion">0.0.0.442</VersionInfoKeys>
+						<VersionInfoKeys Name="FileVersion">0.2.0.4</VersionInfoKeys>
 						<VersionInfoKeys Name="InternalName"/>
 						<VersionInfoKeys Name="LegalCopyright"/>
 						<VersionInfoKeys Name="LegalTrademarks"/>
 						<VersionInfoKeys Name="OriginalFilename"/>
 						<VersionInfoKeys Name="ProductName"/>
-						<VersionInfoKeys Name="ProductVersion">0.0</VersionInfoKeys>
+						<VersionInfoKeys Name="ProductVersion">0.2</VersionInfoKeys>
 						<VersionInfoKeys Name="Comments"/>
 					</VersionInfoKeys>
 					<Source>

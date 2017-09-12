@@ -7,7 +7,7 @@ uses
 
   {$region 'Native functions'}
   procedure ExceptionHandler(x: Exception);
-  procedure AddMessage(msg: String);
+  procedure AddMessage(const msg: String);
   procedure SaveMessages;
   {$endregion}
 
@@ -23,6 +23,7 @@ const
   LineBreak = #13#10;
 
 var
+  LogPosition: Integer;
   Messages: WideString;
   ExceptionMessage: WideString;
 
@@ -36,13 +37,13 @@ uses
 procedure ExceptionHandler(x: Exception);
 begin
   if x.Message <> '' then
-    ExceptionMessage := x.Message
+    ExceptionMessage := Copy(x.Message, 1, Length(x.Message))
   else
     ExceptionMessage := 'Unknown exception.';
   AddMessage(ExceptionMessage);
 end;
 
-procedure AddMessage(msg: String);
+procedure AddMessage(const msg: String);
 begin
   Messages := Messages + msg + LineBreak;
 end;
@@ -64,43 +65,52 @@ end;
 {$region 'API functions'}
 procedure GetExceptionMessageLength(len: PInteger); cdecl;
 begin
-  len^ := Length(exceptionMessage);
+  len^ := Length(ExceptionMessage);
 end;
 
 function GetExceptionMessage(str: PWideChar; len: Integer): WordBool; cdecl;
 begin
   Result := False;
   try
-    if Length(exceptionMessage) > 0 then begin
-      Result := xStrCopy(exceptionMessage, str, len);
-      exceptionMessage := '';
+    if Length(ExceptionMessage) > 0 then begin
+      Result := xStrCopy(ExceptionMessage, str, len);
+      ExceptionMessage := '';
+      Result := True;
     end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
 end;
 
+{$POINTERMATH ON}
 procedure GetMessagesLength(len: PInteger); cdecl;
 begin
-  len^ := Length(Messages);
+  len^ := Length(PWideChar(Messages) + LogPosition);
 end;
 
 function GetMessages(str: PWideChar; maxLen: Integer): WordBool; cdecl;
 begin
   Result := False;
   try
-    StrLCopy(str, PWideChar(Messages), maxLen);
-    Delete(Messages, 1, maxLen);
+    StrLCopy(str, PWideChar(Messages) + LogPosition, maxLen);
+    Inc(LogPosition, Length(str));
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
 end;
+{$POINTERMATH OFF}
 
 procedure ClearMessages; cdecl;
 begin
+  LogPosition := 0;
   Messages := '';
 end;
 {$endregion}
+
+initialization
+  LogPosition := 0;
+  Messages := '';
+  ExceptionMessage := '';
 
 end.

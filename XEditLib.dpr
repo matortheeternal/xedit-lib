@@ -1,7 +1,7 @@
 library XEditLib;
 
 uses
-  ShareMem,
+  xeHelpers in 'src\xeHelpers.pas',
   xeTypes in 'src\xeTypes.pas',
   xeMessages in 'src\xeMessages.pas',
   xeConfiguration in 'src\xeConfiguration.pas',
@@ -14,10 +14,7 @@ uses
   xeErrors in 'src\xeErrors.pas',
   xeRecords in 'src\xeRecords.pas',
   xeSerialization in 'src\xeSerialization.pas',
-  mteHelpers in 'lib\mte\mteHelpers.pas',
-  mteConflict in 'lib\mte\mteConflict.pas',
-  CRC32 in 'lib\mte\CRC32.pas',
-  RttiIni in 'lib\mte\RttiIni.pas',
+  xeConflict in 'src\xeConflict.pas',
   wbImplementation in 'lib\xedit\wbImplementation.pas',
   wbInterface in 'lib\xedit\wbInterface.pas',
   wbBSA in 'lib\xedit\wbBSA.pas',
@@ -43,37 +40,44 @@ const
 exports
   // META METHODS
   InitXEdit, CloseXEdit, GetResultString, GetResultArray, GetGlobal, GetGlobals,
-  Release, ResetStore,
+  SetSortMode, Release, ReleaseNodes, Switch, GetDuplicateHandles, ResetStore,
   // MESSAGE METHODS
   GetMessagesLength, GetMessages, ClearMessages, GetExceptionMessageLength,
   GetExceptionMessage,
   // LOADING AND SET UP METHODS
-  GetGamePath, SetGameMode, GetLoadOrder, GetActivePlugins, LoadPlugins,
-  LoadPlugin, BuildReferences, GetLoaderDone, UnloadPlugin,
+  GetGamePath, SetGamePath, SetLanguage, SetBackupPath, SetGameMode, GetLoadOrder,
+  GetActivePlugins, LoadPlugins, LoadPlugin, LoadPluginHeader, BuildReferences,
+  GetLoaderStatus, UnloadPlugin,
   // FILE HANDLING METHODS
-  AddFile, FileByIndex, FileByLoadOrder, FileByName, FileByAuthor, SaveFile,
-  OverrideRecordCount, SortEditorIDs, SortNames,
+  AddFile, FileByIndex, FileByLoadOrder, FileByName, FileByAuthor, NukeFile,
+  RenameFile, SaveFile, GetRecordCount, GetOverrideRecordCount, MD5Hash, CRCHash,
+  SortEditorIDs, SortNames, GetFileLoadOrder,
   // MASTER HANDLING METHODS
-  CleanMasters, SortMasters, AddMaster, AddMasters, GetMasters, GetRequiredBy,
+  CleanMasters, SortMasters, AddMaster, AddMasters, AddRequiredMasters, GetMasters,
+  GetRequiredBy, GetMasterNames,
   // ELEMENT HANDLING METHODS
-  HasElement, GetElement, AddElement, RemoveElement, RemoveElementOrParent,
-  GetElements, GetContainer,  GetElementFile, GetLinksTo, ElementCount,
-  ElementEquals, ElementMatches, HasArrayItem, GetArrayItem, AddArrayItem,
-  RemoveArrayItem, MoveArrayItem, CopyElement, GetSignatureAllowed, SortKey,
-  ElementType, DefType, SmashType,
-  // ERROR CHECKING METHODS
-  CheckForErrors, GetErrorThreadDone, GetErrors, GetErrorString,
+  HasElement, GetElement, AddElement, AddElementValue, RemoveElement,
+  RemoveElementOrParent, SetElement, GetElements, GetDefNames, GetAddList,
+  GetContainer, GetElementFile, GetElementRecord, GetLinksTo, SetLinksTo,
+  ElementCount, ElementEquals, ElementMatches, HasArrayItem, GetArrayItem,
+  AddArrayItem, RemoveArrayItem, MoveArrayItem, CopyElement, GetSignatureAllowed,
+  GetIsModified, GetIsEditable, GetIsRemoveable, GetCanAdd, SortKey, ElementType,
+  DefType, SmashType, ValueType, IsSorted,
+  // PLUGIN ERROR METHODS
+  CheckForErrors, GetErrorThreadDone, GetErrors, RemoveIdenticalRecords,
   // SERIALIZATION METHODS
-  ElementToJson, {ElementFromJson,}
+  ElementToJson, ElementFromJson,
   // ELEMENT VALUE METHODS
   Name, LongName, DisplayName, Path, Signature, GetValue, SetValue, GetIntValue,
   SetIntValue, GetUIntValue, SetUIntValue, GetFloatValue, SetFloatValue,
-  GetFlag, SetFlag, GetEnabledFlags, SetEnabledFlags, GetAllFlags,
+  GetFlag, SetFlag, GetEnabledFlags, SetEnabledFlags, GetAllFlags, GetEnumOptions,
   SignatureFromName, NameFromSignature, GetSignatureNameMap,
   // RECORD HANDLING METHODS
-  GetFormID, SetFormID, GetRecords, RecordsBySignature, GetOverrides,
-  GetReferences, ExchangeReferences, IsMaster, IsInjected, IsOverride,
-  IsWinningOverride, ConflictThis, ConflictAll;
+  GetFormID, SetFormID, GetRecord, GetRecords, GetOverrides, GetReferencedBy,
+  GetMasterRecord, GetWinningRecord, FindNextRecord, FindPreviousRecord,
+  {FindNextElement, FindPreviousElement,} FindValidReferences, ExchangeReferences,
+  IsMaster, IsInjected, IsOverride, IsWinningOverride, GetNodes, GetConflictData,
+  GetNodeElements;
 
 begin
   IsMultiThread := True;

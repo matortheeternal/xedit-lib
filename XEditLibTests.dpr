@@ -20,10 +20,6 @@ uses
   xeErrors in 'src\xeErrors.pas',
   xeRecords in 'src\xeRecords.pas',
   xeSerialization in 'src\xeSerialization.pas',
-  mteHelpers in 'lib\mte\mteHelpers.pas',
-  mteConflict in 'lib\mte\mteConflict.pas',
-  CRC32 in 'lib\mte\CRC32.pas',
-  RttiIni in 'lib\mte\RttiIni.pas',
   wbImplementation in 'lib\xedit\wbImplementation.pas',
   wbInterface in 'lib\xedit\wbInterface.pas',
   wbBSA in 'lib\xedit\wbBSA.pas',
@@ -39,6 +35,7 @@ uses
   wbStreams in 'lib\xedit\wbStreams.pas',
   {$ENDIF}
   txMeta in 'tests\txMeta.pas',
+  txMessages in 'tests\txMessages.pas',
   txSetup in 'tests\txSetup.pas',
   txFiles in 'tests\txFiles.pas',
   txMasters in 'tests\txMasters.pas',
@@ -59,15 +56,23 @@ const
 
 procedure BuildXETests;
 begin
+  {$IFNDEF SSE}
   BuildSetupTests;
   BuildMetaTests;
+  BuildMessageTests;
   BuildFileHandlingTests;
   BuildMasterHandlingTests;
   BuildElementHandlingTests;
   BuildElementValueTests;
-  BuildSerializationTests;
   BuildRecordHandlingTests;
+  BuildSerializationTests;
   BuildPluginErrorTests;
+  BuildFinalTests;
+  {$ENDIF}
+  {$IFDEF SSE}
+  BuildSetupTests;
+  BuildFinalTests;
+  {$ENDIF}
 end;
 
 procedure RunXETests;
@@ -87,7 +92,6 @@ begin
 
   // run the tests
   RunTests(LogToConsole);
-  CloseXEdit;
 
   // report testing results
   WriteLn(' ');

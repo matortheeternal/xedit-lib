@@ -583,6 +583,8 @@ type
 
     flLoadFinished           : Boolean;
     flFormIDsSorted          : Boolean;
+    flEditorIDsSorted        : Boolean;
+    flNamesSorted            : Boolean;
 
     flInjectedRecords        : array of IwbMainRecord;
 
@@ -604,8 +606,8 @@ type
 
     function FindFormID(aFormID: Cardinal; var Index: Integer): Boolean;
     function FindInjectedID(aFormID: Cardinal; var Index: Integer): Boolean;
-    function FindEditorID(const aEditorID: string; var Index: Integer): Boolean;
-    function FindName(const aName: string; var Index: Integer): Boolean;
+    function FindEditorID(const aEditorID: string; var rec: IwbMainRecord): Boolean;
+    function FindName(const aName: string; var rec: IwbMainRecord): Boolean;
     function GetMasterRecordByFormID(aFormID: Cardinal; aAllowInjected: Boolean): IwbMainRecord;
 
     function GetAddList: TDynStrings; override;
@@ -624,6 +626,7 @@ type
 
     {---IwbFile---}
     function GetFileName: string;
+    procedure SetFileName(const aNewName: String);
     function GetUnsavedSince: TDateTime;
     function HasMaster(const aFileName: string): Boolean;
     function GetMaster(aIndex: Integer): IwbFile;
@@ -2270,6 +2273,7 @@ end;
 
 procedure TwbFile.BuildRef;
 begin
+  if csRefsBuild in cntStates then exit;
   inherited;
 end;
 
@@ -2357,11 +2361,11 @@ constructor TwbFile.Create(const aFileName: string; aLoadOrder: Integer; aCompar
 begin
   if IsTemporary then
     Include(flStates, fsIsTemporary);
-  if aCompareTo <> '' then begin
-    Include(flStates, fsIsCompareLoad);
-    if SameText(ExtractFileName(aFileName), wbGameName + wbHardcodedDat) then
-      Include(flStates, fsIsHardcoded);
-  end else if SameText(ExtractFileName(aFileName), wbGameName + '.esm') then
+  if aCompareTo <> '' then
+    Include(flStates, fsIsCompareLoad)
+  else if SameText(ExtractFileName(aFileName), wbGameName + wbHardcodedDat) then
+      Include(flStates, fsIsHardcoded)
+  else if SameText(ExtractFileName(aFileName), wbGameName + '.esm') then
     Include(flStates, fsIsGameMaster);
   if aOnlyHeader then
     Include(flStates, fsOnlyHeader);
@@ -2445,40 +2449,47 @@ begin
   Result := (aFormID and $00FFFFFF) or (Cardinal(NewFileID) shl 24);
 end;
 
-function TwbFile.FindEditorID(const aEditorID: string; var Index: Integer): Boolean;
+function TwbFile.FindEditorID(const aEditorID: string; var rec: IwbMainRecord): Boolean;
+var
+  i: Integer;
 begin
-  Result := False;
-  if not flLoadFinished then
-    Exit;
-  Result := wbBinarySearch(@flRecordsByEditorID[0], Low(flRecordsByEditorID), High(flRecordsByEditorID), @aEditorID, SearchRecordsByEditorID, Index);
+  Result := wbBinarySearch(@flRecordsByEditorID[0], Low(flRecordsByEditorID), High(flRecordsByEditorID),
+    @aEditorID, SearchRecordsByEditorID, i);
+  if Result then
+    rec := flRecordsByEditorID[i]
+  else if wbAllowSlowSearching then
+    for i := Low(flRecords) to High(flRecords) do
+      if flRecords[i].EditorID = aEditorID then begin
+        Result := True;
+        rec := flRecords[i];
+        break;
+      end;
 end;
 
-function TwbFile.FindName(const aName: string; var Index: Integer): Boolean;
+function TwbFile.FindName(const aName: string; var rec: IwbMainRecord): Boolean;
+var
+  i: Integer;
 begin
-  Result := False;
-  if not flLoadFinished then
-    Exit;
-  Result := wbBinarySearch(@flRecordsByName[0], Low(flRecordsByName), High(flRecordsByName), @aName, SearchRecordsByFullName, Index);
+  Result := wbBinarySearch(@flRecordsByName[0], Low(flRecordsByName), High(flRecordsByName),
+    @aName, SearchRecordsByFullName, i);
+  if Result then
+    rec := flRecordsByName[i]
+  else if wbAllowSlowSearching then
+    for i := Low(flRecords) to High(flRecords) do
+      if flRecords[i].FullName = aName then begin
+        Result := True;
+        rec := flRecords[i];
+        break;
+      end;
 end;
 
 function TwbFile.FindFormID(aFormID: Cardinal; var Index: Integer): Boolean;
 var
   i: Integer;
 begin
-  Result := False;
-  if flFormIDsSorted then begin
-    if (aFormID shr 24) > Cardinal(GetMasterCount) then
-      aFormID := (aFormID and $00FFFFFF) or (Cardinal(GetMasterCount) shl 24);
-    Result := wbBinarySearch(@flRecords[0], Low(flRecords), High(flRecords), @aFormID, SearchRecordsByFixedFormID, Index);
-  end
-  else if wbAllowSlowSearching then begin
-    for i := 0 to Pred(flRecordsCount) do
-      if flRecords[i].FixedFormID = aFormID then begin
-        Index := i;
-        Result := True;
-        Exit;
-      end;
-  end;
+  if (aFormID shr 24) > Cardinal(GetMasterCount) then
+    aFormID := (aFormID and $00FFFFFF) or (Cardinal(GetMasterCount) shl 24);
+  Result := wbBinarySearch(@flRecords[0], Low(flRecords), High(flRecords), @aFormID, SearchRecordsByFixedFormID, Index);
 end;
 
 function TwbFile.FindInjectedID(aFormID: Cardinal; var Index: Integer): Boolean;
@@ -2652,6 +2663,18 @@ end;
 function TwbFile.GetFileName: string;
 begin
   Result := ExtractFileName(flFileName);
+end;
+
+procedure TwbFile.SetFileName(const aNewName: String);
+var
+  newFilePath: String;
+begin
+  newFilePath := ExtractFilePath(flFileName) + aNewName;
+  if FileExists(newFilePath) then
+    raise Exception.Create(Format('Cannot set filename to "%s", file ' +
+      'already exists with this name at "%s"', [aNewName, newFilePath]));
+  flFileName := newFilePath;
+  (self as IwbElementInternal).Modified := True;
 end;
 
 function TwbFile.GetFileStates: TwbFileStates;
@@ -2836,14 +2859,11 @@ var
   i: Integer;
 begin
   Result := nil;
-  if FindEditorID(aEditorID, i) then
-    Result := flRecordsByEditorID[i]
-  else
-    for i := Pred(GetMasterCount) downto 0 do begin
-      Result := GetMaster(i).RecordByEditorID[aEditorID];
-      if Assigned(Result) then
-        Exit;
-    end;
+  if not flLoadFinished then exit;
+  if not FindEditorID(aEditorID, Result) then
+    for i := Low(flMasters) to High(flMasters) do
+      if flMasters[i].FindEditorID(aEditorID, Result) then
+        break;
 end;
 
 function TwbFile.GetRecordByName(const aName: string): IwbMainRecord;
@@ -2851,14 +2871,11 @@ var
   i: Integer;
 begin
   Result := nil;
-  if FindName(aName, i) then
-    Result := flRecordsByName[i]
-  else
-    for i := Pred(GetMasterCount) downto 0 do begin
-      Result := GetMaster(i).RecordByName[aName];
-      if Assigned(Result) then
-        Exit;
-    end;
+  if not flLoadFinished then exit;
+  if not FindName(aName, Result) then
+    for i := Low(flMasters) to High(flMasters) do
+      if flMasters[i].FindName(aName, Result) then
+        break;
 end;
 
 function TwbFile.GetRecordByFormID(aFormID: Cardinal; aAllowInjected: Boolean): IwbMainRecord;
@@ -3552,22 +3569,27 @@ begin
     SetLength(aList, len);
 end;
 
+function HasEditorID(rec: IwbMainRecord): Boolean;
+begin
+  Result := rec.EditorID <> '';
+end;
+
 procedure TwbFile.SortAllEditorIDs;
 var
-  i, n, initialLen: Integer;
+  i, initialLen: Integer;
   rec: IwbMainRecord;
 begin
-  initialLen := flRecordsByEditorIDCount;
+  SetLength(flRecordsByName, 0);
   SetLength(flRecordsByEditorID, GetRecordCount);
   for i := 0 to Pred(GetRecordCount) do begin
     rec := GetRecord(i);
-    if EditorIDSorted(AnsiString(rec.Signature)) then
-      continue;
+    if not HasEditorID(rec) then continue;
     flRecordsbyEditorID[flRecordsByEditorIDCount] := rec;
     Inc(flRecordsByEditorIDCount);
   end;
   if flRecordsByEditorIDCount > initialLen then
     wbMergeSort(@flRecordsByEditorID[0], flRecordsByEditorIDCount, CompareRecordsByEditorID);
+  flEditorIDsSorted := True;
 end;
 
 procedure TwbFile.SortEditorIDs(aSignature: String);
@@ -3579,7 +3601,7 @@ begin
   else if not EditorIDSorted(aSignature) then begin
     flEditorIDSignatures.Add(aSignature);
     len := flRecordsByEditorIDCount;
-    RecordsBySignature(TDynMainRecords(flRecordsByEditorID), aSignature, flRecordsByEditorIDCount);
+    RecordsBySignature(TDynMainRecords(flRecordsByEditorID), aSignature, flRecordsByEditorIDCount, HasEditorID);
     if flRecordsByEditorIDCount > len then
       wbMergeSort(@flRecordsByEditorID[0], flRecordsByEditorIDCount, CompareRecordsByEditorID);
   end;
@@ -3587,7 +3609,7 @@ end;
 
 function TwbFile.EditorIDSorted(aSignature: string): Boolean;
 begin
-  Result := flEditorIDSignatures.IndexOf(aSignature) > -1;
+  Result := flEditorIDsSorted or (flEditorIDSignatures.IndexOf(aSignature) > -1);
 end;
 
 function HasFullName(rec: IwbMainRecord): Boolean;
@@ -3597,20 +3619,20 @@ end;
 
 procedure TwbFile.SortAllNames;
 var
-  i, n, initialLen: Integer;
+  i: Integer;
   rec: IwbMainRecord;
 begin
-  initialLen := flRecordsByNameCount;
+  SetLength(flRecordsByName, 0);
   SetLength(flRecordsByName, GetRecordCount);
   for i := 0 to Pred(GetRecordCount) do begin
     rec := GetRecord(i);
-    if NamesSorted(AnsiString(rec.Signature)) or not HasFullName(rec) then
-      continue;
+    if not HasFullName(rec) then continue;
     flRecordsByName[flRecordsByNameCount] := rec;
     Inc(flRecordsByNameCount);
   end;
-  if flRecordsByNameCount > initialLen then
+  if flRecordsByNameCount > 0 then
     wbMergeSort(@flRecordsByName[0], flRecordsByNameCount, CompareRecordsByFullName);
+  flNamesSorted := True;
 end;
 
 procedure TwbFile.SortNames(aSignature: String);
@@ -3618,7 +3640,7 @@ var
   len: Integer;
 begin
   if (aSignature = '*') or (aSignature = '') then
-    SortAllEditorIDs
+    SortAllNames
   else if not NamesSorted(aSignature) then begin
     flNameSignatures.Add(aSignature);
     len := flRecordsByNameCount;
@@ -3630,7 +3652,7 @@ end;
 
 function TwbFile.NamesSorted(aSignature: String): Boolean;
 begin
-  Result := flNameSignatures.IndexOf(aSignature) > -1;
+  Result := flNamesSorted or (flNameSignatures.IndexOf(aSignature) > -1);
 end;
 
 procedure TwbFile.SortMasters;
@@ -6329,7 +6351,7 @@ begin
     Exit;
 
   DecompressIfNeeded;
-  
+
   mrSubrecordErrors := '';
   FoundError := False;
 
@@ -6389,8 +6411,6 @@ begin
       CurrentDefPos := mrDef.GetMemberIndexFor(CurrentRec.Signature, CurrentRec);
       if CurrentDefPos < 0 then begin
         SubrecordError(String(CurrentRec.Signature));
-        if Assigned(wbProgressCallback) then
-          wbProgressCallback('Error: record '+ String(GetSignature) + ' contains unexpected (or out of order) subrecord ' + String(CurrentRec.Signature) + ' ' + IntToHex(Int64(Cardinal(CurrentRec.Signature)), 8) );
         FoundError := True;
         Inc(CurrentRecPos);
         Continue;
@@ -6399,14 +6419,12 @@ begin
     end else begin
       if not mrDef.ContainsMemberFor(CurrentRec.Signature, CurrentRec) then begin
         SubrecordError(String(CurrentRec.Signature));
-        if Assigned(wbProgressCallback) then
-          wbProgressCallback('Error: record '+ String(GetSignature) + ' contains unexpected (or out of order) subrecord ' + String(CurrentRec.Signature) + ' ' + IntToHex(Int64(Cardinal(CurrentRec.Signature)), 8) );
         FoundError := True;
         Inc(CurrentRecPos);
         Continue;
       end;
 
-      if (CurrentDefPos < mrDef.MemberCount) then begin
+      if (CurrentDefPos < mrDef.MemberCount) and not FoundError then begin
         CurrentDef := mrDef.Members[CurrentDefPos];
         if not CurrentDef.CanHandle(CurrentRec.Signature, CurrentRec) then begin
           Inc(CurrentDefPos);
@@ -6414,11 +6432,13 @@ begin
         end;
       end else begin
         SubrecordError(String(CurrentRec.Signature));
-        if Assigned(wbProgressCallback) then
-          wbProgressCallback('Error: record '+ String(GetSignature) + ' contains unexpected (or out of order) subrecord ' + String(CurrentRec.Signature) );
         FoundError := True;
-        Inc(CurrentRecPos);
-        Continue;
+        CurrentDefPos := mrDef.GetMemberIndexFor(CurrentRec.Signature, CurrentRec);
+        if CurrentDefPos < 0 then begin
+          Inc(CurrentRecPos);
+          Continue;
+        end;
+        CurrentDef := mrDef.Members[CurrentDefPos];
       end;
     end;
 
@@ -6493,8 +6513,6 @@ begin
     end;
 
     SubrecordError(String(CurrentRec.Signature));
-    if Assigned(wbProgressCallback) then
-      wbProgressCallback('Error: record '+ String(GetSignature) + ' contains unexpected (or out of order) subrecord ' + String(CurrentRec.Signature) );
     FoundError := True;
 
     Inc(CurrentRecPos);
@@ -6768,6 +6786,8 @@ end;
 
 procedure TwbMainRecord.SubrecordError(sig: String);
 begin
+  if Assigned(wbProgressCallback) then
+    wbProgressCallback('Error: record '+ String(GetSignature) + ' contains unexpected (or out of order) subrecord ' + sig);
   if mrSubrecordErrors = '' then
     mrSubrecordErrors := sig
   else
@@ -10591,8 +10611,6 @@ function TwbGroupRecord.AddGroup(const aName: string): IwbGroupRecord;
   end;
 
   function ParseSubBlock(aName: String; var grLabel: Cardinal; ext: Boolean = False): Boolean;
-  var
-    i: Integer;
   begin
     Result := Pos('Sub-Block', aName) = 1;
     if Result then
@@ -15187,13 +15205,13 @@ var
 begin
   fileName := _File.FileName;
   index := IndexOfFile(_File);
-  aLength := Length(Files);
-  Assert(index > -1);
-  Assert(index < aLength);
-  (_File as IwbFileInternal).ForceClosed;
-  for i := index + 1 to Pred(aLength) do
-    Files[i - 1] := Files[i];
-  SetLength(Files, aLength - 1);
+  if index > -1 then begin
+    aLength := Length(Files);
+    (_File as IwbFileInternal).ForceClosed;
+    for i := index + 1 to Pred(aLength) do
+      Files[i - 1] := Files[i];
+    SetLength(Files, aLength - 1);
+  end;
   for i := 0 to Pred(FilesMap.Count) do
     if SameText(ExtractFileName(FilesMap[i]), fileName) then begin
       FilesMap.Delete(i);

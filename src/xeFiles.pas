@@ -6,12 +6,12 @@ uses
   Classes, wbInterface;
 
   {$region 'Native functions'}
-  function NativeAddFile(filename: string): IwbFile;
+  function NativeAddFile(const filename: string): IwbFile;
   function NativeFileByIndex(index: Integer): IwbFile;
   function NativeFileByLoadOrder(loadOrder: Integer): IwbFile;
-  function NativeFileByName(name: String): IwbFile;
-  function NativeFileByNameEx(name: String): IwbFile;
-  function IndexOfFile(_file: IWbFile): Integer;
+  function NativeFileByName(const name: String): IwbFile;
+  function NativeFileByNameEx(const name: String): IwbFile;
+  function IndexOfFile(const _file: IwbFile): Integer;
   function CompareLoadOrder(List: TStringList; Index1, Index2: Integer): Integer;
   {$endregion}
 
@@ -21,22 +21,26 @@ uses
   function FileByLoadOrder(loadOrder: Integer; _res: PCardinal): WordBool; cdecl;
   function FileByName(name: PWideChar; _res: PCardinal): WordBool; cdecl;
   function FileByAuthor(author: PWideChar; _res: PCardinal): WordBool; cdecl;
-  function SaveFile(_id: Cardinal): WordBool; cdecl;
-  function OverrideRecordCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
+  function NukeFile(_id: Cardinal): WordBool; cdecl;
+  function RenameFile(_id: Cardinal; filename: PWideChar): WordBool; cdecl;
+  function SaveFile(_id: Cardinal; filePath: PWideChar): WordBool; cdecl;
+  function MD5Hash(_id: Cardinal; len: PInteger): WordBool; cdecl;
+  function CRCHash(_id: Cardinal; len: PInteger): WordBool; cdecl;
+  function GetRecordCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
+  function GetOverrideRecordCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
   function SortEditorIDs(_id: Cardinal; sig: PWideChar): WordBool; cdecl;
   function SortNames(_id: Cardinal; sig: PWideChar): WordBool; cdecl;
+  function GetFileLoadOrder(_id: Cardinal; loadOrder: PInteger): WordBool; cdecl;
   {$endregion}
 
 implementation
 
 uses
   SysUtils,
-  // mte modules
-  mteHelpers,
   // xedit modules
-  wbImplementation,
+  wbImplementation, wbHelpers,
   // xelib modules
-  xeMessages, xeMeta, xeSetup;
+  xeHelpers, xeMessages, xeMeta, xeSetup;
 
 {$region 'Native functions'}
 function NextLoadOrder: Integer;
@@ -46,7 +50,7 @@ begin
     Result := Succ(xFiles[High(xFiles)].LoadOrder);
 end;
 
-function NativeAddFile(filename: string): IwbFile;
+function NativeAddFile(const filename: string): IwbFile;
 var
   LoadOrder : Integer;
   _file: IwbFile;
@@ -88,7 +92,7 @@ begin
   raise Exception.Create('Failed to find file with load order: ' + IntToHex(loadOrder, 2));
 end;
 
-function NativeFileByName(name: String): IwbFile;
+function NativeFileByName(const name: String): IwbFile;
 var
   i: Integer;
 begin
@@ -100,14 +104,14 @@ begin
   Result := nil;
 end;
 
-function NativeFileByNameEx(name: String): IwbFile;
+function NativeFileByNameEx(const name: String): IwbFile;
 begin
   Result := NativeFileByName(name);
   if not Assigned(Result) then
     raise Exception.Create('Failed to find file with name: ' + name);
 end;
 
-function NativeFileByAuthor(author: String): IwbFile;
+function NativeFileByAuthor(const author: String): IwbFile;
 var
   i: Integer;
 begin
@@ -119,7 +123,7 @@ begin
   raise Exception.Create('Failed to find file with author: ' + author);
 end;
 
-function IndexOfFile(_file: IwbFile): Integer;
+function IndexOfFile(const _file: IwbFile): Integer;
 begin
   for Result := Low(xFiles) to High(xFiles) do
     if xFiles[Result].Equals(_file) then
@@ -194,7 +198,47 @@ begin
   end;
 end;
 
-function SaveFile(_id: Cardinal): WordBool; cdecl;
+function NukeFile(_id: Cardinal): WordBool; cdecl;
+var
+  container: IwbContainer;
+  i: Integer;
+  e: IwbHasSignature;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbContainer, container) then
+      raise Exception.Create('Interface must be a container.');
+    if not Supports(container, IwbFile) then
+      raise Exception.Create('Container must be a file.');
+    for i := Pred(container.ElementCount) downto 0 do begin
+      if Supports(container.Elements[i], IwbHasSignature, e)
+      and (e.Signature <> 'TES4') then
+        e.Remove;
+    end;
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function RenameFile(_id: Cardinal; fileName: PWideChar): WordBool; cdecl;
+var
+  _file: IwbFile;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbFile, _file) then
+      raise Exception.Create('Interface must be a file.');
+    if not FileNameValid(fileName) then
+      raise Exception.Create('Filename has invalid characters.');
+    _file.FileName := string(fileName);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function SaveFile(_id: Cardinal; filePath: PWideChar): WordBool; cdecl;
 var
   _file: IwbFile;
   FileStream: TFileStream;
@@ -202,23 +246,75 @@ var
 begin
   Result := False;
   try
-    if Supports(Resolve(_id), IwbFile, _file) then begin
+    if not Supports(Resolve(_id), IwbFile, _file) then
+      raise Exception.Create('Interface must be a file.');
+    if filePath <> '' then begin
+      ForceDirectories(filePath);
+      path := filePath;
+    end
+    else
       path := wbDataPath + _file.FileName + '.save';
-      FileStream := TFileStream.Create(path, fmCreate);
-      try
-        _file.WritetoStream(FileStream, False);
-        slSavedFiles.Add(path);
-        Result := True;
-      finally
-        FileStream.Free;
-      end;
+    FileStream := TFileStream.Create(path, fmCreate);
+    try
+      _file.WritetoStream(FileStream, False);
+      slSavedFiles.Add(path);
+      Result := True;
+    finally
+      FileStream.Free;
     end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
 end;
 
-function OverrideRecordCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
+function MD5Hash(_id: Cardinal; len: PInteger): WordBool; cdecl;
+var
+  _file: IwbFile;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbFile, _file) then
+      raise Exception.Create('Interface must be a file.');
+    resultStr := wbMD5File(wbDataPath + _file.FileName);
+    len^ := Length(resultStr);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function CRCHash(_id: Cardinal; len: PInteger): WordBool; cdecl;
+var
+  _file: IwbFile;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbFile, _file) then
+      raise Exception.Create('Interface must be a file.');
+    resultStr := IntToHex(wbCRC32File(wbDataPath + _file.FileName), 8);
+    len^ := Length(resultStr);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetRecordCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
+var
+  _file: IwbFile;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbFile, _file) then
+      raise Exception.Create('Interface must be a file.');
+    count^ := _file.RecordCount;
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetOverrideRecordCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
 var
   _file: IwbFile;
   i: Integer;
@@ -273,6 +369,21 @@ begin
       _file.SortNames(string(sig))
     else
       raise Exception.Create('Interface must be a file.');
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetFileLoadOrder(_id: Cardinal; loadOrder: PInteger): WordBool; cdecl;
+var
+  _file: IwbFile;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbFile, _file) then
+      raise Exception.Create('Interface must be a file.');
+    loadOrder^ := _file.LoadOrder;
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);

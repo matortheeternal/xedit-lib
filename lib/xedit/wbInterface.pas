@@ -27,7 +27,7 @@ const
   VersionString  = '3.2.1';
   clOrange       = $004080FF;
   wbFloatDigits  = 6;
-  wbHardcodedDat = '.Hardcoded.keep.this.with.the.exe.and.otherwise.ignore.it.I.really.mean.it.dat';
+  wbHardcodedDat = '.Hardcoded.dat';
 
 type
   TwbProgressCallback = procedure(const aStatus: string);
@@ -73,8 +73,9 @@ var
   wbResolveAlias           : Boolean  = True;
   wbActorTemplateHide      : Boolean  = True;
   wbClampFormID            : Boolean  = True;
-  wbAllowSlowSearching     : Boolean  = False;
+  wbAllowSlowSearching     : Boolean  = True;
   wbSortOnDemand           : Boolean  = True;
+  wbAllowErrors            : Boolean  = True;
   wbDoNotBuildRefsFor      : TStringList;
   wbCopyIsRunning          : Integer  = 0;
 
@@ -173,7 +174,7 @@ type
     caOverride,
     caConflict,
     caConflictCritical
-    );
+  );
 
   TByteSet = set of Byte;
   TConflictAllSet = set of TConflictAll;
@@ -192,7 +193,7 @@ type
     ctIdenticalToMasterWinsConflict,
     ctConflictWins,
     ctConflictLoses
-    );
+  );
 
   TConflictThisSet = set of TConflictThis;
   TConflictThisColors = array[TConflictThis] of TColor;
@@ -765,9 +766,12 @@ type
   IwbFile = interface(IwbContainer)
     ['{38AA15A6-F652-45C7-B875-9CB502E5DA92}']
     function GetFileName: string;
+    procedure SetFileName(const aNewName: string);
     function GetUnsavedSince: TDateTime;
     function GetMaster(aIndex: Integer): IwbFile;
     function GetMasterCount: Integer;
+    function FindEditorID(const aEditorID: String; var rec: IwbMainRecord): Boolean;
+    function FindName(const aName: String; var rec: IwbMainRecord): Boolean;
     function GetRecordByFormID(aFormID: Cardinal; aAllowInjected: Boolean): IwbMainRecord;
     function GetRecordByEditorID(const aEditorID: string): IwbMainRecord;
     function GetRecordByName(const aName: string): IwbMainRecord;
@@ -817,7 +821,8 @@ type
     function NamesSorted(aSignature: String): Boolean;
 
     property FileName: string
-      read GetFileName;
+      read GetFileName
+      write SetFileName;
     property UnsavedSince: TDateTime
       read GetUnsavedSince;
 
@@ -12811,9 +12816,11 @@ var
   Error: string;
 begin
   Result := inherited FromEditValue(aValue, aElement);
-  Error := Check(Result, aElement);
-  if Error <> '' then
-    raise Exception.Create(Error);
+  if not wbAllowErrors then begin
+    Error := Check(Result, aElement);
+    if Error <> '' then
+      raise Exception.Create(Error);
+  end;
 end;
 
 function TwbFormIDChecked.GetNoReach: Boolean;
