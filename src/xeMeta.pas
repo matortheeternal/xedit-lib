@@ -71,7 +71,9 @@ begin
     dest[len] := #0;
     Result := True;
   except
-    on x: Exception do ExceptionHandler(x);
+    on x: Exception do
+      ExceptionHandler(Exception.Create(Format('Failed to allocate string buffer.  ' +
+        'source: %s, maxLen: %d, error: %s', [source, maxLen, x.Message])));
   end;
 end;
 
