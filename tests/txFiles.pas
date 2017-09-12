@@ -116,19 +116,19 @@ begin
             end);
         end);
 
-      Describe('OverrideRecordCount', procedure
+      Describe('GetOverrideRecordCount', procedure
         begin
           It('Should return an integer > 0 for a plugin with overrides', procedure
             begin
               ExpectSuccess(FileByName('Update.esm', @h));
-              ExpectSuccess(OverrideRecordCount(h, @count));
+              ExpectSuccess(GetOverrideRecordCount(h, @count));
               Expect(count > 0, 'Should be greater than 0 for Update.esm');
             end);
 
           It('Should return 0 for a plugin with no records', procedure
             begin
               ExpectSuccess(FileByName('xtest-1.esp', @h));
-              ExpectSuccess(OverrideRecordCount(h, @count));
+              ExpectSuccess(GetOverrideRecordCount(h, @count));
               ExpectEqual(count, 0);
             end);
         end);
