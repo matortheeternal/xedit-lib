@@ -26,7 +26,7 @@ uses
   function SaveFile(_id: Cardinal; filePath: PWideChar): WordBool; cdecl;
   function MD5Hash(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function CRCHash(_id: Cardinal; len: PInteger): WordBool; cdecl;
-  function OverrideRecordCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
+  function GetOverrideRecordCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
   function SortEditorIDs(_id: Cardinal; sig: PWideChar): WordBool; cdecl;
   function SortNames(_id: Cardinal; sig: PWideChar): WordBool; cdecl;
   function GetFileLoadOrder(_id: Cardinal; loadOrder: PInteger): WordBool; cdecl;
@@ -298,7 +298,7 @@ begin
   end;
 end;
 
-function OverrideRecordCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
+function GetOverrideRecordCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
 var
   _file: IwbFile;
   i: Integer;
