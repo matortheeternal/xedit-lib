@@ -14,7 +14,7 @@ uses
   txImports,
 {$ENDIF}
 {$IFNDEF USE_DLL}
-  xeFiles, xeErrors,
+  xeFiles, xeMasters, xeErrors, xeRecords, xeElements,
 {$ENDIF}
   txMeta;
 
@@ -45,6 +45,30 @@ begin
       exit;
   end;
   Result := nil;
+end;
+
+procedure OverrideRecord(hexFormID: String; f: Cardinal; winningOverride: Boolean = False);
+var
+  rec: Cardinal;
+begin
+  ExpectSuccess(GetRecord(0, StrToInt('$' + hexFormID), @rec));
+  if winningOverride then
+    ExpectSuccess(GetWinningRecord(rec, @rec));
+  ExpectSuccess(AddRequiredMasters(rec, f, False));
+  ExpectSuccess(CopyElement(rec, f, False, @rec));
+end;
+
+procedure TestRemoveIdenticalRecords(filename: PWideChar; expectedRecordsRemoved: Integer);
+var
+  f: Cardinal;
+  recordCountBefore, recordCountAfter, recordsRemoved: Integer;
+begin
+  ExpectSuccess(FileByName(filename, @f));
+  ExpectSuccess(GetRecordCount(f, @recordCountBefore));
+  ExpectSuccess(RemoveIdenticalRecords(f));
+  ExpectSuccess(GetRecordCount(f, @recordCountAfter));
+  recordsRemoved := recordCountBefore - recordCountAfter;
+  ExpectEqual(recordsRemoved, expectedRecordsRemoved);
 end;
 
 procedure BuildPluginErrorTests;
@@ -162,6 +186,23 @@ begin
                   errorObj := FindError(obj, erUnknown, 'OETest');
                   Expect(Assigned(errorObj), 'Matching error not found');
                 end);}
+            end);
+        end);
+
+      Describe('RemoveIdenticalRecords', procedure
+        begin
+          BeforeAll(procedure
+            begin
+              ExpectSuccess(FileByName('xtest-6.esp', @h));
+              OverrideRecord('00013739', h);
+              OverrideRecord('00034C5E', h);
+              OverrideRecord('00012E46', h, True);
+              OverrideRecord('000170F0', h, True);
+            end);
+
+          It('Should remove ITM and ITPO records from the plugin', procedure
+            begin
+              TestRemoveIdenticalRecords('xtest-6.esp', 4);
             end);
         end);
 
