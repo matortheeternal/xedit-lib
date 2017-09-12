@@ -20,7 +20,7 @@ type
   function GetRecord(_id: Cardinal; formID: Cardinal; _res: PCardinal): WordBool; cdecl;
   function GetRecords(_id: Cardinal; search: PWideChar; includeOverrides: WordBool; len: PInteger): WordBool; cdecl;
   function GetOverrides(_id: Cardinal; count: PInteger): WordBool; cdecl;
-  function GetMaster(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
+  function GetMasterRecord(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function FindNextRecord(_id: Cardinal; search: PWideChar; byEdid, byName: WordBool; _res: PCardinal): WordBool; cdecl;
   function FindPreviousRecord(_id: Cardinal; search: PWideChar; byEdid, byName: Wordbool; _res: PCardinal): WordBool; cdecl;
   function FindValidReferences(_id: Cardinal; search: PWideChar; limitTo: Integer; len: PInteger): WordBool; cdecl;
@@ -423,7 +423,7 @@ begin
   end;
 end;
 
-function GetMaster(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
+function GetMasterRecord(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 var
   rec: IwbMainRecord;
 begin

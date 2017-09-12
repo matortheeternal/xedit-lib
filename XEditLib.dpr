@@ -74,9 +74,9 @@ exports
   SignatureFromName, NameFromSignature, GetSignatureNameMap,
   // RECORD HANDLING METHODS
   GetFormID, SetFormID, GetRecord, GetRecords, GetOverrides, GetReferencedBy,
-  GetMaster, FindNextRecord, FindPreviousRecord, {FindNextElement,
   FindPreviousElement,} FindValidReferences, ExchangeReferences, IsMaster,
   IsInjected, IsOverride, IsWinningOverride, GetNodes, GetConflictData,
+  GetMasterRecord, FindNextRecord, FindPreviousRecord,
   GetNodeElements;
 
 begin
