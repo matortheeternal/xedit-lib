@@ -1,150 +1,174 @@
-<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-		<PropertyGroup>
-			<ProjectGuid>{75B14327-BE37-4588-8BD4-BD6D40177D2E}</ProjectGuid>
-			<MainSource>XEditLib.dpr</MainSource>
-			<ProjectVersion>12.3</ProjectVersion>
-			<Base>True</Base>
-			<Config Condition="'$(Config)'==''">Release</Config>
-			<Platform>Win32</Platform>
-			<AppType>Library</AppType>
-			<FrameworkType>None</FrameworkType>
-			<DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
-		</PropertyGroup>
-		<PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
-			<Base>true</Base>
-		</PropertyGroup>
-		<PropertyGroup Condition="'$(Config)'=='Debug' or '$(Cfg_1)'!=''">
-			<Cfg_1>true</Cfg_1>
-			<CfgParent>Base</CfgParent>
-			<Base>true</Base>
-		</PropertyGroup>
-		<PropertyGroup Condition="'$(Config)'=='Release' or '$(Cfg_2)'!=''">
-			<Cfg_2>true</Cfg_2>
-			<CfgParent>Base</CfgParent>
-			<Base>true</Base>
-		</PropertyGroup>
-		<PropertyGroup Condition="'$(Base)'!=''">
-			<DCC_UsePackage>rtl;vcl;xmlrtl;vclactnband;vclx;VclSmp;vclimg;svnui;svn;bdertl;TeeUI;TeeDB;Tee;vcldb;dbrtl;vcldbx;vcltouch;dsnap;dsnapcon;vclib;ibxpress;adortl;IndyCore;IndySystem;IndyProtocols;inet;intrawebdb_110_150;Intraweb_110_150;vclie;websnap;webdsnap;inetdb;inetdbbde;inetdbxpress;soaprtl;vclribbon;dbexpress;DbxCommonDriver;DataSnapIndy10ServerTransport;DataSnapProviderClient;DbxClientDriver;DataSnapClient;dbxcds;DataSnapServer;AzureCloud;DBXInterBaseDriver;DBXMySQLDriver;DBXFirebirdDriver;DBXSybaseASEDriver;DBXSybaseASADriver;DBXOracleDriver;DBXMSSQLDriver;DBXInformixDriver;DBXDb2Driver;VirtualTreesD17;madBasic_;madDisAsm_;madExcept_;JclDeveloperTools;Jcl;JclVcl;JclContainers;JvCore;JvSystem;JvStdCtrls;JvAppFrm;JvBands;JvDB;JvDlgs;JvBDE;JvControls;JvCmp;JvCrypt;JvCustom;JvDocking;JvDotNetCtrls;JvGlobus;JvHMI;JvJans;JvManagedThreads;JvMM;JvNet;JvPageComps;JvPascalInterpreter;JvPluginSystem;JvPrintPreview;JvRuntimeDesign;JvTimeFramework;JvWizards;JvXPCtrls</DCC_UsePackage>
-			<DCC_UnitSearchPath>lib\mte;lib\Imaging;lib\xedit;lib\Imaging\zlib;lib\xedit\zlib;lib\xedit\lz4;lib\Argo;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
-			<DCC_DcuOutput>.\$(Config)\$(Platform)</DCC_DcuOutput>
-			<DCC_E>false</DCC_E>
-			<DCC_ImageBase>00400000</DCC_ImageBase>
-			<DCC_UnitAlias>WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;$(DCC_UnitAlias)</DCC_UnitAlias>
-			<DCC_ExeOutput>.\$(Config)\$(Platform)</DCC_ExeOutput>
-			<DCC_S>false</DCC_S>
-			<GenDll>true</GenDll>
-			<DCC_N>false</DCC_N>
-			<DCC_F>false</DCC_F>
-			<DCC_K>false</DCC_K>
-		</PropertyGroup>
-		<PropertyGroup Condition="'$(Cfg_1)'!=''">
-			<DCC_MapFile>3</DCC_MapFile>
-			<DCC_ExeOutput>.</DCC_ExeOutput>
-			<DCC_DcuOutput>.\units</DCC_DcuOutput>
-			<DCC_Define>DEBUG;$(DCC_Define)</DCC_Define>
-			<DCC_Optimize>false</DCC_Optimize>
-			<DCC_GenerateStackFrames>true</DCC_GenerateStackFrames>
-		</PropertyGroup>
-		<PropertyGroup Condition="'$(Cfg_2)'!=''">
-			<DCC_MapFile>3</DCC_MapFile>
-			<DCC_ExeOutput>.</DCC_ExeOutput>
-			<DCC_DcuOutput>.\units</DCC_DcuOutput>
-			<DCC_Define>RELEASE;$(DCC_Define)</DCC_Define>
-			<DCC_SymbolReferenceInfo>0</DCC_SymbolReferenceInfo>
-		</PropertyGroup>
-		<ItemGroup>
-			<DelphiCompile Include="XEditLib.dpr">
-				<MainSource>MainSource</MainSource>
-			</DelphiCompile>
-			<DCCReference Include="src\xeHelpers.pas"/>
-			<DCCReference Include="src\xeTypes.pas"/>
-			<DCCReference Include="src\xeMessages.pas"/>
-			<DCCReference Include="src\xeConfiguration.pas"/>
-			<DCCReference Include="src\xeMeta.pas"/>
-			<DCCReference Include="src\xeSetup.pas"/>
-			<DCCReference Include="src\xeFiles.pas"/>
-			<DCCReference Include="src\xeMasters.pas"/>
-			<DCCReference Include="src\xeElements.pas"/>
-			<DCCReference Include="src\xeElementValues.pas"/>
-			<DCCReference Include="src\xeErrors.pas"/>
-			<DCCReference Include="src\xeRecords.pas"/>
-			<DCCReference Include="src\xeSerialization.pas"/>
-			<DCCReference Include="src\xeConflict.pas"/>
-			<DCCReference Include="lib\xedit\wbImplementation.pas"/>
-			<DCCReference Include="lib\xedit\wbInterface.pas"/>
-			<DCCReference Include="lib\xedit\wbBSA.pas"/>
-			<DCCReference Include="lib\xedit\wbSort.pas"/>
-			<DCCReference Include="lib\xedit\wbDefinitionsFNV.pas"/>
-			<DCCReference Include="lib\xedit\wbDefinitionsFO3.pas"/>
-			<DCCReference Include="lib\xedit\wbDefinitionsFO4.pas"/>
-			<DCCReference Include="lib\xedit\wbDefinitionsTES3.pas"/>
-			<DCCReference Include="lib\xedit\wbDefinitionsTES4.pas"/>
-			<DCCReference Include="lib\xedit\wbDefinitionsTES5.pas"/>
-			<DCCReference Include="lib\xedit\wbHelpers.pas"/>
-			<DCCReference Include="lib\xedit\wbLocalization.pas"/>
-			<DCCReference Include="lib\xedit\wbStreams.pas"/>
-			<DCCReference Include="lib\Argo\Argo.pas"/>
-			<DCCReference Include="lib\Argo\ArgoTypes.pas"/>
-			<BuildConfiguration Include="Release">
-				<Key>Cfg_2</Key>
-				<CfgParent>Base</CfgParent>
-			</BuildConfiguration>
-			<BuildConfiguration Include="Base">
-				<Key>Base</Key>
-			</BuildConfiguration>
-			<BuildConfiguration Include="Debug">
-				<Key>Cfg_1</Key>
-				<CfgParent>Base</CfgParent>
-			</BuildConfiguration>
-		</ItemGroup>
-		<Import Condition="Exists('$(BDS)\Bin\CodeGear.Delphi.Targets')" Project="$(BDS)\Bin\CodeGear.Delphi.Targets"/>
-		<Import Condition="Exists('$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj')" Project="$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj"/>
-		<ProjectExtensions>
-			<Borland.Personality>Delphi.Personality.12</Borland.Personality>
-			<Borland.ProjectType/>
-			<BorlandProject>
-				<Delphi.Personality>
-					<VersionInfo>
-						<VersionInfo Name="IncludeVerInfo">True</VersionInfo>
-						<VersionInfo Name="AutoIncBuild">True</VersionInfo>
-						<VersionInfo Name="MajorVer">0</VersionInfo>
-						<VersionInfo Name="MinorVer">2</VersionInfo>
-						<VersionInfo Name="Release">0</VersionInfo>
-						<VersionInfo Name="Build">4</VersionInfo>
-						<VersionInfo Name="Debug">False</VersionInfo>
-						<VersionInfo Name="PreRelease">False</VersionInfo>
-						<VersionInfo Name="Special">False</VersionInfo>
-						<VersionInfo Name="Private">False</VersionInfo>
-						<VersionInfo Name="DLL">True</VersionInfo>
-						<VersionInfo Name="Locale">1033</VersionInfo>
-						<VersionInfo Name="CodePage">1252</VersionInfo>
-					</VersionInfo>
-					<VersionInfoKeys>
-						<VersionInfoKeys Name="CompanyName"/>
-						<VersionInfoKeys Name="FileDescription"/>
-						<VersionInfoKeys Name="FileVersion">0.2.0.4</VersionInfoKeys>
-						<VersionInfoKeys Name="InternalName"/>
-						<VersionInfoKeys Name="LegalCopyright"/>
-						<VersionInfoKeys Name="LegalTrademarks"/>
-						<VersionInfoKeys Name="OriginalFilename"/>
-						<VersionInfoKeys Name="ProductName"/>
-						<VersionInfoKeys Name="ProductVersion">0.2</VersionInfoKeys>
-						<VersionInfoKeys Name="Comments"/>
-					</VersionInfoKeys>
-					<Source>
-						<Source Name="MainSource">XEditLib.dpr</Source>
-					</Source>
-					<Excluded_Packages>
-						<Excluded_Packages Name="$(BDSBIN)\bcboffice2k150.bpl">Embarcadero C++Builder Office 2000 Servers Package</Excluded_Packages>
-						<Excluded_Packages Name="$(BDSBIN)\bcbofficexp150.bpl">Embarcadero C++Builder Office XP Servers Package</Excluded_Packages>
-						<Excluded_Packages Name="$(BDSBIN)\dcloffice2k150.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
-						<Excluded_Packages Name="$(BDSBIN)\dclofficexp150.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
-					</Excluded_Packages>
-				</Delphi.Personality>
-				<Platforms>
-					<Platform value="Win32">True</Platform>
-				</Platforms>
-			</BorlandProject>
-			<ProjectFileVersion>12</ProjectFileVersion>
-		</ProjectExtensions>
-	</Project>
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{75B14327-BE37-4588-8BD4-BD6D40177D2E}</ProjectGuid>
+        <MainSource>XEditLib.dpr</MainSource>
+        <ProjectVersion>18.2</ProjectVersion>
+        <Base>True</Base>
+        <Config Condition="'$(Config)'==''">Release</Config>
+        <AppType>Library</AppType>
+        <FrameworkType>None</FrameworkType>
+        <DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
+        <Platform Condition="'$(Platform)'==''">Win32</Platform>
+        <TargetedPlatforms>1</TargetedPlatforms>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="('$(Platform)'=='Win32' and '$(Base)'=='true') or '$(Base_Win32)'!=''">
+        <Base_Win32>true</Base_Win32>
+        <CfgParent>Base</CfgParent>
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Config)'=='Debug' or '$(Cfg_1)'!=''">
+        <Cfg_1>true</Cfg_1>
+        <CfgParent>Base</CfgParent>
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Config)'=='Release' or '$(Cfg_2)'!=''">
+        <Cfg_2>true</Cfg_2>
+        <CfgParent>Base</CfgParent>
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Base)'!=''">
+        <DCC_UsePackage>rtl;vcl;xmlrtl;vclactnband;vclx;VclSmp;vclimg;svnui;svn;bdertl;TeeUI;TeeDB;Tee;vcldb;dbrtl;vcldbx;vcltouch;dsnap;dsnapcon;vclib;ibxpress;adortl;IndyCore;IndySystem;IndyProtocols;inet;intrawebdb_110_150;Intraweb_110_150;vclie;websnap;webdsnap;inetdb;inetdbbde;inetdbxpress;soaprtl;vclribbon;dbexpress;DbxCommonDriver;DataSnapIndy10ServerTransport;DataSnapProviderClient;DbxClientDriver;DataSnapClient;dbxcds;DataSnapServer;AzureCloud;DBXInterBaseDriver;DBXMySQLDriver;DBXFirebirdDriver;DBXSybaseASEDriver;DBXSybaseASADriver;DBXOracleDriver;DBXMSSQLDriver;DBXInformixDriver;DBXDb2Driver;VirtualTreesD17;madBasic_;madDisAsm_;madExcept_;JclDeveloperTools;Jcl;JclVcl;JclContainers;JvCore;JvSystem;JvStdCtrls;JvAppFrm;JvBands;JvDB;JvDlgs;JvBDE;JvControls;JvCmp;JvCrypt;JvCustom;JvDocking;JvDotNetCtrls;JvGlobus;JvHMI;JvJans;JvManagedThreads;JvMM;JvNet;JvPageComps;JvPascalInterpreter;JvPluginSystem;JvPrintPreview;JvRuntimeDesign;JvTimeFramework;JvWizards;JvXPCtrls;$(DCC_UsePackage)</DCC_UsePackage>
+        <DCC_UnitSearchPath>lib\mte;lib\Imaging;lib\xedit;lib\Imaging\zlib;lib\xedit\zlib;lib\xedit\lz4;lib\Argo;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+        <DCC_DcuOutput>.\$(Config)\$(Platform)</DCC_DcuOutput>
+        <DCC_E>false</DCC_E>
+        <DCC_ImageBase>00400000</DCC_ImageBase>
+        <DCC_ExeOutput>.\$(Config)\$(Platform)</DCC_ExeOutput>
+        <DCC_S>false</DCC_S>
+        <GenDll>true</GenDll>
+        <DCC_N>false</DCC_N>
+        <DCC_F>false</DCC_F>
+        <DCC_K>false</DCC_K>
+        <SanitizedProjectName>XEditLib</SanitizedProjectName>
+        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
+        <VerInfo_AutoGenVersion>true</VerInfo_AutoGenVersion>
+        <VerInfo_MajorVer>0</VerInfo_MajorVer>
+        <VerInfo_MinorVer>2</VerInfo_MinorVer>
+        <VerInfo_Build>4</VerInfo_Build>
+        <VerInfo_DLL>true</VerInfo_DLL>
+        <VerInfo_Locale>1033</VerInfo_Locale>
+        <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=0.2.0.4;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=0.2;Comments=</VerInfo_Keys>
+        <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;Winapi;System.Win;$(DCC_Namespace)</DCC_Namespace>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Base_Win32)'!=''">
+        <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;Bde;$(DCC_Namespace)</DCC_Namespace>
+        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
+        <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=;ProgramID=com.embarcadero.$(MSBuildProjectName)</VerInfo_Keys>
+        <VerInfo_Locale>1033</VerInfo_Locale>
+        <Icon_MainIcon>XEditLib_Icon1.ico</Icon_MainIcon>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Cfg_1)'!=''">
+        <DCC_MapFile>3</DCC_MapFile>
+        <DCC_ExeOutput>.</DCC_ExeOutput>
+        <DCC_DcuOutput>.\units</DCC_DcuOutput>
+        <DCC_Define>DEBUG;$(DCC_Define)</DCC_Define>
+        <DCC_Optimize>false</DCC_Optimize>
+        <DCC_GenerateStackFrames>true</DCC_GenerateStackFrames>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Cfg_2)'!=''">
+        <DCC_MapFile>3</DCC_MapFile>
+        <DCC_ExeOutput>.</DCC_ExeOutput>
+        <DCC_DcuOutput>.\units</DCC_DcuOutput>
+        <DCC_Define>RELEASE;$(DCC_Define)</DCC_Define>
+        <DCC_SymbolReferenceInfo>0</DCC_SymbolReferenceInfo>
+    </PropertyGroup>
+    <ItemGroup>
+        <DelphiCompile Include="$(MainSource)">
+            <MainSource>MainSource</MainSource>
+        </DelphiCompile>
+        <DCCReference Include="src\xeHelpers.pas"/>
+        <DCCReference Include="src\xeTypes.pas"/>
+        <DCCReference Include="src\xeMessages.pas"/>
+        <DCCReference Include="src\xeConfiguration.pas"/>
+        <DCCReference Include="src\xeMeta.pas"/>
+        <DCCReference Include="src\xeSetup.pas"/>
+        <DCCReference Include="src\xeFiles.pas"/>
+        <DCCReference Include="src\xeMasters.pas"/>
+        <DCCReference Include="src\xeElements.pas"/>
+        <DCCReference Include="src\xeElementValues.pas"/>
+        <DCCReference Include="src\xeErrors.pas"/>
+        <DCCReference Include="src\xeRecords.pas"/>
+        <DCCReference Include="src\xeSerialization.pas"/>
+        <DCCReference Include="src\xeConflict.pas"/>
+        <DCCReference Include="lib\xedit\wbImplementation.pas"/>
+        <DCCReference Include="lib\xedit\wbInterface.pas"/>
+        <DCCReference Include="lib\xedit\wbBSA.pas"/>
+        <DCCReference Include="lib\xedit\wbSort.pas"/>
+        <DCCReference Include="lib\xedit\wbDefinitionsFNV.pas"/>
+        <DCCReference Include="lib\xedit\wbDefinitionsFO3.pas"/>
+        <DCCReference Include="lib\xedit\wbDefinitionsFO4.pas"/>
+        <DCCReference Include="lib\xedit\wbDefinitionsTES3.pas"/>
+        <DCCReference Include="lib\xedit\wbDefinitionsTES4.pas"/>
+        <DCCReference Include="lib\xedit\wbDefinitionsTES5.pas"/>
+        <DCCReference Include="lib\xedit\wbHelpers.pas"/>
+        <DCCReference Include="lib\xedit\wbLocalization.pas"/>
+        <DCCReference Include="lib\xedit\wbStreams.pas"/>
+        <DCCReference Include="lib\Argo\Argo.pas"/>
+        <DCCReference Include="lib\Argo\ArgoTypes.pas"/>
+        <BuildConfiguration Include="Release">
+            <Key>Cfg_2</Key>
+            <CfgParent>Base</CfgParent>
+        </BuildConfiguration>
+        <BuildConfiguration Include="Base">
+            <Key>Base</Key>
+        </BuildConfiguration>
+        <BuildConfiguration Include="Debug">
+            <Key>Cfg_1</Key>
+            <CfgParent>Base</CfgParent>
+        </BuildConfiguration>
+    </ItemGroup>
+    <Import Condition="Exists('$(BDS)\Bin\CodeGear.Delphi.Targets')" Project="$(BDS)\Bin\CodeGear.Delphi.Targets"/>
+    <Import Condition="Exists('$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj')" Project="$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj"/>
+    <ProjectExtensions>
+        <Borland.Personality>Delphi.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Delphi.Personality>
+                <VersionInfo>
+                    <VersionInfo Name="IncludeVerInfo">True</VersionInfo>
+                    <VersionInfo Name="AutoIncBuild">True</VersionInfo>
+                    <VersionInfo Name="MajorVer">0</VersionInfo>
+                    <VersionInfo Name="MinorVer">2</VersionInfo>
+                    <VersionInfo Name="Release">0</VersionInfo>
+                    <VersionInfo Name="Build">4</VersionInfo>
+                    <VersionInfo Name="Debug">False</VersionInfo>
+                    <VersionInfo Name="PreRelease">False</VersionInfo>
+                    <VersionInfo Name="Special">False</VersionInfo>
+                    <VersionInfo Name="Private">False</VersionInfo>
+                    <VersionInfo Name="DLL">True</VersionInfo>
+                    <VersionInfo Name="Locale">1033</VersionInfo>
+                    <VersionInfo Name="CodePage">1252</VersionInfo>
+                </VersionInfo>
+                <VersionInfoKeys>
+                    <VersionInfoKeys Name="CompanyName"/>
+                    <VersionInfoKeys Name="FileDescription"/>
+                    <VersionInfoKeys Name="FileVersion">0.2.0.4</VersionInfoKeys>
+                    <VersionInfoKeys Name="InternalName"/>
+                    <VersionInfoKeys Name="LegalCopyright"/>
+                    <VersionInfoKeys Name="LegalTrademarks"/>
+                    <VersionInfoKeys Name="OriginalFilename"/>
+                    <VersionInfoKeys Name="ProductName"/>
+                    <VersionInfoKeys Name="ProductVersion">0.2</VersionInfoKeys>
+                    <VersionInfoKeys Name="Comments"/>
+                </VersionInfoKeys>
+                <Source>
+                    <Source Name="MainSource">XEditLib.dpr</Source>
+                </Source>
+                <Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\bcboffice2k150.bpl">Embarcadero C++Builder Office 2000 Servers Package</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\bcbofficexp150.bpl">Embarcadero C++Builder Office XP Servers Package</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dcloffice2k150.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dclofficexp150.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
+                </Excluded_Packages>
+            </Delphi.Personality>
+            <Platforms>
+                <Platform value="Linux64">False</Platform>
+                <Platform value="OSX32">False</Platform>
+                <Platform value="Win32">True</Platform>
+            </Platforms>
+        </BorlandProject>
+        <ProjectFileVersion>12</ProjectFileVersion>
+    </ProjectExtensions>
+</Project>

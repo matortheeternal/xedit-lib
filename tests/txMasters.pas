@@ -2,9 +2,6 @@ unit txMasters;
 
 interface
 
-uses
-  SysUtils;
-
   // PUBLIC TESTING INTERFACE
   procedure BuildMasterHandlingTests;
 
