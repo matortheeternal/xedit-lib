@@ -53,8 +53,8 @@ exports
   RenameFile, SaveFile, GetRecordCount, GetOverrideRecordCount, MD5Hash, CRCHash,
   SortEditorIDs, SortNames, GetFileLoadOrder,
   // MASTER HANDLING METHODS
-  CleanMasters, SortMasters, AddMaster, AddMasters, GetMasters, GetRequiredBy,
-  GetMasterNames,
+  CleanMasters, SortMasters, AddMaster, AddMasters, AddRequiredMasters, GetMasters,
+  GetRequiredBy, GetMasterNames,
   // ELEMENT HANDLING METHODS
   HasElement, GetElement, AddElement, AddElementValue, RemoveElement,
   RemoveElementOrParent, SetElement, GetElements, GetDefNames, GetAddList,

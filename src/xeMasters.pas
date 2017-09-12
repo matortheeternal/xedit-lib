@@ -16,6 +16,7 @@ uses
   function SortMasters(_id: Cardinal): WordBool; cdecl;
   function AddMaster(_id: Cardinal; masterName: PWideChar): WordBool; cdecl;
   function AddMasters(_id: Cardinal; masters: PWideChar): WordBool; cdecl;
+  function AddRequiredMasters(_id, _id2: Cardinal; asNew: WordBool): WordBool; cdecl;
   function GetMasters(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function GetRequiredBy(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function GetMasterNames(_id: Cardinal; len: PInteger): WordBool; cdecl;
@@ -147,6 +148,24 @@ begin
     finally
       sl.Free;
     end;
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function AddRequiredMasters(_id, _id2: Cardinal; asNew: WordBool): WordBool; cdecl;
+var
+  element: IwbElement;
+  _file: IwbFile;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('First interface must be an element.');
+    if not Supports(Resolve(_id2), IwbFile, _file) then
+      raise Exception.Create('Second interface must be a file.');
+    NativeAddRequiredMasters(element, _file, asNew);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
