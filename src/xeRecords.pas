@@ -21,6 +21,7 @@ type
   function GetRecords(_id: Cardinal; search: PWideChar; includeOverrides: WordBool; len: PInteger): WordBool; cdecl;
   function GetOverrides(_id: Cardinal; count: PInteger): WordBool; cdecl;
   function GetMasterRecord(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
+  function GetWinningRecord(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function FindNextRecord(_id: Cardinal; search: PWideChar; byEdid, byName: WordBool; _res: PCardinal): WordBool; cdecl;
   function FindPreviousRecord(_id: Cardinal; search: PWideChar; byEdid, byName: Wordbool; _res: PCardinal): WordBool; cdecl;
   function FindValidReferences(_id: Cardinal; search: PWideChar; limitTo: Integer; len: PInteger): WordBool; cdecl;
@@ -432,6 +433,21 @@ begin
     if not Supports(Resolve(_id), IwbMainRecord, rec) then
       raise Exception.Create('Interface must be a main record.');
     _res^ := Store(rec.MasterOrSelf);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetWinningRecord(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
+var
+  rec: IwbMainRecord;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbMainRecord, rec) then
+      raise Exception.Create('Interface must be a main record.');
+    _res^ := Store(rec.WinningOverride);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
