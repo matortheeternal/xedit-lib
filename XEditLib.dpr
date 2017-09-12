@@ -50,7 +50,7 @@ exports
   GetLoaderStatus, UnloadPlugin,
   // FILE HANDLING METHODS
   AddFile, FileByIndex, FileByLoadOrder, FileByName, FileByAuthor, NukeFile,
-  RenameFile, SaveFile, GetOverrideRecordCount, MD5Hash, CRCHash,
+  RenameFile, SaveFile, GetRecordCount, GetOverrideRecordCount, MD5Hash, CRCHash,
   SortEditorIDs, SortNames, GetFileLoadOrder,
   // MASTER HANDLING METHODS
   CleanMasters, SortMasters, AddMaster, AddMasters, GetMasters, GetRequiredBy,
