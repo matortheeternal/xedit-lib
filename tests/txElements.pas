@@ -745,6 +745,15 @@ begin
               ExpectSuccess(GetElement(skyrim, '00000DD6\DATA', @h));
               TestGetDefNames(h, TStringArray.Create('Float'));
             end);
+
+          It('Should work with VMAD Object Unions', procedure
+            begin
+              ExpectSuccess(GetElement(0, 'Update.esm\0100080E\' +
+                'VMAD\Scripts\[0]\Properties\[0]\Value\Object Union', @h));
+              TestGetDefNames(h, TStringArray.Create('Object v2'));
+              ExpectSuccess(GetElement(h, 'Object v2', @h));
+              TestGetDefNames(h, TStringArray.Create('FormID', 'Alias', 'Unused'));
+            end);
         end);
       
       Describe('GetContainer', procedure
