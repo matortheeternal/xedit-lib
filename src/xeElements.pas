@@ -695,6 +695,8 @@ var
   recDef: IwbRecordDef;
   RecordDef: PwbRecordDef;
   structDef: IwbStructDef;
+  elementMap: TDynCardinalArray;
+  hasElementMap: Boolean;
   sraDef: IwbSubRecordArrayDef;
   aDef: IwbArrayDef;
 begin
@@ -719,9 +721,15 @@ begin
       sl.Add(GetDefName(recDef.Members[i]));
   end
   // try IwbStructDef
-  else if Supports(def, IwbStructDef, structDef) then
+  else if Supports(def, IwbStructDef, structDef) then begin
+    elementMap := structDef.GetElementMap;
+    hasElementMap := Length(elementMap) > 0;
     for i := 0 to Pred(structDef.MemberCount) do
-      sl.Add(GetDefName(structDef.Members[i]))
+      if hasElementMap then
+        sl.Add(GetDefName(structDef.Members[elementMap[i]]))
+      else
+        sl.Add(GetDefName(structDef.Members[i]));
+  end
   // try IwbSubRecordArrayDef
   else if Supports(def, IwbSubRecordArrayDef, sraDef) then
     sl.Add(GetDefName(sraDef.Element))
