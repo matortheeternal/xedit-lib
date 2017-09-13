@@ -136,7 +136,7 @@ end;
 procedure BuildRecordHandlingTests;
 var
   b: WordBool;
-  skyrim, armo, ar1, dnam, xt1, xt2, xt4, ar2, ar3, kw1, kw2, kw3, h, n1, n2, n3: Cardinal;
+  skyrim, armo, ar1, dnam, xt1, xt2, xt4, ar2, ar3, kw1, kw2, kw3, h, n1, n2, n3, n4: Cardinal;
 begin
   Describe('Record Handling', procedure
     begin
@@ -425,6 +425,13 @@ begin
           It('Should work with file headers', procedure
             begin
               ExpectSuccess(GetElement(skyrim, 'File Header', @h));
+              ExpectSuccess(GetNodes(h, @n1));
+              ExpectSuccess(ReleaseNodes(n1));
+            end);
+
+          It('Should work with union defs', procedure
+            begin
+              ExpectSuccess(GetElement(0, 'Update.esm\0100080E', @h));
               ExpectSuccess(GetNodes(h, @n1));
               ExpectSuccess(ReleaseNodes(n1));
             end);
