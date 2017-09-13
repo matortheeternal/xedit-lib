@@ -1328,7 +1328,7 @@ begin
   try
     if not Supports(Resolve(_id), IwbElement, element) then
       raise Exception.Create('First interface is not an element.');
-    if not Supports(Resolve(_id), IwbMainRecord, rec) then
+    if not Supports(Resolve(_id2), IwbMainRecord, rec) then
       raise Exception.Create('Second interface is not a record.');
     if not IsFormID(element) then
       raise Exception.Create('Element cannot hold references.');
