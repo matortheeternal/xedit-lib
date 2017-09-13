@@ -690,7 +690,8 @@ var
   i: Integer;
   def: IwbNamedDef;
   subDef: IwbSubRecordDef;
-  unionDef: IwbUnionDef;
+  unionDef: IwbUnionDef; 
+  et: TwbElementType;
   recDef: IwbRecordDef;
   RecordDef: PwbRecordDef;
   structDef: IwbStructDef;
@@ -702,8 +703,14 @@ begin
   if Supports(def, IwbSubRecordDef, subDef) then
     def := subDef.Value;
   // handle union defs
-  if Supports(def, IwbUnionDef, unionDef) then
+  if Supports(def, IwbUnionDef, unionDef) then begin
     def := DecideUnion(element, unionDef);
+    et := element.Container.ElementType;
+    if (et <> etMainRecord) and (et <> etSubRecordStruct) then begin
+      sl.Add(def.Name);
+      exit;
+    end;
+  end;
   // try IwbRecordDef
   if Supports(def, IwbRecordDef, recDef) then begin
     if wbFindRecordDef(recDef.Signatures[0], RecordDef) then
