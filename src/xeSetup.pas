@@ -299,13 +299,25 @@ begin
   end;
 end;
 
+procedure RemoveInactivePlugins(var sl: TStringList);
+var
+  i: Integer;
+begin
+  for i := Pred(sl.Count) downto 0 do
+    if sl[i][1] <> '*' then
+      sl.Delete(i);
+end;
+
 procedure LoadPluginsList(const sLoadPath: String; var sl: TStringList);
 var
   sPath: String;
 begin
   sPath := sLoadPath + 'plugins.txt';
-  if FileExists(sPath) then
-    sl.LoadFromFile(sPath)
+  if FileExists(sPath) then begin
+    sl.LoadFromFile(sPath);
+    if (wbGameMode = gmSSE) or (wbGameMode = gmFO4) then
+      RemoveInactivePlugins(sl);
+  end
   else
     AddMissingFiles(sl);
 
