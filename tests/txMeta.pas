@@ -350,7 +350,7 @@ begin
           CloseXEdit;
         end);
 
-      {$IFNDEF SSE}
+      {$IFDEF SKYRIM}
       AfterAll(procedure
         begin
           DeleteFile(GetDataPath + 'xtest-6.esp');

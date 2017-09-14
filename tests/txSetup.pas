@@ -63,7 +63,7 @@ begin
   WriteMessages;
 end;
 
-{$IFNDEF SSE}
+{$IFDEF SKYRIM}
 procedure BuildSetupTests;
 var
   appDataPath, loadOrder, plugins: String;
@@ -261,7 +261,7 @@ end;
 {$IFDEF SSE}
 procedure BuildSetupTests;
 var
-  appDataPath, plugins: String;
+  appDataPath, dataPath, plugins: String;
   len: Integer;
 begin
   Describe('Setup', procedure
@@ -272,6 +272,8 @@ begin
             begin
               ExpectSuccess(GetGlobal('AppDataPath', @len));
               appDataPath := grs(len);
+              ExpectSuccess(GetGlobal('DataPath', @len));
+              dataPath := grs(len);
             end);
 
           It('Should succeed for the first time for Skyrim SE game mode', procedure
@@ -290,11 +292,13 @@ begin
           BeforeAll(procedure
             begin
               BackupFile(appDataPath + 'plugins.txt');
+              WriteStringToFile('', dataPath + 'xtest-0.esp');
             end);
 
           AfterAll(procedure
             begin
-              RestoreFile(appDataPath + 'plugins.txt');
+              RestoreFile(dataPath + 'plugins.txt');
+              DeleteFile(dataPath + 'xtest-0.esp');
             end);
 
           It('Should get list of active plugins from plugins.txt', procedure
@@ -315,6 +319,11 @@ begin
               Expect(Pos('NonExistingPlugin.esp', plugins) = 0, 'Should not contain NonExistingPlugin.esp');
             end);
 
+          It('Should exclude plugins with no * in front of their name', procedure
+            begin
+              Expect(Pos('xtest-0.esp', plugins) = 0, 'Should not contain xtest-0.esp');
+            end);
+
           It('Should add required plugins', procedure
             begin
               Expect(Pos('Skyrim.esm', plugins) > 0, 'Skyrim.esm should be present');
@@ -322,6 +331,105 @@ begin
               Expect(Pos('Dawnguard.esm', plugins) > 0, 'Dawnguard.esm should be present');
               Expect(Pos('HearthFires.esm', plugins) > 0, 'HearthFires.esm should be present');
               Expect(Pos('Dragonborn.esm', plugins) > 0, 'Dragonborn.esm should be present');
+            end);
+        end);
+
+        Describe('GetLoadOrder', procedure
+          begin
+            It('Shouldn''t sort plugins by date', procedure
+              begin
+                ExpectSuccess(GetLoadOrder(@len));
+                plugins := grs(len);
+              end);
+          end);
+    end);
+end;
+{$ENDIF}
+
+{$IFDEF FO4}
+procedure BuildSetupTests;
+var
+  appDataPath, dataPath, plugins: String;
+  len: Integer;
+begin
+  Describe('Setup', procedure
+    begin
+      Describe('SetGameMode', procedure
+        begin
+          AfterAll(procedure
+            begin
+              ExpectSuccess(GetGlobal('AppDataPath', @len));
+              appDataPath := grs(len);
+              ExpectSuccess(GetGlobal('DataPath', @len));
+              dataPath := grs(len);
+            end);
+
+          It('Should succeed for the first time for Fallout 4 game mode', procedure
+            begin
+              ExpectSuccess(SetGameMode(5));
+            end);
+
+          It('Should fail the second time', procedure
+            begin
+              ExpectFailure(SetGameMode(4));
+            end);
+        end);
+
+      Describe('GetActivePlugins', procedure
+        begin
+          BeforeAll(procedure
+            begin
+              BackupFile(appDataPath + 'plugins.txt');
+              WriteStringToFile('', dataPath + 'xtest-0.esp');
+            end);
+
+          AfterAll(procedure
+            begin
+              RestoreFile(appDataPath + 'plugins.txt');
+              DeleteFile(dataPath + 'xtest-0.esp');
+            end);
+
+          It('Should get list of active plugins from plugins.txt', procedure
+            begin
+              WriteStringToFile(' '#13#10'# comment'#13#10'*NonExistingPlugin.esp'#13#10'xtest-0.esp', appDataPath + 'plugins.txt');
+              ExpectSuccess(GetActivePlugins(@len));
+              plugins := grs(len);
+            end);
+
+          It('Should remove comments and empty lines', procedure
+            begin
+              Expect(Pos(' '#13#10, plugins) = 0, 'Empty line should not be present');
+              Expect(Pos('# comment', plugins) = 0, 'Comment should not be present');
+            end);
+
+          It('Should remove files that do not exist', procedure
+            begin
+              Expect(Pos('NonExistingPlugin.esp', plugins) = 0, 'Should not contain NonExistingPlugin.esp');
+            end);
+
+          It('Should exclude plugins with no * in front of their name', procedure
+            begin
+              Expect(Pos('xtest-0.esp', plugins) = 0, 'Should not contain xtest-0.esp');
+            end);
+
+          It('Should add required plugins', procedure
+            begin
+              Expect(Pos('Fallout4.esm', plugins) > 0, 'Fallout4.esm should be present');
+              Expect(Pos('DLCCoast.esm', plugins) > 0, 'DLCCoast.esm should be present');
+              Expect(Pos('DLCNukaworld.esm', plugins) > 0, 'DLCNukaworld.esm should be present');
+              Expect(Pos('DLCRobot.esm', plugins) > 0, 'DLCRobot.esm should be present');
+              Expect(Pos('DLCworkshop01.esm', plugins) > 0, 'DLCworkshop01.esm should be present');
+              Expect(Pos('DLCworkshop02.esm', plugins) > 0, 'DLCworkshop02.esm should be present');
+              Expect(Pos('DLCworkshop03.esm', plugins) > 0, 'DLCworkshop03.esm should be present');
+            end);
+        end);
+
+      Describe('GetLoadOrder', procedure
+        begin
+          It('Shouldn''t sort plugins by date', procedure
+            begin
+              ExpectSuccess(GetLoadOrder(@len));
+              plugins := grs(len);
             end);
         end);
     end);
