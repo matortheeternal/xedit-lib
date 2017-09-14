@@ -649,9 +649,10 @@ begin
       AddBaseMasters(slPlugins);
       AddBaseMasters(slLoadOrder);
 
-      // if GameMode is not Skyrim, SkyrimSE or Fallout 4 sort
-      // by date modified
-      if not (wbGameMode in [gmTES5, gmSSE, gmFO4]) then begin
+      // if GameMode is not SkyrimSE or Fallout 4 and we don't
+      // have a loadorder.txt, sort by date modified
+      if not (wbGameMode <> gmSSE) and (wbGameMode <> gmFO4)
+      and not FileExists(sLoadPath + 'loadorder.txt') then begin
         GetPluginDates(slLoadOrder);
         slLoadOrder.CustomSort(PluginListCompare);
       end;
