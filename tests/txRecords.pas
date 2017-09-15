@@ -70,19 +70,20 @@ begin
   ExpectEqual(grs(len), expectedEDID);
 end;
 
-procedure TestFindValidReferences(h: Cardinal; path: PWideChar; search: PWideChar; expectedResults: TStringArray);
+procedure TestFindValidReferences(h: Cardinal; path: PWideChar; signature, search: PWideChar; expectedResults: TStringArray);
 var
-  len: Integer;
+  expectedLen, len: Integer;
   sl: TStringList;
   i: Integer;
 begin
   if path <> '' then
     ExpectSuccess(GetElement(h, path, @h));
-  ExpectSuccess(FindValidReferences(h, search, Length(expectedResults), @len));
+  expectedLen := Length(expectedResults);
+  ExpectSuccess(FindValidReferences(h, signature, search, expectedLen, @len));
   sl := TStringList.Create;
   try
     sl.Text := grs(len);
-    ExpectEqual(Length(expectedResults), sl.Count);
+    ExpectEqual(expectedLen, sl.Count);
     for i := Low(expectedResults) to High(expectedResults) do
       ExpectEqual(sl[i], expectedResults[i]);
   finally
@@ -270,9 +271,9 @@ begin
 
       Describe('FindValidReferences', procedure
         begin
-          It('Should work on checked FormIDs', procedure
+          It('Should work in Update.esm', procedure
             begin
-              TestFindValidReferences(0, 'Update.esm\0001392A\KWDA\[0]', 'a', TStringArray.Create(
+              TestFindValidReferences(0, 'Update.esm', 'KYWD', 'a', TStringArray.Create(
                 'DA15WabbajackExcludedKeyword [KYWD:01000997]',
                 'ImmuneDragonPairedKill [KYWD:010009A2]',
                 'ArmorMaterialForsworn [KYWD:010009B9]',
