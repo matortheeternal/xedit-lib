@@ -18,6 +18,7 @@ type
     procedure Execute; override;
   end;
   TLoaderState = ( lsInactive, lsActive, lsDone, lsError );
+  TPluginsFormat = ( pfPlain, pfAsterisks, pfEquals );
   {$endregion}
 
   {$region 'Native functions}
@@ -66,7 +67,7 @@ implementation
 uses
   Windows, SysUtils, ShlObj,
   // xelib units
-  xeMeta, xeConfiguration, xeMessages, xeMasters;
+  xeHelpers, xeMeta, xeConfiguration, xeMessages, xeMasters;
 
 {$region 'TLoaderThread'}
 procedure TLoaderThread.Execute;
@@ -299,18 +300,64 @@ begin
   end;
 end;
 
-procedure ProcessAsterisks(var sl: TStringList; noDelete: Boolean);
+function GetPluginsFormat(var sl: TStringList): TPluginsFormat;
 var
+  asterisksCount, equalsCount, i: Integer;
+  s: String;
+begin
+  for i := 0 to Pred(sl.Count) do begin
+    s := sl[i];
+    if s[1] = '*' then
+      Inc(asterisksCount);
+    if StrEndsWith(s, '=0') or StrEndsWith(s, '=1') then
+      Inc(equalsCount);
+  end;
+  if equalsCount > 0 then
+    Result := pfEquals
+  else if asterisksCount > 0 then
+    Result := pfAsterisks
+  else
+    Result := pfPlain;
+end;
+
+procedure ProcessAsterisks(var sl: TStringList; index: Integer; noDelete: Boolean);
+var
+  s: String;
+begin
+  s := sl[index];
+  if s[1] <> '*' then begin
+    if not noDelete then sl.Delete(index);
+  end
+  else
+    sl[index] := Copy(s, 2, Length(s));
+end;
+
+procedure ProcessEquals(var sl: TStringList; index: Integer; noDelete: Boolean);
+var
+  s, endChars: String;
+begin
+  s := sl[index];
+  endChars := Copy(s, Length(s) - 1, 2);
+  if endChars[1] <> '=' then exit;
+  if (endChars[2] <> '1') and (not noDelete) then
+    sl.Delete(index)
+  else
+    sl[index] := Copy(s, 1, Length(s) - 2);
+end;
+
+procedure ProcessPluginsFormat(var sl: TStringList; noDelete: Boolean);
+var
+  pf: TPluginsFormat;
   i: Integer;
   s: String;
 begin
+  pf := GetPluginsFormat(sl);
   for i := Pred(sl.Count) downto 0 do begin
     s := sl[i];
-    if s[1] <> '*' then begin
-      if not noDelete then sl.Delete(i);
-    end
-    else
-      sl[i] := Copy(s, 2, Length(s));
+    case pf of
+      pfAsterisks: ProcessAsterisks(sl, i, noDelete);
+      pfEquals: ProcessEquals(sl, i, noDelete);
+    end;
   end;
 end;
 
@@ -322,7 +369,7 @@ begin
   if FileExists(sPath) then begin
     sl.LoadFromFile(sPath);
     if (wbGameMode = gmSSE) or (wbGameMode = gmFO4) then
-      ProcessAsterisks(sl, noDelete);
+      ProcessPluginsFormat(sl, noDelete);
   end
   else
     AddMissingFiles(sl);
