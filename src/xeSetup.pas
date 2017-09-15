@@ -25,7 +25,7 @@ type
   procedure UpdateFileCount;
   procedure LoadPluginFiles;
   procedure LoadResources;
-  procedure LoadPluginsList(const sLoadPath: String; var sl: TStringList);
+  procedure LoadPluginsList(const sLoadPath: String; var sl: TStringList; noDelete: Boolean = False);
   procedure LoadLoadOrder(const sLoadPath: String; var slLoadOrder, slPlugins: TStringList);
   procedure RemoveCommentsAndEmpty(var sl: TStringList);
   procedure RemoveMissingFiles(var sl: TStringList);
@@ -299,16 +299,22 @@ begin
   end;
 end;
 
-procedure RemoveInactivePlugins(var sl: TStringList);
+procedure ProcessAsterisks(var sl: TStringList; noDelete: Boolean);
 var
   i: Integer;
+  s: String;
 begin
-  for i := Pred(sl.Count) downto 0 do
-    if sl[i][1] <> '*' then
-      sl.Delete(i);
+  for i := Pred(sl.Count) downto 0 do begin
+    s := sl[i];
+    if s[1] <> '*' then begin
+      if not noDelete then sl.Delete(i);
+    end
+    else
+      sl[i] := Copy(s, 2, Length(s));
+  end;
 end;
 
-procedure LoadPluginsList(const sLoadPath: String; var sl: TStringList);
+procedure LoadPluginsList(const sLoadPath: String; var sl: TStringList; noDelete: Boolean = False);
 var
   sPath: String;
 begin
@@ -316,7 +322,7 @@ begin
   if FileExists(sPath) then begin
     sl.LoadFromFile(sPath);
     if (wbGameMode = gmSSE) or (wbGameMode = gmFO4) then
-      RemoveInactivePlugins(sl);
+      ProcessAsterisks(sl, noDelete);
   end
   else
     AddMissingFiles(sl);
@@ -345,19 +351,16 @@ end;
 { Remove comments and empty lines from a stringlist }
 procedure RemoveCommentsAndEmpty(var sl: TStringList);
 var
-  i, j, k: integer;
+  i, j: integer;
   s: string;
 begin
   for i := Pred(sl.Count) downto 0 do begin
     s := Trim(sl.Strings[i]);
     j := Pos('#', s);
-    k := Pos('*', s);
     if j > 0 then
       System.Delete(s, j, High(Integer));
     if s = '' then
       sl.Delete(i);
-    if k = 1 then
-      sl[i] := Copy(s, 2, Length(s));
   end;
 end;
 
@@ -642,7 +645,7 @@ begin
 
     try
       sLoadPath := Globals.Values['AppDataPath'];
-      LoadPluginsList(sLoadPath, slPlugins);
+      LoadPluginsList(sLoadPath, slPlugins, True);
       LoadLoadOrder(sLoadPath, slLoadOrder, slPlugins);
 
       // add base masters if missing
