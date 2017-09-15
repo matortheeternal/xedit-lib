@@ -75,6 +75,7 @@ type
   function MoveArrayItem(_id: Cardinal; index: Integer): WordBool; cdecl;
   function CopyElement(_id, _id2: Cardinal; aAsNew: WordBool; _res: PCardinal): WordBool; cdecl;
   function GetSignatureAllowed(_id: Cardinal; sig: PWideChar; bool: PWordBool): WordBool; cdecl;
+  function GetAllowedSignatures(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function GetIsModified(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
   function GetIsEditable(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
   function GetIsRemoveable(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
@@ -907,6 +908,21 @@ begin
     end;
 end;
 
+function GetAllSignatures: String;
+var
+  i, len: Integer;
+  recordDef: TwbRecordDefEntry;
+begin
+  Result := '';
+  for i := Low(wbRecordDefs) to High(wbRecordDefs) do begin
+    recordDef := wbRecordDefs[i];
+    Result := Result + String(recordDef.rdeSignature) + #13#10;
+  end;
+  len := Length(Result);
+  if len > 0 then
+    Delete(Result, len - 1, 2);
+end;
+
 function NativeGetCanAdd(const element: IwbElement): Boolean;
 var
   eContainer: IwbContainer;
@@ -1599,6 +1615,34 @@ begin
       bool^ := NativeGetSignatureAllowed(formDef, StrToSignature(string(sig)))
     else
       bool^ := true;
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetAllowedSignatures(_id: Cardinal; len: PInteger): WordBool; cdecl;
+var
+  element: IwbElement;
+  integerDef: IwbIntegerDef;
+  formDef: IwbFormIDChecked;
+  i: Integer;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    if not Supports(element.ValueDef, IwbIntegerDef, integerDef)
+    or not Supports(integerDef.Formater[element], IwbFormID) then
+      raise Exception.Create('Interface must be able to hold a FormID value.');
+    if Supports(integerDef.Formater[element], IwbFormIDChecked, formDef) then begin
+      resultStr := String(formDef.Signatures[0]);
+      for i := 1 to Pred(formDef.SignatureCount) do
+        resultStr := resultStr + #13#10 + String(formDef.Signatures[i]);
+    end
+    else
+      resultStr := GetAllSignatures;
+    len^ := Length(resultStr);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
