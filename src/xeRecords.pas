@@ -24,7 +24,7 @@ type
   function GetWinningRecord(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function FindNextRecord(_id: Cardinal; search: PWideChar; byEdid, byName: WordBool; _res: PCardinal): WordBool; cdecl;
   function FindPreviousRecord(_id: Cardinal; search: PWideChar; byEdid, byName: Wordbool; _res: PCardinal): WordBool; cdecl;
-  function FindValidReferences(_id: Cardinal; search: PWideChar; limitTo: Integer; len: PInteger): WordBool; cdecl;
+  function FindValidReferences(_id: Cardinal; signature, search: PWideChar; limitTo: Integer; len: PInteger): WordBool; cdecl;
   function GetReferencedBy(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function ExchangeReferences(_id, oldFormID, newFormID: Cardinal): WordBool; cdecl;
   function IsMaster(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
@@ -268,38 +268,24 @@ begin
     end;
 end;
 
-function NativeFindValidReferences(const element: IwbElement; const search: String; limitTo: Integer): String;
+function NativeFindValidReferences(const element: IwbElement; const signature: TwbSignature; const search: String; limitTo: Integer): String;
 var
   files: TDynFiles;
-  currentRec, rec: IwbMainRecord;
-  integerDef: IwbIntegerDef;
-  formDef: IwbFormIDChecked;
+  rec: IwbMainRecord;
   counter, i, j: Integer;
   _file: IwbFile;
-  CheckSignatures: Boolean;
-  AllowedSignatures: TDynSignatures;
 begin
   Result := '';
-  if not Supports(element.Def, IwbIntegerDef, integerDef) then exit;
   // get record context
   files := GetFilesArray(element._File);
-  currentRec := element.ContainingMainRecord;
-  // determine allowed signatures
-  CheckSignatures := False;
-  if Supports(integerDef.Formater[element], IwbFormIDChecked, formDef) then begin
-    CheckSignatures := True;
-    SetLength(AllowedSignatures, formDef.SignatureCount);
-    for i := 0 to Pred(formDef.SignatureCount) do
-      AllowedSignatures[i] := formDef.Signatures[i];
-  end;
   // perform the search across file and its masters
   counter := 0;
   for i := Low(files) to High(files) do begin
     _file := files[i];
     for j := 0 to Pred(_file.RecordCount) do begin
       rec := _file.Records[j];
-      if ((not CheckSignatures) or SignatureInArray(rec.Signature, AllowedSignatures)) and (Pos(search, rec.Name) > 0) then begin
-        if rec.Equals(currentRec) then continue;
+      if not rec.IsMaster then continue;
+      if (rec.Signature = signature) and (Pos(search, rec.Name) > 0) then begin
         Result := Result + rec.Name + #13#10;
         Inc(counter);
         if counter = limitTo then exit;
@@ -518,17 +504,17 @@ begin
   end;
 end;
 
-function FindValidReferences(_id: Cardinal; search: PWideChar; limitTo: Integer; len: PInteger): WordBool; cdecl;
+function FindValidReferences(_id: Cardinal; signature, search: PWideChar; limitTo: Integer; len: PInteger): WordBool; cdecl;
 var
   element: IwbElement;
+  aSignature: TwbSignature;
 begin
   Result := False;
   try
     if not Supports(Resolve(_id), IwbElement, element) then
       raise Exception.Create('Input interface is not an element.');
-    if not IsFormID(element) then
-      raise Exception.Create('Input element doesn''t hold references.');
-    resultStr := NativeFindValidReferences(element, string(search), limitTo);
+    aSignature := StrToSignature(string(signature));
+    resultStr := NativeFindValidReferences(element, aSignature, string(search), limitTo);
     len^ := Length(resultStr);
     if len^ > 0 then begin
       Delete(resultStr, len^ - 1, 2);
