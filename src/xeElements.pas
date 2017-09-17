@@ -482,7 +482,7 @@ var
   ovr: IwbMainRecord;
 begin
   if Assigned(rec) and not rec._File.Equals(targetFile) then begin
-    ovr := GetPreviousOverride(rec, targetFile);
+    ovr := NativeGetPreviousOverride(rec, targetFile);
     output := CopyElementToFile(ovr, targetFile, false, true);
   end;
 end;

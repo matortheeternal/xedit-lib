@@ -11,7 +11,7 @@ type
 
   {$region 'Native functions'}
   function EditorIDToFormID(const _file: IwbFile; const editorID: String): Cardinal;
-  function GetPreviousOverride(const rec: IwbMainRecord; const targetFile: IwbFile): IwbMainRecord;
+  function NativeGetPreviousOverride(const rec: IwbMainRecord; const targetFile: IwbFile): IwbMainRecord;
   {$endregion}
 
   {$region 'API functions'}
@@ -21,6 +21,7 @@ type
   function GetRecords(_id: Cardinal; search: PWideChar; includeOverrides: WordBool; len: PInteger): WordBool; cdecl;
   function GetOverrides(_id: Cardinal; count: PInteger): WordBool; cdecl;
   function GetMasterRecord(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
+  function GetPreviousOverride(_id, _id2: Cardinal; _res: PCardinal): WordBool; cdecl;
   function GetWinningOverride(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function FindNextRecord(_id: Cardinal; search: PWideChar; byEdid, byName: WordBool; _res: PCardinal): WordBool; cdecl;
   function FindPreviousRecord(_id: Cardinal; search: PWideChar; byEdid, byName: Wordbool; _res: PCardinal): WordBool; cdecl;
@@ -54,7 +55,7 @@ begin
   Result := _file.LoadOrderFormIDtoFileFormID(rec.LoadOrderFormID);
 end;
 
-function GetPreviousOverride(const rec: IwbMainRecord; const targetFile: IwbFile): IwbMainRecord;
+function NativeGetPreviousOverride(const rec: IwbMainRecord; const targetFile: IwbFile): IwbMainRecord;
 var
   i: Integer;
 begin
@@ -419,6 +420,24 @@ begin
     if not Supports(Resolve(_id), IwbMainRecord, rec) then
       raise Exception.Create('Interface must be a main record.');
     _res^ := Store(rec.MasterOrSelf);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetPreviousOverride(_id, _id2: Cardinal; _res: PCardinal): WordBool; cdecl;
+var
+  _file: IwbFile;
+  rec: IwbMainRecord;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbMainRecord, rec) then
+      raise Exception.Create('First interface must be a main record.');
+    if not Supports(Resolve(_id), IwbFile, _file) then
+      raise Exception.Create('Second interface must be a file.');
+    _res^ := Store(NativeGetPreviousOverride(rec, _file));
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
