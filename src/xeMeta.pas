@@ -348,7 +348,8 @@ function Release(_id: Cardinal): WordBool; cdecl;
 begin
   Result := False;
   try
-    if (_id = 0) or (_id >= Cardinal(_store.Count)) then exit;
+    if (_id = 0) or (_id >= Cardinal(_store.Count))
+    or (_store[_id] = nil) then exit;
     _store[_id] := nil;
     _releasedIDs.Add(_id);
     Result := True;
