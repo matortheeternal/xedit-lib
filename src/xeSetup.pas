@@ -305,6 +305,8 @@ var
   asterisksCount, equalsCount, i: Integer;
   s: String;
 begin
+  asterisksCount := 0;
+  equalsCount := 0;
   for i := 0 to Pred(sl.Count) do begin
     s := sl[i];
     if s[1] = '*' then
