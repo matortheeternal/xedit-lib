@@ -694,7 +694,7 @@ var
   unionDef: IwbUnionDef; 
   et: TwbElementType;
   recDef: IwbRecordDef;
-  RecordDef: PwbRecordDef;
+  container: IwbContainer;
   structDef: IwbStructDef;
   elementMap: TDynCardinalArray;
   hasElementMap: Boolean;
@@ -716,8 +716,9 @@ begin
   end;
   // try IwbRecordDef
   if Supports(def, IwbRecordDef, recDef) then begin
-    if wbFindRecordDef(recDef.Signatures[0], RecordDef) then
-      sl.Add('Record Header');
+    if Supports(element, IwbContainer, container) then
+      for i := 0 to Pred(container.AdditionalElementCount) do
+        sl.Add(container.ElementBySortOrder[i].Name);
     for i := 0 to Pred(recDef.MemberCount) do
       sl.Add(GetDefName(recDef.Members[i]));
   end
