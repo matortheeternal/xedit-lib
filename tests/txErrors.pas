@@ -53,7 +53,7 @@ var
 begin
   ExpectSuccess(GetRecord(0, StrToInt('$' + hexFormID), @rec));
   if winningOverride then
-    ExpectSuccess(GetWinningRecord(rec, @rec));
+    ExpectSuccess(GetWinningOverride(rec, @rec));
   ExpectSuccess(AddRequiredMasters(rec, f, False));
   ExpectSuccess(CopyElement(rec, f, False, @rec));
 end;

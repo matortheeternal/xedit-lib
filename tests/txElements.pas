@@ -734,6 +734,20 @@ begin
                 'DATA - Data', 'DNAM - Armor Rating', 'TNAM - Template Armor'));
             end);
 
+          It('Should include additional elements', procedure
+            begin
+              ExpectSuccess(GetElement(skyrim, '000094BD', @h));
+              TestGetDefNames(h, TStringArray.Create('Worldspace', 'Record Header',
+                'EDID - Editor ID', 'FULL - Name', 'DATA - Flags', 'XCLC - Grid',
+                'XCLL - Lighting', 'TVDT - Occlusion Data', 'MHDT - Max Height Data',
+                'LTMP - Lighting Template', 'LNAM - Unknown', 'XCLW - Water Height',
+                'XNAM - Water Noise Texture', 'XCLR - Regions', 'XLCN - Location',
+                'XWCN - Unknown', 'XWCS - Unknown', 'XWCU - Water Velocity', 'XCWT - Water',
+                'Ownership', 'XILL - Lock List', 'XWEM - Water Environment Map',
+                'XCCM - Sky/Weather from Region', 'XCAS - Acoustic Space',
+                'XEZN - Encounter Zone', 'XCMO - Music Type', 'XCIM - Image Space'));
+            end);
+
           It('Should work with structs', procedure
             begin
               ExpectSuccess(GetElement(ar1, 'OBND', @h));
