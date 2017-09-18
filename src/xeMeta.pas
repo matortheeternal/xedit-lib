@@ -65,10 +65,9 @@ begin
   Result := False;
   try
     len := Length(source);
-    if len > maxLen then
-      raise Exception.Create(Format('Found buffer length %d, expected %d.', [maxLen, len + 1]));
+    if len <> maxLen then
+      raise Exception.Create(Format('Found buffer length %d, expected %d.', [maxLen, len]));
     Move(PWideChar(source)^, dest^, len * SizeOf(WideChar));
-    dest[len] := #0;
     Result := True;
   except
     on x: Exception do
