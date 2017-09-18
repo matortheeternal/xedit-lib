@@ -435,7 +435,7 @@ begin
   try
     if not Supports(Resolve(_id), IwbMainRecord, rec) then
       raise Exception.Create('First interface must be a main record.');
-    if not Supports(Resolve(_id), IwbFile, _file) then
+    if not Supports(Resolve(_id2), IwbFile, _file) then
       raise Exception.Create('Second interface must be a file.');
     _res^ := Store(NativeGetPreviousOverride(rec, _file));
     Result := True;
