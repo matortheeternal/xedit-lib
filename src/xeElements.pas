@@ -60,7 +60,7 @@ type
   function GetDefNames(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function GetAddList(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function GetLinksTo(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
-  function SetLinksTo(_id, _id2: Cardinal; key: PWideChar): WordBool; cdecl;
+  function SetLinksTo(_id: Cardinal; key: PWideChar; _id2: Cardinal): WordBool; cdecl;
   function GetElementIndex(_id: Cardinal; index: PInteger): WordBool; cdecl;
   function GetContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function GetElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
@@ -1413,7 +1413,7 @@ begin
   end;
 end;
 
-function SetLinksTo(_id, _id2: Cardinal; key: PWideChar): WordBool; cdecl;
+function SetLinksTo(_id: Cardinal; key: PWideChar; _id2: Cardinal): WordBool; cdecl;
 var
   element: IwbElement;
   rec: IwbMainRecord;
