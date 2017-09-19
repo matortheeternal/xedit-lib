@@ -209,12 +209,12 @@ begin
   end;
 end;
 
-function NativeFindPreviousRecord(container: IwbContainer; const element: IwbElement; const search: String;
+function NativeFindPreviousRecord(const container: IwbContainer; const element: IwbElement; const search: String;
   byEdid, byName, recurse: WordBool): IwbMainRecord;
 var
   i: Integer;
   e: IwbElement;
-  innerContainer: IwbContainer;
+  c: IwbContainer;
   elements: TDynElements;
 begin
   // iterate through children
@@ -228,8 +228,8 @@ begin
       if byName and (Pos(search, Result.FullName) > 0) then exit;
     end
     // recurse through child containers
-    else if Supports(e, IwbContainer, innerContainer) then begin
-      Result := NativeFindPreviousRecord(innerContainer, nil, search, byEdid, byName, false);
+    else if Supports(e, IwbContainer, c) then begin
+      Result := NativeFindPreviousRecord(c, nil, search, byEdid, byName, false);
       if Assigned(Result) then exit;
     end;
     Dec(i);
@@ -238,9 +238,9 @@ begin
   // recurse to sibling container
   if recurse then begin
     e := container as IwbElement;
-    container := e.Container;
-    if Assigned(container) then
-      Result := NativeFindPreviousRecord(container, e, search, byEdid, byName, true);
+    c := e.Container;
+    if Assigned(c) then
+      Result := NativeFindPreviousRecord(c, e, search, byEdid, byName, true);
   end;
 end;
 
@@ -474,8 +474,7 @@ begin
       element := xFiles[Low(xFiles)]
     else if not Supports(Resolve(_id), IwbElement, element) then
       raise Exception.Create('Input interface is not an element.');
-    if not Supports(element, IwbContainer, container) then
-      raise Exception.Create('Input element is not a container.');
+    container := element.Container;
     if Supports(element, IwbMainRecord) then
       rec := NativeFindNextRecord(container, element, string(search), byEdid, byName, True)
     else if Supports(element, IwbGroupRecord) or Supports(element, IwbFile) then
@@ -506,8 +505,7 @@ begin
       element := xFiles[High(xFiles)]
     else if not Supports(Resolve(_id), IwbElement, element) then
       raise Exception.Create('Input interface is not an element.');
-    if not Supports(element, IwbContainer, container) then
-      raise Exception.Create('Input element is not a container.');
+    container := element.Container;
     if Supports(element, IwbMainRecord) then
       rec := NativeFindPreviousRecord(container, element, string(search), byEdid, byName, true)
     else if Supports(element, IwbGroupRecord) or Supports(element, IwbFile) then
