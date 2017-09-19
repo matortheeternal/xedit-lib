@@ -74,6 +74,8 @@ type
   function RemoveArrayItem(_id: Cardinal; path, subpath, value: PWideChar): WordBool; cdecl;
   function MoveArrayItem(_id: Cardinal; index: Integer): WordBool; cdecl;
   function CopyElement(_id, _id2: Cardinal; aAsNew: WordBool; _res: PCardinal): WordBool; cdecl;
+  function FindNextElement(_id: Cardinal; search: PWideChar; byPath, byValue: WordBool; _res: PCardinal): WordBool; cdecl;
+  function FindPreviousElement(_id: Cardinal; search: PWideChar; byPath, byValue: Wordbool; _res: PCardinal): WordBool; cdecl;
   function GetSignatureAllowed(_id: Cardinal; sig: PWideChar; bool: PWordBool): WordBool; cdecl;
   function GetAllowedSignatures(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function GetIsModified(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
@@ -668,6 +670,7 @@ begin
 end;
 {$endregion}
 
+{$REGION 'Def names'}
 function GetDefName(const def: IwbNamedDef): String;
 var
   sigDef: IwbSignatureDef;
@@ -741,6 +744,7 @@ begin
   else
     sl.Add(GetDefName(def));
 end;
+{$ENDREGION}
 
 function NativeContainer(const element: IwbElement): IwbContainer;
 var
@@ -897,6 +901,70 @@ begin
 end;
 {$endregion}
 
+{$REGION 'Element searching'}
+function NativeFindNextElement(const container: IwbContainer; const element: IwbElement; const search: String;
+  byPath, byValue, recurse: WordBool): IwbElement;
+var
+  i: Integer;
+  c: IwbContainer;
+  e: IwbElement;
+begin
+  // iterate through children
+  i := container.IndexOf(element) + 1;
+  while i <= Pred(container.ElementCount) do begin
+    Result := container.Elements[i];
+    if byPath and (Pos(search, GetPath(Result, False, True)) > 0) then exit;
+    if byValue and (Pos(search, Result.EditValue) > 0) then exit;
+    // recurse through child containers
+    if Supports(Result, IwbContainer, c) then begin
+      Result := NativeFindNextElement(c, nil, search, byPath, byValue, false);
+      if Assigned(Result) then exit;
+    end;
+    Inc(i);
+  end;
+  Result := nil;
+  // recurse to sibling container
+  if recurse then begin
+    e := container as IwbElement;
+    c := e.Container;
+    if Assigned(c) then
+      Result := NativeFindNextElement(c, e, search, byPath, byValue, true);
+  end;
+end;
+
+function NativeFindPreviousElement(const container: IwbContainer; const element: IwbElement; const search: String;
+  byPath, byValue, recurse: WordBool): IwbElement;
+var
+  i: Integer;
+  c: IwbContainer;
+  e: IwbElement;
+begin
+  // iterate through children
+  i := container.IndexOf(element) - 1;
+  if i = -2 then i := Pred(container.ElementCount);
+  while i > -1 do begin
+    Result := container.Elements[i];
+    if byPath and (Pos(search, GetPath(Result, False, True)) > 0) then exit;
+    if byValue and (Pos(search, Result.EditValue) > 0) then exit;
+    // recurse through child containers
+    if Supports(Result, IwbContainer, c) then begin
+      Result := NativeFindPreviousElement(c, nil, search, byPath, byValue, false);
+      if Assigned(Result) then exit;
+    end;
+    Dec(i);
+  end;
+  Result := nil;
+  // recurse to sibling container
+  if recurse then begin
+    e := container as IwbElement;
+    c := e.Container;
+    if Assigned(c) then
+      Result := NativeFindPreviousElement(c, e, search, byPath, byValue, true);
+  end;
+end;
+{$ENDREGION}
+
+{$REGION 'Signature checking'}
 function NativeGetSignatureAllowed(const formDef: IwbFormIDChecked; sig: TwbSignature): WordBool;
 var
   i: Integer;
@@ -923,6 +991,7 @@ begin
   if len > 0 then
     Delete(Result, len - 1, 2);
 end;
+{$ENDREGION}
 
 function NativeGetCanAdd(const element: IwbElement): Boolean;
 var
@@ -1594,6 +1663,50 @@ begin
       raise Exception.Create('Failed to copy element.');
     _res^ := Store(copy);
     Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function FindNextElement(_id: Cardinal; search: PWideChar; byPath, byValue: WordBool; _res: PCardinal): WordBool; cdecl;
+var
+  element: IwbElement;
+  container: IwbContainer;
+  rec: IwbMainRecord;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Input interface is not an element.');
+    if Supports(element, IwbFile) or Supports(element, IwbGroupRecord) then
+      raise Exception.Create('Input interface cannot be a file or group.');
+    element := NativeFindNextElement(element, string(search), byPath, byValue, true);
+    if Assigned(element) then begin
+      _res^ := Store(element);
+      Result := True;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function FindPreviousElement(_id: Cardinal; search: PWideChar; byPath, byValue: Wordbool; _res: PCardinal): WordBool; cdecl;
+var
+  element: IwbElement;
+  container: IwbContainer;
+  rec: IwbMainRecord;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Input interface is not an element.');
+    if Supports(element, IwbFile) or Supports(element, IwbGroupRecord) then
+      raise Exception.Create('Input interface cannot be a file or group.');
+    element := NativeFindPreviousElement(element, string(search), byPath, byValue, true);
+    if Assigned(element) then begin
+      _res^ := Store(element);
+      Result := True;
+    end;
   except
     on x: Exception do ExceptionHandler(x);
   end;

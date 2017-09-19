@@ -60,9 +60,10 @@ exports
   RemoveElementOrParent, SetElement, GetElements, GetDefNames, GetAddList,
   GetContainer, GetElementFile, GetElementRecord, GetLinksTo, SetLinksTo,
   ElementCount, ElementEquals, ElementMatches, HasArrayItem, GetArrayItem,
-  AddArrayItem, RemoveArrayItem, MoveArrayItem, CopyElement, GetSignatureAllowed,
-  GetAllowedSignatures, GetIsModified, GetIsEditable, GetIsRemoveable, GetCanAdd,
-  SortKey, ElementType, DefType, SmashType, ValueType, IsSorted,
+  AddArrayItem, RemoveArrayItem, MoveArrayItem, CopyElement, FindNextElement,
+  FindPreviousElement, GetSignatureAllowed, GetAllowedSignatures, GetIsModified,
+  GetIsEditable, GetIsRemoveable, GetCanAdd, SortKey, ElementType, DefType,
+  SmashType, ValueType, IsSorted,
   // PLUGIN ERROR METHODS
   CheckForErrors, GetErrorThreadDone, GetErrors, RemoveIdenticalRecords,
   // SERIALIZATION METHODS
@@ -75,9 +76,8 @@ exports
   // RECORD HANDLING METHODS
   GetFormID, SetFormID, GetRecord, GetRecords, GetOverrides, GetReferencedBy,
   GetMasterRecord, GetPreviousOverride, GetWinningOverride, FindNextRecord,
-  FindPreviousRecord, {FindNextElement, FindPreviousElement,} FindValidReferences,
-  ExchangeReferences, IsMaster, IsInjected, IsOverride, IsWinningOverride, GetNodes,
-  GetConflictData, GetNodeElements;
+  FindPreviousRecord, FindValidReferences, ExchangeReferences, IsMaster, IsInjected,
+  IsOverride, IsWinningOverride, GetNodes, GetConflictData, GetNodeElements;
 
 begin
   IsMultiThread := True;
