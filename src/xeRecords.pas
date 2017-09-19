@@ -183,7 +183,7 @@ function NativeFindNextRecord(const container: IwbContainer; const element: IwbE
 var
   i: Integer;
   e: IwbElement;
-  innerContainer: IwbContainer;
+  c: IwbContainer;
   elements: TDynElements;
 begin
   // iterate through children
@@ -196,8 +196,8 @@ begin
       if byName and (Pos(search, Result.FullName) > 0) then exit;
     end
     // recurse through child containers
-    else if Supports(e, IwbContainer, innerContainer) then begin
-      Result := NativeFindNextRecord(innerContainer, nil, search, byEdid, byName, false);
+    else if Supports(e, IwbContainer, c) then begin
+      Result := NativeFindNextRecord(c, nil, search, byEdid, byName, false);
       if Assigned(Result) then exit;
     end;
     Inc(i);
@@ -206,9 +206,9 @@ begin
   // recurse to sibling container
   if recurse then begin
     e := container as IwbElement;
-    container := e.Container;
-    if Assigned(container) then
-      Result := NativeFindNextRecord(container, e, search, byEdid, byName, true);
+    c := e.Container;
+    if Assigned(c) then
+      Result := NativeFindNextRecord(c, e, search, byEdid, byName, true);
   end;
 end;
 

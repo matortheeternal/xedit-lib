@@ -1671,8 +1671,6 @@ end;
 function FindNextElement(_id: Cardinal; search: PWideChar; byPath, byValue: WordBool; _res: PCardinal): WordBool; cdecl;
 var
   element: IwbElement;
-  container: IwbContainer;
-  rec: IwbMainRecord;
 begin
   Result := False;
   try
@@ -1680,7 +1678,7 @@ begin
       raise Exception.Create('Input interface is not an element.');
     if Supports(element, IwbFile) or Supports(element, IwbGroupRecord) then
       raise Exception.Create('Input interface cannot be a file or group.');
-    element := NativeFindNextElement(element, string(search), byPath, byValue, true);
+    element := NativeFindNextElement(element.Container, element, string(search), byPath, byValue, true);
     if Assigned(element) then begin
       _res^ := Store(element);
       Result := True;
@@ -1693,8 +1691,6 @@ end;
 function FindPreviousElement(_id: Cardinal; search: PWideChar; byPath, byValue: Wordbool; _res: PCardinal): WordBool; cdecl;
 var
   element: IwbElement;
-  container: IwbContainer;
-  rec: IwbMainRecord;
 begin
   Result := False;
   try
@@ -1702,7 +1698,7 @@ begin
       raise Exception.Create('Input interface is not an element.');
     if Supports(element, IwbFile) or Supports(element, IwbGroupRecord) then
       raise Exception.Create('Input interface cannot be a file or group.');
-    element := NativeFindPreviousElement(element, string(search), byPath, byValue, true);
+    element := NativeFindPreviousElement(element.Container, element, string(search), byPath, byValue, true);
     if Assigned(element) then begin
       _res^ := Store(element);
       Result := True;
