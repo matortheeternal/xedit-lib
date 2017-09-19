@@ -479,7 +479,8 @@ begin
       element := xFiles[Low(xFiles)]
     else if not Supports(Resolve(_id), IwbElement, element) then
       raise Exception.Create('Input interface is not an element.');
-    container := element.Container;
+    if not Supports(element, IwbContainer, container) then
+      raise Exception.Create('Input element is not a container.');
     if Supports(element, IwbMainRecord) then
       rec := NativeFindNextRecord(container, element, string(search), byEdid, byName, True)
     else if Supports(element, IwbGroupRecord) or Supports(element, IwbFile) then
@@ -511,7 +512,8 @@ begin
       element := xFiles[High(xFiles)]
     else if not Supports(Resolve(_id), IwbElement, element) then
       raise Exception.Create('Input interface is not an element.');
-    container := element.Container;
+    if not Supports(element, IwbContainer, container) then
+      raise Exception.Create('Input element is not a container.');
     if Supports(element, IwbMainRecord) then
       rec := NativeFindPreviousRecord(container, element, string(search), byEdid, byName, true)
     else if Supports(element, IwbGroupRecord) or Supports(element, IwbFile) then
