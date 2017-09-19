@@ -39,14 +39,14 @@ type
   {$endregion}
 
   {$region 'Native functions'}
-  procedure RemoveIdenticalRecord(const rec: IwbMainRecord);
+  procedure RemoveIdenticalRecord(const rec: IwbMainRecord; removeITMs, removeITPOs: Boolean);
   {$endregion}
 
   {$region 'API functions'}
   function CheckForErrors(_id: Cardinal): WordBool; cdecl;
   function GetErrorThreadDone: WordBool; cdecl;
   function GetErrors(len: PInteger): WordBool; cdecl;
-  function RemoveIdenticalRecords(_id: Cardinal): WordBool; cdecl;
+  function RemoveIdenticalRecords(_id: Cardinal; removeITMs, removeITPOs: WordBool): WordBool; cdecl;
   {$endregion}
 
 const
@@ -262,7 +262,7 @@ end;
 {$endregion}
 
 {$region 'Remove identical records helpers'}
-procedure RemoveEmptyIdenticalContainers(const container: IwbContainer);
+procedure RemoveEmptyIdenticalContainers(const container: IwbContainer; removeITMs, removeITPOs: Boolean);
 var
   rec: IwbMainRecord;
   parentContainer: IwbContainer;
@@ -270,22 +270,22 @@ begin
   if container.ElementCount = 0 then begin
     parentContainer := container.container;
     if Supports(container, IwbMainRecord, rec) then
-      RemoveIdenticalRecord(rec)
+      RemoveIdenticalRecord(rec, removeITMs, removeITPOs)
     else
       container.Remove;
     if Assigned(container) then
-      RemoveEmptyIdenticalContainers(parentContainer);
+      RemoveEmptyIdenticalContainers(parentContainer, removeITMs, removeITPOs);
   end;
 end;
 
-procedure RemoveIdenticalRecord(const rec: IwbMainRecord);
+procedure RemoveIdenticalRecord(const rec: IwbMainRecord; removeITMs, removeITPOs: Boolean);
 var
   container: IwbContainer;
 begin
-  if IsITM(rec) or IsITPO(rec) then begin
+  if (removeITMs and IsITM(rec)) or (removeITPOs and IsITPO(rec)) then begin
     container := rec.Container;
     rec.Remove;
-    RemoveEmptyIdenticalContainers(container);
+    RemoveEmptyIdenticalContainers(container, removeITMs, removeITPOs);
   end;
 end;
 {$endregion}
@@ -343,7 +343,7 @@ begin
   end;
 end;
 
-function RemoveIdenticalRecords(_id: Cardinal): WordBool; cdecl;
+function RemoveIdenticalRecords(_id: Cardinal; removeITMs, removeITPOs: WordBool): WordBool; cdecl;
 var
   _file: IwbFile;
   i: Integer;
@@ -356,7 +356,7 @@ begin
     for i := Pred(_file.RecordCount) downto 0 do begin
       rec := _file.Records[i];
       if rec.IsMaster then continue;
-      RemoveIdenticalRecord(rec);
+      RemoveIdenticalRecord(rec, removeITMs, removeITPOs);
     end;
     Result := True;
   except
