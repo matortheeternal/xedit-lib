@@ -94,7 +94,8 @@ begin
   Result := True;
 end;
 
-procedure FindRecords(const _file: IwbFile; signatures: TFastStringList; includeOverrides: Boolean; lst: TList); overload;
+procedure FindRecords(const _file: IwbFile; signatures: TFastStringList;
+  includeOverrides: Boolean; lst: TList); overload;
 var
   allRecords: Boolean;
   i, j: Integer;
@@ -122,7 +123,8 @@ begin
   end;
 end;
 
-procedure FindRecords(const group: IwbGroupRecord; signatures: TFastStringList; includeOverrides: Boolean; lst: TList); overload;
+procedure FindRecords(const group: IwbGroupRecord; signatures: TFastStringList;
+  includeOverrides: Boolean; lst: TList); overload;
 var
   allRecords: Boolean;
   i: Integer;
@@ -141,7 +143,8 @@ begin
   end;
 end;
 
-procedure NativeGetRecords(_id: Cardinal; signatures: TFastStringList; includeOverrides: Boolean; lst: TList);
+procedure NativeGetRecords(_id: Cardinal; signatures: TFastStringList;
+  includeOverrides: Boolean; lst: TList);
 var
   i: Integer;
   e: IInterface;
@@ -175,8 +178,8 @@ begin
   Result := -1;
 end;
 
-function NativeFindNextRecord(container: IwbContainer; const element: IwbElement; const search: String;
-  byEdid, byName, recurse: WordBool): IwbMainRecord;
+function NativeFindNextRecord(const container: IwbContainer; const element: IwbElement;
+  const search: String; byEdid, byName, recurse: WordBool): IwbMainRecord;
 var
   i: Integer;
   e: IwbElement;
@@ -209,8 +212,8 @@ begin
   end;
 end;
 
-function NativeFindPreviousRecord(const container: IwbContainer; const element: IwbElement; const search: String;
-  byEdid, byName, recurse: WordBool): IwbMainRecord;
+function NativeFindPreviousRecord(const container: IwbContainer; const element: IwbElement;
+  const search: String; byEdid, byName, recurse: WordBool): IwbMainRecord;
 var
   i: Integer;
   e: IwbElement;
@@ -269,7 +272,8 @@ begin
     end;
 end;
 
-function NativeFindValidReferences(const element: IwbElement; const signature: TwbSignature; const search: String; limitTo: Integer): String;
+function NativeFindValidReferences(const element: IwbElement; const signature: TwbSignature;
+  const search: String; limitTo: Integer): String;
 var
   files: TDynFiles;
   rec: IwbMainRecord;
@@ -459,7 +463,8 @@ begin
   end;
 end;
 
-function FindNextRecord(_id: Cardinal; search: PWideChar; byEdid, byName: WordBool; _res: PCardinal): WordBool; cdecl;
+function FindNextRecord(_id: Cardinal; search: PWideChar; byEdid, byName: WordBool;
+  _res: PCardinal): WordBool; cdecl;
 var
   element: IwbElement;
   container: IwbContainer;
@@ -490,7 +495,8 @@ begin
   end;
 end;
 
-function FindPreviousRecord(_id: Cardinal; search: PWideChar; byEdid, byName: Wordbool; _res: PCardinal): WordBool; cdecl;
+function FindPreviousRecord(_id: Cardinal; search: PWideChar; byEdid, byName: Wordbool;
+  _res: PCardinal): WordBool; cdecl;
 var
   element: IwbElement;
   container: IwbContainer;
@@ -521,7 +527,8 @@ begin
   end;
 end;
 
-function FindValidReferences(_id: Cardinal; signature, search: PWideChar; limitTo: Integer; len: PInteger): WordBool; cdecl;
+function FindValidReferences(_id: Cardinal; signature, search: PWideChar;
+  limitTo: Integer; len: PInteger): WordBool; cdecl;
 var
   element: IwbElement;
   aSignature: TwbSignature;
