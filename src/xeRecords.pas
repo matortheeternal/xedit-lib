@@ -11,7 +11,7 @@ type
 
   {$region 'Native functions'}
   function EditorIDToFormID(const _file: IwbFile; const editorID: String): Cardinal;
-  function NativeGetPreviousOverride(const rec: IwbMainRecord; const targetFile: IwbFile): IwbMainRecord;
+  function NativeGetPreviousOverride(rec: IwbMainRecord; const targetFile: IwbFile): IwbMainRecord;
   {$endregion}
 
   {$region 'API functions'}
@@ -55,10 +55,11 @@ begin
   Result := _file.LoadOrderFormIDtoFileFormID(rec.LoadOrderFormID);
 end;
 
-function NativeGetPreviousOverride(const rec: IwbMainRecord; const targetFile: IwbFile): IwbMainRecord;
+function NativeGetPreviousOverride(rec: IwbMainRecord; const targetFile: IwbFile): IwbMainRecord;
 var
   i: Integer;
 begin
+  rec := rec.MasterOrSelf;
   for i := Pred(rec.OverrideCount) downto 0 do begin
     Result := rec.Overrides[i];
     if NativeFileHasMaster(targetFile, Result._File) then exit;
