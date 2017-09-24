@@ -37,6 +37,7 @@ type
   function NativeAddElement(_id: Cardinal; const key: string): IInterface;
   function CopyElementToFile(const aSource: IwbElement; const aFile: IwbFile; aAsNew, aDeepCopy: Boolean): IwbElement;
   function CopyElementToRecord(const aSource: IwbElement; const aMainRecord: IwbMainRecord; aAsNew, aDeepCopy: Boolean): IwbElement;
+  function ResolveDef(const element: IwbElement; decideUnions: Boolean): IwbNamedDef;
   function IsChildGroup(const group: IwbGroupRecord): Boolean;
   function NativeIsSorted(const e: IwbElement): Boolean;
   function NativeIsFlags(const e: IwbElement): Boolean;
@@ -693,9 +694,7 @@ procedure NativeGetDefNames(const element: IwbElement; var sl: TStringList);
 var
   i: Integer;
   def: IwbNamedDef;
-  subDef: IwbSubRecordDef;
   unionDef: IwbUnionDef; 
-  et: TwbElementType;
   recDef: IwbRecordDef;
   container: IwbContainer;
   structDef: IwbStructDef;
@@ -704,21 +703,14 @@ var
   sraDef: IwbSubRecordArrayDef;
   aDef: IwbArrayDef;
 begin
-  def := element.Def;
-  // traverse into subrecord defs
-  if Supports(def, IwbSubRecordDef, subDef) then
-    def := subDef.Value;
-  // handle union defs
+  def := ResolveDef(element, False);
+  // try IwbUnionDef
   if Supports(def, IwbUnionDef, unionDef) then begin
     def := DecideUnion(element, unionDef);
-    et := element.Container.ElementType;
-    if (et <> etMainRecord) and (et <> etSubRecordStruct) then begin
-      sl.Add(def.Name);
-      exit;
-    end;
-  end;
+    sl.Add(def.Name);
+  end
   // try IwbRecordDef
-  if Supports(def, IwbRecordDef, recDef) then begin
+  else if Supports(def, IwbRecordDef, recDef) then begin
     if Supports(element, IwbContainer, container) then
       for i := 0 to Pred(container.AdditionalElementCount) do
         sl.Add(container.ElementBySortOrder[i].Name);
@@ -1009,6 +1001,24 @@ begin
 end;
 
 {$region 'Def/type helpers'}
+function ResolveDef(const element: IwbElement; decideUnions: Boolean): IwbNamedDef;
+var
+  subDef: IwbSubrecordDef;
+  unionDef: IwbUnionDef;
+  et: TwbElementType;
+begin
+  Result := element.Def;
+  // traverse into subrecord defs
+  if Supports(Result, IwbSubRecordDef, subDef) then
+    Result := subDef.Value;
+  // handle union defs
+  if Supports(Result, IwbUnionDef, unionDef) then begin
+    et := element.Container.ElementType;
+    if decideUnions or (et = etMainRecord) or (et = etSubRecordStruct) then
+      Result := DecideUnion(element, unionDef);
+  end;
+end;
+
 function IsChildGroup(const group: IwbGroupRecord): Boolean;
 begin
   Result := group.GroupType in [1,6,7];
@@ -1717,7 +1727,7 @@ begin
   try
     if not Supports(Resolve(_id), IwbElement, element) then
       raise Exception.Create('Interface is not an element.');
-    if not Supports(element.ValueDef, IwbIntegerDef, integerDef)
+    if not Supports(ResolveDef(element, True), IwbIntegerDef, integerDef)
     or not Supports(integerDef.Formater[element], IwbFormID) then
       raise Exception.Create('Interface must be able to hold a FormID value.');
     if Supports(integerDef.Formater[element], IwbFormIDChecked, formDef) then
@@ -1741,7 +1751,7 @@ begin
   try
     if not Supports(Resolve(_id), IwbElement, element) then
       raise Exception.Create('Interface is not an element.');
-    if not Supports(element.ValueDef, IwbIntegerDef, integerDef)
+    if not Supports(ResolveDef(element, True), IwbIntegerDef, integerDef)
     or not Supports(integerDef.Formater[element], IwbFormID) then
       raise Exception.Create('Interface must be able to hold a FormID value.');
     if Supports(integerDef.Formater[element], IwbFormIDChecked, formDef) then begin
