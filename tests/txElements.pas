@@ -958,7 +958,7 @@ begin
             begin
               It('Should return true if FormID matches', procedure
                 begin
-                  TestElementMatches(keywords, '[0]', '000424EF', true);
+                  TestElementMatches(keywords, '[0]', '0002C17B', true);
                   TestElementMatches(ar2, 'ZNAM', '00000000', true);
                   TestElementMatches(ar2, 'RNAM', '00000019', true);
                 end);
@@ -974,7 +974,7 @@ begin
             begin
               It('Should return true if Editor ID matches', procedure
                 begin
-                  TestElementMatches(keywords, '[0]', 'PerkFistsIron');
+                  TestElementMatches(keywords, '[0]', 'PerkFistsDaedric');
                   TestElementMatches(keywords, '[3]', 'ArmorGauntlets');
                   TestElementMatches(ar2, 'RNAM', 'DefaultRace');
                 end);
