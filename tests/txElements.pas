@@ -244,6 +244,27 @@ begin
   ExpectEqual(b, expectedResult);
 end;
 
+procedure TestGetAllowedSignatures(h: Cardinal; path: PWideChar; expectedSignatures: TStringArray);
+var
+  len: Integer;
+  sl: TStringList;
+  i: Integer;
+begin
+  if path <> '' then
+    ExpectSuccess(GetElement(h, path, @h));
+  ExpectSuccess(GetAllowedSignatures(h, @len));
+  sl := TStringList.Create;
+  try
+    sl.Text := grs(len);
+    len := sl.Count;
+    ExpectEqual(len, Length(expectedSignatures));
+    for i := 0 to Pred(len) do
+      ExpectEqual(sl[i], expectedSignatures[i]);
+  finally
+    sl.Free;
+  end;
+end;
+
 procedure TestGetIsEditable(h: Cardinal; path: PWideChar; expectedResult: WordBool);
 var
   b: WordBool;
@@ -1267,6 +1288,33 @@ begin
           It('Should raise an exception if element can''t hold formIDs', procedure
             begin
               ExpectFailure(GetSignatureAllowed(dnam, 'ARMO', @b));
+            end);
+        end);
+
+      Describe('GetAllowedSignatures', procedure
+        begin
+          It('Should work with checked references', procedure
+            begin
+              TestGetAllowedSignatures(keyword, '', TStringArray.Create('KYWD', 'NULL'));
+            end);
+
+          It('Should work with union elements', procedure
+            begin
+              TestGetAllowedSignatures(skyrim, '00000DD2\Conditions\[1]\CTDA\Parameter #1',
+                TStringArray.Create('PERK'));
+            end);
+
+          It('Should raise an exception if element isn''t an integer', procedure
+            begin
+              ExpectFailure(GetAllowedSignatures(skyrim, @len));
+              ExpectFailure(GetAllowedSignatures(armo1, @len));
+              ExpectFailure(GetAllowedSignatures(ar1, @len));
+              ExpectFailure(GetAllowedSignatures(keywords, @len));
+            end);
+
+          It('Should raise an exception if element can''t hold formIDs', procedure
+            begin
+              ExpectFailure(GetAllowedSignatures(dnam, @len));
             end);
         end);
 
