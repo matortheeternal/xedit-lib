@@ -1420,8 +1420,7 @@ var
 begin
   Result := False;
   try
-    if not Supports(Resolve(_id), IwbElement, element) then
-      raise Exception.Create('First interface is not an element.');
+    element := NativeGetElementEx(_id, key);
     if not Supports(Resolve(_id2), IwbMainRecord, rec) then
       raise Exception.Create('Second interface is not a record.');
     if not IsFormID(element) then
