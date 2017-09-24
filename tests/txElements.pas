@@ -200,13 +200,11 @@ end;
 
 procedure TestGetContainer(h: Cardinal; path: PWideChar);
 var
-  element, container: Cardinal;
+  container: Cardinal;
 begin
   if path <> '' then
-    ExpectSuccess(GetElement(h, path, @element))
-  else
-    element := h;
-  ExpectSuccess(GetContainer(element, @container));
+    ExpectSuccess(GetElement(h, path, @h));
+  ExpectSuccess(GetContainer(h, @container));
   Expect(container > 0, 'Handle should be greater than 0');
 end;
 
