@@ -230,6 +230,12 @@ begin
   ExpectEqual(grs(len), expectedRecordName);
 end;
 
+procedure TestSetLinksTo(h, ref: Cardinal; path: PWideChar; expectedRecordName: String);
+begin
+  ExpectSuccess(SetLinksTo(h, path, ref));
+  TestGetLinksTo(h, path, expectedRecordName);
+end;
+
 procedure TestGetSignatureAllowed(h: Cardinal; sig: PWideChar; expectedResult: WordBool);
 var
   b: WordBool;
@@ -853,6 +859,15 @@ begin
               ExpectFailure(GetLinksTo(skyrim, '', @h));
               ExpectFailure(GetLinksTo(ar1, '', @h));
               ExpectFailure(GetLinksTo(dnam, '', @h));
+            end);
+        end);
+
+      Describe('SetLinksTo', procedure
+        begin
+          It('Should set references', procedure
+            begin
+              ExpectSuccess(GetElement(0, 'Skyrim.esm\0002C17B', @h));
+              TestSetLinksTo(keyword, h, '', 'PerkFistsDaedric');
             end);
         end);
 
