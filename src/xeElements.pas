@@ -1688,7 +1688,7 @@ begin
       raise Exception.Create('Input interface is not an element.');
     if Supports(element, IwbFile) or Supports(element, IwbGroupRecord) then
       raise Exception.Create('Input interface cannot be a file or group.');
-    if Supports(element, IwbMainRecord) then
+    if Supports(element, IwbMainRecord) or Supports(element, IwbContainer) then
       container := element as IwbContainer
     else
       container := element.Container;
@@ -1713,7 +1713,7 @@ begin
       raise Exception.Create('Input interface is not an element.');
     if Supports(element, IwbFile) or Supports(element, IwbGroupRecord) then
       raise Exception.Create('Input interface cannot be a file or group.');
-    if Supports(element, IwbMainRecord) then
+    if Supports(element, IwbMainRecord) or Supports(element, IwbContainer) then
       container := element as IwbContainer
     else
       container := element.Container;
