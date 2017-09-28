@@ -916,7 +916,7 @@ begin
   end;
   Result := nil;
   // recurse to sibling container
-  if recurse then begin
+  if recurse and not Supports(container, IwbMainRecord) then begin
     e := container as IwbElement;
     c := e.Container;
     if Assigned(c) then
@@ -947,7 +947,7 @@ begin
   end;
   Result := nil;
   // recurse to sibling container
-  if recurse then begin
+  if recurse and not Supports(container, IwbMainRecord) then begin
     e := container as IwbElement;
     c := e.Container;
     if Assigned(c) then
@@ -1688,9 +1688,7 @@ begin
       raise Exception.Create('Input interface is not an element.');
     if Supports(element, IwbFile) or Supports(element, IwbGroupRecord) then
       raise Exception.Create('Input interface cannot be a file or group.');
-    if Supports(element, IwbMainRecord) or Supports(element, IwbContainer) then
-      container := element as IwbContainer
-    else
+    if not Supports(element, IwbContainer, container) then
       container := element.Container;
     element := NativeFindNextElement(container, element, string(search), byPath, byValue, true);
     if Assigned(element) then begin
@@ -1713,9 +1711,7 @@ begin
       raise Exception.Create('Input interface is not an element.');
     if Supports(element, IwbFile) or Supports(element, IwbGroupRecord) then
       raise Exception.Create('Input interface cannot be a file or group.');
-    if Supports(element, IwbMainRecord) or Supports(element, IwbContainer) then
-      container := element as IwbContainer
-    else
+    if not Supports(element, IwbContainer, container) then
       container := element.Container;
     element := NativeFindPreviousElement(container, element, string(search), byPath, byValue, true);
     if Assigned(element) then begin
