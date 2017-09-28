@@ -915,7 +915,7 @@ begin
     Inc(i);
   end;
   Result := nil;
-  // recurse to sibling container
+  // recurse through parent containers, but don't recurse above the main record
   if recurse and not Supports(container, IwbMainRecord) then begin
     e := container as IwbElement;
     c := e.Container;
@@ -946,7 +946,7 @@ begin
     Dec(i);
   end;
   Result := nil;
-  // recurse to sibling container
+  // recurse through parent containers, but don't recurse above the main record
   if recurse and not Supports(container, IwbMainRecord) then begin
     e := container as IwbElement;
     c := e.Container;
