@@ -110,7 +110,7 @@
 						<VersionInfo Name="MajorVer">0</VersionInfo>
 						<VersionInfo Name="MinorVer">2</VersionInfo>
 						<VersionInfo Name="Release">0</VersionInfo>
-						<VersionInfo Name="Build">29</VersionInfo>
+						<VersionInfo Name="Build">33</VersionInfo>
 						<VersionInfo Name="Debug">False</VersionInfo>
 						<VersionInfo Name="PreRelease">False</VersionInfo>
 						<VersionInfo Name="Special">False</VersionInfo>
@@ -122,7 +122,7 @@
 					<VersionInfoKeys>
 						<VersionInfoKeys Name="CompanyName"/>
 						<VersionInfoKeys Name="FileDescription"/>
-						<VersionInfoKeys Name="FileVersion">0.2.0.29</VersionInfoKeys>
+						<VersionInfoKeys Name="FileVersion">0.2.0.33</VersionInfoKeys>
 						<VersionInfoKeys Name="InternalName"/>
 						<VersionInfoKeys Name="LegalCopyright"/>
 						<VersionInfoKeys Name="LegalTrademarks"/>
