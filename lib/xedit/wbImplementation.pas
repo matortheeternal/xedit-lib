@@ -640,6 +640,7 @@ type
     function GetRecord(aIndex: Integer): IwbMainRecord;
     function GetRecordCount: Integer;
     function GetHeader: IwbMainRecord;
+    procedure SetIsEditable(state: Boolean);
 
     procedure RecordsBySignature(var aList: TDynMainRecords; aSignature: String; var len: Integer; aCondition: TConditionFunc = nil);
 
@@ -2722,11 +2723,20 @@ end;
 function TwbFile.GetIsEditable: Boolean;
 begin
   Result := wbIsInternalEdit or (
-        wbEditAllowed and
-    not (fsIsGameMaster in flStates) and
-    not (fsIsHardcoded in flStates) and
-    not (fsIsCompareLoad in flStates)
+    wbEditAllowed and (fsIsEditable in flStates) or (
+      not (fsIsGameMaster in flStates) and
+      not (fsIsHardcoded in flStates) and
+      not (fsIsCompareLoad in flStates)
+    )
   );
+end;
+
+procedure TwbFile.SetIsEditable(state: Boolean);
+begin
+  if state then
+    Include(flStates, fsIsEditable)
+  else
+    Exclude(flStates, fsIsEditable);
 end;
 
 function TwbFile.GetIsESM: Boolean;

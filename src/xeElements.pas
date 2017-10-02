@@ -81,6 +81,7 @@ type
   function GetAllowedSignatures(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function GetIsModified(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
   function GetIsEditable(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
+  function SetIsEditable(_id: Cardinal; bool: WordBool): WordBool; cdecl;
   function GetIsRemoveable(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
   function GetCanAdd(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
   function SortKey(_id: Cardinal; len: PInteger): WordBool; cdecl;
@@ -1798,6 +1799,21 @@ begin
     if not Supports(Resolve(_id), IwbElement, element) then
       raise Exception.Create('Interface is not an element.');
     bool^ := element.IsEditable;
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function SetIsEditable(_id: Cardinal; bool: WordBool): WordBool; cdecl;
+var
+  _file: IwbFile;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbFile, _file) then
+      raise Exception.Create('Interface is not a file.');
+    _file.SetIsEditable(bool);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
