@@ -248,7 +248,7 @@ constructor TRecordError.Create(const rec: IwbMainRecord; const element: IwbElem
 begin
   Init(rec);
   if not Supports(element, IwbMainRecord) then
-    path := GetPath(element, false);
+    path := GetPath(element, false, true);
   ParseError(error, &type, data);
 end;
 
