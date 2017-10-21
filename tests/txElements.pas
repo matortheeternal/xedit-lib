@@ -99,7 +99,7 @@ begin
   ExpectSuccess(RemoveElement(h, path));
   if testPresence then begin
     ExpectSuccess(HasElement(h, path, @b));
-    Expect(not b, 'The element should not longer be present');
+    Expect(not b, 'The element should no longer be present');
   end;
 end;
 
@@ -616,6 +616,11 @@ begin
               TestElementCount(keywords, 5);
               TestRemoveElement(armature, '[0]', False);
               TestElementCount(armature, 2);
+            end);
+
+          It('Should remove the last element in an array', procedure
+            begin
+              TestRemoveElement(0, 'xtest-4.esp\05000802\Armature\[0]');
             end);
 
           It('Should remove the element passed if no path is given', procedure

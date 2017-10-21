@@ -497,6 +497,7 @@ type
 
     procedure AddElement(const aElement: IwbElement); virtual;
     procedure InsertElement(aPosition: Integer; const aElement: IwbElement);
+    function IsArray: Boolean;
     function RemoveElement(aPos: Integer; aMarkModified: Boolean = False): IwbElement; overload; virtual;
     function RemoveElement(const aElement: IwbElement; aMarkModified: Boolean = False): IwbElement; overload; virtual;
     function RemoveElement(const aName: string): IwbElement; overload;
@@ -5164,6 +5165,17 @@ begin
         cntElements[i].ReportRequiredMasters(aStrings, aAsNew, Recursive);
 end;
 
+function TwbContainer.IsArray: Boolean;
+var
+  def: IwbNamedDef;
+  dt: TwbDefType;
+begin
+  Result := False;
+  def := GetDef;
+  if not Assigned(def) then exit;
+  Result := (def.DefType = dtArray) or (def.DefType = dtSubrecordArray);
+end;
+
 function TwbContainer.RemoveElement(aPos: Integer; aMarkModified: Boolean = False): IwbElement;
 var
   SelfRef : IwbContainerElementRef;
@@ -5192,7 +5204,10 @@ begin
   end;
 
   SetLength(cntElements, Pred(Length(cntElements)));
-  NotifyChanged(eContainer);
+  if (Length(cntElements) = 0) and Self.IsArray then
+    Self.Remove
+  else
+    NotifyChanged(eContainer);
 end;
 
 procedure TwbContainer.Reset;
@@ -10325,7 +10340,7 @@ begin
   Result := IsElementEditable(aElement)
     and (srsIsArray in srStates)
     and Assigned(srValueDef)
-    and ((srValueDef as IwbArrayDef).ElementCount <= 0) and (Length(cntElements)>1);
+    and ((srValueDef as IwbArrayDef).ElementCount <= 0);
 end;
 
 function TwbSubRecord.IsFlags: Boolean;
@@ -13820,7 +13835,7 @@ end;
 
 function TwbSubRecordArray.IsElementRemoveable(const aElement: IwbElement): Boolean;
 begin
-  Result := IsElementEditable(aElement) and (Length(cntElements) > 1);
+  Result := IsElementEditable(aElement);
 end;
 
 procedure TwbSubRecordArray.SetModified(aValue: Boolean);
