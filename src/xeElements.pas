@@ -151,10 +151,11 @@ function GetSignatureFromName(const name: String; var signature: TwbSignature): 
 var
   index: Integer;
 begin
-  index := slSignatureNameMap.IndexOf(name);
+  BuildSignatureNameMap;
+  index := slSignatureNameMap.IndexOfValue(name);
   Result := index > -1;
   if Result then
-    signature := TwbSignature(slSignatureNameMap.Names[index])
+    signature := StrToSignature(slSignatureNameMap.Names[index])
 end;
 
 procedure SplitPath(const path: String; var key, nextPath: String);
@@ -232,12 +233,11 @@ begin
         exit;
       end;
     end
-    else if Supports(element, IwbGroupRecord, grp) then begin
+    else if Supports(element, IwbGroupRecord, grp) then
       if SameText(grp.ShortName, searchKey) then begin
         Result := grp;
         exit;
       end;
-    end;
   end;
 end;
 
