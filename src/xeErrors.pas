@@ -74,7 +74,7 @@ implementation
 uses
   SysUtils, StrUtils, Masks, RegularExpressions,
   // xelib units
-  xeConflict, xeMessages, xeElementValues,
+  xeConflict, xeMessages, xeElementValues, xeRecords,
   // library units
   Argo;
 
@@ -92,11 +92,13 @@ begin
   error := rec.GetSubRecordErrors;
   if error <> '' then
     errors.Add(TRecordError.Create(rec, erUES, Error));
-end;  
+end;
 
 procedure CheckForIdenticalErrors(const rec: IwbMainRecord);
 begin
-  if rec.IsMaster or rec.Master.IsInjected then exit;
+  if rec.IsMaster or rec.Master.IsInjected
+  or (Assigned(rec.ChildGroup) and HasChildRecords(rec.ChildGroup)) then
+    exit;
   if IsITM(rec) then
     errors.Add(TRecordError.Create(rec, erITM))
   else if IsITPO(rec) then
