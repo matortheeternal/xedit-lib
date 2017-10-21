@@ -388,7 +388,7 @@ begin
                 end);
             end);
 
-          Describe('File group resolution by signature', procedure
+          Describe('Top-level group resolution by signature', procedure
             begin
               It('Should return a handle if the group exists', procedure
                 begin
@@ -398,6 +398,52 @@ begin
               It('Should fail if the group does not exist', procedure
                 begin
                   ExpectFailure(GetElement(skyrim, 'ABCD', @h));
+                end);
+            end);
+
+          Describe('Top-level group resolution by name', procedure
+            begin
+              It('Should return a handle if the group exists', procedure
+                begin
+                  TestGetElement(skyrim, 'Armor');
+                end);
+
+              It('Should fail if the group does not exist', procedure
+                begin
+                  ExpectFailure(GetElement(xt3, 'Ammunition', @h));
+                end);
+            end);
+
+          Describe('Block/sub-block resolution', procedure
+            begin
+              It('Should return a handle if the group exists', procedure
+                begin
+                  TestGetElement(skyrim, '0000003C\Child Group\Block -1, 0');
+                  TestGetElement(skyrim, '0000003C\Child Group\Block -1, 0\Sub-Block -1, 0');
+                  TestGetElement(skyrim, 'CELL\Block 0');
+                  TestGetElement(skyrim, 'CELL\Block 0\Sub-Block 0');
+                end);
+
+              It('Should fail if the group does not exist', procedure
+                begin
+                  ExpectFailure(GetElement(skyrim, '0000003C\Child Group\Block -99, 99', @h));
+                  ExpectFailure(GetElement(skyrim, '0000003C\Child Group\Block -1, 0\Sub-Block -99, 99', @h));
+                  ExpectFailure(GetElement(skyrim, 'CELL\Block 10', @h));
+                  ExpectFailure(GetElement(skyrim, 'CELL\Block 0\Sub-Block 10', @h));
+                end);
+            end);
+
+          Describe('Temporary/persistent group resolution', procedure
+            begin
+              It('Should return a handle if the group exists', procedure
+                begin
+                  TestGetElement(skyrim, '00027D1C\Child Group\Temporary');
+                  TestGetElement(skyrim, '00027D1C\Child Group\Persistent');
+                end);
+
+              It('Should fail if the group does not exist', procedure
+                begin
+                  ExpectFailure(GetElement(skyrim, '000094BD\Child Group\Persistent', @h));
                 end);
             end);
 
