@@ -12,6 +12,7 @@ type
   {$region 'Native functions'}
   function EditorIDToFormID(const _file: IwbFile; const editorID: String): Cardinal;
   function NativeGetPreviousOverride(rec: IwbMainRecord; const targetFile: IwbFile): IwbMainRecord;
+  function HasChildRecords(const container: IwbContainer): Boolean;
   {$endregion}
 
   {$region 'API functions'}
@@ -298,6 +299,21 @@ begin
       end;
     end;
   end;
+end;
+
+function HasChildRecords(const container: IwbContainer): Boolean;
+var
+  i: Integer;
+  e: IwbElement;
+  c: IwbContainer;
+begin
+  for i := 0 to Pred(container.ElementCount) do begin
+    e := container.Elements[i];
+    Result := Supports(e, IwbMainRecord)
+      or (Supports(e, IwbContainer, c) and HasChildRecords(c));
+    if Result then exit;
+  end;
+  Result := False;
 end;
 {$endregion}
 
