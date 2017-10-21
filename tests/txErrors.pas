@@ -114,10 +114,10 @@ begin
                       Expect(Assigned(errorObj), 'Matching error not found');
                     end);
 
-                  It('Should include records with children', procedure
+                  It('Should not include records with children', procedure
                     begin
                       errorObj := FindError(obj, erITM, 'KilkreathRuins03');
-                      Expect(Assigned(errorObj), 'Matching error not found');
+                      Expect(not Assigned(errorObj), 'Matching error found');
                     end);
 
                   It('Should not include injected records', procedure
@@ -175,10 +175,10 @@ begin
                   ary := obj.A['errors'];
                   for i := 0 to Pred(ary.Count) do begin
                     errorObj := ary.O[i];
-                    if (Pos('UESTest', errorObj.S['name']) = 1) then
+                    if Pos('UESTest', errorObj.S['name']) = 1 then
                       Inc(n);
                   end;
-                  ExpectEqual(n, 8);
+                  ExpectEqual(n, 7);
                 end);
 
               {It('Should find Other Errors (OEs)', procedure
