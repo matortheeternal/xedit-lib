@@ -267,7 +267,12 @@ end;
 {$region 'Load order helpers'}
 function LoadFileHeader(const filePath: String): IwbFile;
 begin
-  Result := wbFile(filePath, -1, '', False, True);
+  try
+    Result := wbFile(filePath, -1, '', False, True);
+  except
+    on x: Exception do 
+      raise Exception.Create(Format('Failed to load file header %s, %s', [filePath, x.Message]));
+  end;
 end;
 
 procedure AddToLoadOrder(const filePath: String);
