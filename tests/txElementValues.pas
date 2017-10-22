@@ -17,6 +17,14 @@ uses
 {$ENDIF}
   txMeta, txElements;
 
+function GetFullName(h: Cardinal): String;
+var
+  len: Integer;
+begin
+  GetValue(h, 'FULL', @len);
+  Result := grs(len);
+end;
+
 procedure TestGetFlag(h: Cardinal; path, flag: PWideChar; expectedValue: WordBool);
 var
   b: WordBool;
@@ -283,6 +291,7 @@ begin
               ExpectSuccess(GetValue(keyword, '', @len));
               ExpectEqual(grs(len), 'ArmorHeavy [KYWD:0006BBD2]');
             end);
+
           It('Should resolve element value at path', procedure
             begin
               ExpectSuccess(GetValue(rec, 'OBND\X1', @len));
@@ -292,9 +301,18 @@ begin
               ExpectSuccess(GetValue(rec, 'Female world model\MOD4', @len));
               ExpectEqual(grs(len), 'Test');
             end);
+
           It('Should fail if path does not exist', procedure
             begin
               ExpectFailure(GetValue(rec, 'Non\Existent\Path', @len));
+            end);
+
+          It('Should be fast', procedure
+            begin
+              Benchmark(100000, procedure
+                begin
+                  GetFullName(rec);
+                end);
             end);
         end);
 
