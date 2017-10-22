@@ -4464,12 +4464,12 @@ begin
   DoInit;
   Result := nil;
   for i := Low(cntElements) to High(cntElements) do
-    if SameText(cntElements[i].Name, aName) then begin
+    if cntElements[i].Name = aName then begin
       Result := IInterface(cntElements[i]) as IwbElement;
       Exit;
     end;
   for i := Low(cntElements) to High(cntElements) do
-    if SameText(cntElements[i].DisplayName, aName) then begin
+    if cntElements[i].DisplayName = aName then begin
       Result := IInterface(cntElements[i]) as IwbElement;
       Exit;
     end;
@@ -5250,7 +5250,7 @@ end;
 
 function TwbContainer.ResolveElementName(aName: string; out aRemainingName: string; aCanCreate: Boolean = False): IwbElement;
 var
-  i : Integer;
+  i, len: Integer;
 begin
   aRemainingName := '';
   i := Pos('\', aName);
@@ -5258,16 +5258,21 @@ begin
     aRemainingName := Copy(aName, Succ(i), High(Integer));
     Delete(aName, i, High(Integer));
   end;
+
+  len := Length(aName);
   if aName = '..' then
     Result := GetContainer
-  else if (Length(aName) > 2) and (aName[1] = '[') and (aName[Length(aName)] = ']') then begin
-    i := StrToIntDef(Copy(aName, 2, Length(aName) - 2), 0);
+  else if (len > 2) and (aName[1] = '[') and (aName[len] = ']') then begin
+    i := StrToIntDef(Copy(aName, 2, len - 2), 0);
     Result := GetElement(i);
+  end
+  else if len = 4 then begin
+    Result := GetElementBySignature(StrToSignature(aName));
+    if not Assigned(Result) then
+      Result := GetElementByName(aName);
   end
   else
     Result := GetElementByName(aName);
-  if not Assigned(Result) and (Length(aName) = 4) then
-    Result := GetElementBySignature(StrToSignature(aName));
 end;
 
 procedure TwbContainer.ReverseElements;
