@@ -50,7 +50,7 @@ implementation
 uses
   wbImplementation,
   // xelib modules
-  xeConfiguration, xeMessages, xeSetup, xeFiles;
+  xeConfiguration, xeMessages, xeSetup, xeFiles, xeElementValues;
 
 const
   sortByFormID = 1;
@@ -140,8 +140,12 @@ begin
     Result := _file.Name
   else if Supports(e, IwbGroupRecord, group) then
     Result := group.ShortName
-  else if Supports(e, IwbMainRecord, rec) then
-    Result := rec.FullName
+  else if Supports(e, IwbMainRecord, rec) then begin
+    if rec.ElementExists['FULL'] then
+      Result := rec.FullName
+    else if rec.ElementExists['NAME'] then
+      Result := NativeName(rec.ElementByPath['NAME'].LinksTo)
+  end
   else
     Result := '';
 end;
