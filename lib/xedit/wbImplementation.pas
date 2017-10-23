@@ -6606,8 +6606,31 @@ begin
 end;
 
 function TwbMainRecord.FindReferencedBy(const aMainRecord: IwbMainRecord; var Index: Integer): Boolean;
+var
+  L, H, I, C: Integer;
 begin
-  Result := wbBinarySearch(@mrReferencedBy[0], Low(mrReferencedBy), High(mrReferencedBy), @aMainRecord, SearchByRecord, Index);
+  Result := False;
+
+  L := Low(mrReferencedBy);
+  H := High(mrReferencedBy);
+  while L <= H do begin
+    I := (L + H) shr 1;
+
+    C := CmpW32(mrReferencedBy[I].LoadOrderFormID , aMainRecord.LoadOrderFormID);
+    if C = 0 then
+      C := CmpW32(mrReferencedBy[I]._File.LoadOrder, aMainRecord._File.LoadOrder);
+
+    if C < 0 then
+      L := I + 1
+    else begin
+      H := I - 1;
+      if C = 0 then begin
+        Result := True;
+        L := I;
+      end;
+    end;
+  end;
+  Index := L;
 end;
 
 procedure TwbMainRecord.FindUsedMasters(aMasters: PwbUsedMasters);
