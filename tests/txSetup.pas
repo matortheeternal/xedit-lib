@@ -47,20 +47,48 @@ end;
 procedure TestLoader(expectedTime: Double);
 var
   status, activeByte: Byte;
-  n: Integer;
+  start: Extended;
 begin
   ExpectSuccess(GetLoaderStatus(@status));
   activeByte := Byte(Ord(lsActive));
   Expect(status = activeByte, 'Loader should take time');
-  n := 0;
-  while (status = activeByte) do begin
+  start := Now;
+  while status = activeByte do begin
     WriteMessages;
-    Inc(n);
     Sleep(100);
-    GetLoaderStatus(@status)
+    GetLoaderStatus(@status);
   end;
-  Expect(n < expectedTime * 10, 'Loader should complete in under ' + FloatToStr(expectedTime) + ' seconds');
+  Expect(start - Now < expectedTime, 'Loader should complete in under ' + FloatToStr(expectedTime) + ' seconds');
+end;
+
+procedure TestLoadPlugins(loadOrder: PWideChar; expectedTime: Double);
+begin
+  WriteLn(' ');
+  ExpectSuccess(LoadPlugins(loadOrder, True));
+  TestLoader(expectedTime);
   WriteMessages;
+  WriteLn(' ');
+end;
+
+procedure TestBuildReferences(fileName: PWideChar; expectedTime: Double);
+var
+  h: Cardinal;
+begin
+  WriteLn(' ');
+  ExpectSuccess(FileByName(fileName, @h));
+  ExpectSuccess(BuildReferences(h));
+  TestLoader(expectedTime);
+  WriteMessages;
+  WriteLn(' ');
+end;
+
+procedure TestLoadPlugin(fileName: PWideChar; expectedTime: Double);
+begin
+  WriteLn(' ');
+  ExpectSuccess(LoadPlugin(fileName));
+  TestLoader(expectedTime);
+  WriteMessages;
+  WriteLn(' ');
 end;
 
 {$IFDEF SKYRIM}
@@ -184,10 +212,7 @@ begin
         begin
           It('Should load plugins based on input load order', procedure
             begin
-              WriteLn(' ');
-              ExpectSuccess(LoadPlugins(TestLoadOrder, True));
-              TestLoader(10);
-              WriteLn(' ');
+              TestLoadPlugins(TestLoadOrder, 10);
             end);
 
           It('Should set FileCount global', procedure
@@ -197,19 +222,13 @@ begin
             end);
         end);
 
-      {Describe('BuildReferences', procedure
+      Describe('BuildReferences', procedure
         begin
           It('Should build references for the input plugin', procedure
             begin
-              WriteLn(' ');
-              ExpectSuccess(FileByName('xtest-2.esp', @h));
-              ExpectSuccess(BuildReferences(h));
-              while not GetLoaderDone do
-                Sleep(100);
-              WriteMessages;
-              WriteLn(' ');
+              TestBuildReferences('xtest-2.esp', 2);
             end);
-        end);}
+        end);
 
       Describe('UnloadPlugin', procedure
         begin
@@ -242,10 +261,7 @@ begin
         begin
           It('Should successfully load plugins', procedure
             begin
-              WriteLn(' ');
-              ExpectSuccess(LoadPlugin('xtest-5.esp'));
-              TestLoader(0.5);
-              WriteLn(' ');
+              TestLoadPlugin('xtest-5.esp', 0.5);
             end);
 
           It('Should update FileCount global', procedure
