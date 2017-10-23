@@ -702,10 +702,6 @@ begin
       LoadPluginsList(sLoadPath, slPlugins, True);
       LoadLoadOrder(sLoadPath, slLoadOrder, slPlugins);
 
-      // add base masters if missing
-      AddBaseMasters(slPlugins);
-      AddBaseMasters(slLoadOrder);
-
       // if GameMode is not SkyrimSE or Fallout 4 and we don't
       // have a loadorder.txt, sort by date modified
       if not (wbGameMode <> gmSSE) and (wbGameMode <> gmFO4)
@@ -713,6 +709,10 @@ begin
         GetPluginDates(slLoadOrder);
         slLoadOrder.CustomSort(PluginListCompare);
       end;
+
+      // add base masters if missing
+      AddBaseMasters(slPlugins);
+      AddBaseMasters(slLoadOrder);
 
       // SET RESULT STRING
       resultStr := slLoadOrder.Text;
