@@ -76,7 +76,7 @@ var
 begin
   WriteLn(' ');
   ExpectSuccess(FileByName(fileName, @h));
-  ExpectSuccess(BuildReferences(h));
+  ExpectSuccess(BuildReferences(h, False));
   TestLoader(expectedTime);
   WriteMessages;
   WriteLn(' ');

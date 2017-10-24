@@ -49,7 +49,7 @@ type
   function LoadPlugins(loadOrder: PWideChar; smartLoad: WordBool): WordBool; cdecl;
   function LoadPlugin(filename: PWideChar): WordBool; cdecl;
   function LoadPluginHeader(fileName: PWideChar; _res: PCardinal): WordBool; cdecl;
-  function BuildReferences(_id: Cardinal): WordBool; cdecl;
+  function BuildReferences(_id: Cardinal; synchronous: WordBool): WordBool; cdecl;
   function GetLoaderStatus(status: PByte): WordBool; cdecl;
   function UnloadPlugin(_id: Cardinal): WordBool; cdecl;
   {$endregion}
@@ -126,6 +126,42 @@ begin
     lsError: wbLoaderError := True;
   end;
 end;
+
+{$region 'Reference building helpers}
+procedure BuildReferencesAsync(_id: Cardinal);
+var
+  _file: IwbFile;
+begin
+  if _id = 0 then
+    rFiles := Copy(xFiles, 0, MaxInt)
+  else begin
+    if not Supports(Resolve(_id), IwbFile, _file) then
+      raise Exception.Create('Interface must be a file.');
+    SetLength(rFiles, 1);
+    rFiles[0] := _file;
+  end;
+
+  // start reference building thread
+  SetLoaderState(lsActive);
+  RefThread := TRefThread.Create;
+end;
+
+procedure BuildReferencesSync(_id: Cardinal);
+var
+  i: Integer;
+  _file: IwbFile;
+begin
+  if _id = 0 then begin
+    for i := Low(xFiles) to High(xFiles) do
+      xFiles[i].BuildRef;
+  end
+  else begin
+    if not Supports(Resolve(_id), IwbFile, _file) then
+      raise Exception.Create('Interface must be a file.');
+    _file.BuildRef;
+  end;
+end;
+{$endregion}
 
 {$region 'File loading'}
 procedure UpdateFileCount;
@@ -818,24 +854,15 @@ begin
   end;
 end;
 
-function BuildReferences(_id: Cardinal): WordBool; cdecl;
-var
-  _file: IwbFile;
+function BuildReferences(_id: Cardinal; synchronous: WordBool): WordBool; cdecl;
 begin
   Result := False;
   try
-    if _id = 0 then
-      rFiles := Copy(xFiles, 0, MaxInt)
-    else begin
-      if not Supports(Resolve(_id), IwbFile, _file) then
-        raise Exception.Create('Interface must be a file.');
-      SetLength(rFiles, 1);
-      rFiles[0] := _file;
-    end;
+    if not synchronous then
+      BuildReferencesAsync(_id)
+    else
+      BuildReferencesSync(_id);
 
-    // start reference building thread
-    SetLoaderState(lsActive);
-    RefThread := TRefThread.Create;
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);

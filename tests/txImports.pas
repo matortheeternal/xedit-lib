@@ -42,7 +42,7 @@ type
   function LoadPlugins(loadOrder: PWideChar; smartLoad: WordBool): WordBool; cdecl; external 'XEditLib.dll';
   function LoadPlugin(filename: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
   function LoadPluginHeader(fileName: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function BuildReferences(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
+  function BuildReferences(_id: Cardinal; synchronous: WordBool): WordBool; cdecl; external 'XEditLib.dll';
   function GetLoaderStatus(status: PByte): WordBool; cdecl; external 'XEditLib.dll';
   function UnloadPlugin(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
 
