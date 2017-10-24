@@ -17,8 +17,9 @@ type
   function GetResultArray(_res: PCardinal; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
   function GetGlobal(key: PWideChar; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetGlobals(len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
-  function SetSortMode(_sortBy: Byte; _reverse: WordBool): WordBool; cdecl;
+  function SetSortMode(_sortBy: Byte; _reverse: WordBool): WordBool; cdecl; external 'XEditLib.dll';
   function Release(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
+  function ReleaseNodes(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
   function Switch(_id, _id2: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
   function GetDuplicateHandles(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function ResetStore: WordBool; cdecl; external 'XEditLib.dll';
@@ -44,7 +45,6 @@ type
   function BuildReferences(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
   function GetLoaderStatus(status: PByte): WordBool; cdecl; external 'XEditLib.dll';
   function UnloadPlugin(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function SetGameMode(mode: Integer): WordBool; cdecl; external 'XEditLib.dll';
 
   // FILE HANDLING METHODS
   function AddFile(filename: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
@@ -69,7 +69,7 @@ type
   function AddRequiredMasters(_id, _id2: Cardinal; asNew: WordBool): WordBool; cdecl; external 'XEditLib.dll';
   function GetMasters(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetRequiredBy(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
-  function GetMasterNames(_id: Cardinal; len: PInteger): WordBool; cdecl;
+  function GetMasterNames(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
 
   // ELEMENT HANDLING METHODS
   function HasElement(_id: Cardinal; key: PWideChar; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
@@ -83,7 +83,7 @@ type
   function GetDefNames(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetAddList(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetLinksTo(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function SetLinksTo(_id, _id2: Cardinal; key: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
+  function SetLinksTo(_id: Cardinal; key: PWideChar; _id2: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
   function GetElementIndex(_id: Cardinal; index: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function GetElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
@@ -98,6 +98,7 @@ type
   function MoveArrayItem(_id: Cardinal; index: Integer): WordBool; cdecl; external 'XEditLib.dll';
   function CopyElement(_id, _id2: Cardinal; aAsNew: WordBool; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function GetSignatureAllowed(_id: Cardinal; sig: PWideChar; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
+  function GetAllowedSignatures(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetIsModified(_id: Cardinal; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
   function GetIsEditable(_id: Cardinal; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
   function GetIsRemoveable(_id: Cardinal; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
@@ -144,10 +145,10 @@ type
   function GetRecords(_id: Cardinal; search: PWideChar; includeOverrides: WordBool; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetOverrides(_id: Cardinal; count: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetMasterRecord(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function GetWinningRecord(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
+  function GetWinningOverride(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function FindNextRecord(_id: Cardinal; search: PWideChar; byEdid, byName: WordBool; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function FindPreviousRecord(_id: Cardinal; search: PWideChar; byEdid, byName: Wordbool; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function FindValidReferences(_id: Cardinal; search: PWideChar; limitTo: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function FindValidReferences(_id: Cardinal; signature, search: PWideChar; limitTo: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetReferencedBy(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function ExchangeReferences(_id, oldFormID, newFormID: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
   function IsMaster(_id: Cardinal; bool: PWordBool): WordBool; cdecl; external 'XEditLib.dll';
@@ -163,7 +164,7 @@ type
   function GetErrorThreadDone: WordBool; cdecl; external 'XEditLib.dll';
   function GetErrors(len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetErrorString(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
-  function RemoveIdenticalRecords(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
+  function RemoveIdenticalRecords(_id: Cardinal; removeITMs, removeITPOs: WordBool): WordBool; cdecl; external 'XEditLib.dll';
 
 implementation
 end.
