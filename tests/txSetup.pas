@@ -313,7 +313,7 @@ begin
 
           AfterAll(procedure
             begin
-              RestoreFile(dataPath + 'plugins.txt');
+              RestoreFile(appDataPath + 'plugins.txt');
               DeleteFile(dataPath + 'xtest-0.esp');
             end);
 
