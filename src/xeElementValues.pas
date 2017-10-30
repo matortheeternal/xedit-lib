@@ -705,6 +705,8 @@ begin
     BuildSignatureNameMap;
     resultStr := slSignatureNameMap.Text;
     len^ := Length(resultStr);
+    Delete(resultStr, len^ - 1, 2);
+    len^ := len^ - 2;
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
