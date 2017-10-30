@@ -283,9 +283,15 @@ var
   _file: IwbFile;
 begin
   Result := '';
-  // get record context
-  files := GetFilesArray(element._File);
-  // perform the search across file and its masters
+  // get context
+  if Assigned(element) then
+    files := GetFilesArray(element._File)
+  else begin
+    SetLength(files, Length(xFiles));
+    for i := Low(xFiles) to High(xFiles) do
+      files[i] := xFiles[i];
+  end;
+  // perform the search across files
   counter := 0;
   for i := Low(files) to High(files) do begin
     _file := files[i];
@@ -554,7 +560,9 @@ var
 begin
   Result := False;
   try
-    if not Supports(Resolve(_id), IwbElement, element) then
+    if _id = 0 then
+      element := nil
+    else if not Supports(Resolve(_id), IwbElement, element) then
       raise Exception.Create('Input interface is not an element.');
     aSignature := StrToSignature(string(signature));
     resultStr := NativeFindValidReferences(element, aSignature, string(search), limitTo);
