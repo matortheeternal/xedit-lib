@@ -65,6 +65,7 @@ type
   function GetElementIndex(_id: Cardinal; index: PInteger): WordBool; cdecl;
   function GetContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function GetElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
+  function GetElementGroup(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function GetElementRecord(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function ElementCount(_id: Cardinal; count: PInteger): WordBool; cdecl;
   function ElementEquals(_id, _id2: Cardinal; bool: PWordBool): WordBool; cdecl;
@@ -1490,6 +1491,23 @@ begin
     if not Supports(Resolve(_id), IwbElement, element) then
       raise Exception.Create('Interface is not an element.');
     _res^ := Store(element._File);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetElementGroup(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
+var
+  element: IwbElement;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    while not Supports(element, IwbGroupRecord) do
+      Supports(NativeContainer(element), IwbElement, element);
+    _res^ := Store(element);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);

@@ -58,12 +58,12 @@ exports
   // ELEMENT HANDLING METHODS
   HasElement, GetElement, AddElement, AddElementValue, RemoveElement,
   RemoveElementOrParent, SetElement, GetElements, GetDefNames, GetAddList,
-  GetContainer, GetElementFile, GetElementRecord, GetLinksTo, SetLinksTo,
-  ElementCount, ElementEquals, ElementMatches, HasArrayItem, GetArrayItem,
-  AddArrayItem, RemoveArrayItem, MoveArrayItem, CopyElement, FindNextElement,
-  FindPreviousElement, GetSignatureAllowed, GetAllowedSignatures, GetIsModified,
-  GetIsEditable, SetIsEditable, GetIsRemoveable, GetCanAdd, SortKey, ElementType,
-  DefType, SmashType, ValueType, IsSorted,
+  GetContainer, GetElementFile, GetElementGroup, GetElementRecord, GetLinksTo,
+  SetLinksTo, ElementCount, ElementEquals, ElementMatches, HasArrayItem,
+  GetArrayItem, AddArrayItem, RemoveArrayItem, MoveArrayItem, CopyElement,
+  FindNextElement, FindPreviousElement, GetSignatureAllowed, GetAllowedSignatures,
+  GetIsModified, GetIsEditable, SetIsEditable, GetIsRemoveable, GetCanAdd, SortKey,
+  ElementType, DefType, SmashType, ValueType, IsSorted,
   // PLUGIN ERROR METHODS
   CheckForErrors, GetErrorThreadDone, GetErrors, RemoveIdenticalRecords,
   // SERIALIZATION METHODS
