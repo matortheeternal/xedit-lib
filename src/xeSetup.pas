@@ -350,6 +350,7 @@ begin
   equalsCount := 0;
   for i := 0 to Pred(sl.Count) do begin
     s := sl[i];
+    if Length(s) = 0 then continue;
     if s[1] = '*' then
       Inc(asterisksCount);
     if StrEndsWith(s, '=0') or StrEndsWith(s, '=1') then
