@@ -57,7 +57,7 @@ type
   function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; cdecl;
   function RemoveElementOrParent(_id: Cardinal): WordBool; cdecl;
   function SetElement(_id, _id2: Cardinal): WordBool; cdecl;
-  function GetElements(_id: Cardinal; key: PWideChar; sort: WordBool; len: PInteger): WordBool; cdecl;
+  function GetElements(_id: Cardinal; key: PWideChar; sort, filter: WordBool; len: PInteger): WordBool; cdecl;
   function GetDefNames(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function GetAddList(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function GetLinksTo(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
@@ -1341,7 +1341,7 @@ begin
 end;
 
 // returns an array of handles for the elements in a container
-function GetElements(_id: Cardinal; key: PWideChar; sort: WordBool; len: PInteger): WordBool; cdecl;
+function GetElements(_id: Cardinal; key: PWideChar; sort, filter: WordBool; len: PInteger): WordBool; cdecl;
 begin
   Result := False;
   try
@@ -1349,6 +1349,7 @@ begin
       GetFiles(len)
     else
       GetChildrenElements(NativeGetElementEx(_id, key), len);
+    if filter then FilterResultArray;
     if sort then SortResultArray;
     Result := True;
   except

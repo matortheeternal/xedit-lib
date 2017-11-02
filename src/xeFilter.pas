@@ -1,0 +1,88 @@
+unit xeFilter;
+
+interface
+
+uses
+  wbInterface,
+  xeMeta;
+
+  {$region 'API functions'}
+  function FilterRecord(_id: Cardinal): WordBool; cdecl;
+  function ResetFilter: WordBool; cdecl;
+  {$endregion}
+
+
+implementation
+
+uses
+  xeElements, xeSetup, xeMessages, SysUtils;
+
+{$region 'Native functions'}
+procedure SetChildrenHidden(const container: IwbContainer);
+var
+  i: Integer;
+  innerContainer: IwbContainer;
+  rec: IwbMainrecord;
+begin
+  for i := 0 to Pred(container.ElementCount) do
+    if Supports(container.Elements[i], IwbContainer, innerContainer)
+    and not (esHidden in innerContainer.ElementStates) then begin
+      innerContainer.Hide;
+      if Supports(innerContainer, IwbMainRecord, rec) then begin
+        if Supports(rec.ChildGroup, IwbContainer, InnerContainer) then
+          SetChildrenHidden(innerContainer);
+      end
+      else
+        SetChildrenHidden(innerContainer);
+    end;
+end;
+
+procedure SetParentsVisible(const container: IwbContainer);
+var
+  parentContainer: IwbContainer;
+begin
+  parentContainer := NativeContainer(container);
+  if Assigned(parentContainer) and (esHidden in parentContainer.elementStates) then begin
+    parentContainer.Show;
+    SetParentsVisible(parentContainer);
+  end;
+end;
+{$endregion}
+
+{$region 'API functions'}
+function FilterRecord(_id: Cardinal): WordBool; cdecl;
+var
+  rec: IwbMainRecord;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbMainRecord, rec) then
+      raise Exception.Create('Interface must be a main record.');
+    rec.Show;
+    SetParentsVisible(rec as IwbContainer);
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function ResetFilter: WordBool; cdecl;
+var
+  i: Integer;
+  container: IwbContainer;
+begin
+  Result := False;
+  try
+    for i := Low(xFiles) to High(xFiles) do
+      if Supports(xFiles[i], IwbContainer, container)
+      and not (esHidden in container.ElementStates) then begin
+        container.Hide;
+        SetChildrenHidden(container);
+      end;
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+{$endregion}
+
+end.

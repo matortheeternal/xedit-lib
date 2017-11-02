@@ -15,6 +15,7 @@ uses
   xeRecords in 'src\xeRecords.pas',
   xeSerialization in 'src\xeSerialization.pas',
   xeConflict in 'src\xeConflict.pas',
+  xeFilter in 'src\xeFilter.pas',
   wbImplementation in 'lib\xedit\wbImplementation.pas',
   wbInterface in 'lib\xedit\wbInterface.pas',
   wbBSA in 'lib\xedit\wbBSA.pas',
@@ -77,7 +78,9 @@ exports
   GetFormID, SetFormID, GetRecord, GetRecords, GetOverrides, GetReferencedBy,
   GetMasterRecord, GetPreviousOverride, GetWinningOverride, FindNextRecord,
   FindPreviousRecord, FindValidReferences, ExchangeReferences, IsMaster, IsInjected,
-  IsOverride, IsWinningOverride, GetNodes, GetConflictData, GetNodeElements;
+  IsOverride, IsWinningOverride, GetNodes, GetConflictData, GetNodeElements,
+  // FILTERING METHODS
+  FilterRecord, ResetFilter;
 
 begin
   IsMultiThread := True;

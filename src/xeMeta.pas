@@ -7,11 +7,13 @@ uses
 
 type
   TDataFunction = function(const e: IInterface): String;
+  TCardinalArray = array of Cardinal;
 
   {$region 'Native functions'}
   function Resolve(_id: Cardinal): IInterface;
   function ResolveNodes(_id: Cardinal): TDynViewNodeDatas;
   procedure StoreList(lst: TList; len: PInteger);
+  procedure FilterResultArray;
   procedure SortResultArray;
   procedure GetSortedElements(const container: IwbContainer; var elements: TDynElements);
   procedure StoreIfAssigned(const x: IInterface; var _res: PCardinal; var Success: WordBool);
@@ -41,7 +43,7 @@ var
   _nodesStore: TList<TDynViewNodeDatas>;
   nextID: Cardinal;
   resultStr: WideString;
-  resultArray: array of Cardinal;
+  resultArray: TCardinalArray;
   SortBy: Byte;
   Reverse: Boolean;
 
@@ -96,6 +98,23 @@ begin
   for i := 0 to Pred(lst.Count) do
     resultArray[i] := Store(IInterface(lst[i]));
   len^ := Length(resultArray);
+end;
+
+procedure FilterResultArray;
+var
+  oldResults: TCardinalArray;
+  i, index: Integer;
+  element: IwbElement;
+begin
+  oldResults := Copy(resultArray, 0, MaxInt);
+  index := 0;
+  for i := Low(oldResults) to High(oldResults) do
+    if Supports(_store[oldResults[i]], IwbElement, element)
+    and not (esHidden in element.ElementStates) then begin
+      resultArray[index] := oldResults[i];
+      Inc(index);
+    end;
+  SetLength(resultArray, index);
 end;
 
 function FormData(const e: IInterface): String;

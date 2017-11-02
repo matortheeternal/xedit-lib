@@ -70,6 +70,7 @@
 			<DCCReference Include="src\xeRecords.pas"/>
 			<DCCReference Include="src\xeSerialization.pas"/>
 			<DCCReference Include="src\xeConflict.pas"/>
+			<DCCReference Include="src\xeFilter.pas"/>
 			<DCCReference Include="lib\xedit\wbImplementation.pas"/>
 			<DCCReference Include="lib\xedit\wbInterface.pas"/>
 			<DCCReference Include="lib\xedit\wbBSA.pas"/>
@@ -110,7 +111,7 @@
 						<VersionInfo Name="MajorVer">0</VersionInfo>
 						<VersionInfo Name="MinorVer">3</VersionInfo>
 						<VersionInfo Name="Release">0</VersionInfo>
-						<VersionInfo Name="Build">5</VersionInfo>
+						<VersionInfo Name="Build">6</VersionInfo>
 						<VersionInfo Name="Debug">False</VersionInfo>
 						<VersionInfo Name="PreRelease">False</VersionInfo>
 						<VersionInfo Name="Special">False</VersionInfo>
@@ -122,7 +123,7 @@
 					<VersionInfoKeys>
 						<VersionInfoKeys Name="CompanyName"/>
 						<VersionInfoKeys Name="FileDescription"/>
-						<VersionInfoKeys Name="FileVersion">0.3.0.5</VersionInfoKeys>
+						<VersionInfoKeys Name="FileVersion">0.3.0.6</VersionInfoKeys>
 						<VersionInfoKeys Name="InternalName"/>
 						<VersionInfoKeys Name="LegalCopyright"/>
 						<VersionInfoKeys Name="LegalTrademarks"/>
