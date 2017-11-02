@@ -150,8 +150,13 @@ begin
   
   // recursion
   if Supports(element, IwbContainerElementRef, container) then
-    for i := Pred(container.ElementCount) downto 0 do
+    for i := Pred(container.ElementCount) downto 0 do try
       Result := NativeCheckForErrors(container.Elements[i], Result);
+    except
+      on x: Exception do
+        AddMessage(Format('Exception checking for errors in %s, %s',
+          [container.Elements[i].Path, x.Message]));
+    end;
 end;
 
 procedure TErrorCheckThread.Execute;

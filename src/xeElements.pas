@@ -629,24 +629,22 @@ end;
 {$endregion}
 
 {$region 'Multi-element resolution'}
-procedure GetFiles(len: PInteger);
+procedure GetFiles();
 var
   i: Integer;
 begin
-  len^ := High(xFiles) + 1;
-  SetLength(resultArray, len^);
+  SetLength(resultArray, Length(xFiles));
   for i := 0 to High(xFiles) do
     resultArray[i] := Store(xFiles[i]);
 end;
 
-procedure GetContainerElements(const container: IwbContainerElementRef; len: PInteger);
+procedure GetContainerElements(const container: IwbContainerElementRef);
 var
   i, n: Integer;
   e: IwbElement;
   g: IwbGroupRecord;
 begin
-  len^ := container.ElementCount;
-  SetLength(resultArray, len^);
+  SetLength(resultArray, container.ElementCount);
   if HideChildGroups then begin
     n := 0;
     for i := 0 to Pred(container.ElementCount) do begin
@@ -655,7 +653,6 @@ begin
       resultArray[n] := Store(container.Elements[i]);
       Inc(n);
     end;
-    len^ := n;
     SetLength(resultArray, n);
   end
   else
@@ -663,13 +660,13 @@ begin
       resultArray[i] := Store(container.Elements[i]);
 end;
 
-procedure GetChildrenElements(const element: IInterface; len: PInteger);
+procedure GetChildrenElements(const element: IInterface);
 var
   container: IwbContainerElementRef;
 begin
   if not Supports(element, IwbContainerElementRef, container) then
     raise Exception.Create('Interface must be a container.');
-  GetContainerElements(container, len);
+  GetContainerElements(container);
 end;
 {$endregion}
 
@@ -1346,11 +1343,12 @@ begin
   Result := False;
   try
     if (_id = 0) and (key = '') then
-      GetFiles(len)
+      GetFiles()
     else
-      GetChildrenElements(NativeGetElementEx(_id, key), len);
+      GetChildrenElements(NativeGetElementEx(_id, key));
     if filter then FilterResultArray;
     if sort then SortResultArray;
+    len^ := Length(resultArray);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);

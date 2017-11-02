@@ -26,8 +26,8 @@ var
 begin
   for i := 0 to Pred(container.ElementCount) do
     if Supports(container.Elements[i], IwbContainer, innerContainer)
-    and not (esHidden in innerContainer.ElementStates) then begin
-      innerContainer.Hide;
+    and not (esFilterHidden in innerContainer.ElementStates) then begin
+      innerContainer.Filter(false);
       if Supports(innerContainer, IwbMainRecord, rec) then begin
         if Supports(rec.ChildGroup, IwbContainer, InnerContainer) then
           SetChildrenHidden(innerContainer);
@@ -39,11 +39,16 @@ end;
 
 procedure SetParentsVisible(const container: IwbContainer);
 var
+  group: IwbGroupRecord;
   parentContainer: IwbContainer;
 begin
-  parentContainer := NativeContainer(container);
-  if Assigned(parentContainer) and (esHidden in parentContainer.elementStates) then begin
-    parentContainer.Show;
+  if Supports(container, IwbGroupRecord, group) and IsChildGroup(group) then
+    parentContainer := group.ChildrenOf as IwbContainer
+  else
+    parentContainer := container.Container;
+  if Assigned(parentContainer)
+  and (esFilterHidden in parentContainer.elementStates) then begin
+    parentContainer.Filter(true);
     SetParentsVisible(parentContainer);
   end;
 end;
@@ -58,8 +63,9 @@ begin
   try
     if not Supports(Resolve(_id), IwbMainRecord, rec) then
       raise Exception.Create('Interface must be a main record.');
-    rec.Show;
+    rec.Filter(true);
     SetParentsVisible(rec as IwbContainer);
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -74,8 +80,8 @@ begin
   try
     for i := Low(xFiles) to High(xFiles) do
       if Supports(xFiles[i], IwbContainer, container)
-      and not (esHidden in container.ElementStates) then begin
-        container.Hide;
+      and not (esFilterHidden in container.ElementStates) then begin
+        container.Filter(false);
         SetChildrenHidden(container);
       end;
     Result := True;

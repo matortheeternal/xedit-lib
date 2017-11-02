@@ -110,7 +110,7 @@ begin
   index := 0;
   for i := Low(oldResults) to High(oldResults) do
     if Supports(_store[oldResults[i]], IwbElement, element)
-    and not (esHidden in element.ElementStates) then begin
+    and not (esFilterHidden in element.ElementStates) then begin
       resultArray[index] := oldResults[i];
       Inc(index);
     end;
