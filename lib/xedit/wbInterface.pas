@@ -403,7 +403,7 @@ type
     esChangeNotified,
     esModifiedUpdated,
     esSorting,
-    esFilterHidden
+    esFilterShow
   );
 
   TwbElementStates = set of TwbElementState;

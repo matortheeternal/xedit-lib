@@ -26,7 +26,7 @@ var
 begin
   for i := 0 to Pred(container.ElementCount) do
     if Supports(container.Elements[i], IwbContainer, innerContainer)
-    and not (esFilterHidden in innerContainer.ElementStates) then begin
+    and (esFilterShow in innerContainer.ElementStates) then begin
       innerContainer.Filter(false);
       if Supports(innerContainer, IwbMainRecord, rec) then begin
         if Supports(rec.ChildGroup, IwbContainer, InnerContainer) then
@@ -47,7 +47,7 @@ begin
   else
     parentContainer := container.Container;
   if Assigned(parentContainer)
-  and (esFilterHidden in parentContainer.elementStates) then begin
+  and not (esFilterShow in parentContainer.elementStates) then begin
     parentContainer.Filter(true);
     SetParentsVisible(parentContainer);
   end;
@@ -80,7 +80,7 @@ begin
   try
     for i := Low(xFiles) to High(xFiles) do
       if Supports(xFiles[i], IwbContainer, container)
-      and not (esFilterHidden in container.ElementStates) then begin
+      and (esFilterShow in container.ElementStates) then begin
         container.Filter(false);
         SetChildrenHidden(container);
       end;
