@@ -79,7 +79,7 @@ type
   function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
   function RemoveElementOrParent(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
   function SetElement(_id, _id2: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function GetElements(_id: Cardinal; key: PWideChar; sort: WordBool; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function GetElements(_id: Cardinal; key: PWideChar; sort, filter: WordBool; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetDefNames(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetAddList(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetLinksTo(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
