@@ -4,7 +4,7 @@
 			<MainSource>XEditLibTests.dpr</MainSource>
 			<ProjectVersion>12.3</ProjectVersion>
 			<Base>True</Base>
-			<Config Condition="'$(Config)'==''">Debug</Config>
+			<Config Condition="'$(Config)'==''">Release</Config>
 			<Platform>Win32</Platform>
 			<AppType>Console</AppType>
 			<FrameworkType>None</FrameworkType>
@@ -67,31 +67,7 @@
 			<DelphiCompile Include="XEditLibTests.dpr">
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
-			<DCCReference Include="src\xeTypes.pas"/>
-			<DCCReference Include="src\xeMessages.pas"/>
-			<DCCReference Include="src\xeConfiguration.pas"/>
-			<DCCReference Include="src\xeMeta.pas"/>
-			<DCCReference Include="src\xeSetup.pas"/>
-			<DCCReference Include="src\xeFiles.pas"/>
-			<DCCReference Include="src\xeMasters.pas"/>
-			<DCCReference Include="src\xeElements.pas"/>
-			<DCCReference Include="src\xeElementValues.pas"/>
-			<DCCReference Include="src\xeErrors.pas"/>
-			<DCCReference Include="src\xeRecords.pas"/>
-			<DCCReference Include="src\xeSerialization.pas"/>
-			<DCCReference Include="lib\xedit\wbImplementation.pas"/>
-			<DCCReference Include="lib\xedit\wbInterface.pas"/>
-			<DCCReference Include="lib\xedit\wbBSA.pas"/>
-			<DCCReference Include="lib\xedit\wbSort.pas"/>
-			<DCCReference Include="lib\xedit\wbDefinitionsFNV.pas"/>
-			<DCCReference Include="lib\xedit\wbDefinitionsFO3.pas"/>
-			<DCCReference Include="lib\xedit\wbDefinitionsFO4.pas"/>
-			<DCCReference Include="lib\xedit\wbDefinitionsTES3.pas"/>
-			<DCCReference Include="lib\xedit\wbDefinitionsTES4.pas"/>
-			<DCCReference Include="lib\xedit\wbDefinitionsTES5.pas"/>
-			<DCCReference Include="lib\xedit\wbHelpers.pas"/>
-			<DCCReference Include="lib\xedit\wbLocalization.pas"/>
-			<DCCReference Include="lib\xedit\wbStreams.pas"/>
+			<DCCReference Include="tests\txImports.pas"/>
 			<DCCReference Include="tests\txMeta.pas"/>
 			<DCCReference Include="tests\txMessages.pas"/>
 			<DCCReference Include="tests\txSetup.pas"/>
