@@ -932,6 +932,15 @@ begin
               ExpectFailure(GetLinksTo(ar1, '', @h));
               ExpectFailure(GetLinksTo(dnam, '', @h));
             end);
+
+          It('Should be fast', procedure
+            begin
+              ExpectSuccess(GetElement(0, 'Skyrim.esm\ARMO\000135BA', @h));
+              Benchmark(100000, procedure
+                begin
+                  ExpectSuccess(GetLinksTo(keyword, '', @h));
+                end);
+            end);
         end);
 
       Describe('SetLinksTo', procedure

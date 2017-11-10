@@ -307,13 +307,14 @@ begin
               ExpectFailure(GetValue(rec, 'Non\Existent\Path', @len));
             end);
 
-          It('Should be fast', procedure
+          {It('Should be fast', procedure
             begin
+              ExpectSuccess(GetElement(0, 'Skyrim.esm\ARMO\000135BA', @h));
               Benchmark(100000, procedure
                 begin
-                  GetFullName(rec);
+                  GetFullName(h);
                 end);
-            end);
+            end);}
         end);
 
       Describe('GetIntValue', procedure
