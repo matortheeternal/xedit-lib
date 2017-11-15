@@ -904,8 +904,8 @@ begin
   i := container.IndexOf(element) + 1;
   while i <= Pred(container.ElementCount) do begin
     Result := container.Elements[i];
-    if byPath and (Pos(search, GetPath(Result, False, True)) > 0) then exit;
-    if byValue and (Pos(search, Result.EditValue) > 0) then exit;
+    if byPath and ContainsText(GetPath(Result, False, True), search) then exit;
+    if byValue and ContainsText(Result.EditValue, search) then exit;
     // recurse through child containers
     if Supports(Result, IwbContainer, c) then begin
       Result := NativeFindNextElement(c, nil, search, byPath, byValue, false);
@@ -935,8 +935,8 @@ begin
   if i = -2 then i := Pred(container.ElementCount);
   while i > -1 do begin
     Result := container.Elements[i];
-    if byPath and (Pos(search, GetPath(Result, False, True)) > 0) then exit;
-    if byValue and (Pos(search, Result.EditValue) > 0) then exit;
+    if byPath and ContainsText(GetPath(Result, False, True), search) then exit;
+    if byValue and ContainsText(Result.EditValue, search) then exit;
     // recurse through child containers
     if Supports(Result, IwbContainer, c) then begin
       Result := NativeFindPreviousElement(c, nil, search, byPath, byValue, false);
