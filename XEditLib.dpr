@@ -1,6 +1,7 @@
 library XEditLib;
 
 uses
+  SysUtils,
   xeHelpers in 'src\xeHelpers.pas',
   xeTypes in 'src\xeTypes.pas',
   xeMessages in 'src\xeMessages.pas',
@@ -80,6 +81,7 @@ exports
   IsOverride, IsWinningOverride, GetNodes, GetConflictData, GetNodeElements;
 
 begin
+  SysUtils.FormatSettings.DecimalSeparator := '.';
   IsMultiThread := True;
 end.
 
