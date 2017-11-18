@@ -9,6 +9,7 @@ uses
 
   {$region 'API functions'}
   function ExtractContainer(name, destination: PWideChar; replace: WordBool): WordBool; cdecl;
+  function ExtractFile(name, source, destination: PWideChar): WordBool; cdecl;
   function GetContainerFiles(name: PWideChar; len: PInteger): WordBool; cdecl;
   function GetLoadedContainers(len: PInteger): WordBool; cdecl;
   function LoadContainer(filePath: PWideChar): WordBool; cdecl;

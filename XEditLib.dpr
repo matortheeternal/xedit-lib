@@ -52,7 +52,7 @@ exports
   GetActivePlugins, LoadPlugins, LoadPlugin, LoadPluginHeader, BuildReferences,
   GetLoaderStatus, UnloadPlugin,
   // ARCHIVE HANDLING METHODS
-  ExtractContainer, GetContainerFiles, GetLoadedContainers, LoadContainer,
+  ExtractContainer, ExtractFile, GetContainerFiles, GetLoadedContainers, LoadContainer,
   // FILE HANDLING METHODS
   AddFile, FileByIndex, FileByLoadOrder, FileByName, FileByAuthor, NukeFile,
   RenameFile, SaveFile, GetRecordCount, GetOverrideRecordCount, MD5Hash, CRCHash,
