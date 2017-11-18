@@ -31,7 +31,8 @@ uses
   wbLocalization in 'lib\xedit\wbLocalization.pas',
   wbStreams in 'lib\xedit\wbStreams.pas',
   Argo in 'lib\Argo\Argo.pas',
-  ArgoTypes in 'lib\Argo\ArgoTypes.pas';
+  ArgoTypes in 'lib\Argo\ArgoTypes.pas',
+  xeArchive in 'src\xeArchive.pas';
 
 {$R *.RES}
 {$MAXSTACKSIZE 2097152}
@@ -50,6 +51,8 @@ exports
   GetGamePath, SetGamePath, SetLanguage, SetBackupPath, SetGameMode, GetLoadOrder,
   GetActivePlugins, LoadPlugins, LoadPlugin, LoadPluginHeader, BuildReferences,
   GetLoaderStatus, UnloadPlugin,
+  // ARCHIVE HANDLING METHODS
+  ExtractContainer, GetContainerFiles, GetLoadedContainers, LoadContainer,
   // FILE HANDLING METHODS
   AddFile, FileByIndex, FileByLoadOrder, FileByName, FileByAuthor, NukeFile,
   RenameFile, SaveFile, GetRecordCount, GetOverrideRecordCount, MD5Hash, CRCHash,
