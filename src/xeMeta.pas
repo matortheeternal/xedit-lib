@@ -20,6 +20,7 @@ type
   function Store(const x: IInterface): Cardinal;
   function StoreNodes(nodes: TDynViewNodeDatas): Cardinal; overload;
   function xStrCopy(source: WideString; dest: PWideChar; maxLen: Integer): WordBool;
+  procedure SetResultFromList(var sl: TStringList; len: PInteger);
   {$endregion}
 
   {$region 'API functions'}
@@ -76,6 +77,13 @@ begin
       ExceptionHandler(Exception.Create(Format('Failed to allocate string buffer.  ' +
         'source: %s, maxLen: %d, error: %s', [source, maxLen, x.Message])));
   end;
+end;
+
+procedure SetResultFromList(var sl: TStringList; len: PInteger);
+begin
+  resultStr := sl.Text;
+  Delete(resultStr, Length(resultStr) - 1, 2);
+  len^ := Length(resultStr);
 end;
 
 function Resolve(_id: Cardinal): IInterface;

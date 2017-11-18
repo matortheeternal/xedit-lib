@@ -249,10 +249,11 @@ var
   slErrors: TStringList;
   i: Integer;
   modName: String;
-  bIsTES5: Boolean;
+  bExact, bModIni: Boolean;
 begin
   wbContainerHandler.AddFolder(wbDataPath);
-  bIsTES5 := wbGameMode in [gmTES5, gmSSE];
+  bExact := wbGameMode in [gmTES5];
+  bModIni := wbGameMode in [gmTES5, gmSSE];
   slBSAFileNames := TStringList.Create;
   try
     slErrors := TStringList.Create;
@@ -266,7 +267,7 @@ begin
         slBSAFileNames.Clear;
         slErrors.Clear;
         modName := ChangeFileExt(xFiles[i].GetFileName, '');
-        HasBSAs(modName, wbDataPath, bIsTES5, bIsTES5, slBSAFileNames, slErrors);
+        HasBSAs(modName, wbDataPath, bExact, bModIni, slBSAFileNames, slErrors);
         LoadBSAs(slBSAFileNames, slErrors);
       end;
     finally
@@ -751,9 +752,7 @@ begin
       AddBaseMasters(slLoadOrder);
 
       // SET RESULT STRING
-      resultStr := slLoadOrder.Text;
-      Delete(resultStr, Length(resultStr) - 1, 2);
-      len^ := Length(resultStr);
+      SetResultFromList(slLoadOrder, len);
       Result := True;
     finally
       slPlugins.Free;
@@ -778,10 +777,7 @@ begin
       LoadPluginsList(sLoadPath, slPlugins);
       AddBaseMasters(slPlugins);
 
-      // SET RESULT STRING
-      resultStr := slPlugins.Text;
-      Delete(resultStr, Length(resultStr) - 1, 2);
-      len^ := Length(resultStr);
+      SetResultFromList(slPlugins, len);
       Result := True;
     finally
       slPlugins.Free;

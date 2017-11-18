@@ -703,10 +703,7 @@ begin
   Result := False;
   try
     BuildSignatureNameMap;
-    resultStr := slSignatureNameMap.Text;
-    len^ := Length(resultStr);
-    Delete(resultStr, len^ - 1, 2);
-    len^ := len^ - 2;
+    SetResultFromList(TStringList(slSignatureNameMap), len);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
