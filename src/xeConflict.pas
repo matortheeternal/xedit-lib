@@ -115,7 +115,6 @@ var
   Records: TStringList;
   AnyHidden, IsNonOverride: Boolean;
 begin
-  Assert(wbLoaderDone);
   IsNonOverride := False;
   Master := aMainRecord.MasterOrSelf;
   SetLength(Result, Succ(Master.OverrideCount));
