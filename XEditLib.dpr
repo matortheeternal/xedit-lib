@@ -8,6 +8,7 @@ uses
   xeConfiguration in 'src\xeConfiguration.pas',
   xeMeta in 'src\xeMeta.pas',
   xeSetup in 'src\xeSetup.pas',
+  xeArchives in 'src\xeArchives.pas',
   xeFiles in 'src\xeFiles.pas',
   xeMasters in 'src\xeMasters.pas',
   xeElements in 'src\xeElements.pas',
@@ -31,8 +32,7 @@ uses
   wbLocalization in 'lib\xedit\wbLocalization.pas',
   wbStreams in 'lib\xedit\wbStreams.pas',
   Argo in 'lib\Argo\Argo.pas',
-  ArgoTypes in 'lib\Argo\ArgoTypes.pas',
-  xeArchive in 'src\xeArchive.pas';
+  ArgoTypes in 'lib\Argo\ArgoTypes.pas';
 
 {$R *.RES}
 {$MAXSTACKSIZE 2097152}

@@ -62,6 +62,7 @@
 			<DCCReference Include="src\xeConfiguration.pas"/>
 			<DCCReference Include="src\xeMeta.pas"/>
 			<DCCReference Include="src\xeSetup.pas"/>
+			<DCCReference Include="src\xeArchives.pas"/>
 			<DCCReference Include="src\xeFiles.pas"/>
 			<DCCReference Include="src\xeMasters.pas"/>
 			<DCCReference Include="src\xeElements.pas"/>
@@ -86,7 +87,6 @@
 			<DCCReference Include="lib\xedit\wbStreams.pas"/>
 			<DCCReference Include="lib\Argo\Argo.pas"/>
 			<DCCReference Include="lib\Argo\ArgoTypes.pas"/>
-			<DCCReference Include="src\xeArchive.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>
@@ -111,8 +111,8 @@
 						<VersionInfo Name="AutoIncBuild">True</VersionInfo>
 						<VersionInfo Name="MajorVer">0</VersionInfo>
 						<VersionInfo Name="MinorVer">3</VersionInfo>
-						<VersionInfo Name="Release">0</VersionInfo>
-						<VersionInfo Name="Build">17</VersionInfo>
+						<VersionInfo Name="Release">1</VersionInfo>
+						<VersionInfo Name="Build">1</VersionInfo>
 						<VersionInfo Name="Debug">False</VersionInfo>
 						<VersionInfo Name="PreRelease">False</VersionInfo>
 						<VersionInfo Name="Special">False</VersionInfo>
@@ -124,7 +124,7 @@
 					<VersionInfoKeys>
 						<VersionInfoKeys Name="CompanyName"/>
 						<VersionInfoKeys Name="FileDescription"/>
-						<VersionInfoKeys Name="FileVersion">0.3.0.17</VersionInfoKeys>
+						<VersionInfoKeys Name="FileVersion">0.3.1.1</VersionInfoKeys>
 						<VersionInfoKeys Name="InternalName"/>
 						<VersionInfoKeys Name="LegalCopyright"/>
 						<VersionInfoKeys Name="LegalTrademarks"/>
