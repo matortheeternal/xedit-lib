@@ -33,7 +33,7 @@ type
   procedure AddMissingFiles(var sl: TStringList);
   procedure GetPluginDates(var sl: TStringList);
   procedure AddBaseMasters(var sl: TStringList);
-  procedure FixLoadOrder(var sl: TStringList; const filename: String; index: Integer);
+  procedure FixLoadOrder(var sl: TStringList; const filename: String; var index: Integer);
   function PluginListCompare(List: TStringList; Index1, Index2: Integer): Integer;
   procedure RenameSavedFiles;
   {$endregion}
@@ -524,32 +524,35 @@ begin
 end;
 
 procedure AddBaseMasters(var sl: TStringList);
+var
+  index: Integer;
 begin
+  index := 0;
   if (wbGameMode = gmTES5) then begin
-    FixLoadOrder(sl, 'Skyrim.esm', 0);
-    FixLoadOrder(sl, 'Update.esm', 1);
+    FixLoadOrder(sl, 'Skyrim.esm', index);
+    FixLoadOrder(sl, 'Update.esm', index);
   end
   else if (wbGameMode = gmSSE) then begin
-    FixLoadOrder(sl, 'Skyrim.esm', 0);
-    FixLoadOrder(sl, 'Update.esm', 1);
-    FixLoadOrder(sl, 'Dawnguard.esm', 2);
-    FixLoadOrder(sl, 'HearthFires.esm', 3);
-    FixLoadOrder(sl, 'Dragonborn.esm', 4);
+    FixLoadOrder(sl, 'Skyrim.esm', index);
+    FixLoadOrder(sl, 'Update.esm', index);
+    FixLoadOrder(sl, 'Dawnguard.esm', index);
+    FixLoadOrder(sl, 'HearthFires.esm', index);
+    FixLoadOrder(sl, 'Dragonborn.esm', index);
   end
   else if (wbGameMode = gmFO4) then begin
-    FixLoadOrder(sl, 'Fallout4.esm', 0);
-    FixLoadOrder(sl, 'DLCRobot.esm', 1);
-    FixLoadOrder(sl, 'DLCworkshop01.esm', 2);
-    FixLoadOrder(sl, 'DLCCoast.esm', 3);
-    FixLoadOrder(sl, 'DLCworkshop02.esm', 4);
-    FixLoadOrder(sl, 'DLCworkshop03.esm', 5);
-    FixLoadOrder(sl, 'DLCNukaWorld.esm', 6);
-    FixLoadOrder(sl, 'DLCUltraHighResolution.esm', 7);
+    FixLoadOrder(sl, 'Fallout4.esm', index);
+    FixLoadOrder(sl, 'DLCRobot.esm', index);
+    FixLoadOrder(sl, 'DLCworkshop01.esm', index);
+    FixLoadOrder(sl, 'DLCCoast.esm', index);
+    FixLoadOrder(sl, 'DLCworkshop02.esm', index);
+    FixLoadOrder(sl, 'DLCworkshop03.esm', index);
+    FixLoadOrder(sl, 'DLCNukaWorld.esm', index);
+    FixLoadOrder(sl, 'DLCUltraHighResolution.esm', index);
   end;
 end;
 
 { Forces a plugin to load at a specific position }
-procedure FixLoadOrder(var sl: TStringList; const filename: String; index: Integer);
+procedure FixLoadOrder(var sl: TStringList; const filename: String; var index: Integer);
 var
   oldIndex: Integer;
 begin
@@ -560,7 +563,10 @@ begin
     sl.Insert(index, filename);
   end
   else if FileExists(wbDataPath + filename) then
-    sl.Insert(index, filename);
+    sl.Insert(index, filename)
+  else
+    exit;
+  Inc(index);
 end;
 
 { Compare function for sorting load order by date modified/esms }
