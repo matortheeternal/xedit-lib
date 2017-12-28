@@ -543,7 +543,8 @@ begin
     FixLoadOrder(sl, 'DLCCoast.esm', 3);
     FixLoadOrder(sl, 'DLCworkshop02.esm', 4);
     FixLoadOrder(sl, 'DLCworkshop03.esm', 5);
-    FixLoadOrder(sl, 'DLCNukaworld.esm', 6);
+    FixLoadOrder(sl, 'DLCNukaWorld.esm', 6);
+    FixLoadOrder(sl, 'DLCUltraHighResolution.esm', 7);
   end;
 end;
 
