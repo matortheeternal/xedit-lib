@@ -1081,11 +1081,23 @@ begin
     (structDef.Members[2].Name = 'Blue');
 end;
 
+function GetInnerDef(const element: IwbElement): IwbNamedDef;
+var
+  subDef: IwbSubRecordDef;
+  unionDef: IwbUnionDef;
+begin
+  Result := element.Def;
+  if Supports(Result, IwbSubRecordDef, subDef) then
+    Result := subDef.Value;
+  if Supports(Result, IwbUnionDef, unionDef) then
+    Result := DecideUnion(element, unionDef);
+end;
+
 function GetFlagsDef(const element: IwbElement; var flagsDef: IwbFlagsDef): Boolean;
 var
   intDef: IwbIntegerDef;
 begin
-  Result := Supports(element.ValueDef, IwbIntegerDef, intDef)
+  Result := Supports(GetInnerDef(element), IwbIntegerDef, intDef)
     and Supports(intDef.Formater[element], IwbFlagsDef, flagsDef);
 end;
 
@@ -1093,7 +1105,7 @@ function GetEnumDef(const element: IwbElement; var enumDef: IwbEnumDef): Boolean
 var
   intDef: IwbIntegerDef;
 begin
-  Result := Supports(element.ValueDef, IwbIntegerDef, intDef)
+  Result := Supports(GetInnerDef(element), IwbIntegerDef, intDef)
     and Supports(intDef.Formater[element], IwbEnumDef, enumDef);
 end;
 
@@ -1158,15 +1170,9 @@ end;
 function GetValueType(const element: IwbElement): TValueType;
 var
   def: IwbNamedDef;
-  subDef: IwbSubRecordDef;
-  unionDef: IwbUnionDef;
   intDef: IwbIntegerDef;
 begin
-  def := element.Def;
-  if Supports(def, IwbSubRecordDef, subDef) then
-    def := subDef.Value;
-  if Supports(def, IwbUnionDef, unionDef) then
-    def := DecideUnion(element, unionDef);
+  def := GetInnerDef(element);
 
   case def.DefType of
     dtSubRecordArray, dtArray:
