@@ -16455,7 +16455,24 @@ begin
 
         MainRecordInternal.mrStruct.mrsFlags := Flags;
       end;
-    end;
+    end
+    else if SameText(aElement.Def.Name, 'Version Control Info 1') then
+      if Supports(aElement, IwbDataContainer, DataContainer) then begin
+        UpdateStorageFromElements;
+        dcDataStorage := nil;
+        Exclude(dcFlags, dcfStorageInvalid);
+        MainRecordInternal.MakeHeaderWriteable;
+        MainRecordInternal.mrStruct.mrsVCS1 := PCardinal(DataContainer.DataBasePtr)^;
+      end
+    else if SameText(aElement.Def.Name, 'Version Control Info 2') then
+      if Supports(aElement, IwbDataContainer, DataContainer) then begin
+        UpdateStorageFromElements;
+        dcDataStorage := nil;
+        Exclude(dcFlags, dcfStorageInvalid);
+        MainRecordInternal.MakeHeaderWriteable;
+        MainRecordInternal.mrStruct.mrsVCS2 := PCardinal(DataContainer.DataBasePtr)^;
+      end;
+
     p := MainRecordInternal.mrStruct;
     InformStorage(p, Pointer(Cardinal(p) + wbSizeOfMainRecordStruct ));
 
