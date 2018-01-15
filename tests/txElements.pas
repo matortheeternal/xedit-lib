@@ -1275,6 +1275,19 @@ begin
               end;
             end);
 
+          It('Should be able to copy array elements', procedure
+            begin
+              try
+                ExpectSuccess(GetElement(ar3, 'KWDA', @h));
+                h := TestCopyElement('xtest-3.esp\00012E46\KWDA\[0]', h, True);
+                TestElementFile(h, 'xtest-3.esp');
+                ExpectSuccess(GetContainer(h, @h));
+                TestElementCount(h, 6);
+              finally
+                ExpectSuccess(RemoveArrayItem(ar3, 'KWDA', '', '000424EF'));
+              end;
+            end);
+
           It('Should be able to override records', procedure
             begin
               h := TestCopyElement('xtest-2.esp\00012E46', xt5, False);

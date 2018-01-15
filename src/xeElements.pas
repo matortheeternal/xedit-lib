@@ -37,6 +37,7 @@ type
   function NativeAddElement(_id: Cardinal; const key: string): IInterface;
   function CopyElementToFile(const aSource: IwbElement; const aFile: IwbFile; aAsNew, aDeepCopy: Boolean): IwbElement;
   function CopyElementToRecord(const aSource: IwbElement; const aMainRecord: IwbMainRecord; aAsNew, aDeepCopy: Boolean): IwbElement;
+  function CopyElementToArray(const aSource: IwbElement; const aArray: IwbElement): IwbElement;
   function ResolveDef(const element: IwbElement; decideUnions: Boolean): IwbNamedDef;
   function IsChildGroup(const group: IwbGroupRecord): Boolean;
   function NativeIsSorted(const e: IwbElement): Boolean;
@@ -890,6 +891,16 @@ begin
   if Assigned(Target) then
     Result := Target.AddIfMissing(aSource, aAsNew, aDeepCopy, '', '', '');
 end;
+
+function CopyElementToArray(const aSource: IwbElement; const aArray: IwbElement): IwbElement;
+var
+  container: IwbContainer;
+begin
+  Result := nil;
+  if not Supports(aArray, IwbContainer, container) then
+    exit;
+  Result := container.Assign(High(Integer), aSource, False);
+end;
 {$endregion}
 
 {$REGION 'Element searching'}
@@ -1680,16 +1691,20 @@ function CopyElement(_id, _id2: Cardinal; aAsNew: WordBool; _res: PCardinal): Wo
 var
   _file: IwbFile;
   rec: IwbMainRecord;
-  element, copy: IwbElement;
+  e: IInterface;
+  element, container, copy: IwbElement;
 begin
   Result := False;
   try
     if not Supports(Resolve(_id), IwbElement, element) then
       raise Exception.Create('Interface is not an element.');
-    if Supports(Resolve(_id2), IwbFile, _file) then
+    e := Resolve(_id2);
+    if Supports(e, IwbFile, _file) then
       copy := CopyElementToFile(element, _file, aAsNew, True)
-    else if Supports(Resolve(_id2), IwbMainRecord, rec) then
+    else if Supports(e, IwbMainRecord, rec) then
       copy := CopyElementToRecord(element, rec, aAsNew, True)
+    else if Supports(e, IwbElement, container) and IsArray(container) then
+      copy := CopyElementToArray(element, container)
     else
       raise Exception.Create('Second interface must be a file or a main record.');
     if not Assigned(copy) then
