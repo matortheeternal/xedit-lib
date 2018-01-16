@@ -323,7 +323,8 @@ begin
   for i := Low(masterNames) to High(masterNames) do
     if slLoadOrder.IndexOf(masterNames[i]) = -1 then
       AddToLoadOrder(masterNames[i]);
-  slLoadOrder.Add(filePath);
+  if slLoadOrder.IndexOf(filePath) = -1 then
+    slLoadOrder.Add(filePath);
 end;
 
 procedure BuildLoadOrder(const loadOrder: String);
@@ -558,9 +559,10 @@ var
 begin
   oldIndex := sl.IndexOf(filename);
   if (oldIndex > -1) then begin
-    if oldIndex = index then exit;
-    sl.Delete(oldIndex);
-    sl.Insert(index, filename);
+    if oldIndex <> index then begin
+      sl.Delete(oldIndex);
+      sl.Insert(index, filename);
+    end;
   end
   else if FileExists(wbDataPath + filename) then
     sl.Insert(index, filename)
