@@ -580,6 +580,11 @@ begin
 
       Describe('AddElement', procedure
         begin
+          BeforeAll(procedure
+            begin
+              ExpectSuccess(RemoveElement(ar2, 'EDID - Editor ID'));
+            end);
+
           It('Should create a new file if no handle given', procedure
             begin
               TestAddElement(0, 'NewFile-1.esp');
@@ -609,6 +614,7 @@ begin
 
           It('Should be able to create a new element on a record', procedure
             begin
+              TestAddElement(ar2, 'EDID - Editor ID');
               TestAddElement(ar2, 'Destructable');
             end);
 
