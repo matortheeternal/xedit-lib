@@ -92,6 +92,7 @@ type
   function SmashType(_id: Cardinal; enum: PByte): WordBool; cdecl;
   function ValueType(_id: Cardinal; enum: PByte): WordBool; cdecl;
   function IsSorted(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
+  function IsFixed(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
   {$endregion}
 
 implementation
@@ -1044,6 +1045,16 @@ begin
     Result := Container.Sorted;
 end;
 
+{ Returns true if @e is a fixed length array }
+function NativeIsFixed(const e: IwbElement): Boolean;
+var
+  arrayDef: IwbArrayDef;
+begin
+  Result := False;
+  if Supports(ResolveDef(e, true), IwbArrayDef, arrayDef) then
+    Result := arrayDef.ElementCount > 0;
+end;
+
 { Returns true if @e is a flags element }
 function NativeIsFlags(const e: IwbElement): Boolean;
 var
@@ -1990,6 +2001,22 @@ begin
     if not Supports(Resolve(_id), IwbElement, element) then
       raise Exception.Create('Interface is not an element.');
     bool^ := NativeIsSorted(element);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+
+function IsFixed(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
+var
+  element: IwbElement;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    bool^ := NativeIsFixed(element);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);

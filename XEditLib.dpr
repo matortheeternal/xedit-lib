@@ -68,7 +68,7 @@ exports
   GetArrayItem, AddArrayItem, RemoveArrayItem, MoveArrayItem, CopyElement,
   FindNextElement, FindPreviousElement, GetSignatureAllowed, GetAllowedSignatures,
   GetIsModified, GetIsEditable, SetIsEditable, GetIsRemoveable, GetCanAdd, SortKey,
-  ElementType, DefType, SmashType, ValueType, IsSorted,
+  ElementType, DefType, SmashType, ValueType, IsSorted, IsFixed,
   // PLUGIN ERROR METHODS
   CheckForErrors, GetErrorThreadDone, GetErrors, RemoveIdenticalRecords,
   // SERIALIZATION METHODS
