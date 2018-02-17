@@ -430,7 +430,8 @@ var
   sPath: String;
 begin
   sPath := sLoadPath + 'loadorder.txt';
-  if FileExists(sPath) then
+  if (wbGameMode <> gmSSE) and (wbGameMode <> gmFO4)
+  and FileExists(sPath) then
     slLoadOrder.LoadFromFile(sPath)
   else
     slLoadOrder.AddStrings(slPlugins);
