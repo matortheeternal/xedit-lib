@@ -39,14 +39,14 @@ type
   {$endregion}
 
   {$region 'Native functions'}
-  procedure RemoveIdenticalRecord(const rec: IwbMainRecord);
+  procedure RemoveIdenticalRecord(const rec: IwbMainRecord; removeITMs, removeITPOs: Boolean);
   {$endregion}
 
   {$region 'API functions'}
   function CheckForErrors(_id: Cardinal): WordBool; cdecl;
   function GetErrorThreadDone: WordBool; cdecl;
   function GetErrors(len: PInteger): WordBool; cdecl;
-  function RemoveIdenticalRecords(_id: Cardinal): WordBool; cdecl;
+  function RemoveIdenticalRecords(_id: Cardinal; removeITMs, removeITPOs: WordBool): WordBool; cdecl;
   {$endregion}
 
 const
@@ -74,7 +74,7 @@ implementation
 uses
   SysUtils, StrUtils, Masks, RegularExpressions,
   // xelib units
-  xeConflict, xeMessages, xeElementValues,
+  xeConflict, xeMessages, xeElementValues, xeRecords,
   // library units
   Argo;
 
@@ -92,11 +92,13 @@ begin
   error := rec.GetSubRecordErrors;
   if error <> '' then
     errors.Add(TRecordError.Create(rec, erUES, Error));
-end;  
+end;
 
 procedure CheckForIdenticalErrors(const rec: IwbMainRecord);
 begin
-  if rec.IsMaster or rec.Master.IsInjected then exit;
+  if rec.IsMaster or rec.Master.IsInjected
+  or (Assigned(rec.ChildGroup) and HasChildRecords(rec.ChildGroup)) then
+    exit;
   if IsITM(rec) then
     errors.Add(TRecordError.Create(rec, erITM))
   else if IsITPO(rec) then
@@ -148,8 +150,13 @@ begin
   
   // recursion
   if Supports(element, IwbContainerElementRef, container) then
-    for i := Pred(container.ElementCount) downto 0 do
+    for i := Pred(container.ElementCount) downto 0 do try
       Result := NativeCheckForErrors(container.Elements[i], Result);
+    except
+      on x: Exception do
+        AddMessage(Format('Exception checking for errors in %s, %s',
+          [container.Elements[i].Path, x.Message]));
+    end;
 end;
 
 procedure TErrorCheckThread.Execute;
@@ -248,7 +255,7 @@ constructor TRecordError.Create(const rec: IwbMainRecord; const element: IwbElem
 begin
   Init(rec);
   if not Supports(element, IwbMainRecord) then
-    path := GetPath(element, false);
+    path := GetPath(element, false, true);
   ParseError(error, &type, data);
 end;
 
@@ -262,7 +269,7 @@ end;
 {$endregion}
 
 {$region 'Remove identical records helpers'}
-procedure RemoveEmptyIdenticalContainers(const container: IwbContainer);
+procedure RemoveEmptyIdenticalContainers(const container: IwbContainer; removeITMs, removeITPOs: Boolean);
 var
   rec: IwbMainRecord;
   parentContainer: IwbContainer;
@@ -270,22 +277,22 @@ begin
   if container.ElementCount = 0 then begin
     parentContainer := container.container;
     if Supports(container, IwbMainRecord, rec) then
-      RemoveIdenticalRecord(rec)
+      RemoveIdenticalRecord(rec, removeITMs, removeITPOs)
     else
       container.Remove;
     if Assigned(container) then
-      RemoveEmptyIdenticalContainers(parentContainer);
+      RemoveEmptyIdenticalContainers(parentContainer, removeITMs, removeITPOs);
   end;
 end;
 
-procedure RemoveIdenticalRecord(const rec: IwbMainRecord);
+procedure RemoveIdenticalRecord(const rec: IwbMainRecord; removeITMs, removeITPOs: Boolean);
 var
   container: IwbContainer;
 begin
-  if IsITM(rec) or IsITPO(rec) then begin
+  if (removeITMs and IsITM(rec)) or (removeITPOs and IsITPO(rec)) then begin
     container := rec.Container;
     rec.Remove;
-    RemoveEmptyIdenticalContainers(container);
+    RemoveEmptyIdenticalContainers(container, removeITMs, removeITPOs);
   end;
 end;
 {$endregion}
@@ -343,7 +350,7 @@ begin
   end;
 end;
 
-function RemoveIdenticalRecords(_id: Cardinal): WordBool; cdecl;
+function RemoveIdenticalRecords(_id: Cardinal; removeITMs, removeITPOs: WordBool): WordBool; cdecl;
 var
   _file: IwbFile;
   i: Integer;
@@ -356,7 +363,7 @@ begin
     for i := Pred(_file.RecordCount) downto 0 do begin
       rec := _file.Records[i];
       if rec.IsMaster then continue;
-      RemoveIdenticalRecord(rec);
+      RemoveIdenticalRecord(rec, removeITMs, removeITPOs);
     end;
     Result := True;
   except

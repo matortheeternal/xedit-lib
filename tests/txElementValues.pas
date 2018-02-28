@@ -13,9 +13,35 @@ uses
   txImports,
 {$ENDIF}
 {$IFNDEF USE_DLL}
-  xeElements, xeElementValues,
+  xeElements, xeElementValues, xeRecords,
 {$ENDIF}
   txMeta, txElements;
+
+function GetFullName(h: Cardinal): String;
+var
+  len: Integer;
+begin
+  GetValue(h, 'FULL', @len);
+  Result := grs(len);
+end;
+
+procedure TestSetValue(h: Cardinal; path, value: PWideChar);
+var
+  len: Integer;
+begin
+  ExpectSuccess(SetValue(h, path, value));
+  ExpectSuccess(GetValue(h, path, @len));
+  ExpectEqual(grs(len), string(value));
+end;
+
+procedure TestSetUIntValue(h: Cardinal; path: PWideChar; value: Cardinal);
+var
+  c: Cardinal;
+begin
+  ExpectSuccess(SetUIntValue(h, path, value));
+  ExpectSuccess(GetUIntValue(h, path, @c));
+  ExpectEqual(c, value);
+end;
 
 procedure TestGetFlag(h: Cardinal; path, flag: PWideChar; expectedValue: WordBool);
 var
@@ -101,22 +127,26 @@ begin
                   ExpectSuccess(Name(armo, @len));
                   ExpectEqual(grs(len), 'Armor');
                 end);
+
               It('Should resolve block names', procedure
                 begin
                   ExpectSuccess(Name(block, @len));
                   ExpectEqual(grs(len), 'Block 0');
                 end);
+
               It('Should resolve sub-block names', procedure
                 begin
                   ExpectSuccess(Name(subBlock, @len));
                   ExpectEqual(grs(len), 'Sub-Block 0');
                 end);
+
               It('Should resolve child group names', procedure
                 begin
                   ExpectSuccess(Name(childGroup, @len));
                   expectedName := 'Children of 00027D1C';
                   ExpectEqual(grs(len), expectedName);
                 end);
+
               It('Should resolve persistent/temporary group names', procedure
                 begin
                   ExpectSuccess(Name(persistentGroup, @len));
@@ -132,17 +162,20 @@ begin
                   ExpectSuccess(Name(rec, @len));
                   ExpectEqual(grs(len), 'Iron Gauntlets');
                 end);
+
               It('Should resolve Editor ID, if present', procedure
                 begin
                   ExpectSuccess(Name(refr, @len));
                   ExpectEqual(grs(len), 'ITPOTest');
                 end);
+
               It('Should resolve context for cells with no EDID or FULL', procedure
                 begin
                   ExpectSuccess(GetElement(0, 'Update.esm\00038381', @h));
                   ExpectSuccess(Name(h, @len));
                   ExpectEqual(grs(len), '"Windhelm" <32,9>');
                 end);
+
               It('Should resolve context for placements with no EDID', procedure
                 begin
                   ExpectSuccess(GetElement(0, 'Update.esm\0003F70F', @h));
@@ -190,46 +223,55 @@ begin
               ExpectSuccess(Path(xt2, false, false, @len));
               ExpectEqual(grs(len), 'xtest-2.esp');
             end);
+
           It('Should resolve group signatures', procedure
             begin
               ExpectSuccess(Path(armo, false, false,  @len));
               ExpectEqual(grs(len), 'xtest-2.esp\ARMO');
             end);
+
           It('Should resolve block names', procedure
             begin
               ExpectSuccess(Path(block, false, false,  @len));
               ExpectEqual(grs(len), 'xtest-2.esp\CELL\Block 0');
             end);
+
           It('Should resolve sub-block names', procedure
             begin
               ExpectSuccess(Path(subBlock, false, false,  @len));
               ExpectEqual(grs(len), 'xtest-2.esp\CELL\Block 0\Sub-Block 0');
             end);
+
           It('Should resolve child groups', procedure
             begin
               ExpectSuccess(Path(childGroup, true, false, @len));
               ExpectEqual(grs(len), 'xtest-2.esp\00027D1C\Child Group');
             end);
+
           It('Should resolve temporary/persistent groups', procedure
             begin
               ExpectSuccess(Path(persistentGroup, true, false,  @len));
               ExpectEqual(grs(len), 'xtest-2.esp\00027D1C\Child Group\Persistent');
             end);
+
           It('Should resolve record FormIDs', procedure
             begin
               ExpectSuccess(Path(refr, true, false, @len));
               ExpectEqual(grs(len), 'xtest-2.esp\000170F0');
             end);
+
           It('Should resolve file headers', procedure
             begin
               ExpectSuccess(Path(fileFlags, false, false,  @len));
               ExpectEqual(grs(len), 'xtest-2.esp\File Header\Record Header\Record Flags');
             end);
+
           It('Should resolve element names', procedure
             begin
               ExpectSuccess(Path(element, true, false, @len));
               ExpectEqual(grs(len), 'xtest-2.esp\00012E46\DNAM - Armor Rating');
             end);
+
           It('Should resolve array element indexes', procedure
             begin
               ExpectSuccess(Path(keyword, true, false, @len));
@@ -243,10 +285,12 @@ begin
             begin
               ExpectFailure(Signature(xt2, @len));
             end);
+
           It('Should fail if an element with no signature is passed', procedure
             begin
               ExpectFailure(Signature(keyword, @len));
             end);
+
           It('Should resolve group signatures', procedure
             begin
               ExpectSuccess(Signature(block, @len));
@@ -260,6 +304,7 @@ begin
               ExpectSuccess(Signature(armo, @len));
               ExpectEqual(grs(len), 'ARMO');
             end);
+
           It('Should resolve record signatures', procedure
             begin
               ExpectSuccess(Signature(rec, @len));
@@ -267,6 +312,7 @@ begin
               ExpectSuccess(Signature(refr, @len));
               ExpectEqual(grs(len), 'REFR');
             end);
+
           It('Should resolve element signatures', procedure
             begin
               ExpectSuccess(Signature(element, @len));
@@ -283,6 +329,7 @@ begin
               ExpectSuccess(GetValue(keyword, '', @len));
               ExpectEqual(grs(len), 'ArmorHeavy [KYWD:0006BBD2]');
             end);
+
           It('Should resolve element value at path', procedure
             begin
               ExpectSuccess(GetValue(rec, 'OBND\X1', @len));
@@ -292,10 +339,20 @@ begin
               ExpectSuccess(GetValue(rec, 'Female world model\MOD4', @len));
               ExpectEqual(grs(len), 'Test');
             end);
+
           It('Should fail if path does not exist', procedure
             begin
               ExpectFailure(GetValue(rec, 'Non\Existent\Path', @len));
             end);
+
+          {It('Should be fast', procedure
+            begin
+              ExpectSuccess(GetElement(0, 'Skyrim.esm\ARMO\000135BA', @h));
+              Benchmark(100000, procedure
+                begin
+                  GetFullName(h);
+                end);
+            end);}
         end);
 
       Describe('GetIntValue', procedure
@@ -306,11 +363,13 @@ begin
               ExpectSuccess(GetIntValue(h, '', @i));
               ExpectEqual(i, -15);
             end);
+
           It('Should resolve element integer values at paths', procedure
             begin
               ExpectSuccess(GetIntValue(rec, 'OBND\Z1', @i));
               ExpectEqual(i, -1);
             end);
+
           It('Should fail if path does not exist', procedure
             begin
               ExpectFailure(GetIntValue(rec, 'Non\Existent\Path', @i));
@@ -324,11 +383,13 @@ begin
               ExpectSuccess(GetUIntValue(keyword, '', @c));
               ExpectEqual(c, $6BBD2);
             end);
+
           It('Should resolve element unsigned integer values at paths', procedure
             begin
               ExpectSuccess(GetUIntValue(rec, 'KWDA\[0]', @c));
               ExpectEqual(c, $424EF);
             end);
+
           It('Should fail if path does not exist', procedure
             begin
               ExpectFailure(GetUIntValue(rec, 'Non\Existent\Path', @c));
@@ -343,11 +404,13 @@ begin
               // armor rating is stored at *100 internally, for some reason
               ExpectEqual(f, 1000.0);
             end);
+
           It('Should resolve element float values at paths', procedure
             begin
               ExpectSuccess(GetFloatValue(rec, 'DATA\Weight', @f));
               ExpectEqual(f, 5.0);
             end);
+
           It('Should fail if path does not exist', procedure
             begin
               ExpectFailure(GetFloatValue(rec, 'Non\Existent\Path', @f));
@@ -358,25 +421,17 @@ begin
         begin
           It('Should set element values', procedure
             begin
-              ExpectSuccess(SetValue(element, '', '14.100000'));
-              ExpectSuccess(GetValue(element, '', @len));
-              ExpectEqual(grs(len), '14.100000');
-              ExpectSuccess(SetValue(keyword, '', 'ArmorLight [KYWD:0006BBD3]'));
-              ExpectSuccess(GetValue(keyword, '', @len));
-              ExpectEqual(grs(len), 'ArmorLight [KYWD:0006BBD3]');
+              TestSetValue(element, '', '14.100000');
+              TestSetValue(keyword, '', 'ArmorLight [KYWD:0006BBD3]');
             end);
+
           It('Should set element value at path', procedure
             begin
-              ExpectSuccess(SetValue(rec, 'OBND\X1', '-8'));
-              ExpectSuccess(GetValue(rec, 'OBND\X1', @len));
-              ExpectEqual(grs(len), '-8');
-              ExpectSuccess(SetValue(rec, 'KWDA\[0]', 'PerkFistsEbony [KYWD:0002C178]'));
-              ExpectSuccess(GetValue(rec, 'KWDA\[0]', @len));
-              ExpectEqual(grs(len), 'PerkFistsEbony [KYWD:0002C178]');
-              ExpectSuccess(SetValue(rec, 'Female world model\MOD4', 'Armor\Iron\F\GauntletsGND.nif'));
-              ExpectSuccess(GetValue(rec, 'Female world model\MOD4', @len));
-              ExpectEqual(grs(len), 'Armor\Iron\F\GauntletsGND.nif');
+              TestSetValue(rec, 'OBND\X1', '-8');
+              TestSetValue(rec, 'KWDA\[0]', 'PerkFistsEbony [KYWD:0002C178]');
+              TestSetValue(rec, 'Female world model\MOD4', 'Armor\Iron\F\GauntletsGND.nif');
             end);
+
           It('Should fail if path does not exist', procedure
             begin
               ExpectFailure(SetValue(rec, 'Non\Existent\Path', 'Test'));
@@ -392,12 +447,14 @@ begin
               ExpectSuccess(GetIntValue(h, '', @i));
               ExpectEqual(i, -13);
             end);
+
           It('Should set element integer values at paths', procedure
             begin
               ExpectSuccess(SetIntValue(rec, 'OBND\Z1', -4));
               ExpectSuccess(GetIntValue(rec, 'OBND\Z1', @i));
               ExpectEqual(i, -4);
             end);
+
           It('Should fail if path does not exist', procedure
             begin
               ExpectFailure(SetIntValue(rec, 'Non\Existent\Path', 1));
@@ -408,16 +465,20 @@ begin
         begin
           It('Should set element unsigned integer values', procedure
             begin
-              ExpectSuccess(SetUIntValue(keyword, '', $6BBE2));
-              ExpectSuccess(GetUIntValue(keyword, '', @c));
-              ExpectEqual(c, $6BBE2);
+              TestSetUIntValue(keyword, '', $6BBE2);
             end);
+
           It('Should set element unsigned integer values at paths', procedure
             begin
-              ExpectSuccess(SetUIntValue(rec, 'KWDA\[0]', $2C177));
-              ExpectSuccess(GetUIntValue(rec, 'KWDA\[0]', @c));
-              ExpectEqual(c, $2C177);
+              TestSetUIntValue(rec, 'KWDA\[0]', $2C177)
             end);
+
+          It('Should work with version control info', procedure
+            begin
+              TestSetUIntValue(rec, 'Record Header\Version Control Info 1', $1234);
+              TestSetUIntValue(rec, 'Record Header\Version Control Info 2', $1234);
+            end);
+
           It('Should fail if path does not exist', procedure
             begin
               ExpectFailure(SetUIntValue(rec, 'Non\Existent\Path', $10));
@@ -433,12 +494,14 @@ begin
               // armor rating is stored at *100 internally, for some reason
               ExpectEqual(f, 1920.0);
             end);
+
           It('Should resolve element float values at paths', procedure
             begin
               ExpectSuccess(SetFloatValue(rec, 'DATA\Weight', 7.3));
               ExpectSuccess(GetFloatValue(rec, 'DATA\Weight', @f));
               ExpectEqual(f, 7.3);
             end);
+
           It('Should fail if path does not exist', procedure
             begin
               ExpectFailure(SetFloatValue(rec, 'Non\Existent\Path', 1.23));

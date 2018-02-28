@@ -99,7 +99,7 @@ begin
   ExpectSuccess(RemoveElement(h, path));
   if testPresence then begin
     ExpectSuccess(HasElement(h, path, @b));
-    Expect(not b, 'The element should not longer be present');
+    Expect(not b, 'The element should no longer be present');
   end;
 end;
 
@@ -172,7 +172,7 @@ var
   len, i: Integer;
   elements: CardinalArray;
 begin
-  ExpectSuccess(GetElements(_file, '', False, @len));
+  ExpectSuccess(GetElements(_file, '', False, False, @len));
   elements := gra(len);
   for i := 1 to High(elements) do
     ExpectSuccess(RemoveElement(elements[i], ''));
@@ -200,13 +200,11 @@ end;
 
 procedure TestGetContainer(h: Cardinal; path: PWideChar);
 var
-  element, container: Cardinal;
+  container: Cardinal;
 begin
   if path <> '' then
-    ExpectSuccess(GetElement(h, path, @element))
-  else
-    element := h;
-  ExpectSuccess(GetContainer(element, @container));
+    ExpectSuccess(GetElement(h, path, @h));
+  ExpectSuccess(GetContainer(h, @container));
   Expect(container > 0, 'Handle should be greater than 0');
 end;
 
@@ -232,12 +230,39 @@ begin
   ExpectEqual(grs(len), expectedRecordName);
 end;
 
+procedure TestSetLinksTo(h, ref: Cardinal; path: PWideChar; expectedRecordName: String);
+begin
+  ExpectSuccess(SetLinksTo(h, path, ref));
+  TestGetLinksTo(h, path, expectedRecordName);
+end;
+
 procedure TestGetSignatureAllowed(h: Cardinal; sig: PWideChar; expectedResult: WordBool);
 var
   b: WordBool;
 begin
   ExpectSuccess(GetSignatureAllowed(h, sig, @b));
   ExpectEqual(b, expectedResult);
+end;
+
+procedure TestGetAllowedSignatures(h: Cardinal; path: PWideChar; expectedSignatures: TStringArray);
+var
+  len: Integer;
+  sl: TStringList;
+  i: Integer;
+begin
+  if path <> '' then
+    ExpectSuccess(GetElement(h, path, @h));
+  ExpectSuccess(GetAllowedSignatures(h, @len));
+  sl := TStringList.Create;
+  try
+    sl.Text := grs(len);
+    len := sl.Count;
+    ExpectEqual(len, Length(expectedSignatures));
+    for i := 0 to Pred(len) do
+      ExpectEqual(sl[i], expectedSignatures[i]);
+  finally
+    sl.Free;
+  end;
 end;
 
 procedure TestGetIsEditable(h: Cardinal; path: PWideChar; expectedResult: WordBool);
@@ -363,7 +388,7 @@ begin
                 end);
             end);
 
-          Describe('File group resolution by signature', procedure
+          Describe('Top-level group resolution by signature', procedure
             begin
               It('Should return a handle if the group exists', procedure
                 begin
@@ -373,6 +398,52 @@ begin
               It('Should fail if the group does not exist', procedure
                 begin
                   ExpectFailure(GetElement(skyrim, 'ABCD', @h));
+                end);
+            end);
+
+          Describe('Top-level group resolution by name', procedure
+            begin
+              It('Should return a handle if the group exists', procedure
+                begin
+                  TestGetElement(skyrim, 'Armor');
+                end);
+
+              It('Should fail if the group does not exist', procedure
+                begin
+                  ExpectFailure(GetElement(xt3, 'Ammunition', @h));
+                end);
+            end);
+
+          Describe('Block/sub-block resolution', procedure
+            begin
+              It('Should return a handle if the group exists', procedure
+                begin
+                  TestGetElement(skyrim, '0000003C\Child Group\Block -1, 0');
+                  TestGetElement(skyrim, '0000003C\Child Group\Block -1, 0\Sub-Block -1, 0');
+                  TestGetElement(skyrim, 'CELL\Block 0');
+                  TestGetElement(skyrim, 'CELL\Block 0\Sub-Block 0');
+                end);
+
+              It('Should fail if the group does not exist', procedure
+                begin
+                  ExpectFailure(GetElement(skyrim, '0000003C\Child Group\Block -99, 99', @h));
+                  ExpectFailure(GetElement(skyrim, '0000003C\Child Group\Block -1, 0\Sub-Block -99, 99', @h));
+                  ExpectFailure(GetElement(skyrim, 'CELL\Block 10', @h));
+                  ExpectFailure(GetElement(skyrim, 'CELL\Block 0\Sub-Block 10', @h));
+                end);
+            end);
+
+          Describe('Temporary/persistent group resolution', procedure
+            begin
+              It('Should return a handle if the group exists', procedure
+                begin
+                  TestGetElement(skyrim, '00027D1C\Child Group\Temporary');
+                  TestGetElement(skyrim, '00027D1C\Child Group\Persistent');
+                end);
+
+              It('Should fail if the group does not exist', procedure
+                begin
+                  ExpectFailure(GetElement(skyrim, '000094BD\Child Group\Persistent', @h));
                 end);
             end);
 
@@ -509,6 +580,11 @@ begin
 
       Describe('AddElement', procedure
         begin
+          BeforeAll(procedure
+            begin
+              ExpectSuccess(RemoveElement(ar2, 'EDID - Editor ID'));
+            end);
+
           It('Should create a new file if no handle given', procedure
             begin
               TestAddElement(0, 'NewFile-1.esp');
@@ -538,6 +614,7 @@ begin
 
           It('Should be able to create a new element on a record', procedure
             begin
+              TestAddElement(ar2, 'EDID - Editor ID');
               TestAddElement(ar2, 'Destructable');
             end);
 
@@ -591,6 +668,11 @@ begin
               TestElementCount(keywords, 5);
               TestRemoveElement(armature, '[0]', False);
               TestElementCount(armature, 2);
+            end);
+
+          It('Should remove the last element in an array', procedure
+            begin
+              TestRemoveElement(0, 'xtest-4.esp\05000802\Armature\[0]');
             end);
 
           It('Should remove the element passed if no path is given', procedure
@@ -661,60 +743,60 @@ begin
 
           It('Should resolve root children (files)', procedure
             begin
-              ExpectSuccess(GetElements(0, '', False, @len));
+              ExpectSuccess(GetElements(0, '', False, False, @len));
               ExpectEqual(len, 9);
               TestNames(gra(len), 'Skyrim.esm', 'NewFile-1.esp');
             end);
 
           It('Should resolve file children (file header and groups)', procedure
             begin
-              ExpectSuccess(GetElements(skyrim, '', False, @len));
+              ExpectSuccess(GetElements(skyrim, '', False, False, @len));
               ExpectEqual(len, 118);
               TestNames(gra(len), 'File Header', 'Reverb Parameters');
             end);
 
           It('Should resolve group children (records)', procedure
             begin
-              ExpectSuccess(GetElements(armo1, '', False, @len));
+              ExpectSuccess(GetElements(armo1, '', False, False, @len));
               ExpectEqual(len, 2762);
               TestEdids(gra(len), 'DremoraBoots', 'SkinNaked');
             end);
 
           It('Should resolve record children (subrecords/elements)', procedure
             begin
-              ExpectSuccess(GetElements(ar1, '', False, @len));
+              ExpectSuccess(GetElements(ar1, '', False, False, @len));
               ExpectEqual(len, 13);
               TestNames(gra(len), 'Record Header', 'DNAM - Armor Rating');
             end);
 
           It('Should resolve element children', procedure
             begin
-              ExpectSuccess(GetElements(keywords, '', False, @len));
+              ExpectSuccess(GetElements(keywords, '', False, False, @len));
               ExpectEqual(len, 5);
               TestNames(gra(len), 'Keyword', 'Keyword');
             end);
 
           It('Should resolve paths', procedure
             begin
-              ExpectSuccess(GetElements(ar2, 'KWDA', False, @len));
+              ExpectSuccess(GetElements(ar2, 'KWDA', False, False, @len));
               ExpectEqual(len, 5);
             end);
 
           It('Should be able to return sorted elements', procedure
             begin
               ExpectSuccess(SetSortMode(1, False));
-              ExpectSuccess(GetElements(0, 'Skyrim.esm', True, @len));
+              ExpectSuccess(GetElements(0, 'Skyrim.esm', True, False, @len));
               TestNames(gra(len), 'File Header', 'Weather');
-              ExpectSuccess(GetElements(0, '', True, @len));
+              ExpectSuccess(GetElements(0, '', True, False, @len));
               TestNames(gra(len), 'Skyrim.esm', 'NewFile-1.esp');
               ExpectSuccess(SetSortMode(1, True));
-              ExpectSuccess(GetElements(0, '', True, @len));
+              ExpectSuccess(GetElements(0, '', True, False, @len));
               TestNames(gra(len), 'NewFile-1.esp', 'Skyrim.esm');
             end);
 
           It('Should not include child groups', procedure
             begin
-              ExpectSuccess(GetElements(0, 'Skyrim.esm\DIAL', False, @len));
+              ExpectSuccess(GetElements(0, 'Skyrim.esm\DIAL', False, False, @len));
               ExpectEqual(len, 15037);
             end);
         end);
@@ -734,6 +816,20 @@ begin
                 'DATA - Data', 'DNAM - Armor Rating', 'TNAM - Template Armor'));
             end);
 
+          It('Should include additional elements', procedure
+            begin
+              ExpectSuccess(GetElement(skyrim, '000094BD', @h));
+              TestGetDefNames(h, TStringArray.Create('Worldspace', 'Record Header',
+                'EDID - Editor ID', 'FULL - Name', 'DATA - Flags', 'XCLC - Grid',
+                'XCLL - Lighting', 'TVDT - Occlusion Data', 'MHDT - Max Height Data',
+                'LTMP - Lighting Template', 'LNAM - Unknown', 'XCLW - Water Height',
+                'XNAM - Water Noise Texture', 'XCLR - Regions', 'XLCN - Location',
+                'XWCN - Unknown', 'XWCS - Unknown', 'XWCU - Water Velocity', 'XCWT - Water',
+                'Ownership', 'XILL - Lock List', 'XWEM - Water Environment Map',
+                'XCCM - Sky/Weather from Region', 'XCAS - Acoustic Space',
+                'XEZN - Encounter Zone', 'XCMO - Music Type', 'XCIM - Image Space'));
+            end);
+
           It('Should work with structs', procedure
             begin
               ExpectSuccess(GetElement(ar1, 'OBND', @h));
@@ -744,6 +840,15 @@ begin
             begin
               ExpectSuccess(GetElement(skyrim, '00000DD6\DATA', @h));
               TestGetDefNames(h, TStringArray.Create('Float'));
+            end);
+
+          It('Should work with VMAD Object Unions', procedure
+            begin
+              ExpectSuccess(GetElement(0, 'Update.esm\0100080E\' +
+                'VMAD\Scripts\[0]\Properties\[0]\Value\Object Union', @h));
+              TestGetDefNames(h, TStringArray.Create('Object v2'));
+              ExpectSuccess(GetElement(h, 'Object v2', @h));
+              TestGetDefNames(h, TStringArray.Create('FormID', 'Alias', 'Unused'));
             end);
         end);
       
@@ -832,6 +937,24 @@ begin
               ExpectFailure(GetLinksTo(skyrim, '', @h));
               ExpectFailure(GetLinksTo(ar1, '', @h));
               ExpectFailure(GetLinksTo(dnam, '', @h));
+            end);
+
+          It('Should be fast', procedure
+            begin
+              ExpectSuccess(GetElement(0, 'Skyrim.esm\ARMO\000135BA', @h));
+              Benchmark(100000, procedure
+                begin
+                  ExpectSuccess(GetLinksTo(keyword, '', @h));
+                end);
+            end);
+        end);
+
+      Describe('SetLinksTo', procedure
+        begin
+          It('Should set references', procedure
+            begin
+              ExpectSuccess(GetElement(0, 'Skyrim.esm\0002C17B', @h));
+              TestSetLinksTo(keyword, h, '', 'PerkFistsDaedric');
             end);
         end);
 
@@ -935,7 +1058,7 @@ begin
             begin
               It('Should return true if FormID matches', procedure
                 begin
-                  TestElementMatches(keywords, '[0]', '000424EF', true);
+                  TestElementMatches(keywords, '[0]', '0002C17B', true);
                   TestElementMatches(ar2, 'ZNAM', '00000000', true);
                   TestElementMatches(ar2, 'RNAM', '00000019', true);
                 end);
@@ -951,7 +1074,7 @@ begin
             begin
               It('Should return true if Editor ID matches', procedure
                 begin
-                  TestElementMatches(keywords, '[0]', 'PerkFistsIron');
+                  TestElementMatches(keywords, '[0]', 'PerkFistsDaedric');
                   TestElementMatches(keywords, '[3]', 'ArmorGauntlets');
                   TestElementMatches(ar2, 'RNAM', 'DefaultRace');
                 end);
@@ -1158,6 +1281,19 @@ begin
               end;
             end);
 
+          It('Should be able to copy array elements', procedure
+            begin
+              try
+                ExpectSuccess(GetElement(ar3, 'KWDA', @h));
+                h := TestCopyElement('xtest-3.esp\00012E46\KWDA\[0]', h, True);
+                TestElementFile(h, 'xtest-3.esp');
+                ExpectSuccess(GetContainer(h, @h));
+                TestElementCount(h, 6);
+              finally
+                ExpectSuccess(RemoveArrayItem(ar3, 'KWDA', '', '000424EF'));
+              end;
+            end);
+
           It('Should be able to override records', procedure
             begin
               h := TestCopyElement('xtest-2.esp\00012E46', xt5, False);
@@ -1231,6 +1367,33 @@ begin
           It('Should raise an exception if element can''t hold formIDs', procedure
             begin
               ExpectFailure(GetSignatureAllowed(dnam, 'ARMO', @b));
+            end);
+        end);
+
+      Describe('GetAllowedSignatures', procedure
+        begin
+          It('Should work with checked references', procedure
+            begin
+              TestGetAllowedSignatures(keyword, '', TStringArray.Create('KYWD', 'NULL'));
+            end);
+
+          It('Should work with union elements', procedure
+            begin
+              TestGetAllowedSignatures(skyrim, '00000DD2\Conditions\[1]\CTDA\Parameter #1',
+                TStringArray.Create('PERK'));
+            end);
+
+          It('Should raise an exception if element isn''t an integer', procedure
+            begin
+              ExpectFailure(GetAllowedSignatures(skyrim, @len));
+              ExpectFailure(GetAllowedSignatures(armo1, @len));
+              ExpectFailure(GetAllowedSignatures(ar1, @len));
+              ExpectFailure(GetAllowedSignatures(keywords, @len));
+            end);
+
+          It('Should raise an exception if element can''t hold formIDs', procedure
+            begin
+              ExpectFailure(GetAllowedSignatures(dnam, @len));
             end);
         end);
 

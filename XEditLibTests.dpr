@@ -56,7 +56,7 @@ const
 
 procedure BuildXETests;
 begin
-  {$IFNDEF SSE}
+  {$IFDEF SKYRIM}
   BuildSetupTests;
   BuildMetaTests;
   BuildMessageTests;
@@ -70,6 +70,10 @@ begin
   BuildFinalTests;
   {$ENDIF}
   {$IFDEF SSE}
+  BuildSetupTests;
+  BuildFinalTests;
+  {$ENDIF}
+  {$IFDEF FO4}
   BuildSetupTests;
   BuildFinalTests;
   {$ENDIF}

@@ -18,6 +18,7 @@ type
     procedure Execute; override;
   end;
   TLoaderState = ( lsInactive, lsActive, lsDone, lsError );
+  TPluginsFormat = ( pfPlain, pfAsterisks, pfEquals );
   {$endregion}
 
   {$region 'Native functions}
@@ -25,14 +26,14 @@ type
   procedure UpdateFileCount;
   procedure LoadPluginFiles;
   procedure LoadResources;
-  procedure LoadPluginsList(const sLoadPath: String; var sl: TStringList);
+  procedure LoadPluginsList(const sLoadPath: String; var sl: TStringList; noDelete: Boolean = False);
   procedure LoadLoadOrder(const sLoadPath: String; var slLoadOrder, slPlugins: TStringList);
   procedure RemoveCommentsAndEmpty(var sl: TStringList);
   procedure RemoveMissingFiles(var sl: TStringList);
   procedure AddMissingFiles(var sl: TStringList);
   procedure GetPluginDates(var sl: TStringList);
   procedure AddBaseMasters(var sl: TStringList);
-  procedure FixLoadOrder(var sl: TStringList; const filename: String; index: Integer);
+  procedure FixLoadOrder(var sl: TStringList; const filename: String; var index: Integer);
   function PluginListCompare(List: TStringList; Index1, Index2: Integer): Integer;
   procedure RenameSavedFiles;
   {$endregion}
@@ -48,7 +49,7 @@ type
   function LoadPlugins(loadOrder: PWideChar; smartLoad: WordBool): WordBool; cdecl;
   function LoadPlugin(filename: PWideChar): WordBool; cdecl;
   function LoadPluginHeader(fileName: PWideChar; _res: PCardinal): WordBool; cdecl;
-  function BuildReferences(_id: Cardinal): WordBool; cdecl;
+  function BuildReferences(_id: Cardinal; synchronous: WordBool): WordBool; cdecl;
   function GetLoaderStatus(status: PByte): WordBool; cdecl;
   function UnloadPlugin(_id: Cardinal): WordBool; cdecl;
   {$endregion}
@@ -66,7 +67,7 @@ implementation
 uses
   Windows, SysUtils, ShlObj,
   // xelib units
-  xeMeta, xeConfiguration, xeMessages, xeMasters;
+  xeHelpers, xeMeta, xeConfiguration, xeMessages, xeMasters;
 
 {$region 'TLoaderThread'}
 procedure TLoaderThread.Execute;
@@ -125,6 +126,42 @@ begin
     lsError: wbLoaderError := True;
   end;
 end;
+
+{$region 'Reference building helpers}
+procedure BuildReferencesAsync(_id: Cardinal);
+var
+  _file: IwbFile;
+begin
+  if _id = 0 then
+    rFiles := Copy(xFiles, 0, MaxInt)
+  else begin
+    if not Supports(Resolve(_id), IwbFile, _file) then
+      raise Exception.Create('Interface must be a file.');
+    SetLength(rFiles, 1);
+    rFiles[0] := _file;
+  end;
+
+  // start reference building thread
+  SetLoaderState(lsActive);
+  RefThread := TRefThread.Create;
+end;
+
+procedure BuildReferencesSync(_id: Cardinal);
+var
+  i: Integer;
+  _file: IwbFile;
+begin
+  if _id = 0 then begin
+    for i := Low(xFiles) to High(xFiles) do
+      xFiles[i].BuildRef;
+  end
+  else begin
+    if not Supports(Resolve(_id), IwbFile, _file) then
+      raise Exception.Create('Interface must be a file.');
+    _file.BuildRef;
+  end;
+end;
+{$endregion}
 
 {$region 'File loading'}
 procedure UpdateFileCount;
@@ -212,10 +249,11 @@ var
   slErrors: TStringList;
   i: Integer;
   modName: String;
-  bIsTES5: Boolean;
+  bExact, bModIni: Boolean;
 begin
   wbContainerHandler.AddFolder(wbDataPath);
-  bIsTES5 := wbGameMode in [gmTES5, gmSSE];
+  bExact := wbGameMode in [gmTES5];
+  bModIni := wbGameMode in [gmTES5, gmSSE];
   slBSAFileNames := TStringList.Create;
   try
     slErrors := TStringList.Create;
@@ -229,7 +267,7 @@ begin
         slBSAFileNames.Clear;
         slErrors.Clear;
         modName := ChangeFileExt(xFiles[i].GetFileName, '');
-        HasBSAs(modName, wbDataPath, bIsTES5, bIsTES5, slBSAFileNames, slErrors);
+        HasBSAs(modName, wbDataPath, bExact, bModIni, slBSAFileNames, slErrors);
         LoadBSAs(slBSAFileNames, slErrors);
       end;
     finally
@@ -266,7 +304,12 @@ end;
 {$region 'Load order helpers'}
 function LoadFileHeader(const filePath: String): IwbFile;
 begin
-  Result := wbFile(filePath, -1, '', False, True);
+  try
+    Result := wbFile(filePath, -1, '', False, True);
+  except
+    on x: Exception do 
+      raise Exception.Create(Format('Failed to load file header %s, %s', [filePath, x.Message]));
+  end;
 end;
 
 procedure AddToLoadOrder(const filePath: String);
@@ -280,7 +323,8 @@ begin
   for i := Low(masterNames) to High(masterNames) do
     if slLoadOrder.IndexOf(masterNames[i]) = -1 then
       AddToLoadOrder(masterNames[i]);
-  slLoadOrder.Add(filePath);
+  if slLoadOrder.IndexOf(filePath) = -1 then
+    slLoadOrder.Add(filePath);
 end;
 
 procedure BuildLoadOrder(const loadOrder: String);
@@ -299,13 +343,80 @@ begin
   end;
 end;
 
-procedure LoadPluginsList(const sLoadPath: String; var sl: TStringList);
+function GetPluginsFormat(var sl: TStringList): TPluginsFormat;
+var
+  asterisksCount, equalsCount, i: Integer;
+  s: String;
+begin
+  asterisksCount := 0;
+  equalsCount := 0;
+  for i := 0 to Pred(sl.Count) do begin
+    s := sl[i];
+    if Length(s) = 0 then continue;
+    if s[1] = '*' then
+      Inc(asterisksCount);
+    if StrEndsWith(s, '=0') or StrEndsWith(s, '=1') then
+      Inc(equalsCount);
+  end;
+  if equalsCount > 0 then
+    Result := pfEquals
+  else if asterisksCount > 0 then
+    Result := pfAsterisks
+  else
+    Result := pfPlain;
+end;
+
+procedure ProcessAsterisks(var sl: TStringList; index: Integer; noDelete: Boolean);
+var
+  s: String;
+begin
+  s := sl[index];
+  if s[1] <> '*' then begin
+    if not noDelete then sl.Delete(index);
+  end
+  else
+    sl[index] := Copy(s, 2, Length(s));
+end;
+
+procedure ProcessEquals(var sl: TStringList; index: Integer; noDelete: Boolean);
+var
+  s, endChars: String;
+begin
+  s := sl[index];
+  endChars := Copy(s, Length(s) - 1, 2);
+  if endChars[1] <> '=' then exit;
+  if (endChars[2] <> '1') and (not noDelete) then
+    sl.Delete(index)
+  else
+    sl[index] := Copy(s, 1, Length(s) - 2);
+end;
+
+procedure ProcessPluginsFormat(var sl: TStringList; noDelete: Boolean);
+var
+  pf: TPluginsFormat;
+  i: Integer;
+  s: String;
+begin
+  pf := GetPluginsFormat(sl);
+  for i := Pred(sl.Count) downto 0 do begin
+    s := sl[i];
+    case pf of
+      pfAsterisks: ProcessAsterisks(sl, i, noDelete);
+      pfEquals: ProcessEquals(sl, i, noDelete);
+    end;
+  end;
+end;
+
+procedure LoadPluginsList(const sLoadPath: String; var sl: TStringList; noDelete: Boolean = False);
 var
   sPath: String;
 begin
   sPath := sLoadPath + 'plugins.txt';
-  if FileExists(sPath) then
-    sl.LoadFromFile(sPath)
+  if FileExists(sPath) then begin
+    sl.LoadFromFile(sPath);
+    if (wbGameMode = gmSSE) or (wbGameMode = gmFO4) then
+      ProcessPluginsFormat(sl, noDelete);
+  end
   else
     AddMissingFiles(sl);
 
@@ -319,7 +430,8 @@ var
   sPath: String;
 begin
   sPath := sLoadPath + 'loadorder.txt';
-  if FileExists(sPath) then
+  if (wbGameMode <> gmSSE) and (wbGameMode <> gmFO4)
+  and FileExists(sPath) then
     slLoadOrder.LoadFromFile(sPath)
   else
     slLoadOrder.AddStrings(slPlugins);
@@ -333,19 +445,16 @@ end;
 { Remove comments and empty lines from a stringlist }
 procedure RemoveCommentsAndEmpty(var sl: TStringList);
 var
-  i, j, k: integer;
+  i, j: integer;
   s: string;
 begin
   for i := Pred(sl.Count) downto 0 do begin
     s := Trim(sl.Strings[i]);
     j := Pos('#', s);
-    k := Pos('*', s);
     if j > 0 then
       System.Delete(s, j, High(Integer));
     if s = '' then
       sl.Delete(i);
-    if k = 1 then
-      sl[i] := Copy(s, 2, Length(s));
   end;
 end;
 
@@ -417,42 +526,50 @@ begin
 end;
 
 procedure AddBaseMasters(var sl: TStringList);
+var
+  index: Integer;
 begin
+  index := 0;
   if (wbGameMode = gmTES5) then begin
-    FixLoadOrder(sl, 'Skyrim.esm', 0);
-    FixLoadOrder(sl, 'Update.esm', 1);
+    FixLoadOrder(sl, 'Skyrim.esm', index);
+    FixLoadOrder(sl, 'Update.esm', index);
   end
   else if (wbGameMode = gmSSE) then begin
-    FixLoadOrder(sl, 'Skyrim.esm', 0);
-    FixLoadOrder(sl, 'Update.esm', 1);
-    FixLoadOrder(sl, 'Dawnguard.esm', 2);
-    FixLoadOrder(sl, 'HearthFires.esm', 3);
-    FixLoadOrder(sl, 'Dragonborn.esm', 4);
+    FixLoadOrder(sl, 'Skyrim.esm', index);
+    FixLoadOrder(sl, 'Update.esm', index);
+    FixLoadOrder(sl, 'Dawnguard.esm', index);
+    FixLoadOrder(sl, 'HearthFires.esm', index);
+    FixLoadOrder(sl, 'Dragonborn.esm', index);
   end
   else if (wbGameMode = gmFO4) then begin
-    FixLoadOrder(sl, 'Fallout4.esm', 0);
-    FixLoadOrder(sl, 'DLCRobot.esm', 1);
-    FixLoadOrder(sl, 'DLCworkshop01.esm', 2);
-    FixLoadOrder(sl, 'DLCCoast.esm', 3);
-    FixLoadOrder(sl, 'DLCworkshop02.esm', 4);
-    FixLoadOrder(sl, 'DLCworkshop03.esm', 5);
-    FixLoadOrder(sl, 'DLCNukaworld.esm', 6);
+    FixLoadOrder(sl, 'Fallout4.esm', index);
+    FixLoadOrder(sl, 'DLCRobot.esm', index);
+    FixLoadOrder(sl, 'DLCworkshop01.esm', index);
+    FixLoadOrder(sl, 'DLCCoast.esm', index);
+    FixLoadOrder(sl, 'DLCworkshop02.esm', index);
+    FixLoadOrder(sl, 'DLCworkshop03.esm', index);
+    FixLoadOrder(sl, 'DLCNukaWorld.esm', index);
+    FixLoadOrder(sl, 'DLCUltraHighResolution.esm', index);
   end;
 end;
 
 { Forces a plugin to load at a specific position }
-procedure FixLoadOrder(var sl: TStringList; const filename: String; index: Integer);
+procedure FixLoadOrder(var sl: TStringList; const filename: String; var index: Integer);
 var
   oldIndex: Integer;
 begin
   oldIndex := sl.IndexOf(filename);
   if (oldIndex > -1) then begin
-    if oldIndex = index then exit;
-    sl.Delete(oldIndex);
-    sl.Insert(index, filename);
+    if oldIndex <> index then begin
+      sl.Delete(oldIndex);
+      sl.Insert(index, filename);
+    end;
   end
   else if FileExists(wbDataPath + filename) then
-    sl.Insert(index, filename);
+    sl.Insert(index, filename)
+  else
+    exit;
+  Inc(index);
 end;
 
 { Compare function for sorting load order by date modified/esms }
@@ -630,24 +747,22 @@ begin
 
     try
       sLoadPath := Globals.Values['AppDataPath'];
-      LoadPluginsList(sLoadPath, slPlugins);
+      LoadPluginsList(sLoadPath, slPlugins, True);
       LoadLoadOrder(sLoadPath, slLoadOrder, slPlugins);
 
-      // add base masters if missing
-      AddBaseMasters(slPlugins);
-      AddBaseMasters(slLoadOrder);
-
-      // if GameMode is not Skyrim, SkyrimSE or Fallout 4 sort
-      // by date modified
-      if not (wbGameMode in [gmTES5, gmSSE, gmFO4]) then begin
+      // if GameMode is not SkyrimSE or Fallout 4 and we don't
+      // have a loadorder.txt, sort by date modified
+      if (wbGameMode <> gmSSE) and (wbGameMode <> gmFO4)
+      and not FileExists(sLoadPath + 'loadorder.txt') then begin
         GetPluginDates(slLoadOrder);
         slLoadOrder.CustomSort(PluginListCompare);
       end;
 
+      // add base masters if missing
+      AddBaseMasters(slLoadOrder);
+
       // SET RESULT STRING
-      resultStr := slLoadOrder.Text;
-      Delete(resultStr, Length(resultStr) - 1, 2);
-      len^ := Length(resultStr);
+      SetResultFromList(slLoadOrder, len);
       Result := True;
     finally
       slPlugins.Free;
@@ -672,10 +787,7 @@ begin
       LoadPluginsList(sLoadPath, slPlugins);
       AddBaseMasters(slPlugins);
 
-      // SET RESULT STRING
-      resultStr := slPlugins.Text;
-      Delete(resultStr, Length(resultStr) - 1, 2);
-      len^ := Length(resultStr);
+      SetResultFromList(slPlugins, len);
       Result := True;
     finally
       slPlugins.Free;
@@ -748,24 +860,15 @@ begin
   end;
 end;
 
-function BuildReferences(_id: Cardinal): WordBool; cdecl;
-var
-  _file: IwbFile;
+function BuildReferences(_id: Cardinal; synchronous: WordBool): WordBool; cdecl;
 begin
   Result := False;
   try
-    if _id = 0 then
-      rFiles := Copy(xFiles, 0, MaxInt)
-    else begin
-      if not Supports(Resolve(_id), IwbFile, _file) then
-        raise Exception.Create('Interface must be a file.');
-      SetLength(rFiles, 1);
-      rFiles[0] := _file;
-    end;
+    if not synchronous then
+      BuildReferencesAsync(_id)
+    else
+      BuildReferencesSync(_id);
 
-    // start reference building thread
-    SetLoaderState(lsActive);
-    RefThread := TRefThread.Create;
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);

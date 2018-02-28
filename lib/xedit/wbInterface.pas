@@ -402,7 +402,8 @@ type
     esDestroying,
     esChangeNotified,
     esModifiedUpdated,
-    esSorting
+    esSorting,
+    esFilterShow
   );
 
   TwbElementStates = set of TwbElementState;
@@ -492,6 +493,7 @@ type
 
     procedure Hide;
     procedure Show;
+    procedure Filter(show: Boolean);
     function GetIsHidden: Boolean;
 
     procedure MoveUp;
@@ -754,7 +756,8 @@ type
     fsIsHardcoded,
     fsIsGameMaster,
     fsIsTemporary,
-    fsHasNoFormID
+    fsHasNoFormID,
+    fsIsEditable
   );
 
   TwbFileStates = set of TwbFileState;
@@ -781,6 +784,7 @@ type
     function HasGroup(const aSignature: TwbSignature): Boolean;
     function GetFileStates: TwbFileStates;
     procedure BuildReachable;
+    procedure SetIsEditable(state: Boolean);
 
     function LoadOrderFormIDtoFileFormID(aFormID: Cardinal): Cardinal;
     function FileFormIDtoLoadOrderFormID(aFormID: Cardinal): Cardinal;
@@ -11891,11 +11895,21 @@ begin
 end;
 
 procedure TwbByteArrayDef.FromNativeValue(aBasePtr, aEndPtr: Pointer; const aElement: IwbElement; const aValue: Variant);
+const
+  vtBytes = 8209;
 var
   Bytes  : TBytes;
   Prefix : Integer;
 begin
-  Bytes := aValue;
+  if VarType(aValue) <> vtBytes then begin
+    SetLength(Bytes, 4);
+    Bytes[0] := Cardinal(aValue) shr 24;
+    Bytes[1] := Cardinal(aValue) shr 16;
+    Bytes[2] := Cardinal(aValue) shr 8;
+    Bytes[3] := Cardinal(aValue);
+  end
+  else
+    Bytes := aValue;
 
   case badSize of
     -1 : Prefix := SizeOf(Cardinal);

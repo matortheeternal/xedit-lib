@@ -11,7 +11,8 @@ type
 
   {$region 'Native functions'}
   function EditorIDToFormID(const _file: IwbFile; const editorID: String): Cardinal;
-  function GetPreviousOverride(const rec: IwbMainRecord; const targetFile: IwbFile): IwbMainRecord;
+  function NativeGetPreviousOverride(rec: IwbMainRecord; const targetFile: IwbFile): IwbMainRecord;
+  function HasChildRecords(const container: IwbContainer): Boolean;
   {$endregion}
 
   {$region 'API functions'}
@@ -21,10 +22,11 @@ type
   function GetRecords(_id: Cardinal; search: PWideChar; includeOverrides: WordBool; len: PInteger): WordBool; cdecl;
   function GetOverrides(_id: Cardinal; count: PInteger): WordBool; cdecl;
   function GetMasterRecord(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
-  function GetWinningRecord(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
+  function GetPreviousOverride(_id, _id2: Cardinal; _res: PCardinal): WordBool; cdecl;
+  function GetWinningOverride(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function FindNextRecord(_id: Cardinal; search: PWideChar; byEdid, byName: WordBool; _res: PCardinal): WordBool; cdecl;
   function FindPreviousRecord(_id: Cardinal; search: PWideChar; byEdid, byName: Wordbool; _res: PCardinal): WordBool; cdecl;
-  function FindValidReferences(_id: Cardinal; search: PWideChar; limitTo: Integer; len: PInteger): WordBool; cdecl;
+  function FindValidReferences(_id: Cardinal; signature, search: PWideChar; limitTo: Integer; len: PInteger): WordBool; cdecl;
   function GetReferencedBy(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function ExchangeReferences(_id, oldFormID, newFormID: Cardinal): WordBool; cdecl;
   function IsMaster(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
@@ -54,10 +56,11 @@ begin
   Result := _file.LoadOrderFormIDtoFileFormID(rec.LoadOrderFormID);
 end;
 
-function GetPreviousOverride(const rec: IwbMainRecord; const targetFile: IwbFile): IwbMainRecord;
+function NativeGetPreviousOverride(rec: IwbMainRecord; const targetFile: IwbFile): IwbMainRecord;
 var
   i: Integer;
 begin
+  rec := rec.MasterOrSelf;
   for i := Pred(rec.OverrideCount) downto 0 do begin
     Result := rec.Overrides[i];
     if NativeFileHasMaster(targetFile, Result._File) then exit;
@@ -93,7 +96,8 @@ begin
   Result := True;
 end;
 
-procedure FindRecords(const _file: IwbFile; signatures: TFastStringList; includeOverrides: Boolean; lst: TList); overload;
+procedure FindRecords(const _file: IwbFile; signatures: TFastStringList;
+  includeOverrides: Boolean; lst: TList); overload;
 var
   allRecords: Boolean;
   i, j: Integer;
@@ -121,7 +125,8 @@ begin
   end;
 end;
 
-procedure FindRecords(const group: IwbGroupRecord; signatures: TFastStringList; includeOverrides: Boolean; lst: TList); overload;
+procedure FindRecords(const group: IwbGroupRecord; signatures: TFastStringList;
+  includeOverrides: Boolean; lst: TList); overload;
 var
   allRecords: Boolean;
   i: Integer;
@@ -140,7 +145,8 @@ begin
   end;
 end;
 
-procedure NativeGetRecords(_id: Cardinal; signatures: TFastStringList; includeOverrides: Boolean; lst: TList);
+procedure NativeGetRecords(_id: Cardinal; signatures: TFastStringList;
+  includeOverrides: Boolean; lst: TList);
 var
   i: Integer;
   e: IInterface;
@@ -174,12 +180,12 @@ begin
   Result := -1;
 end;
 
-function NativeFindNextRecord(container: IwbContainer; const element: IwbElement; const search: String;
-  byEdid, byName, recurse: WordBool): IwbMainRecord;
+function NativeFindNextRecord(const container: IwbContainer; const element: IwbElement;
+  const search: String; byEdid, byName, recurse: WordBool): IwbMainRecord;
 var
   i: Integer;
   e: IwbElement;
-  innerContainer: IwbContainer;
+  c: IwbContainer;
   elements: TDynElements;
 begin
   // iterate through children
@@ -192,8 +198,8 @@ begin
       if byName and (Pos(search, Result.FullName) > 0) then exit;
     end
     // recurse through child containers
-    else if Supports(e, IwbContainer, innerContainer) then begin
-      Result := NativeFindNextRecord(innerContainer, nil, search, byEdid, byName, false);
+    else if Supports(e, IwbContainer, c) then begin
+      Result := NativeFindNextRecord(c, nil, search, byEdid, byName, false);
       if Assigned(Result) then exit;
     end;
     Inc(i);
@@ -202,18 +208,18 @@ begin
   // recurse to sibling container
   if recurse then begin
     e := container as IwbElement;
-    container := e.Container;
-    if Assigned(container) then
-      Result := NativeFindNextRecord(container, e, search, byEdid, byName, true);
+    c := e.Container;
+    if Assigned(c) then
+      Result := NativeFindNextRecord(c, e, search, byEdid, byName, true);
   end;
 end;
 
-function NativeFindPreviousRecord(container: IwbContainer; const element: IwbElement; const search: String;
-  byEdid, byName, recurse: WordBool): IwbMainRecord;
+function NativeFindPreviousRecord(const container: IwbContainer; const element: IwbElement;
+  const search: String; byEdid, byName, recurse: WordBool): IwbMainRecord;
 var
   i: Integer;
   e: IwbElement;
-  innerContainer: IwbContainer;
+  c: IwbContainer;
   elements: TDynElements;
 begin
   // iterate through children
@@ -227,8 +233,8 @@ begin
       if byName and (Pos(search, Result.FullName) > 0) then exit;
     end
     // recurse through child containers
-    else if Supports(e, IwbContainer, innerContainer) then begin
-      Result := NativeFindPreviousRecord(innerContainer, nil, search, byEdid, byName, false);
+    else if Supports(e, IwbContainer, c) then begin
+      Result := NativeFindPreviousRecord(c, nil, search, byEdid, byName, false);
       if Assigned(Result) then exit;
     end;
     Dec(i);
@@ -237,9 +243,9 @@ begin
   // recurse to sibling container
   if recurse then begin
     e := container as IwbElement;
-    container := e.Container;
-    if Assigned(container) then
-      Result := NativeFindPreviousRecord(container, e, search, byEdid, byName, true);
+    c := e.Container;
+    if Assigned(c) then
+      Result := NativeFindPreviousRecord(c, e, search, byEdid, byName, true);
   end;
 end;
 
@@ -268,44 +274,52 @@ begin
     end;
 end;
 
-function NativeFindValidReferences(const element: IwbElement; const search: String; limitTo: Integer): String;
+function NativeFindValidReferences(const element: IwbElement; const signature: TwbSignature;
+  const search: String; limitTo: Integer): String;
 var
   files: TDynFiles;
-  currentRec, rec: IwbMainRecord;
-  integerDef: IwbIntegerDef;
-  formDef: IwbFormIDChecked;
+  rec: IwbMainRecord;
   counter, i, j: Integer;
   _file: IwbFile;
-  CheckSignatures: Boolean;
-  AllowedSignatures: TDynSignatures;
 begin
   Result := '';
-  if not Supports(element.Def, IwbIntegerDef, integerDef) then exit;
-  // get record context
-  files := GetFilesArray(element._File);
-  currentRec := element.ContainingMainRecord;
-  // determine allowed signatures
-  CheckSignatures := False;
-  if Supports(integerDef.Formater[element], IwbFormIDChecked, formDef) then begin
-    CheckSignatures := True;
-    SetLength(AllowedSignatures, formDef.SignatureCount);
-    for i := 0 to Pred(formDef.SignatureCount) do
-      AllowedSignatures[i] := formDef.Signatures[i];
+  // get context
+  if Assigned(element) then
+    files := GetFilesArray(element._File)
+  else begin
+    SetLength(files, Length(xFiles));
+    for i := Low(xFiles) to High(xFiles) do
+      files[i] := xFiles[i];
   end;
-  // perform the search across file and its masters
+  // perform the search across files
   counter := 0;
   for i := Low(files) to High(files) do begin
     _file := files[i];
     for j := 0 to Pred(_file.RecordCount) do begin
       rec := _file.Records[j];
-      if ((not CheckSignatures) or SignatureInArray(rec.Signature, AllowedSignatures)) and (Pos(search, rec.Name) > 0) then begin
-        if rec.Equals(currentRec) then continue;
+      if not rec.IsMaster then continue;
+      if (rec.Signature = signature) and (Pos(search, rec.Name) > 0) then begin
         Result := Result + rec.Name + #13#10;
         Inc(counter);
         if counter = limitTo then exit;
       end;
     end;
   end;
+end;
+
+function HasChildRecords(const container: IwbContainer): Boolean;
+var
+  i: Integer;
+  e: IwbElement;
+  c: IwbContainer;
+begin
+  for i := 0 to Pred(container.ElementCount) do begin
+    e := container.Elements[i];
+    Result := Supports(e, IwbMainRecord)
+      or (Supports(e, IwbContainer, c) and HasChildRecords(c));
+    if Result then exit;
+  end;
+  Result := False;
 end;
 {$endregion}
 
@@ -439,7 +453,25 @@ begin
   end;
 end;
 
-function GetWinningRecord(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
+function GetPreviousOverride(_id, _id2: Cardinal; _res: PCardinal): WordBool; cdecl;
+var
+  _file: IwbFile;
+  rec: IwbMainRecord;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbMainRecord, rec) then
+      raise Exception.Create('First interface must be a main record.');
+    if not Supports(Resolve(_id2), IwbFile, _file) then
+      raise Exception.Create('Second interface must be a file.');
+    _res^ := Store(NativeGetPreviousOverride(rec, _file));
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetWinningOverride(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 var
   rec: IwbMainRecord;
 begin
@@ -454,7 +486,8 @@ begin
   end;
 end;
 
-function FindNextRecord(_id: Cardinal; search: PWideChar; byEdid, byName: WordBool; _res: PCardinal): WordBool; cdecl;
+function FindNextRecord(_id: Cardinal; search: PWideChar; byEdid, byName: WordBool;
+  _res: PCardinal): WordBool; cdecl;
 var
   element: IwbElement;
   container: IwbContainer;
@@ -486,7 +519,8 @@ begin
   end;
 end;
 
-function FindPreviousRecord(_id: Cardinal; search: PWideChar; byEdid, byName: Wordbool; _res: PCardinal): WordBool; cdecl;
+function FindPreviousRecord(_id: Cardinal; search: PWideChar; byEdid, byName: Wordbool;
+  _res: PCardinal): WordBool; cdecl;
 var
   element: IwbElement;
   container: IwbContainer;
@@ -518,17 +552,20 @@ begin
   end;
 end;
 
-function FindValidReferences(_id: Cardinal; search: PWideChar; limitTo: Integer; len: PInteger): WordBool; cdecl;
+function FindValidReferences(_id: Cardinal; signature, search: PWideChar;
+  limitTo: Integer; len: PInteger): WordBool; cdecl;
 var
   element: IwbElement;
+  aSignature: TwbSignature;
 begin
   Result := False;
   try
-    if not Supports(Resolve(_id), IwbElement, element) then
+    if _id = 0 then
+      element := nil
+    else if not Supports(Resolve(_id), IwbElement, element) then
       raise Exception.Create('Input interface is not an element.');
-    if not IsFormID(element) then
-      raise Exception.Create('Input element doesn''t hold references.');
-    resultStr := NativeFindValidReferences(element, string(search), limitTo);
+    aSignature := StrToSignature(string(signature));
+    resultStr := NativeFindValidReferences(element, aSignature, string(search), limitTo);
     len^ := Length(resultStr);
     if len^ > 0 then begin
       Delete(resultStr, len^ - 1, 2);

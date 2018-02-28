@@ -7,6 +7,7 @@ uses
   // xedit units
   wbInterface;
 
+  function StrEndsWith(str, substr: String): Boolean;
   function GetCSIDLShellFolder(CSIDLFolder: integer): string;
   function TryRegistryKeys(var keys: TStringList): string;
   function GetVersionMem: string;
@@ -17,6 +18,17 @@ implementation
 
 uses
   StrUtils, IOUtils, ShellApi, shlObj, Registry;
+
+function StrEndsWith(str, substr: String): Boolean;
+var
+  len, subLen: Integer;
+begin
+  Result := False;
+  len := Length(str);
+  subLen := Length(substr);
+  if (len < subLen) then exit;
+  Result :=  Copy(str, len - subLen + 1, subLen) = substr;
+end;
 
 function StrArrayJoin(ary: TDynStrings; const separator: String): String;
 var

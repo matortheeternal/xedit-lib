@@ -443,10 +443,18 @@ begin
 end;
 
 function GetUIntValue(_id: Cardinal; path: PWideChar; value: PCardinal): WordBool; cdecl;
+const
+  vtBytes = 8209;
+var
+  v: Variant;
 begin
   Result := False;
   try
-    value^ := Cardinal(GetNativeValue(_id, path));
+    v := GetNativeValue(_id, path);
+    if VarType(v) = vtBytes then
+      value^ := v[3] + (v[2] shl 8) + (v[1] shl 16) + (v[0] shl 24)
+    else
+      value^ := Cardinal(v);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
@@ -703,8 +711,7 @@ begin
   Result := False;
   try
     BuildSignatureNameMap;
-    resultStr := slSignatureNameMap.Text;
-    len^ := Length(resultStr);
+    SetResultFromList(TStringList(slSignatureNameMap), len);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);

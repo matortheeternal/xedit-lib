@@ -3,7 +3,7 @@ unit Mahogany;
 interface
 
 uses
-  SysUtils, Classes, Variants;
+  SysUtils, Classes, Variants, Diagnostics;
 
 type
   TProc = reference to procedure;
@@ -55,6 +55,7 @@ type
 
   // PUBLIC API
   procedure TestComment(comment: String);
+  procedure Benchmark(times: Integer; callback: TProc);
   procedure Describe(description: String; callback: TProc);
   procedure BeforeAll(callback: TProc);
   procedure AfterAll(callback: TProc);
@@ -95,6 +96,20 @@ var
 begin
   spacing := StringOfChar(' ', (ActiveSuite.depth + 2) * 2);
   LogMessage(spacing + comment);
+end;
+
+procedure Benchmark(times: Integer; callback: TProc);
+var
+  stopwatch: TStopWatch;
+  duration: Double;
+  i: Integer;
+begin
+  stopwatch := TStopWatch.StartNew;
+  for i := 1 to times do
+    callback();
+  duration := stopwatch.Elapsed.TotalMilliseconds;
+  TestComment(Format('Completed in %0.3fms', [duration]));
+  TestComment(Format('%0.3fus per call', [(duration / times) * 1000]));
 end;
 
 { Suite Functions }

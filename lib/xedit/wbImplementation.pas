@@ -292,6 +292,7 @@ type
 
     procedure Hide;
     procedure Show;
+    procedure Filter(show: Boolean);
     function GetIsHidden: Boolean;
 
     function HasErrors: Boolean; virtual;
@@ -497,6 +498,7 @@ type
 
     procedure AddElement(const aElement: IwbElement); virtual;
     procedure InsertElement(aPosition: Integer; const aElement: IwbElement);
+    function IsArray: Boolean;
     function RemoveElement(aPos: Integer; aMarkModified: Boolean = False): IwbElement; overload; virtual;
     function RemoveElement(const aElement: IwbElement; aMarkModified: Boolean = False): IwbElement; overload; virtual;
     function RemoveElement(const aName: string): IwbElement; overload;
@@ -640,6 +642,7 @@ type
     function GetRecord(aIndex: Integer): IwbMainRecord;
     function GetRecordCount: Integer;
     function GetHeader: IwbMainRecord;
+    procedure SetIsEditable(state: Boolean);
 
     procedure RecordsBySignature(var aList: TDynMainRecords; aSignature: String; var len: Integer; aCondition: TConditionFunc = nil);
 
@@ -2722,11 +2725,20 @@ end;
 function TwbFile.GetIsEditable: Boolean;
 begin
   Result := wbIsInternalEdit or (
-        wbEditAllowed and
-    not (fsIsGameMaster in flStates) and
-    not (fsIsHardcoded in flStates) and
-    not (fsIsCompareLoad in flStates)
+    wbEditAllowed and (fsIsEditable in flStates) or (
+      not (fsIsGameMaster in flStates) and
+      not (fsIsHardcoded in flStates) and
+      not (fsIsCompareLoad in flStates)
+    )
   );
+end;
+
+procedure TwbFile.SetIsEditable(state: Boolean);
+begin
+  if state then
+    Include(flStates, fsIsEditable)
+  else
+    Exclude(flStates, fsIsEditable);
 end;
 
 function TwbFile.GetIsESM: Boolean;
@@ -4453,12 +4465,12 @@ begin
   DoInit;
   Result := nil;
   for i := Low(cntElements) to High(cntElements) do
-    if SameText(cntElements[i].Name, aName) then begin
+    if cntElements[i].Name = aName then begin
       Result := IInterface(cntElements[i]) as IwbElement;
       Exit;
     end;
   for i := Low(cntElements) to High(cntElements) do
-    if SameText(cntElements[i].DisplayName, aName) then begin
+    if cntElements[i].DisplayName = aName then begin
       Result := IInterface(cntElements[i]) as IwbElement;
       Exit;
     end;
@@ -5154,6 +5166,17 @@ begin
         cntElements[i].ReportRequiredMasters(aStrings, aAsNew, Recursive);
 end;
 
+function TwbContainer.IsArray: Boolean;
+var
+  def: IwbNamedDef;
+  dt: TwbDefType;
+begin
+  Result := False;
+  def := GetDef;
+  if not Assigned(def) then exit;
+  Result := (def.DefType = dtArray) or (def.DefType = dtSubrecordArray);
+end;
+
 function TwbContainer.RemoveElement(aPos: Integer; aMarkModified: Boolean = False): IwbElement;
 var
   SelfRef : IwbContainerElementRef;
@@ -5182,7 +5205,10 @@ begin
   end;
 
   SetLength(cntElements, Pred(Length(cntElements)));
-  NotifyChanged(eContainer);
+  if (Length(cntElements) = 0) and Self.IsArray then
+    Self.Remove
+  else
+    NotifyChanged(eContainer);
 end;
 
 procedure TwbContainer.Reset;
@@ -5225,7 +5251,7 @@ end;
 
 function TwbContainer.ResolveElementName(aName: string; out aRemainingName: string; aCanCreate: Boolean = False): IwbElement;
 var
-  i : Integer;
+  i, len: Integer;
 begin
   aRemainingName := '';
   i := Pos('\', aName);
@@ -5233,16 +5259,21 @@ begin
     aRemainingName := Copy(aName, Succ(i), High(Integer));
     Delete(aName, i, High(Integer));
   end;
+
+  len := Length(aName);
   if aName = '..' then
     Result := GetContainer
-  else if (Length(aName) > 2) and (aName[1] = '[') and (aName[Length(aName)] = ']') then begin
-    i := StrToIntDef(Copy(aName, 2, Length(aName) - 2), 0);
+  else if (len > 2) and (aName[1] = '[') and (aName[len] = ']') then begin
+    i := StrToIntDef(Copy(aName, 2, len - 2), 0);
     Result := GetElement(i);
+  end
+  else if len = 4 then begin
+    Result := GetElementBySignature(StrToSignature(aName));
+    if not Assigned(Result) then
+      Result := GetElementByName(aName);
   end
   else
     Result := GetElementByName(aName);
-  if not Assigned(Result) and (Length(aName) = 4) then
-    Result := GetElementBySignature(StrToSignature(aName));
 end;
 
 procedure TwbContainer.ReverseElements;
@@ -5548,7 +5579,8 @@ begin
     DoInit;
 
     for i := 0 to Pred(mrDef.MemberCount) do
-      if SameText(mrDef.Members[i].Name, aName) or SameText(mrDef.Members[i].DefaultSignature, aName) then begin
+      if SameText(mrDef.Members[i].Name, aName)
+      or SameText(mrDef.Members[i].DefaultSignature, s) then begin
         Result := GetElementBySortOrder(i + GetAdditionalElementCount);
         if not Assigned(Result) then begin
           Assign(i, nil, False);
@@ -6576,8 +6608,31 @@ begin
 end;
 
 function TwbMainRecord.FindReferencedBy(const aMainRecord: IwbMainRecord; var Index: Integer): Boolean;
+var
+  L, H, I, C: Integer;
 begin
-  Result := wbBinarySearch(@mrReferencedBy[0], Low(mrReferencedBy), High(mrReferencedBy), @aMainRecord, SearchByRecord, Index);
+  Result := False;
+
+  L := Low(mrReferencedBy);
+  H := High(mrReferencedBy);
+  while L <= H do begin
+    I := (L + H) shr 1;
+
+    C := CmpW32(mrReferencedBy[I].LoadOrderFormID , aMainRecord.LoadOrderFormID);
+    if C = 0 then
+      C := CmpW32(mrReferencedBy[I]._File.LoadOrder, aMainRecord._File.LoadOrder);
+
+    if C < 0 then
+      L := I + 1
+    else begin
+      H := I - 1;
+      if C = 0 then begin
+        Result := True;
+        L := I;
+      end;
+    end;
+  end;
+  Index := L;
 end;
 
 procedure TwbMainRecord.FindUsedMasters(aMasters: PwbUsedMasters);
@@ -10315,7 +10370,7 @@ begin
   Result := IsElementEditable(aElement)
     and (srsIsArray in srStates)
     and Assigned(srValueDef)
-    and ((srValueDef as IwbArrayDef).ElementCount <= 0) and (Length(cntElements)>1);
+    and ((srValueDef as IwbArrayDef).ElementCount <= 0);
 end;
 
 function TwbSubRecord.IsFlags: Boolean;
@@ -13034,6 +13089,14 @@ begin
   end;
 end;
 
+procedure TwbElement.Filter(show: Boolean);
+begin
+  if show then
+    Include(eStates, esFilterShow)
+  else
+    Exclude(eStates, esFilterShow);
+end;
+
 procedure TwbElement.InformStorage(var aBasePtr: Pointer; aEndPtr: Pointer);
 begin
   {can be overriden}
@@ -13810,7 +13873,7 @@ end;
 
 function TwbSubRecordArray.IsElementRemoveable(const aElement: IwbElement): Boolean;
 begin
-  Result := IsElementEditable(aElement) and (Length(cntElements) > 1);
+  Result := IsElementEditable(aElement);
 end;
 
 procedure TwbSubRecordArray.SetModified(aValue: Boolean);
@@ -16393,7 +16456,24 @@ begin
 
         MainRecordInternal.mrStruct.mrsFlags := Flags;
       end;
-    end;
+    end
+    else if SameText(aElement.Def.Name, 'Version Control Info 1') then
+      if Supports(aElement, IwbDataContainer, DataContainer) then begin
+        UpdateStorageFromElements;
+        dcDataStorage := nil;
+        Exclude(dcFlags, dcfStorageInvalid);
+        MainRecordInternal.MakeHeaderWriteable;
+        MainRecordInternal.mrStruct.mrsVCS1 := PCardinal(DataContainer.DataBasePtr)^;
+      end
+    else if SameText(aElement.Def.Name, 'Version Control Info 2') then
+      if Supports(aElement, IwbDataContainer, DataContainer) then begin
+        UpdateStorageFromElements;
+        dcDataStorage := nil;
+        Exclude(dcFlags, dcfStorageInvalid);
+        MainRecordInternal.MakeHeaderWriteable;
+        MainRecordInternal.mrStruct.mrsVCS2 := PCardinal(DataContainer.DataBasePtr)^;
+      end;
+
     p := MainRecordInternal.mrStruct;
     InformStorage(p, Pointer(Cardinal(p) + wbSizeOfMainRecordStruct ));
 

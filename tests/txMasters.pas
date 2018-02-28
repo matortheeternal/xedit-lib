@@ -22,9 +22,12 @@ var
   masters: Cardinal;
   count: Integer;
 begin
-  ExpectSuccess(GetElement(f, 'File Header\Master Files', @masters));
-  ExpectSuccess(ElementCount(masters, @count));
-  ExpectEqual(count, expectedCount);
+  if GetElement(f, 'File Header\Master Files', @masters) then begin
+    ExpectSuccess(ElementCount(masters, @count));
+    ExpectEqual(count, expectedCount);
+  end
+  else
+    ExpectEqual(0, expectedCount);
 end;
 
 procedure TestMasterNames(f: Cardinal; masterNames: array of string);
@@ -32,7 +35,7 @@ var
   len, i: Integer;
   masters: CardinalArray;
 begin
-  ExpectSuccess(GetElements(f, 'File Header\Master Files', False, @len));
+  ExpectSuccess(GetElements(f, 'File Header\Master Files', False, False, @len));
   masters := gra(len);
   ExpectEqual(Length(masters), Length(masterNames));
   for i := 0 to len - 1 do begin

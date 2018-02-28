@@ -256,6 +256,14 @@ begin
             begin
               ExpectFailure(GetGlobal('DoesNotExist', @len));
             end);
+
+          It('Should be fast', procedure
+            begin
+              Benchmark(100000, procedure
+                begin
+                  GetGlobal('ProgramPath', @len);
+                end);
+            end);
         end);
 
       Describe('SetSortMode', procedure
@@ -350,12 +358,12 @@ begin
           CloseXEdit;
         end);
 
-      {$IFNDEF SSE}
+      {$IFDEF SKYRIM}
       AfterAll(procedure
         begin
           DeleteFile(GetDataPath + 'xtest-6.esp');
-          {DeleteFile(GetDataPath + 'xtest-5.esp');
-          SysUtils.RenameFile(GetBackupPath('xtest-5.esp'), GetDataPath + 'xtext-5.esp');}
+          //DeleteFile(GetDataPath + 'xtest-5.esp');
+          //SysUtils.RenameFile(GetBackupPath('xtest-5.esp'), GetDataPath + 'xtext-5.esp');
         end);
 
       It('Should rename .save files', procedure

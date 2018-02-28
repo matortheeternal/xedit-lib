@@ -1,12 +1,14 @@
 library XEditLib;
 
 uses
+  SysUtils,
   xeHelpers in 'src\xeHelpers.pas',
   xeTypes in 'src\xeTypes.pas',
   xeMessages in 'src\xeMessages.pas',
   xeConfiguration in 'src\xeConfiguration.pas',
   xeMeta in 'src\xeMeta.pas',
   xeSetup in 'src\xeSetup.pas',
+  xeArchives in 'src\xeArchives.pas',
   xeFiles in 'src\xeFiles.pas',
   xeMasters in 'src\xeMasters.pas',
   xeElements in 'src\xeElements.pas',
@@ -15,6 +17,7 @@ uses
   xeRecords in 'src\xeRecords.pas',
   xeSerialization in 'src\xeSerialization.pas',
   xeConflict in 'src\xeConflict.pas',
+  xeFilter in 'src\xeFilter.pas',
   wbImplementation in 'lib\xedit\wbImplementation.pas',
   wbInterface in 'lib\xedit\wbInterface.pas',
   wbBSA in 'lib\xedit\wbBSA.pas',
@@ -48,6 +51,8 @@ exports
   GetGamePath, SetGamePath, SetLanguage, SetBackupPath, SetGameMode, GetLoadOrder,
   GetActivePlugins, LoadPlugins, LoadPlugin, LoadPluginHeader, BuildReferences,
   GetLoaderStatus, UnloadPlugin,
+  // ARCHIVE HANDLING METHODS
+  ExtractContainer, ExtractFile, GetContainerFiles, GetLoadedContainers, LoadContainer,
   // FILE HANDLING METHODS
   AddFile, FileByIndex, FileByLoadOrder, FileByName, FileByAuthor, NukeFile,
   RenameFile, SaveFile, GetRecordCount, GetOverrideRecordCount, MD5Hash, CRCHash,
@@ -58,11 +63,12 @@ exports
   // ELEMENT HANDLING METHODS
   HasElement, GetElement, AddElement, AddElementValue, RemoveElement,
   RemoveElementOrParent, SetElement, GetElements, GetDefNames, GetAddList,
-  GetContainer, GetElementFile, GetElementRecord, GetLinksTo, SetLinksTo,
-  ElementCount, ElementEquals, ElementMatches, HasArrayItem, GetArrayItem,
-  AddArrayItem, RemoveArrayItem, MoveArrayItem, CopyElement, GetSignatureAllowed,
-  GetIsModified, GetIsEditable, GetIsRemoveable, GetCanAdd, SortKey, ElementType,
-  DefType, SmashType, ValueType, IsSorted,
+  GetContainer, GetElementFile, GetElementGroup, GetElementRecord, GetLinksTo,
+  SetLinksTo, ElementCount, ElementEquals, ElementMatches, HasArrayItem,
+  GetArrayItem, AddArrayItem, RemoveArrayItem, MoveArrayItem, CopyElement,
+  FindNextElement, FindPreviousElement, GetSignatureAllowed, GetAllowedSignatures,
+  GetIsModified, GetIsEditable, SetIsEditable, GetIsRemoveable, GetCanAdd, SortKey,
+  ElementType, DefType, SmashType, ValueType, IsSorted, IsFixed,
   // PLUGIN ERROR METHODS
   CheckForErrors, GetErrorThreadDone, GetErrors, RemoveIdenticalRecords,
   // SERIALIZATION METHODS
@@ -74,12 +80,14 @@ exports
   SignatureFromName, NameFromSignature, GetSignatureNameMap,
   // RECORD HANDLING METHODS
   GetFormID, SetFormID, GetRecord, GetRecords, GetOverrides, GetReferencedBy,
-  GetMasterRecord, GetWinningRecord, FindNextRecord, FindPreviousRecord,
-  {FindNextElement, FindPreviousElement,} FindValidReferences, ExchangeReferences,
-  IsMaster, IsInjected, IsOverride, IsWinningOverride, GetNodes, GetConflictData,
-  GetNodeElements;
+  GetMasterRecord, GetPreviousOverride, GetWinningOverride, FindNextRecord,
+  FindPreviousRecord, FindValidReferences, ExchangeReferences, IsMaster, IsInjected,
+  IsOverride, IsWinningOverride, GetNodes, GetConflictData, GetNodeElements,
+  // FILTERING METHODS
+  FilterRecord, ResetFilter;
 
 begin
+  SysUtils.FormatSettings.DecimalSeparator := '.';
   IsMultiThread := True;
 end.
 

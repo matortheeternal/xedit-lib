@@ -7,17 +7,20 @@ uses
 
 type
   TDataFunction = function(const e: IInterface): String;
+  TCardinalArray = array of Cardinal;
 
   {$region 'Native functions'}
   function Resolve(_id: Cardinal): IInterface;
   function ResolveNodes(_id: Cardinal): TDynViewNodeDatas;
   procedure StoreList(lst: TList; len: PInteger);
+  procedure FilterResultArray;
   procedure SortResultArray;
   procedure GetSortedElements(const container: IwbContainer; var elements: TDynElements);
   procedure StoreIfAssigned(const x: IInterface; var _res: PCardinal; var Success: WordBool);
   function Store(const x: IInterface): Cardinal;
   function StoreNodes(nodes: TDynViewNodeDatas): Cardinal; overload;
   function xStrCopy(source: WideString; dest: PWideChar; maxLen: Integer): WordBool;
+  procedure SetResultFromList(var sl: TStringList; len: PInteger);
   {$endregion}
 
   {$region 'API functions'}
@@ -41,7 +44,7 @@ var
   _nodesStore: TList<TDynViewNodeDatas>;
   nextID: Cardinal;
   resultStr: WideString;
-  resultArray: array of Cardinal;
+  resultArray: TCardinalArray;
   SortBy: Byte;
   Reverse: Boolean;
 
@@ -50,7 +53,7 @@ implementation
 uses
   wbImplementation,
   // xelib modules
-  xeConfiguration, xeMessages, xeSetup, xeFiles;
+  xeConfiguration, xeMessages, xeSetup, xeFiles, xeElementValues;
 
 const
   sortByFormID = 1;
@@ -65,16 +68,22 @@ begin
   Result := False;
   try
     len := Length(source);
-    if len > maxLen then
-      raise Exception.Create(Format('Found buffer length %d, expected %d.', [maxLen, len + 1]));
+    if len <> maxLen then
+      raise Exception.Create(Format('Found buffer length %d, expected %d.', [maxLen, len]));
     Move(PWideChar(source)^, dest^, len * SizeOf(WideChar));
-    dest[len] := #0;
     Result := True;
   except
     on x: Exception do
       ExceptionHandler(Exception.Create(Format('Failed to allocate string buffer.  ' +
         'source: %s, maxLen: %d, error: %s', [source, maxLen, x.Message])));
   end;
+end;
+
+procedure SetResultFromList(var sl: TStringList; len: PInteger);
+begin
+  resultStr := sl.Text;
+  Delete(resultStr, Length(resultStr) - 1, 2);
+  len^ := Length(resultStr);
 end;
 
 function Resolve(_id: Cardinal): IInterface;
@@ -97,6 +106,23 @@ begin
   for i := 0 to Pred(lst.Count) do
     resultArray[i] := Store(IInterface(lst[i]));
   len^ := Length(resultArray);
+end;
+
+procedure FilterResultArray;
+var
+  oldResults: TCardinalArray;
+  i, index: Integer;
+  element: IwbElement;
+begin
+  oldResults := Copy(resultArray, 0, MaxInt);
+  index := 0;
+  for i := Low(oldResults) to High(oldResults) do
+    if Supports(_store[oldResults[i]], IwbElement, element)
+    and (esFilterShow in element.ElementStates) then begin
+      resultArray[index] := oldResults[i];
+      Inc(index);
+    end;
+  SetLength(resultArray, index);
 end;
 
 function FormData(const e: IInterface): String;
@@ -141,8 +167,12 @@ begin
     Result := _file.Name
   else if Supports(e, IwbGroupRecord, group) then
     Result := group.ShortName
-  else if Supports(e, IwbMainRecord, rec) then
-    Result := rec.FullName
+  else if Supports(e, IwbMainRecord, rec) then begin
+    if rec.ElementExists['FULL'] then
+      Result := rec.FullName
+    else if rec.ElementExists['NAME'] then
+      Result := NativeName(rec.ElementByPath['NAME'].LinksTo)
+  end
   else
     Result := '';
 end;
@@ -348,7 +378,8 @@ function Release(_id: Cardinal): WordBool; cdecl;
 begin
   Result := False;
   try
-    if (_id = 0) or (_id >= Cardinal(_store.Count)) then exit;
+    if (_id = 0) or (_id >= Cardinal(_store.Count))
+    or (_store[_id] = nil) then exit;
     _store[_id] := nil;
     _releasedIDs.Add(_id);
     Result := True;

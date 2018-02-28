@@ -53,7 +53,7 @@ var
 begin
   ExpectSuccess(GetRecord(0, StrToInt('$' + hexFormID), @rec));
   if winningOverride then
-    ExpectSuccess(GetWinningRecord(rec, @rec));
+    ExpectSuccess(GetWinningOverride(rec, @rec));
   ExpectSuccess(AddRequiredMasters(rec, f, False));
   ExpectSuccess(CopyElement(rec, f, False, @rec));
 end;
@@ -65,7 +65,7 @@ var
 begin
   ExpectSuccess(FileByName(filename, @f));
   ExpectSuccess(GetRecordCount(f, @recordCountBefore));
-  ExpectSuccess(RemoveIdenticalRecords(f));
+  ExpectSuccess(RemoveIdenticalRecords(f, True, True));
   ExpectSuccess(GetRecordCount(f, @recordCountAfter));
   recordsRemoved := recordCountBefore - recordCountAfter;
   ExpectEqual(recordsRemoved, expectedRecordsRemoved);
@@ -114,10 +114,10 @@ begin
                       Expect(Assigned(errorObj), 'Matching error not found');
                     end);
 
-                  It('Should include records with children', procedure
+                  It('Should not include records with children', procedure
                     begin
                       errorObj := FindError(obj, erITM, 'KilkreathRuins03');
-                      Expect(Assigned(errorObj), 'Matching error not found');
+                      Expect(not Assigned(errorObj), 'Matching error found');
                     end);
 
                   It('Should not include injected records', procedure
@@ -175,10 +175,10 @@ begin
                   ary := obj.A['errors'];
                   for i := 0 to Pred(ary.Count) do begin
                     errorObj := ary.O[i];
-                    if (Pos('UESTest', errorObj.S['name']) = 1) then
+                    if Pos('UESTest', errorObj.S['name']) = 1 then
                       Inc(n);
                   end;
-                  ExpectEqual(n, 8);
+                  ExpectEqual(n, 7);
                 end);
 
               {It('Should find Other Errors (OEs)', procedure
@@ -194,6 +194,8 @@ begin
           BeforeAll(procedure
             begin
               ExpectSuccess(FileByName('xtest-6.esp', @h));
+              ExpectSuccess(AddMaster(h, 'xtest-2.esp'));
+              ExpectSuccess(AddMaster(h, 'xtest-4.esp'));
               OverrideRecord('00013739', h);
               OverrideRecord('00034C5E', h);
               OverrideRecord('00012E46', h, True);
