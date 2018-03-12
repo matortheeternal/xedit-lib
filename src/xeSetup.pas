@@ -802,9 +802,8 @@ begin
   Result := False;
   try
     // exit if loader is already active
-    if LoaderState <> lsInactive then
-      raise Exception.Create('Error: You can only call LoadPlugins once per session. ' +
-        'Use LoadPlugin to load additional plugins.');
+    if LoaderState = lsActive then
+      raise Exception.Create('Error: Currently loading plugins.');
     
     // prepare load order
     slLoadOrder := TStringList.Create;
