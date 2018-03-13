@@ -249,7 +249,7 @@ begin
     if not Supports(Resolve(_id), IwbFile, _file) then
       raise Exception.Create('Interface must be a file.');
     if filePath <> '' then begin
-      ForceDirectories(filePath);
+      ForceDirectories(ExtractFilePath(filePath));
       path := filePath;
     end
     else
