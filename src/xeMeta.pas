@@ -294,6 +294,7 @@ begin
   // store global values
   Globals.Values['ProgramPath'] := ExtractFilePath(ParamStr(0));
   Globals.Values['Version'] := ProgramVersion;
+  Globals.Values['FileCount'] := '0';
 end;
 
 procedure CloseXEdit; cdecl;
