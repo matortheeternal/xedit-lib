@@ -256,7 +256,7 @@ begin
       path := wbDataPath + _file.FileName + '.save';
     FileStream := TFileStream.Create(path, fmCreate);
     try
-      _file.WritetoStream(FileStream, False);
+      _file.WriteToStream(FileStream, False);
       slSavedFiles.Add(path);
       Result := True;
     finally
