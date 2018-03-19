@@ -810,11 +810,14 @@ begin
     raise Exception.Create('Could not find matching array element.');
 end;
 
-function NativeAddArrayItem(const container: IwbContainerElementRef; const path, value: String): IwbElement;
+function NativeAddArrayItem(const container: IwbContainerElementRef; const path, value: String; first: Boolean): IwbElement;
 var
   e: IInterface;
 begin
-  Result := container.Assign(High(Integer), nil, False);
+  if first then
+    Result := container.Elements[0]
+  else
+    Result := container.Assign(High(Integer), nil, False);
   if value = '' then exit;
   if path = '' then
     SetElementValue(Result, value)
@@ -1648,16 +1651,21 @@ end;
 
 function AddArrayItem(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
-  element: IwbElement;
+  element: IInterface;
   container: IwbContainerElementRef;
+  createdArray: Boolean;
 begin
   Result := False;
   try
-    element := NativeGetElementEx(_id, path);
+    element := NativeGetElement(_id, path);
+    if not Assigned(element) then begin
+      element := CreateElement(Resolve(_id), path);
+      createdArray := true;
+    end;
     if not Supports(element, IwbContainerElementRef, container)
     or not IsArray(container) then
       raise Exception.Create('Interface must be an array.');
-    _res^ := Store(NativeAddArrayItem(container, subpath, value));
+    _res^ := Store(NativeAddArrayItem(container, subpath, value, createdArray));
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);

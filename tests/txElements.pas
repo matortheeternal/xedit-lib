@@ -1184,12 +1184,26 @@ begin
 
       Describe('AddArrayItem', procedure
         begin
+          BeforeAll(procedure
+            begin
+              ExpectSuccess(RemoveElement(ar2, 'Armature'));
+              ExpectSuccess(HasElement(ar2, 'Armature', @b));
+              ExpectEqual(b, False);
+            end);
+
           Describe('Adding references', procedure
             begin
               It('Should add an array item', procedure
                 begin
                   TestAddArrayItem(keywords, '', '', '');
                   TestElementCount(keywords, 6);
+                end);
+
+              It('Should create the array if missing', procedure
+                begin
+                  TestAddArrayItem(ar2, 'Armature', '', '00012E47', 'IronGlovesAA [ARMA:00012E47]');
+                  ExpectSuccess(GetElement(ar2, 'Armature', @h));
+                  TestElementCount(h, 1);
                 end);
 
               It('Should be able to set reference with FormID', procedure
