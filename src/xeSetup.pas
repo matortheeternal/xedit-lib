@@ -30,6 +30,7 @@ type
   procedure LoadLoadOrder(const sLoadPath: String; var slLoadOrder, slPlugins: TStringList);
   procedure RemoveCommentsAndEmpty(var sl: TStringList);
   procedure RemoveMissingFiles(var sl: TStringList);
+  procedure RemoveESLs(var sl: TStringList);
   procedure AddMissingFiles(var sl: TStringList);
   procedure GetPluginDates(var sl: TStringList);
   procedure AddBaseMasters(var sl: TStringList);
@@ -423,6 +424,7 @@ begin
   // remove comments and missing files
   RemoveCommentsAndEmpty(sl);
   RemoveMissingFiles(sl);
+  RemoveESLs(sl);
 end;
 
 procedure LoadLoadOrder(const sLoadPath: String; var slLoadOrder, slPlugins: TStringList);
@@ -440,6 +442,7 @@ begin
   RemoveCommentsAndEmpty(slLoadOrder);
   RemoveMissingFiles(slLoadOrder);
   AddMissingFiles(slLoadOrder);
+  RemoveESLs(slLoadOrder);
 end;
 
 { Remove comments and empty lines from a stringlist }
@@ -465,6 +468,16 @@ var
 begin
   for i := Pred(sl.Count) downto 0 do
     if not FileExists(wbDataPath + sl.Strings[i]) then
+      sl.Delete(i);
+end;
+
+{ Remove ESLs from stringlist }
+procedure RemoveESLs(var sl: TStringList);
+var
+  i: integer;
+begin
+  for i := Pred(sl.Count) downto 0 do
+    if StrEndsWith(sl[i], '.esl') then
       sl.Delete(i);
 end;
 
