@@ -113,10 +113,12 @@ const
 {$region 'Native functions'}
 {$region 'Path parsing'}
 function ParseIndex(const key: string; var index: Integer): Boolean;
+var
+  len: Integer;
 begin
-  Result := (key[1] = '[') and (key[Length(key)] = ']');
-  if Result then
-    index := StrToInt(Copy(key, 2, Length(key) - 2));
+  len := Length(key);
+  Result := (len > 2) and (key[1] = '[') and (key[len] = ']')
+    and TryStrToInt(Copy(key, 2, len - 2), index);
 end;
 
 function CheckIndex(maxIndex: Integer; var index: Integer): Boolean;

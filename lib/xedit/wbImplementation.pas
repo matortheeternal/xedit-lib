@@ -494,6 +494,7 @@ type
     function GetElementLinksTo(const aName: string): IwbElement;
     function GetElementSortKey(const aName: string; aExtended: Boolean): string;
 
+    function ResolveFirstElement(var aName: string): IwbElement;
     function ResolveElementName(aName: string; out aRemainingName: string; aCanCreate: Boolean = False): IwbElement; virtual;
 
     procedure AddElement(const aElement: IwbElement); virtual;
@@ -5249,6 +5250,35 @@ begin
     cntElements[i].ResetTags;
 end;
 
+function TwbContainer.ResolveFirstElement(var aName: string): IwbElement;
+var
+  aFName: String;
+  i, len: Integer;
+begin
+  i := Pos('|', aName);
+  if i = 0 then
+    i := High(Integer);
+
+  aFName := Copy(aName, 1, i - 1);
+  Delete(aName, 1, i);
+
+  len := Length(aFName);
+  if aFName = '..' then
+    Result := GetContainer
+  else if (len > 2) and (aFName[1] = '[') and (aFName[len] = ']') then begin
+    aName := Copy(aFName, 2, len - 2);
+    if TryStrToInt(aFName, i) then
+      Result := GetElement(i)
+  end
+  else if len = 4 then begin
+    Result := GetElementBySignature(StrToSignature(aFName));
+    if not Assigned(Result) then
+      Result := GetElementByName(aFName);
+  end
+  else
+    Result := GetElementByName(aName);
+end;
+
 function TwbContainer.ResolveElementName(aName: string; out aRemainingName: string; aCanCreate: Boolean = False): IwbElement;
 var
   i, len: Integer;
@@ -5264,8 +5294,12 @@ begin
   if aName = '..' then
     Result := GetContainer
   else if (len > 2) and (aName[1] = '[') and (aName[len] = ']') then begin
-    i := StrToIntDef(Copy(aName, 2, len - 2), 0);
-    Result := GetElement(i);
+    aName := Copy(aName, 2, len - 2);
+    if TryStrToInt(aName, i) then
+      Result := GetElement(i)
+    else
+      while not Assigned(Result) and (aName <> '') do
+        Result := ResolveFirstElement(aName);
   end
   else if len = 4 then begin
     Result := GetElementBySignature(StrToSignature(aName));

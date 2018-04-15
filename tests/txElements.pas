@@ -554,6 +554,19 @@ begin
                 end);
             end);
 
+          Describe('Record element pipe resolution', procedure
+            begin
+              It('Should return a handle if the element exists', procedure
+                begin
+                  TestGetElement(ar1, '[BOD2|BODT]');
+                end);
+
+              It('Should fail if the element does not exist', procedure
+                begin
+                  ExpectFailure(GetElement(ar1, '[Does not exist|Nope]', @h));
+                end);
+            end);
+
           Describe('Nested resolution', procedure
             begin
               It('Should resolve nested indexes correctly if the indexes are all in bounds', procedure
