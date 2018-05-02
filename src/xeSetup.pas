@@ -179,11 +179,15 @@ begin
   xFiles[High(xFiles)] := _file;
 end;
 
-procedure LoadHardcodedDat;
+procedure LoadHardcodedDat(const filePath: String);
 var
   _file: IwbFile;
 begin
-  _file := wbFile(Globals.Values['ProgramPath'] + wbGameName + wbHardcodedDat, 0);
+  if not FileExists(filePath) then begin
+    AddMessage('File not found: ' + filePath);
+    exit;
+  end;
+  _file := wbFile(filePath, 0);
   SetLength(xFiles, Length(xFiles) + 1);
   xFiles[High(xFiles)] := _file;
 end;
@@ -214,10 +218,11 @@ begin
 
     // load hardcoded dat
     if (i = 0) and (sFileName = wbGameName + '.esm') then try
-      LoadHardCodedDat;
+      sFileName := Globals.Values['ProgramPath'] + wbGameName + wbHardcodedDat;
+      LoadHardCodedDat(sFileName);
     except
       on x: Exception do
-        ThreadException('Exception loading ' + wbGameName + wbHardcodedDat + ': ' + x.Message);
+        ThreadException('Exception loading ' + sFileName + ': ' + x.Message);
     end;
   end;
 end;
