@@ -238,26 +238,6 @@ begin
 end;
 {$endregion}
 
-{$region 'Native value helpers'}
-function GetNativeValue(_id: Cardinal; path: PWideChar): Variant;
-var
-  element: IwbElement;
-begin
-  element := NativeGetElement(_id, path) as IwbElement;
-  if ElementNotFound(element, path) then exit;
-  Result := element.NativeValue;
-end;
-
-procedure SetNativeValue(_id: Cardinal; path: PWideChar; value: Variant);
-var
-  element: IwbElement;
-begin
-  element := NativeGetElement(_id, path) as IwbElement;
-  if ElementNotFound(element, path) then exit;
-  element.NativeValue := value;
-end;
-{$endregion}
-
 function IndexOfFlag(const flagsDef: IwbFlagsDef; const name: String): Integer;
 begin
   for Result := 0 to Pred(flagsDef.FlagCount) do
@@ -434,10 +414,14 @@ end;
 
 {$region 'Native value functions'}
 function GetIntValue(_id: Cardinal; path: PWideChar; value: PInteger): WordBool; cdecl;
+var
+  element: IwbElement;
 begin
   Result := False;
   try
-    value^ := Integer(GetNativeValue(_id, path));
+    element := NativeGetElement(_id, path) as IwbElement;
+    if ElementNotFound(element, path) then exit;
+    value^ := Integer(element.NativeValue);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
@@ -445,10 +429,14 @@ begin
 end;
 
 function SetIntValue(_id: Cardinal; path: PWideChar; value: Integer): WordBool; cdecl;
+var
+  element: IwbElement;
 begin
   Result := False;
   try
-    SetNativeValue(_id, path, value);
+    element := NativeGetElement(_id, path) as IwbElement;
+    if ElementNotFound(element, path) then exit;
+    element.NativeValue := value;
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
@@ -459,11 +447,14 @@ function GetUIntValue(_id: Cardinal; path: PWideChar; value: PCardinal): WordBoo
 const
   vtBytes = 8209;
 var
+  element: IwbElement;
   v: Variant;
 begin
   Result := False;
   try
-    v := GetNativeValue(_id, path);
+    element := NativeGetElement(_id, path) as IwbElement;
+    if ElementNotFound(element, path) then exit;
+    v := element.NativeValue;
     if VarType(v) = vtBytes then
       value^ := v[3] + (v[2] shl 8) + (v[1] shl 16) + (v[0] shl 24)
     else
@@ -475,10 +466,14 @@ begin
 end;
 
 function SetUIntValue(_id: Cardinal; path: PWideChar; value: Cardinal): WordBool; cdecl;
+var
+  element: IwbElement;
 begin
   Result := False;
   try
-    SetNativeValue(_id, path, value);
+    element := NativeGetElement(_id, path) as IwbElement;
+    if ElementNotFound(element, path) then exit;
+    element.NativeValue := value;
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
@@ -486,10 +481,14 @@ begin
 end;
 
 function GetFloatValue(_id: Cardinal; path: PWideChar; value: PDouble): WordBool; cdecl;
+var
+  element: IwbElement;
 begin
   Result := False;
   try
-    value^ := Double(GetNativeValue(_id, path));
+    element := NativeGetElement(_id, path) as IwbElement;
+    if ElementNotFound(element, path) then exit;
+    value^ := Double(element.NativeValue);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
@@ -497,10 +496,14 @@ begin
 end;
 
 function SetFloatValue(_id: Cardinal; path: PWideChar; value: Double): WordBool; cdecl;
+var
+  element: IwbElement;
 begin
   Result := False;
   try
-    SetNativeValue(_id, path, value);
+    element := NativeGetElement(_id, path) as IwbElement;
+    if ElementNotFound(element, path) then exit;
+    element.NativeValue := value;
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
@@ -527,7 +530,7 @@ begin
       Result := True;
     end
     else
-      raise Exception.Create('Flag "' + name + '" not found.');
+      SoftException('Flag "' + name + '" not found.');
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -551,7 +554,7 @@ begin
       Result := True;
     end
     else
-      raise Exception.Create('Flag "' + name + '" not found.');
+      SoftException('Flag "' + name + '" not found.');
   except
     on x: Exception do ExceptionHandler(x);
   end;

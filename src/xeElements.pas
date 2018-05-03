@@ -1273,7 +1273,7 @@ begin
   try
     element := NativeAddElement(_id, string(path));
     if not Assigned(element) then
-      raise Exception.Create('Failed to add element at path: ' + string(path));
+      SoftException('Failed to add element at path: ' + string(path));
     _res^ := Store(element);
     Result := True;
   except
