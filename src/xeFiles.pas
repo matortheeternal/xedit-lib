@@ -257,7 +257,7 @@ begin
     FileStream := TFileStream.Create(path, fmCreate);
     try
       _file.WriteToStream(FileStream, False);
-      slSavedFiles.Add(path);
+      if filePath = '' then slSavedFiles.Add(path);
       Result := True;
     finally
       FileStream.Free;

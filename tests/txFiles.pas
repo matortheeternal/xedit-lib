@@ -130,7 +130,7 @@ begin
 
           It('Should return 0 for a plugin with no records', procedure
             begin
-              ExpectSuccess(FileByName('xtest-1.esp', @h));
+              ExpectSuccess(FileByName('xtest-5.esp', @h));
               ExpectSuccess(GetOverrideRecordCount(h, @count));
               ExpectEqual(count, 0);
             end);

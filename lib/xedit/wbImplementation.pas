@@ -5276,7 +5276,7 @@ begin
       Result := GetElementByName(aFName);
   end
   else
-    Result := GetElementByName(aName);
+    Result := GetElementByName(aFName);
 end;
 
 function TwbContainer.ResolveElementName(aName: string; out aRemainingName: string; aCanCreate: Boolean = False): IwbElement;

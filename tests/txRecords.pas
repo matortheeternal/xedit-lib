@@ -137,7 +137,7 @@ end;
 procedure BuildRecordHandlingTests;
 var
   b: WordBool;
-  skyrim, armo, ar1, dnam, xt1, xt2, xt4, ar2, ar3, kw1, kw2, kw3, h, n1, n2, n3, n4: Cardinal;
+  skyrim, armo, ar1, dnam, xt1, xt2, xt4, ar2, ar3, kw1, kw2, kw3, h, n1, n2, n3: Cardinal;
 begin
   Describe('Record Handling', procedure
     begin
