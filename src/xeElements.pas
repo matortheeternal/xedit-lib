@@ -1449,8 +1449,9 @@ begin
       raise Exception.Create('Element cannot hold references.');
     linkedElement := element.LinksTo;
     if not Assigned(linkedElement) then
-      raise Exception.Create('Failed to resolve linked element.');
-    _res^ := Store(linkedElement);
+      _res^ := 0
+    else
+      _res^ := Store(linkedElement);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);

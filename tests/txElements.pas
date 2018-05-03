@@ -290,6 +290,7 @@ var
   b: WordBool;
   h, rec, skyrim, xt3, xt5, armo1, ar1, keywords, keyword, dnam, element, armo2,
   ar2, ar3, refr, lvli, entries, armature: Cardinal;
+  records: CardinalArray;
   len: Integer;
   enum: Byte;
 begin
@@ -953,11 +954,16 @@ begin
             end);
 
           It('Should be fast', procedure
+            var
+              i: Integer;
             begin
-              ExpectSuccess(GetElement(0, 'Skyrim.esm\ARMO\000135BA', @h));
-              Benchmark(100000, procedure
+              ExpectSuccess(GetRecords(0, 'CELL', False, @len));
+              records := gra(len);
+              i := 0;
+              Benchmark(len, procedure
                 begin
-                  ExpectSuccess(GetLinksTo(keyword, '', @h));
+                  GetLinksTo(records[i], 'LTMP', @h);
+                  Inc(i);
                 end);
             end);
         end);
