@@ -244,6 +244,17 @@ begin
                   TestGetRecords(0, '', 'Constructible Object,Non-Player Character (Actor)', False, 606 + 5119);
                 end);
             end);
+
+          Describe('Speed', procedure
+            begin
+              It('Should load records quickly', procedure
+                begin
+                  Benchmark(5, procedure
+                    begin
+                      TestGetRecords(0, 'Skyrim.esm', '', False, 869692);
+                    end);
+                end);
+            end);
         end);
 
       Describe('FindNextRecord', procedure
