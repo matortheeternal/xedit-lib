@@ -133,6 +133,7 @@ begin
   wbFlagsAsArray := True;
   wbRequireLoadOrder := True;
   wbLanguage := Language;
+  wbStringEncoding := seUTF8;
   wbEditAllowed := True;
   wbLoaderDone := True;
   wbContainerHandler := wbCreateContainerHandler;
