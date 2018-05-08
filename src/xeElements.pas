@@ -22,8 +22,8 @@ type
   function ResolveGroupOrRecord(const group: IwbGroupRecord; const key, nextPath: String): IInterface; overload;
   function ResolveFromGroup(const group: IwbGroupRecord; const path: String): IInterface;
   function ResolveElement(const e: IInterface; const path: String): IInterface;
-  function NativeGetElement(_id: Cardinal; key: PWideChar): IInterface;
-  function NativeGetElementEx(_id: Cardinal; key: PWideChar): IwbElement;
+  function NativeGetElement(_id: Cardinal; path: PWideChar): IInterface;
+  function ElementNotFound(const element: IwbElement; path: PWideChar): Boolean;
   procedure NativeMoveArrayItem(const element: IwbElement; index: Integer);
   function NativeContainer(const element: IwbElement): IwbContainer;
   function AddGroupIfMissing(const _file: IwbFile; const sig: String): IwbGroupRecord;
@@ -34,7 +34,7 @@ type
   function CreateFromGroup(const group: IwbGroupRecord; const path: String): IInterface;
   function CreateFile(const fileName, nextPath: String): IInterface;
   function CreateElement(const e: IInterface; const path: String): IInterface;
-  function NativeAddElement(_id: Cardinal; const key: string): IInterface;
+  function NativeAddElement(_id: Cardinal; const path: string): IInterface;
   function CopyElementToFile(const aSource: IwbElement; const aFile: IwbFile; aAsNew, aDeepCopy: Boolean): IwbElement;
   function CopyElementToRecord(const aSource: IwbElement; const aMainRecord: IwbMainRecord; aAsNew, aDeepCopy: Boolean): IwbElement;
   function CopyElementToArray(const aSource: IwbElement; const aArray: IwbElement): IwbElement;
@@ -51,18 +51,18 @@ type
   {$endregion}
 
   {$region 'API functions'}
-  function HasElement(_id: Cardinal; key: PWideChar; bool: PWordBool): WordBool; cdecl;
-  function GetElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
-  function AddElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
-  function AddElementValue(_id: Cardinal; key, value: PWideChar; _res: PCardinal): WordBool; cdecl;
-  function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; cdecl;
+  function HasElement(_id: Cardinal; path: PWideChar; bool: PWordBool): WordBool; cdecl;
+  function GetElement(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
+  function AddElement(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
+  function AddElementValue(_id: Cardinal; path, value: PWideChar; _res: PCardinal): WordBool; cdecl;
+  function RemoveElement(_id: Cardinal; path: PWideChar): WordBool; cdecl;
   function RemoveElementOrParent(_id: Cardinal): WordBool; cdecl;
   function SetElement(_id, _id2: Cardinal): WordBool; cdecl;
-  function GetElements(_id: Cardinal; key: PWideChar; sort, filter: WordBool; len: PInteger): WordBool; cdecl;
+  function GetElements(_id: Cardinal; path: PWideChar; sort, filter: WordBool; len: PInteger): WordBool; cdecl;
   function GetDefNames(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function GetAddList(_id: Cardinal; len: PInteger): WordBool; cdecl;
-  function GetLinksTo(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
-  function SetLinksTo(_id: Cardinal; key: PWideChar; _id2: Cardinal): WordBool; cdecl;
+  function GetLinksTo(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
+  function SetLinksTo(_id: Cardinal; path: PWideChar; _id2: Cardinal): WordBool; cdecl;
   function GetElementIndex(_id: Cardinal; index: PInteger): WordBool; cdecl;
   function GetContainer(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function GetElementFile(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
@@ -113,10 +113,12 @@ const
 {$region 'Native functions'}
 {$region 'Path parsing'}
 function ParseIndex(const key: string; var index: Integer): Boolean;
+var
+  len: Integer;
 begin
-  Result := (key[1] = '[') and (key[Length(key)] = ']');
-  if Result then
-    index := StrToInt(Copy(key, 2, Length(key) - 2));
+  len := Length(key);
+  Result := (len > 2) and (key[1] = '[') and (key[len] = ']')
+    and TryStrToInt(Copy(key, 2, len - 2), index);
 end;
 
 function CheckIndex(maxIndex: Integer; var index: Integer): Boolean;
@@ -404,23 +406,21 @@ begin
     raise Exception.Create('Failed to resolve element at path: ' + path);
 end;
 
-function NativeGetElement(_id: Cardinal; key: PWideChar): IInterface;
+function NativeGetElement(_id: Cardinal; path: PWideChar): IInterface;
 begin
-  if string(key) = '' then
+  if string(path) = '' then
     Result := Resolve(_id)
   else if _id = 0 then
-    Result := ResolveFromRoot(string(key))
+    Result := ResolveFromRoot(string(path))
   else
-    Result := ResolveElement(Resolve(_id), string(key));
+    Result := ResolveElement(Resolve(_id), string(path));
 end;
 
-function NativeGetElementEx(_id: Cardinal; key: PWideChar): IwbElement;
-var
-  e: IInterface;
+function ElementNotFound(const element: IwbElement; path: PWideChar): Boolean;
 begin
-  e := NativeGetElement(_id, key);
-  if not Supports(e, IwbElement, Result) then
-    raise Exception.Create('Failed to resolve element at path: ' + string(key));
+  Result := not Assigned(element);
+  if Result then
+    SoftException('Failed to resolve element at path: ' + string(path));
 end;
 {$endregion}
 
@@ -619,14 +619,14 @@ begin
     Result := CreateFromContainer(container, path);
 end;
 
-function NativeAddElement(_id: Cardinal; const key: String): IInterface;
+function NativeAddElement(_id: Cardinal; const path: String): IInterface;
 begin
   if _id = 0 then
-    Result := CreateFromRoot(key)
-  else if key = '' then
+    Result := CreateFromRoot(path)
+  else if path = '' then
     Result := Resolve(_id)   
   else
-    Result := CreateElement(Resolve(_id), key);
+    Result := CreateElement(Resolve(_id), path);
 end;
 {$endregion}
 
@@ -810,11 +810,14 @@ begin
     raise Exception.Create('Could not find matching array element.');
 end;
 
-function NativeAddArrayItem(const container: IwbContainerElementRef; const path, value: String): IwbElement;
+function NativeAddArrayItem(const container: IwbContainerElementRef; const path, value: String; first: Boolean): IwbElement;
 var
   e: IInterface;
 begin
-  Result := container.Assign(High(Integer), nil, False);
+  if first then
+    Result := container.Elements[0]
+  else
+    Result := container.Assign(High(Integer), nil, False);
   if value = '' then exit;
   if path = '' then
     SetElementValue(Result, value)
@@ -1230,13 +1233,13 @@ end;
 {$endregion}
 
 {$region 'API functions'}
-function HasElement(_id: Cardinal; key: PWideChar; bool: PWordBool): WordBool; cdecl;
+function HasElement(_id: Cardinal; path: PWideChar; bool: PWordBool): WordBool; cdecl;
 var
   e: IInterface;
 begin
   Result := False;
   try
-    e := NativeGetElement(_id, key);
+    e := NativeGetElement(_id, path);
     bool^ := Assigned(e);
     Result := True;
   except
@@ -1247,13 +1250,14 @@ end;
 // Has the functionality of FileByName, FileByIndex, GetFileHeader, GroupBySignature,
 // GroupByName, RecordByFormID, RecordByEditorID, RecordByName, RecordByIndex,
 // GetChildGroup, ElementByName, ElementByPath, ElementByIndex, and ElementBySignature.
-function GetElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
+function GetElement(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
   element: IwbElement;
 begin
   Result := False;
   try
-    element := NativeGetElementEx(_id, key);
+    element := NativeGetElement(_id, path) as IwbElement;
+    if ElementNotFound(element, path) then exit;
     _res^ := Store(element as IInterface);
     Result := True;
   except
@@ -1261,15 +1265,15 @@ begin
   end;
 end;
 
-function AddElement(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
+function AddElement(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
   element: IInterface;
 begin
   Result := False;
   try
-    element := NativeAddElement(_id, string(key));
+    element := NativeAddElement(_id, string(path));
     if not Assigned(element) then
-      raise Exception.Create('Failed to add element at path: ' + string(key));
+      SoftException('Failed to add element at path: ' + string(path));
     _res^ := Store(element);
     Result := True;
   except
@@ -1277,15 +1281,15 @@ begin
   end;
 end;
 
-function AddElementValue(_id: Cardinal; key, value: PWideChar; _res: PCardinal): WordBool; cdecl;
+function AddElementValue(_id: Cardinal; path, value: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
   element: IInterface;
 begin
   Result := False;
   try
-    element := NativeAddElement(_id, string(key));
+    element := NativeAddElement(_id, string(path));
     if not Assigned(element) then
-      raise Exception.Create('Failed to add element at path: ' + string(key));
+      raise Exception.Create('Failed to add element at path: ' + string(path));
     SetElementValue(element as IwbElement, string(value));
     _res^ := Store(element);
     Result := True;
@@ -1294,14 +1298,14 @@ begin
   end;
 end;
 
-function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; cdecl;
+function RemoveElement(_id: Cardinal; path: PWideChar): WordBool; cdecl;
 var
   e: IInterface;
   element: IwbElement;
 begin
   Result := False;
   try
-    e := NativeGetElement(_id, key);
+    e := NativeGetElement(_id, path);
     if Supports(e, IwbFile) then
       raise Exception.Create('Cannot remove files.');
     if not Supports(e, IwbElement, element) then
@@ -1366,14 +1370,19 @@ begin
 end;
 
 // returns an array of handles for the elements in a container
-function GetElements(_id: Cardinal; key: PWideChar; sort, filter: WordBool; len: PInteger): WordBool; cdecl;
+function GetElements(_id: Cardinal; path: PWideChar; sort, filter: WordBool; len: PInteger): WordBool; cdecl;
+var
+  element: IwbElement;
 begin
   Result := False;
   try
-    if (_id = 0) and (key = '') then
+    if (_id = 0) and (path = '') then
       GetFiles()
-    else
-      GetChildrenElements(NativeGetElementEx(_id, key));
+    else begin
+      element := NativeGetElement(_id, path) as IwbElement;
+      if ElementNotFound(element, path) then exit;
+      GetChildrenElements(element);
+    end;
     if filter then FilterResultArray;
     if sort then SortResultArray;
     len^ := Length(resultArray);
@@ -1433,33 +1442,36 @@ begin
   end;
 end;
 
-function GetLinksTo(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl;
+function GetLinksTo(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
   element, linkedElement: IwbElement;
 begin
   Result := False;
   try
-    element := NativeGetElementEx(_id, key);
+    element := NativeGetElement(_id, path) as IwbElement;
+    if ElementNotFound(element, path) then exit;
     if not IsFormID(element) then
       raise Exception.Create('Element cannot hold references.');
     linkedElement := element.LinksTo;
     if not Assigned(linkedElement) then
-      raise Exception.Create('Failed to resolve linked element.');
-    _res^ := Store(linkedElement);
+      _res^ := 0
+    else
+      _res^ := Store(linkedElement);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
 end;
 
-function SetLinksTo(_id: Cardinal; key: PWideChar; _id2: Cardinal): WordBool; cdecl;
+function SetLinksTo(_id: Cardinal; path: PWideChar; _id2: Cardinal): WordBool; cdecl;
 var
   element: IwbElement;
   rec: IwbMainRecord;
 begin
   Result := False;
   try
-    element := NativeGetElementEx(_id, key);
+    element := NativeGetElement(_id, path) as IwbElement;
+    if ElementNotFound(element, path) then exit;
     if not Supports(Resolve(_id2), IwbMainRecord, rec) then
       raise Exception.Create('Second interface is not a record.');
     if not IsFormID(element) then
@@ -1601,7 +1613,8 @@ var
 begin
   Result := False;
   try
-    element := NativeGetElementEx(_id, path);
+    element := NativeGetElement(_id, path) as IwbElement;
+    if ElementNotFound(element, path) then exit;
     bool^ := NativeElementMatches(element, '', value);
     Result := True;
   except
@@ -1617,7 +1630,8 @@ var
 begin
   Result := False;
   try
-    element := NativeGetElementEx(_id, path);
+    element := NativeGetElement(_id, path) as IwbElement;
+    if ElementNotFound(element, path) then exit;
     if not Supports(element, IwbContainerElementRef, container)
     or not IsArray(container) then
       raise Exception.Create('Interface must be an array.');
@@ -1635,7 +1649,8 @@ var
 begin
   Result := False;
   try
-    element := NativeGetElementEx(_id, path);
+    element := NativeGetElement(_id, path) as IwbElement;
+    if ElementNotFound(element, path) then exit;
     if not Supports(element, IwbContainerElementRef, container)
     or not IsArray(container) then
       raise Exception.Create('Interface must be an array.');
@@ -1648,16 +1663,21 @@ end;
 
 function AddArrayItem(_id: Cardinal; path, subpath, value: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
-  element: IwbElement;
+  element: IInterface;
   container: IwbContainerElementRef;
+  createdArray: Boolean;
 begin
   Result := False;
   try
-    element := NativeGetElementEx(_id, path);
+    element := NativeGetElement(_id, path);
+    if not Assigned(element) then begin
+      element := CreateElement(Resolve(_id), path);
+      createdArray := true;
+    end;
     if not Supports(element, IwbContainerElementRef, container)
     or not IsArray(container) then
       raise Exception.Create('Interface must be an array.');
-    _res^ := Store(NativeAddArrayItem(container, subpath, value));
+    _res^ := Store(NativeAddArrayItem(container, subpath, value, createdArray));
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
@@ -1671,7 +1691,8 @@ var
 begin
   Result := False;
   try
-    element := NativeGetElementEx(_id, path);
+    element := NativeGetElement(_id, path) as IwbElement;
+    if ElementNotFound(element, path) then exit;
     if not Supports(element, IwbContainerElementRef, container)
     or not IsArray(container) then
       raise Exception.Create('Interface must be an array.');

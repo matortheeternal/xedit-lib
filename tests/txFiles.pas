@@ -40,16 +40,19 @@ begin
   ExpectEqual(grs(len), expectedHash);
 end;
 
-procedure TestSaveFile(fileName: PWideChar);
+procedure TestSaveFile(fileName: PWideChar; customPath: String = '');
 var
   filePath: String;
   h: Cardinal;
 begin
-  filePath := GetDataPath + fileName + '.save';
+  if customPath <> '' then
+    filePath := customPath
+  else
+    filePath := GetDataPath + fileName + '.save';
   if FileExists(filePath) then
     DeleteFile(filePath);
   ExpectSuccess(FileByName(fileName, @h));
-  ExpectSuccess(SaveFile(h, ''));
+  ExpectSuccess(SaveFile(h, PWideChar(customPath)));
   Expect(FileExists(filePath), 'Plugin file not found at "' + filePath + '"');
 end;
 
@@ -127,7 +130,7 @@ begin
 
           It('Should return 0 for a plugin with no records', procedure
             begin
-              ExpectSuccess(FileByName('xtest-1.esp', @h));
+              ExpectSuccess(FileByName('xtest-5.esp', @h));
               ExpectSuccess(GetOverrideRecordCount(h, @count));
               ExpectEqual(count, 0);
             end);
@@ -220,6 +223,11 @@ begin
           It('Should save new files', procedure
             begin
               TestSaveFile('xtest-6.esp');
+            end);
+
+          It('Should save files at custom paths', procedure
+            begin
+              TestSaveFile('xtest-6.esp', 'E:\xtest-6.esp');
             end);
 
           It('Should save existing files', procedure

@@ -7,6 +7,7 @@ uses
 
   {$region 'Native functions'}
   procedure ExceptionHandler(x: Exception);
+  procedure SoftException(const msg: String);
   procedure AddMessage(const msg: String);
   procedure SaveMessages;
   {$endregion}
@@ -40,6 +41,12 @@ begin
     ExceptionMessage := Copy(x.Message, 1, Length(x.Message))
   else
     ExceptionMessage := 'Unknown exception.';
+  AddMessage(ExceptionMessage);
+end;
+
+procedure SoftException(const msg: String);
+begin
+  ExceptionMessage := msg;
   AddMessage(ExceptionMessage);
 end;
 

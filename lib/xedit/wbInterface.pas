@@ -24,7 +24,7 @@ uses
   Vcl.Graphics;
 
 const
-  VersionString  = '3.2.1';
+  VersionString  = '3.2.2';
   clOrange       = $004080FF;
   wbFloatDigits  = 6;
   wbHardcodedDat = '.Hardcoded.dat';
@@ -40,6 +40,7 @@ threadvar
   wbCurrentAction    : string;
   wbStartTime        : TDateTime;
   wbShowStartTime    : Integer;
+  wbForceTerminate   : Boolean;
 
 var
   wbDisplayLoadOrderFormID : Boolean  = False;
@@ -124,7 +125,16 @@ var
   wbProgramPath        : string;
   wbDataPath           : string;
   wbOutputPath         : string;
+  wbScriptsPath        : string;
+  wbBackupPath         : string;
+  wbTempPath           : string;
+  wbSavePath           : string;
+  wbMyGamesTheGamePath : string;
   wbTheGameIniFileName : string;
+
+  wbCreationClubContentFileName : string;
+  wbCreationClubContent: array of string;
+  wbOfficialDLC        : array of string;
 
   wbShouldLoadMOHookFile : Boolean;
   wbMOProfile            : string;
@@ -3149,12 +3159,13 @@ var
   wbSizeOfMainRecordStruct : Integer;
 
 type
-  TwbGameMode   = (gmFNV, gmFO3, gmTES3, gmTES4, gmTES5, gmSSE, gmFO4);
+  TwbGameMode   = (gmFNV, gmFO3, gmTES3, gmTES4, gmTES5, gmTES5VR, gmSSE, gmFO4, gmFO4VR);
   TwbToolMode   = (tmView, tmEdit, tmDump, tmExport, tmMasterUpdate, tmMasterRestore, tmLODgen, tmScript,
                     tmTranslate, tmESMify, tmESPify, tmSortAndCleanMasters,
                     tmCheckForErrors, tmCheckForITM, tmCheckForDR);
   TwbToolSource = (tsPlugins, tsSaves);
   TwbSetOfMode  = set of TwbToolMode;
+  TwbSetOfSource  = set of TwbToolSource;
 
 var
   wbGameMode    : TwbGameMode;
@@ -3162,12 +3173,13 @@ var
   wbToolSource  : TwbToolSource;
   wbAppName     : string;
   wbGameName    : string;
-  wbGameName2   : string; // game title name
+  wbGameName2   : string; // game title name used for AppData and MyGames folders
+  wbGameNameReg : string; // registry name
   wbToolName    : string;
   wbSourceName  : String;
   wbLanguage    : string;
   wbAutoModes   : TwbSetOfMode = [ tmMasterUpdate, tmMasterRestore, tmLODgen, // Tool modes that run without user interaction until final status
-                    tmESMify, tmESPify, tmSortAndCleanMasters,
+                    tmESMify, tmESPify, tmSortAndCleanMasters, tmScript,
                     tmCheckForErrors, tmCheckForITM, tmCheckForDR ];
   wbPluginModes : TwbSetOfMode = [ tmESMify, tmESPify, tmSortAndCleanMasters,
                                    tmCheckForErrors, tmCheckForITM, tmCheckForDR ];  // Auto modes that require a specific plugin to be provided.
@@ -3176,6 +3188,10 @@ var
 
 function wbDefToName(const aDef: IwbDef): string;
 function wbDefsToPath(const aDefs: TwbDefPath): string;
+function wbIsSkyrim: Boolean;
+function wbIsFallout3: Boolean;
+function wbIsFallout4: Boolean;
+function wbIsEslSupported: Boolean;
 
 procedure ReportDefs;
 
@@ -3241,6 +3257,7 @@ procedure wbEndInternalEdit;
 function wbIsInternalEdit: Boolean;
 
 function StrToSignature(const s: string): TwbSignature;
+function IntToSignature(aInt: Cardinal): TwbSignature; inline;
 function wbStringToAnsi(const aString: string; const aElement: IwbElement): AnsiString;
 function wbAnsiToString(const aString: AnsiString; const aElement: IwbElement): string;
 
@@ -3271,7 +3288,6 @@ var
   wbTerminator        : Byte = Ord('|');
   wbPlayerRefID       : Cardinal = $14;
   wbChangedFormOffset : Integer = 10000;
-  wbOfficialDLC       : array of string;
 
 type
   {$IFDEF WIN32}
@@ -3314,6 +3330,11 @@ begin
     Result := PwbSignature(@t[1])^
   else
     raise Exception.Create('"'+t+'" is not a valid signature');
+end;
+
+function IntToSignature(aInt: Cardinal): TwbSignature; inline;
+begin
+  Result := PwbSignature(@aInt)^;
 end;
 
 function IsTranslatable(const aElement: IwbElement): Boolean;
@@ -3482,6 +3503,26 @@ begin
     wbRecordDefs[i].rdeDef.Report(nil);
 end;
 
+function wbIsSkyrim: Boolean; inline;
+begin
+  Result := wbGameMode in [gmTES5, gmTES5VR, gmSSE];
+end;
+
+function wbIsFallout3: Boolean; inline;
+begin
+  Result := wbGameMode in [gmFO3, gmFNV];
+end;
+
+function wbIsFallout4: Boolean; inline;
+begin
+  Result := wbGameMode in [gmFO4, gmFO4VR];
+end;
+
+function wbIsEslSupported: Boolean; inline;
+begin
+  Result := wbGameMode in [gmSSE, gmTES5VR, gmFO4, gmFO4VR];
+end;
+
 function wbDefToName(const aDef: IwbDef): string;
 var
   SignatureDef : IwbSignatureDef;
@@ -3519,6 +3560,7 @@ begin
       Result := Result + '['+IntToStr(aDefs[i].Index)+'] ';
   end;
 end;
+
 function wbIsInGridCell(const aPosition: TwbVector; const aGridCell: TwbGridCell): Boolean;
 var
   GridCell : TwbGridCell;
@@ -14834,10 +14876,11 @@ initialization
 
   wbProgramPath := IncludeTrailingPathDelimiter(ExtractFilePath(ParamStr(0)));
 
-  SetLength(wbPluginExtensions, 3);
+  SetLength(wbPluginExtensions, 4);
   wbPluginExtensions[0] := '.ESP';
   wbPluginExtensions[1] := '.ESM';
-  wbPluginExtensions[2] := '.GHOST';
+  wbPluginExtensions[2] := '.ESL';
+  wbPluginExtensions[3] := '.GHOST';
 
 finalization
   FreeAndNil(wbIgnoreRecords);

@@ -73,6 +73,7 @@ var
   i: Integer;
   str: String;
 begin
+  if search = '*' then exit;
   signatures.StrictDelimiter := true;
   signatures.CommaText := search;
   for i := 0 to Pred(signatures.Count) do begin

@@ -290,6 +290,7 @@ var
   b: WordBool;
   h, rec, skyrim, xt3, xt5, armo1, ar1, keywords, keyword, dnam, element, armo2,
   ar2, ar3, refr, lvli, entries, armature: Cardinal;
+  records: CardinalArray;
   len: Integer;
   enum: Byte;
 begin
@@ -551,6 +552,19 @@ begin
               It('Should fail if the element does not exist', procedure
                 begin
                   ExpectFailure(GetElement(ar1, 'Does not exist', @h));
+                end);
+            end);
+
+          Describe('Record element pipe resolution', procedure
+            begin
+              It('Should return a handle if the element exists', procedure
+                begin
+                  TestGetElement(ar1, '[BOD2|BODT]');
+                end);
+
+              It('Should fail if the element does not exist', procedure
+                begin
+                  ExpectFailure(GetElement(ar1, '[Does not exist|Nope]', @h));
                 end);
             end);
 
@@ -940,11 +954,16 @@ begin
             end);
 
           It('Should be fast', procedure
+            var
+              i: Integer;
             begin
-              ExpectSuccess(GetElement(0, 'Skyrim.esm\ARMO\000135BA', @h));
-              Benchmark(100000, procedure
+              ExpectSuccess(GetRecords(0, 'CELL', False, @len));
+              records := gra(len);
+              i := 0;
+              Benchmark(len, procedure
                 begin
-                  ExpectSuccess(GetLinksTo(keyword, '', @h));
+                  GetLinksTo(records[i], 'LTMP', @h);
+                  Inc(i);
                 end);
             end);
         end);
@@ -1184,12 +1203,26 @@ begin
 
       Describe('AddArrayItem', procedure
         begin
+          BeforeAll(procedure
+            begin
+              ExpectSuccess(RemoveElement(ar2, 'Armature'));
+              ExpectSuccess(HasElement(ar2, 'Armature', @b));
+              ExpectEqual(b, False);
+            end);
+
           Describe('Adding references', procedure
             begin
               It('Should add an array item', procedure
                 begin
                   TestAddArrayItem(keywords, '', '', '');
                   TestElementCount(keywords, 6);
+                end);
+
+              It('Should create the array if missing', procedure
+                begin
+                  TestAddArrayItem(ar2, 'Armature', '', '00012E47', 'IronGlovesAA [ARMA:00012E47]');
+                  ExpectSuccess(GetElement(ar2, 'Armature', @h));
+                  TestElementCount(h, 1);
                 end);
 
               It('Should be able to set reference with FormID', procedure

@@ -238,18 +238,6 @@ begin
 end;
 {$endregion}
 
-{$region 'Native value helpers'}
-function GetNativeValue(_id: Cardinal; path: PWideChar): Variant;
-begin
-  Result := NativeGetElementEx(_id, path).NativeValue;
-end;
-
-procedure SetNativeValue(_id: Cardinal; path: PWideChar; value: Variant);
-begin
-  NativeGetElementEx(_id, path).NativeValue := value;
-end;
-{$endregion}
-
 function IndexOfFlag(const flagsDef: IwbFlagsDef; const name: String): Integer;
 begin
   for Result := 0 to Pred(flagsDef.FlagCount) do
@@ -398,7 +386,8 @@ var
 begin
   Result := False;
   try
-    element := NativeGetElementEx(_id, path);
+    element := NativeGetElement(_id, path) as IwbElement;
+    if ElementNotFound(element, path) then exit;
     resultStr := element.EditValue;
     len^ := Length(resultStr);
     Result := True;
@@ -408,10 +397,14 @@ begin
 end;
 
 function SetValue(_id: Cardinal; path, value: PWideChar): WordBool; cdecl;
+var
+  element: IwbElement;
 begin
   Result := False;
   try
-    SetElementValue(NativeGetElementEx(_id, path), string(value));
+    element := NativeGetElement(_id, path) as IwbElement;
+    if ElementNotFound(element, path) then exit;
+    SetElementValue(element, string(value));
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
@@ -421,10 +414,14 @@ end;
 
 {$region 'Native value functions'}
 function GetIntValue(_id: Cardinal; path: PWideChar; value: PInteger): WordBool; cdecl;
+var
+  element: IwbElement;
 begin
   Result := False;
   try
-    value^ := Integer(GetNativeValue(_id, path));
+    element := NativeGetElement(_id, path) as IwbElement;
+    if ElementNotFound(element, path) then exit;
+    value^ := Integer(element.NativeValue);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
@@ -432,10 +429,14 @@ begin
 end;
 
 function SetIntValue(_id: Cardinal; path: PWideChar; value: Integer): WordBool; cdecl;
+var
+  element: IwbElement;
 begin
   Result := False;
   try
-    SetNativeValue(_id, path, value);
+    element := NativeGetElement(_id, path) as IwbElement;
+    if ElementNotFound(element, path) then exit;
+    element.NativeValue := value;
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
@@ -446,11 +447,14 @@ function GetUIntValue(_id: Cardinal; path: PWideChar; value: PCardinal): WordBoo
 const
   vtBytes = 8209;
 var
+  element: IwbElement;
   v: Variant;
 begin
   Result := False;
   try
-    v := GetNativeValue(_id, path);
+    element := NativeGetElement(_id, path) as IwbElement;
+    if ElementNotFound(element, path) then exit;
+    v := element.NativeValue;
     if VarType(v) = vtBytes then
       value^ := v[3] + (v[2] shl 8) + (v[1] shl 16) + (v[0] shl 24)
     else
@@ -462,10 +466,14 @@ begin
 end;
 
 function SetUIntValue(_id: Cardinal; path: PWideChar; value: Cardinal): WordBool; cdecl;
+var
+  element: IwbElement;
 begin
   Result := False;
   try
-    SetNativeValue(_id, path, value);
+    element := NativeGetElement(_id, path) as IwbElement;
+    if ElementNotFound(element, path) then exit;
+    element.NativeValue := value;
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
@@ -473,10 +481,14 @@ begin
 end;
 
 function GetFloatValue(_id: Cardinal; path: PWideChar; value: PDouble): WordBool; cdecl;
+var
+  element: IwbElement;
 begin
   Result := False;
   try
-    value^ := Double(GetNativeValue(_id, path));
+    element := NativeGetElement(_id, path) as IwbElement;
+    if ElementNotFound(element, path) then exit;
+    value^ := Double(element.NativeValue);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
@@ -484,10 +496,14 @@ begin
 end;
 
 function SetFloatValue(_id: Cardinal; path: PWideChar; value: Double): WordBool; cdecl;
+var
+  element: IwbElement;
 begin
   Result := False;
   try
-    SetNativeValue(_id, path, value);
+    element := NativeGetElement(_id, path) as IwbElement;
+    if ElementNotFound(element, path) then exit;
+    element.NativeValue := value;
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
@@ -504,7 +520,8 @@ var
 begin
   Result := False;
   try
-    element := NativeGetElementEx(_id, path);
+    element := NativeGetElement(_id, path) as IwbElement;
+    if ElementNotFound(element, path) then exit;
     if not GetFlagsDef(element, flagsDef) then
       raise Exception.Create('Element does not have flags');
     index := IndexOfFlag(flagsDef, string(name));
@@ -513,7 +530,7 @@ begin
       Result := True;
     end
     else
-      raise Exception.Create('Flag "' + name + '" not found.');
+      SoftException('Flag "' + name + '" not found.');
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -527,7 +544,8 @@ var
 begin
   Result := False;
   try
-    element := NativeGetElementEx(_id, path);
+    element := NativeGetElement(_id, path) as IwbElement;
+    if ElementNotFound(element, path) then exit;
     if not GetFlagsDef(element, flagsDef) then
       raise Exception.Create('Element does not have flags');
     index := IndexOfFlag(flagsDef, name);
@@ -536,7 +554,7 @@ begin
       Result := True;
     end
     else
-      raise Exception.Create('Flag "' + name + '" not found.');
+      SoftException('Flag "' + name + '" not found.');
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -556,7 +574,8 @@ begin
     slFlags.Delimiter := ',';
 
     try
-      element := NativeGetElementEx(_id, path);
+      element := NativeGetElement(_id, path) as IwbElement;
+      if ElementNotFound(element, path) then exit;
       if not GetFlagsDef(element, flagsDef) then
         raise Exception.Create('Element does not have flags');
       for i := 0 to Pred(flagsDef.FlagCount) do
@@ -589,7 +608,8 @@ begin
     slFlags.Delimiter := ',';
 
     try
-      element := NativeGetElementEx(_id, path);
+      element := NativeGetElement(_id, path) as IwbElement;
+      if ElementNotFound(element, path) then exit;
       if not GetFlagsDef(element, flagsDef) then
         raise Exception.Create('Element does not have flags');
       for i := 0 to Pred(flagsDef.FlagCount) do begin
@@ -627,7 +647,8 @@ begin
     slFlags.DelimitedText := flags;
 
     try
-      element := NativeGetElementEx(_id, path);
+      element := NativeGetElement(_id, path) as IwbElement;
+      if ElementNotFound(element, path) then exit;
       if not GetFlagsDef(element, flagsDef) then
         raise Exception.Create('Element does not have flags');
       flagVal := 0;
@@ -662,7 +683,8 @@ begin
     slOptions.Delimiter := ',';
 
     try
-      element := NativeGetElementEx(_id, path);
+      element := NativeGetElement(_id, path) as IwbElement;
+      if ElementNotFound(element, path) then exit;
       if not GetEnumDef(element, enumDef) then
         raise Exception.Create('Element does not have enumeration');
       for i := 0 to Pred(enumDef.NameCount) do

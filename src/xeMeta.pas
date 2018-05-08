@@ -35,6 +35,7 @@ type
   function ReleaseNodes(_id: Cardinal): WordBool; cdecl;
   function Switch(_id, _id2: Cardinal): WordBool; cdecl;
   function GetDuplicateHandles(_id: Cardinal; len: PInteger): WordBool; cdecl;
+  function CleanStore: WordBool; cdecl;
   function ResetStore: WordBool; cdecl;
   {$endregion}
 
@@ -294,6 +295,7 @@ begin
   // store global values
   Globals.Values['ProgramPath'] := ExtractFilePath(ParamStr(0));
   Globals.Values['Version'] := ProgramVersion;
+  Globals.Values['FileCount'] := '0';
 end;
 
 procedure CloseXEdit; cdecl;
@@ -437,6 +439,29 @@ begin
     finally
       lst.Free;
     end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function CleanStore: WordBool; cdecl;
+var
+  i: Integer;
+begin
+  Result := False;
+  try
+    i := Pred(_store.Count);
+    _releasedIDs.Clear;
+    while _store[i] = nil do begin
+      _store.Delete(i);
+      Dec(i);
+    end;
+    while i > 0 do begin
+      if _store[i] = nil then
+        _releasedIDs.Add(i);
+      Dec(i);
+    end;
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;

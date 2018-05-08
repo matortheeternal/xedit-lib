@@ -30,8 +30,8 @@ type
   procedure LoadLoadOrder(const sLoadPath: String; var slLoadOrder, slPlugins: TStringList);
   procedure RemoveCommentsAndEmpty(var sl: TStringList);
   procedure RemoveMissingFiles(var sl: TStringList);
+  procedure RemoveESLs(var sl: TStringList);
   procedure AddMissingFiles(var sl: TStringList);
-  procedure GetPluginDates(var sl: TStringList);
   procedure AddBaseMasters(var sl: TStringList);
   procedure FixLoadOrder(var sl: TStringList; const filename: String; var index: Integer);
   function PluginListCompare(List: TStringList; Index1, Index2: Integer): Integer;
@@ -178,11 +178,15 @@ begin
   xFiles[High(xFiles)] := _file;
 end;
 
-procedure LoadHardcodedDat;
+procedure LoadHardcodedDat(const filePath: String);
 var
   _file: IwbFile;
 begin
-  _file := wbFile(Globals.Values['ProgramPath'] + wbGameName + wbHardcodedDat, 0);
+  if not FileExists(filePath) then begin
+    AddMessage('File not found: ' + filePath);
+    exit;
+  end;
+  _file := wbFile(filePath, 0);
   SetLength(xFiles, Length(xFiles) + 1);
   xFiles[High(xFiles)] := _file;
 end;
@@ -213,10 +217,11 @@ begin
 
     // load hardcoded dat
     if (i = 0) and (sFileName = wbGameName + '.esm') then try
-      LoadHardCodedDat;
+      sFileName := Globals.Values['ProgramPath'] + wbGameName + wbHardcodedDat;
+      LoadHardCodedDat(sFileName);
     except
       on x: Exception do
-        ThreadException('Exception loading ' + wbGameName + wbHardcodedDat + ': ' + x.Message);
+        ThreadException('Exception loading ' + sFileName + ': ' + x.Message);
     end;
   end;
 end;
@@ -423,6 +428,7 @@ begin
   // remove comments and missing files
   RemoveCommentsAndEmpty(sl);
   RemoveMissingFiles(sl);
+  RemoveESLs(sl);
 end;
 
 procedure LoadLoadOrder(const sLoadPath: String; var slLoadOrder, slPlugins: TStringList);
@@ -440,6 +446,7 @@ begin
   RemoveCommentsAndEmpty(slLoadOrder);
   RemoveMissingFiles(slLoadOrder);
   AddMissingFiles(slLoadOrder);
+  RemoveESLs(slLoadOrder);
 end;
 
 { Remove comments and empty lines from a stringlist }
@@ -468,12 +475,40 @@ begin
       sl.Delete(i);
 end;
 
+{ Remove ESLs from stringlist }
+procedure RemoveESLs(var sl: TStringList);
+var
+  i: integer;
+begin
+  for i := Pred(sl.Count) downto 0 do
+    if StrEndsWith(sl[i], '.esl') then
+      sl.Delete(i);
+end;
+
+{ Try to fit a meaningful modified date of a file into 32 bits integer value
+  For relative load order sorting only
+  Oblivion GOG version has dates from 1969 year and FileAge() doesn't support them }
+function GetPluginDate(const aFileName: string): Cardinal;
+const
+  DateOmitYears = 60;
+  DatePrecision = 100000;
+var
+  F: TSearchRec;
+begin
+  if FindFirst(aFileName, faAnyFile, F) = 0 then begin
+    Result := Round((F.TimeStamp - 364 * DateOmitYears) * DatePrecision);
+    FindClose(F);
+  end else
+    Result := 0;
+end;
+
 { Add missing *.esp and *.esm files to list }
 procedure AddMissingFiles(var sl: TStringList);
 var
   F: TSearchRec;
   i, j: integer;
   slNew: TStringList;
+  fileSortKey: Cardinal;
 begin
   slNew := TStringList.Create;
   try
@@ -482,8 +517,10 @@ begin
       repeat
         if not (IsFileESM(F.Name) or IsFileESP(F.Name)) then
           continue;
-        if sl.IndexOf(F.Name) = -1 then
-          slNew.AddObject(F.Name, TObject(FileAge(wbDataPath + F.Name)));
+        if sl.IndexOf(F.Name) = -1 then begin
+          fileSortKey := GetPluginDate(wbDataPath + F.Name);
+          slNew.AddObject(F.Name, TObject(fileSortKey));
+        end;
       until FindNext(F) <> 0;
     finally
       FindClose(F);
@@ -516,33 +553,21 @@ begin
   end;
 end;
 
-{ Get date modified for plugins in load order and store in stringlist objects }
-procedure GetPluginDates(var sl: TStringList);
-var
-  i: Integer;
-begin
-  for i := 0 to Pred(sl.Count) do
-    sl.Objects[i] := TObject(FileAge(wbDataPath + sl[i]));
-end;
-
 procedure AddBaseMasters(var sl: TStringList);
 var
   index: Integer;
 begin
   index := 0;
-  if (wbGameMode = gmTES5) then begin
-    FixLoadOrder(sl, 'Skyrim.esm', index);
-    FixLoadOrder(sl, 'Update.esm', index);
-  end
+  FixLoadOrder(sl, wbGameName + '.esm', index);
+  if (wbGameMode = gmTES5) then
+    FixLoadOrder(sl, 'Update.esm', index)
   else if (wbGameMode = gmSSE) then begin
-    FixLoadOrder(sl, 'Skyrim.esm', index);
     FixLoadOrder(sl, 'Update.esm', index);
     FixLoadOrder(sl, 'Dawnguard.esm', index);
     FixLoadOrder(sl, 'HearthFires.esm', index);
     FixLoadOrder(sl, 'Dragonborn.esm', index);
   end
   else if (wbGameMode = gmFO4) then begin
-    FixLoadOrder(sl, 'Fallout4.esm', index);
     FixLoadOrder(sl, 'DLCRobot.esm', index);
     FixLoadOrder(sl, 'DLCworkshop01.esm', index);
     FixLoadOrder(sl, 'DLCCoast.esm', index);
@@ -576,32 +601,21 @@ end;
 function PluginListCompare(List: TStringList; Index1, Index2: Integer): Integer;
 var
   IsESM1, IsESM2: Boolean;
-  FileAge1,FileAge2: Integer;
-  FileDateTime1, FileDateTime2: TDateTime;
+  FileSK1, FileSK2: Integer;
 begin
   IsESM1 := IsFileESM(List[Index1]);
   IsESM2 := IsFileESM(List[Index2]);
 
   if IsESM1 = IsESM2 then begin
-    FileAge1 := Integer(List.Objects[Index1]);
-    FileAge2 := Integer(List.Objects[Index2]);
+    FileSK1 := Cardinal(List.Objects[Index1]);
+    FileSK2 := Cardinal(List.Objects[Index2]);
 
-    if FileAge1 < FileAge2 then
+    if FileSK1 < FileSK2 then
       Result := -1
-    else if FileAge1 > FileAge2 then
+    else if FileSK1 > FileSK2 then
       Result := 1
-    else begin
-      if not SameText(List[Index1], List[Index1])
-      and FileAge(List[Index1], FileDateTime1) and FileAge(List[Index2], FileDateTime2) then begin
-        if FileDateTime1 < FileDateTime2 then
-          Result := -1
-        else if FileDateTime1 > FileDateTime2 then
-          Result := 1
-        else
-          Result := 0;
-      end else
-        Result := 0;
-    end;
+    else
+      Result := 0;
 
   end else if IsESM1 then
     Result := -1
@@ -750,14 +764,6 @@ begin
       LoadPluginsList(sLoadPath, slPlugins, True);
       LoadLoadOrder(sLoadPath, slLoadOrder, slPlugins);
 
-      // if GameMode is not SkyrimSE or Fallout 4 and we don't
-      // have a loadorder.txt, sort by date modified
-      if (wbGameMode <> gmSSE) and (wbGameMode <> gmFO4)
-      and not FileExists(sLoadPath + 'loadorder.txt') then begin
-        GetPluginDates(slLoadOrder);
-        slLoadOrder.CustomSort(PluginListCompare);
-      end;
-
       // add base masters if missing
       AddBaseMasters(slLoadOrder);
 
@@ -802,9 +808,8 @@ begin
   Result := False;
   try
     // exit if loader is already active
-    if LoaderState <> lsInactive then
-      raise Exception.Create('Error: You can only call LoadPlugins once per session. ' +
-        'Use LoadPlugin to load additional plugins.');
+    if LoaderState = lsActive then
+      raise Exception.Create('Error: Currently loading plugins.');
     
     // prepare load order
     slLoadOrder := TStringList.Create;

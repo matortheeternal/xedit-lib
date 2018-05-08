@@ -109,7 +109,10 @@ begin
     callback();
   duration := stopwatch.Elapsed.TotalMilliseconds;
   TestComment(Format('Completed in %0.3fms', [duration]));
-  TestComment(Format('%0.3fus per call', [(duration / times) * 1000]));
+  if duration / times > 1.0 then
+    TestComment(Format('%0.3fms per call', [duration / times]))
+  else
+    TestComment(Format('%0.3fus per call', [(duration / times) * 1000]));
 end;
 
 { Suite Functions }

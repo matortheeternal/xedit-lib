@@ -137,7 +137,7 @@ end;
 procedure BuildRecordHandlingTests;
 var
   b: WordBool;
-  skyrim, armo, ar1, dnam, xt1, xt2, xt4, ar2, ar3, kw1, kw2, kw3, h, n1, n2, n3, n4: Cardinal;
+  skyrim, armo, ar1, dnam, xt1, xt2, xt4, ar2, ar3, kw1, kw2, kw3, h, n1, n2, n3: Cardinal;
 begin
   Describe('Record Handling', procedure
     begin
@@ -242,6 +242,17 @@ begin
                 begin
                   TestGetRecords(0, '', 'Armor', False, 2763);
                   TestGetRecords(0, '', 'Constructible Object,Non-Player Character (Actor)', False, 606 + 5119);
+                end);
+            end);
+
+          Describe('Speed', procedure
+            begin
+              It('Should load records quickly', procedure
+                begin
+                  Benchmark(5, procedure
+                    begin
+                      TestGetRecords(0, 'Skyrim.esm', '', False, 869692);
+                    end);
                 end);
             end);
         end);
