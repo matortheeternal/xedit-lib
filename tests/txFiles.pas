@@ -136,6 +136,7 @@ begin
             end);
         end);
 
+      {$IFNDEF WIN64}
       Describe('MD5Hash', procedure
         begin
           It('Should return the MD5 Hash of a file', procedure
@@ -169,6 +170,7 @@ begin
               ExpectFailure(CRCHash(0, @len));
             end);
         end);
+      {$ENDIF}
 
       Describe('AddFile', procedure
         begin
