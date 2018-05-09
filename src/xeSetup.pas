@@ -121,8 +121,8 @@ procedure SetLoaderState(state: TLoaderState);
 begin
   LoaderState := state;
   case state of
-    lsActive: wbLoaderdone := False;
-    lsDone: wbLoaderdone := True;
+    lsActive: wbLoaderDone := False;
+    lsDone: wbLoaderDone := True;
     lsError: wbLoaderError := True;
   end;
 end;
@@ -323,13 +323,18 @@ var
   masterNames: TDynStrings;
   i: Integer;
 begin
-  _file := LoadFileHeader(filePath);
-  masterNames := NativeGetMasterNames(_file);
-  for i := Low(masterNames) to High(masterNames) do
-    if slLoadOrder.IndexOf(masterNames[i]) = -1 then
-      AddToLoadOrder(masterNames[i]);
-  if slLoadOrder.IndexOf(filePath) = -1 then
-    slLoadOrder.Add(filePath);
+  try
+    _file := LoadFileHeader(filePath);
+    masterNames := NativeGetMasterNames(_file);
+    for i := Low(masterNames) to High(masterNames) do
+      if slLoadOrder.IndexOf(masterNames[i]) = -1 then
+        AddToLoadOrder(masterNames[i]);
+    if slLoadOrder.IndexOf(filePath) = -1 then
+      slLoadOrder.Add(filePath);
+  except
+    on x: Exception do
+      raise Exception.Create('Error adding ' + filePath + ' to load order, ' + x.Message);
+  end;
 end;
 
 procedure BuildLoadOrder(const loadOrder: String);
@@ -343,8 +348,8 @@ begin
     for i := 0 to Pred(slFiles.Count) do
       AddToLoadOrder(slFiles[i]);
   finally
-    wbFileForceClosed;
     slFiles.Free;
+    wbFileForceClosed;
   end;
 end;
 
