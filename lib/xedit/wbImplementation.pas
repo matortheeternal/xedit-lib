@@ -2486,8 +2486,6 @@ begin
 end;
 
 function TwbFile.FindFormID(aFormID: Cardinal; var Index: Integer): Boolean;
-var
-  i: Integer;
 begin
   if (aFormID shr 24) > Cardinal(GetMasterCount) then
     aFormID := (aFormID and $00FFFFFF) or (Cardinal(GetMasterCount) shl 24);
@@ -15294,10 +15292,15 @@ procedure wbFileForceClosed;
 var
   i: Integer;
 begin
-  for i := Low(Files) to High(Files) do
-    (Files[i] as IwbFileInternal).ForceClosed;
-  Files := nil;
-  FilesMap.Clear;
+  try
+    for i := Low(Files) to High(Files) do
+      (Files[i] as IwbFileInternal).ForceClosed;
+    Files := nil;
+    FilesMap.Clear;
+  except
+    on x: Exception do
+      raise Exception.Create('wbFileForceClosed failed, ' + x.Message);
+  end;
 end;
 
 function IndexOfFile(_File: IwbFile): Integer;
