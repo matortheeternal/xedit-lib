@@ -77,6 +77,8 @@ end;
 
 function NativeFileByIndex(index: Integer): IwbFile;
 begin
+  if (index >= Length(xFiles)) or (index < 0) then
+    raise Exception.Create('NativeFileByIndex: Index of out of bounds.');
   Result := xFiles[index];
 end;
 
