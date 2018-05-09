@@ -1322,7 +1322,7 @@ begin
         try
           repeat
             dRunning := WaitForSingleObject(piProcess.hProcess, 100);
-            Application.ProcessMessages;
+            //Application.ProcessMessages;
 
             if wbForceTerminate or (GetKeyState(VK_ESCAPE) and 128 = 128) then begin
               dw := Integer(TerminateProcess(piProcess.hProcess, 1));

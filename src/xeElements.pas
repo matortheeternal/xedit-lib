@@ -429,7 +429,7 @@ function AddGroupIfMissing(const _file: IwbFile; const sig: String): IwbGroupRec
 var
   _sig: TwbSignature;
 begin
-  _sig := TwbSignature(sig);
+  _sig := StrToSignature(sig);
   if _file.HasGroup(_sig) then
     Result := _file.GroupBySignature[_sig]
   else
@@ -516,7 +516,7 @@ var
   rec: IwbMainRecord;
 begin
   if key = '.' then
-    key := String(AnsiString(group.GroupLabel));
+    key := String(AnsiString(TwbSignature(group.GroupLabel)));
   if Length(key) > 4 then begin
     Result := FindRecordOrGroup(group, key);
     if not Assigned(Result) then
