@@ -8,8 +8,8 @@
         <AppType>Console</AppType>
         <FrameworkType>None</FrameworkType>
         <DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
-        <Platform Condition="'$(Platform)'==''">Win32</Platform>
-        <TargetedPlatforms>1</TargetedPlatforms>
+        <Platform Condition="'$(Platform)'==''">Win64</Platform>
+        <TargetedPlatforms>3</TargetedPlatforms>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
         <Base>true</Base>
@@ -39,9 +39,20 @@
         <CfgParent>Base</CfgParent>
         <Base>true</Base>
     </PropertyGroup>
+    <PropertyGroup Condition="('$(Platform)'=='Win64' and '$(Base)'=='true') or '$(Base_Win64)'!=''">
+        <Base_Win64>true</Base_Win64>
+        <CfgParent>Base</CfgParent>
+        <Base>true</Base>
+    </PropertyGroup>
     <PropertyGroup Condition="'$(Config)'=='Debug' or '$(Cfg_1)'!=''">
         <Cfg_1>true</Cfg_1>
         <CfgParent>Base</CfgParent>
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="('$(Platform)'=='Win64' and '$(Cfg_1)'=='true') or '$(Cfg_1_Win64)'!=''">
+        <Cfg_1_Win64>true</Cfg_1_Win64>
+        <CfgParent>Cfg_1</CfgParent>
+        <Cfg_1>true</Cfg_1>
         <Base>true</Base>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Config)'=='Release' or '$(Cfg_2)'!=''">
@@ -86,6 +97,7 @@
         <AUP_WRITE_CALENDAR>true</AUP_WRITE_CALENDAR>
         <AUP_WRITE_EXTERNAL_STORAGE>true</AUP_WRITE_EXTERNAL_STORAGE>
         <AUP_READ_PHONE_STATE>true</AUP_READ_PHONE_STATE>
+        <EnabledSysJars>android-support-v4.dex.jar;cloud-messaging.dex.jar;fmx.dex.jar;google-analytics-v2.dex.jar;google-play-billing.dex.jar;google-play-licensing.dex.jar;google-play-services.dex.jar</EnabledSysJars>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_iOSDevice32)'!=''">
         <iPhone_AppIcon60>$(BDS)\bin\Artwork\iOS\iPhone\FM_ApplicationIcon_60x60.png</iPhone_AppIcon60>
@@ -130,15 +142,25 @@
         <iPad_Launch2048x1536>$(BDS)\bin\Artwork\iOS\iPad\FM_LaunchImageLandscape_2048x1536.png</iPad_Launch2048x1536>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win32)'!=''">
-        <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;Bde;$(DCC_Namespace)</DCC_Namespace>
+        <DCC_Namespace>System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;Bde;$(DCC_Namespace)</DCC_Namespace>
         <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=;ProgramID=com.embarcadero.$(MSBuildProjectName)</VerInfo_Keys>
         <VerInfo_Locale>1033</VerInfo_Locale>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Base_Win64)'!=''">
+        <DCC_Namespace>System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;$(DCC_Namespace)</DCC_Namespace>
+        <BT_BuildType>Debug</BT_BuildType>
+        <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1)'!=''">
         <DCC_MapFile>3</DCC_MapFile>
         <DCC_Define>DEBUG;$(DCC_Define)</DCC_Define>
         <DCC_Optimize>false</DCC_Optimize>
         <DCC_GenerateStackFrames>true</DCC_GenerateStackFrames>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Cfg_1_Win64)'!=''">
+        <DCC_Define>SKYRIM;$(DCC_Define)</DCC_Define>
+        <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
+        <Manifest_File>(None)</Manifest_File>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">
         <DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>
@@ -150,44 +172,45 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
-			<DCCReference Include="src\xeTypes.pas"/>
-			<DCCReference Include="src\xeMessages.pas"/>
-			<DCCReference Include="src\xeConfiguration.pas"/>
-			<DCCReference Include="src\xeMeta.pas"/>
-			<DCCReference Include="src\xeSetup.pas"/>
-			<DCCReference Include="src\xeFiles.pas"/>
-			<DCCReference Include="src\xeMasters.pas"/>
-			<DCCReference Include="src\xeElements.pas"/>
-			<DCCReference Include="src\xeElementValues.pas"/>
-			<DCCReference Include="src\xeErrors.pas"/>
-			<DCCReference Include="src\xeRecords.pas"/>
-			<DCCReference Include="src\xeSerialization.pas"/>
-			<DCCReference Include="lib\xedit\wbImplementation.pas"/>
-			<DCCReference Include="lib\xedit\wbInterface.pas"/>
-			<DCCReference Include="lib\xedit\wbBSA.pas"/>
-			<DCCReference Include="lib\xedit\wbSort.pas"/>
-			<DCCReference Include="lib\xedit\wbDefinitionsFNV.pas"/>
-			<DCCReference Include="lib\xedit\wbDefinitionsFO3.pas"/>
-			<DCCReference Include="lib\xedit\wbDefinitionsFO4.pas"/>
-			<DCCReference Include="lib\xedit\wbDefinitionsTES3.pas"/>
-			<DCCReference Include="lib\xedit\wbDefinitionsTES4.pas"/>
-			<DCCReference Include="lib\xedit\wbDefinitionsTES5.pas"/>
-			<DCCReference Include="lib\xedit\wbHelpers.pas"/>
-			<DCCReference Include="lib\xedit\wbLocalization.pas"/>
-			<DCCReference Include="lib\xedit\wbStreams.pas"/>
-			<DCCReference Include="tests\txMeta.pas"/>
-			<DCCReference Include="tests\txMessages.pas"/>
-			<DCCReference Include="tests\txSetup.pas"/>
-			<DCCReference Include="tests\txFiles.pas"/>
-			<DCCReference Include="tests\txMasters.pas"/>
-			<DCCReference Include="tests\txElements.pas"/>
-			<DCCReference Include="tests\txElementValues.pas"/>
-			<DCCReference Include="tests\txSerialization.pas"/>
-			<DCCReference Include="tests\txRecords.pas"/>
-			<DCCReference Include="tests\txErrors.pas"/>
-			<DCCReference Include="lib\Argo\Argo.pas"/>
-			<DCCReference Include="lib\Argo\ArgoTypes.pas"/>
-			<DCCReference Include="lib\mahogany\Mahogany.pas"/>
+        <DCCReference Include="tests\txImports.pas"/>
+        <DCCReference Include="src\xeTypes.pas"/>
+        <DCCReference Include="src\xeMessages.pas"/>
+        <DCCReference Include="src\xeConfiguration.pas"/>
+        <DCCReference Include="src\xeMeta.pas"/>
+        <DCCReference Include="src\xeSetup.pas"/>
+        <DCCReference Include="src\xeFiles.pas"/>
+        <DCCReference Include="src\xeMasters.pas"/>
+        <DCCReference Include="src\xeElements.pas"/>
+        <DCCReference Include="src\xeElementValues.pas"/>
+        <DCCReference Include="src\xeErrors.pas"/>
+        <DCCReference Include="src\xeRecords.pas"/>
+        <DCCReference Include="src\xeSerialization.pas"/>
+        <DCCReference Include="lib\xedit\wbImplementation.pas"/>
+        <DCCReference Include="lib\xedit\wbInterface.pas"/>
+        <DCCReference Include="lib\xedit\wbBSA.pas"/>
+        <DCCReference Include="lib\xedit\wbSort.pas"/>
+        <DCCReference Include="lib\xedit\wbDefinitionsFNV.pas"/>
+        <DCCReference Include="lib\xedit\wbDefinitionsFO3.pas"/>
+        <DCCReference Include="lib\xedit\wbDefinitionsFO4.pas"/>
+        <DCCReference Include="lib\xedit\wbDefinitionsTES3.pas"/>
+        <DCCReference Include="lib\xedit\wbDefinitionsTES4.pas"/>
+        <DCCReference Include="lib\xedit\wbDefinitionsTES5.pas"/>
+        <DCCReference Include="lib\xedit\wbHelpers.pas"/>
+        <DCCReference Include="lib\xedit\wbLocalization.pas"/>
+        <DCCReference Include="lib\xedit\wbStreams.pas"/>
+        <DCCReference Include="tests\txMeta.pas"/>
+        <DCCReference Include="tests\txMessages.pas"/>
+        <DCCReference Include="tests\txSetup.pas"/>
+        <DCCReference Include="tests\txFiles.pas"/>
+        <DCCReference Include="tests\txMasters.pas"/>
+        <DCCReference Include="tests\txElements.pas"/>
+        <DCCReference Include="tests\txElementValues.pas"/>
+        <DCCReference Include="tests\txSerialization.pas"/>
+        <DCCReference Include="tests\txRecords.pas"/>
+        <DCCReference Include="tests\txErrors.pas"/>
+        <DCCReference Include="lib\Argo\Argo.pas"/>
+        <DCCReference Include="lib\Argo\ArgoTypes.pas"/>
+        <DCCReference Include="lib\mahogany\Mahogany.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>
@@ -237,6 +260,12 @@
                 <Source>
                     <Source Name="MainSource">XEditLibTests.dpr</Source>
                 </Source>
+                <Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\bcboffice2k250.bpl">Embarcadero C++Builder Office 2000 Servers Package</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\bcbofficexp250.bpl">Embarcadero C++Builder Office XP Servers Package</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dcloffice2k250.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dclofficexp250.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
+                </Excluded_Packages>
             </Delphi.Personality>
             <Platforms>
                 <Platform value="Android">False</Platform>
@@ -246,7 +275,7 @@
                 <Platform value="Linux64">False</Platform>
                 <Platform value="OSX32">False</Platform>
                 <Platform value="Win32">True</Platform>
-                <Platform value="Win64">False</Platform>
+                <Platform value="Win64">True</Platform>
             </Platforms>
         </BorlandProject>
         <ProjectFileVersion>12</ProjectFileVersion>
