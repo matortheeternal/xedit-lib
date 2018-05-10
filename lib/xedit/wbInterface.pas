@@ -8221,8 +8221,8 @@ var
 begin
   Result := 0;
   Buffer[3] := 0;
-  Buffer[2] := PByte(aBasePtr)^; aBasePtr := PAnsiChar(aBasePtr) + 1;
-  Buffer[1] := PByte(aBasePtr)^; aBasePtr := PAnsiChar(aBasePtr) + 1;
+  Buffer[2] := PByte(aBasePtr)^; aBasePtr := PByte(aBasePtr) + 1;
+  Buffer[1] := PByte(aBasePtr)^; aBasePtr := PByte(aBasePtr) + 1;
   Buffer[0] := PByte(aBasePtr)^;
   Move(Buffer, Result, SizeOf(Result));
 end;
@@ -8232,8 +8232,8 @@ var
   Buffer : array[0..3] of Byte;
 begin
   Move(aValue, Buffer, SizeOf(aValue));
-  PByte(aBasePtr)^ := Buffer[2]; aBasePtr := PAnsiChar(aBasePtr) + 1;
-  PByte(aBasePtr)^ := Buffer[1]; aBasePtr := PAnsiChar(aBasePtr) + 1;
+  PByte(aBasePtr)^ := Buffer[2]; aBasePtr := PByte(aBasePtr) + 1;
+  PByte(aBasePtr)^ := Buffer[1]; aBasePtr := PByte(aBasePtr) + 1;
   PByte(aBasePtr)^ := Buffer[0];
 end;
 
@@ -8279,18 +8279,18 @@ begin
     Move(aValue, Buffer, SizeOf(aValue));
     if Buffer[3] > 0 then begin // 4 bytes counter
       Buffer[3] := (Buffer[3] shl 2 ) or 3;
-      PByte(aBasePtr)^ := Buffer[3]; aBasePtr := PAnsiChar(aBasePtr) + 1;
-      PByte(aBasePtr)^ := Buffer[2]; aBasePtr := PAnsiChar(aBasePtr) + 1;
-      PByte(aBasePtr)^ := Buffer[1]; aBasePtr := PAnsiChar(aBasePtr) + 1;
+      PByte(aBasePtr)^ := Buffer[3]; aBasePtr := PByte(aBasePtr) + 1;
+      PByte(aBasePtr)^ := Buffer[2]; aBasePtr := PByte(aBasePtr) + 1;
+      PByte(aBasePtr)^ := Buffer[1]; aBasePtr := PByte(aBasePtr) + 1;
       PByte(aBasePtr)^ := Buffer[0];
     end else if Buffer[2] > 0 then begin
       Buffer[2] := (Buffer[3] shl 2 ) or 2;
-      PByte(aBasePtr)^ := Buffer[2]; aBasePtr := PAnsiChar(aBasePtr) + 1;
-      PByte(aBasePtr)^ := Buffer[1]; aBasePtr := PAnsiChar(aBasePtr) + 1;
+      PByte(aBasePtr)^ := Buffer[2]; aBasePtr := PByte(aBasePtr) + 1;
+      PByte(aBasePtr)^ := Buffer[1]; aBasePtr := PByte(aBasePtr) + 1;
       PByte(aBasePtr)^ := Buffer[0];
     end else if Buffer[1] > 0 then begin
       Buffer[1] := (Buffer[1] shl 2 ) or 1;
-      PByte(aBasePtr)^ := Buffer[1]; aBasePtr := PAnsiChar(aBasePtr) + 1;
+      PByte(aBasePtr)^ := Buffer[1]; aBasePtr := PByte(aBasePtr) + 1;
       PByte(aBasePtr)^ := Buffer[0];
     end else begin
       Buffer[0] := (Buffer[0] shl 2 ) or 0;
@@ -9523,7 +9523,7 @@ begin
             BasePtr := aEndPtr;
         end;
 
-        EndPtr := PAnsiChar(BasePtr) + stMembers[SortMember].Size[BasePtr, aEndPtr, aElement];
+        EndPtr := PByte(BasePtr) + stMembers[SortMember].Size[BasePtr, aEndPtr, aElement];
 
         if Cardinal(BasePtr) > Cardinal(aEndPtr) then
           BasePtr := aEndPtr;
@@ -9550,7 +9550,7 @@ begin
               BasePtr := aEndPtr;
           end;
 
-          EndPtr := PAnsiChar(BasePtr) + stMembers[SortMember].Size[BasePtr, aEndPtr, aElement];
+          EndPtr := PByte(BasePtr) + stMembers[SortMember].Size[BasePtr, aEndPtr, aElement];
 
           if Cardinal(BasePtr) > Cardinal(aEndPtr) then
             BasePtr := aEndPtr;
@@ -9567,7 +9567,7 @@ begin
   end else begin
     BasePtr := aBasePtr;
     for j := Low(stMembers) to High(stMembers) do begin
-      EndPtr := PAnsiChar(BasePtr) + stMembers[j].Size[BasePtr, aEndPtr, aElement];
+      EndPtr := PByte(BasePtr) + stMembers[j].Size[BasePtr, aEndPtr, aElement];
 
       if Cardinal(BasePtr) > Cardinal(aEndPtr) then
         BasePtr := aEndPtr;
@@ -12159,9 +12159,9 @@ var
   Bytes: TBytes;
 begin
   case badSize of
-    -1 : aBasePtr := PAnsiChar(aBasePtr) + SizeOf(Cardinal);
-    -2 : aBasePtr := PAnsiChar(aBasePtr) + SizeOf(Word);
-    -4 : aBasePtr := PAnsiChar(aBasePtr) + SizeOf(Byte);
+    -1 : aBasePtr := PByte(aBasePtr) + SizeOf(Cardinal);
+    -2 : aBasePtr := PByte(aBasePtr) + SizeOf(Word);
+    -4 : aBasePtr := PByte(aBasePtr) + SizeOf(Byte);
   end;
   SetLength(Bytes, Cardinal(aEndPtr) - Cardinal(aBasePtr));
   if Length(Bytes) > 0 then
@@ -12193,9 +12193,9 @@ var
 begin
   Result := '';
   case badSize of
-    -1 : aBasePtr := PAnsiChar(aBasePtr) + SizeOf(Cardinal);
-    -2 : aBasePtr := PAnsiChar(aBasePtr) + SizeOf(Word);
-    -4 : aBasePtr := PAnsiChar(aBasePtr) + SizeOf(Byte);
+    -1 : aBasePtr := PByte(aBasePtr) + SizeOf(Cardinal);
+    -2 : aBasePtr := PByte(aBasePtr) + SizeOf(Word);
+    -4 : aBasePtr := PByte(aBasePtr) + SizeOf(Byte);
   end;
   p := aBasePtr;
   while Cardinal(p) < Cardinal(aEndPtr) do begin
@@ -13646,7 +13646,7 @@ begin
   NewSize := Len + GetPrefixOffset;
   aElement.RequestStorageChange(aBasePtr, aEndPtr, NewSize + Ord(noTerminator));
   SetPrefixValue(aBasePtr, aEndPtr, aElement, Len);
-  p := PAnsiChar(aBasePtr) + GetPrefixOffset;
+  p := PByte(aBasePtr) + GetPrefixOffset;
   if Len > 0 then
     Move(s[1], p^, Len);
   if noTerminator then begin
