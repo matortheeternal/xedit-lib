@@ -312,8 +312,9 @@ begin
   try
     Result := wbFile(filePath, -1, '', False, True);
   except
-    on x: Exception do 
-      raise Exception.Create(Format('Failed to load file header %s, %s', [filePath, x.Message]));
+    on x: Exception do
+      raise Exception.CreateFmt('Failed to load file header %s, %s',
+        [filePath, x.Message]);
   end;
 end;
 
@@ -323,18 +324,13 @@ var
   masterNames: TDynStrings;
   i: Integer;
 begin
-  try
-    _file := LoadFileHeader(filePath);
-    masterNames := NativeGetMasterNames(_file);
-    for i := Low(masterNames) to High(masterNames) do
-      if slLoadOrder.IndexOf(masterNames[i]) = -1 then
-        AddToLoadOrder(masterNames[i]);
-    if slLoadOrder.IndexOf(filePath) = -1 then
-      slLoadOrder.Add(filePath);
-  except
-    on x: Exception do
-      raise Exception.Create('Error adding ' + filePath + ' to load order, ' + x.Message);
-  end;
+  _file := LoadFileHeader(filePath);
+  masterNames := NativeGetMasterNames(_file);
+  for i := Low(masterNames) to High(masterNames) do
+    if slLoadOrder.IndexOf(masterNames[i]) = -1 then
+      AddToLoadOrder(masterNames[i]);
+  if slLoadOrder.IndexOf(filePath) = -1 then
+    slLoadOrder.Add(filePath);
 end;
 
 procedure BuildLoadOrder(const loadOrder: String);
@@ -819,7 +815,7 @@ begin
     // prepare load order
     slLoadOrder := TStringList.Create;
     if smartLoad then
-      BuildLoadOrder(loadOrder)
+      BuildLoadOrder(String(loadOrder))
     else
       slLoadOrder.Text := loadOrder;
 
@@ -829,7 +825,8 @@ begin
     Result := True;
   except
     on x: Exception do begin  
-      slLoadOrder.Free;
+      if Assigned(slLoadOrder) then
+        slLoadOrder.Free;
       ExceptionHandler(x);
     end;
   end;
