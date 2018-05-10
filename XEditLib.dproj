@@ -58,6 +58,7 @@
 			</DelphiCompile>
 			<DCCReference Include="src\xeHelpers.pas"/>
 			<DCCReference Include="src\xeTypes.pas"/>
+			<DCCReference Include="src\xeStackTrace.pas"/>
 			<DCCReference Include="src\xeMessages.pas"/>
 			<DCCReference Include="src\xeConfiguration.pas"/>
 			<DCCReference Include="src\xeMeta.pas"/>
