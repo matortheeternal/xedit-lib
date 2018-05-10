@@ -3,7 +3,8 @@ unit xeMessages;
 interface
 
 uses
-  SysUtils;
+  SysUtils,
+  xeStackTrace;
 
   {$region 'Native functions'}
   procedure ExceptionHandler(x: Exception);
@@ -36,12 +37,13 @@ uses
 
 {$region 'Native functions'}
 procedure ExceptionHandler(x: Exception);
+var
+  msg: String;
 begin
-  if x.Message <> '' then
-    ExceptionMessage := Copy(x.Message, 1, Length(x.Message))
-  else
-    ExceptionMessage := 'Unknown exception.';
-  AddMessage(ExceptionMessage);
+  msg := x.Message;
+  if msg = '' then
+    msg := 'Unknown exception.';
+  ExceptionMessage := Format('%s'#13#10'%s', [msg, x.StackTrace]);
 end;
 
 procedure SoftException(const msg: String);

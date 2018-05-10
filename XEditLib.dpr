@@ -32,7 +32,8 @@ uses
   wbLocalization in 'lib\xedit\wbLocalization.pas',
   wbStreams in 'lib\xedit\wbStreams.pas',
   Argo in 'lib\Argo\Argo.pas',
-  ArgoTypes in 'lib\Argo\ArgoTypes.pas';
+  ArgoTypes in 'lib\Argo\ArgoTypes.pas',
+  xeStackTrace in 'src\xeStackTrace.pas';
 
 {$R *.RES}
 {$MAXSTACKSIZE 2097152}
