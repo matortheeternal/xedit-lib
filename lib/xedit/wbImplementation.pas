@@ -2566,7 +2566,7 @@ begin
   if not Assigned(flView) then
     RaiseLastOSError;
 
-  flEndPtr := Pointer( Cardinal(flView) + GetFileSize(flFileHandle, nil) );
+  flEndPtr := PAnsiChar(flView) + GetFileSize(flFileHandle, nil);
 
   flProgress('File loaded');
 end;
@@ -4054,7 +4054,7 @@ begin
                             SetLength(dcDataStorage, OurSize);
                             if OurSize > 0 then begin
                               dcDataBasePtr := @dcDataStorage[Low(dcDataStorage)];
-                              dcDataEndPtr := Pointer( Cardinal(dcDataBasePtr) + OurSize );
+                              dcDataEndPtr := PAnsiChar(dcDataBasePtr) + OurSize;
                             end else begin
                               dcDataBasePtr := @EmptyPtr;
                               dcDataEndPtr := @EmptyPtr;
@@ -5767,7 +5767,7 @@ begin
         GroupRecord := nil;
 
         BasePtr := dcBasePtr;
-        with TwbRecordHeaderStruct.Create(Self, BasePtr, Pointer( Cardinal(BasePtr) + wbSizeOfMainRecordStruct), mrDef.RecordHeaderStruct, '') do begin
+        with TwbRecordHeaderStruct.Create(Self, BasePtr, PAnsiChar(BasePtr) + wbSizeOfMainRecordStruct, mrDef.RecordHeaderStruct, '') do begin
           Include(dcFlags, dcfDontSave);
           SetSortOrder(-1);
           SetMemoryOrder(Low(Integer));
@@ -6141,7 +6141,7 @@ begin
 
       Move(Stream.Memory^, dcBasePtr^, Stream.Size);
 
-      dcEndPtr := Pointer( Cardinal(dcBasePtr) + Stream.Size);
+      dcEndPtr := PAnsiChar(dcBasePtr) + Stream.Size;
 
       Exclude(dcFlags, dcfStorageInvalid);
       mrDataStorage := nil;
@@ -6310,14 +6310,14 @@ begin
       SetLength(mrDataStorage, UncompressedLength );
 
       DecompressToUserBuf(
-        Pointer( Cardinal(dcDataBasePtr) + SizeOf(Cardinal) ),
+        PAnsiChar(dcDataBasePtr) + SizeOf(Cardinal),
         mrStruct.mrsDataSize - SizeOf(Cardinal),
         @mrDataStorage[0],
         UncompressedLength
       );
 
       dcDataBasePtr := @mrDataStorage[0];
-      dcDataEndPtr := Pointer( Cardinal(dcDataBasePtr) + UncompressedLength );
+      dcDataEndPtr := PAnsiChar(dcDataBasePtr) + UncompressedLength;
     end else begin
       mrDataStorage := nil;
       dcDataBasePtr := @EmptyPtr;
@@ -6353,7 +6353,7 @@ begin
   GroupRecord := nil;
 
   BasePtr := dcBasePtr;
-  with TwbRecordHeaderStruct.Create(Self, BasePtr, Pointer( Cardinal(BasePtr) + wbSizeOfMainRecordStruct), mrDef.RecordHeaderStruct, '') do begin
+  with TwbRecordHeaderStruct.Create(Self, BasePtr, PAnsiChar(BasePtr) + wbSizeOfMainRecordStruct, mrDef.RecordHeaderStruct, '') do begin
     Include(dcFlags, dcfDontSave);
     SetSortOrder(-1);
     SetMemoryOrder(Low(Integer));
@@ -6423,7 +6423,7 @@ begin
     GroupRecord := nil;
 
     CurrentPtr := dcBasePtr;
-    with TwbRecordHeaderStruct.Create(Self, CurrentPtr, Pointer( Cardinal(CurrentPtr) + wbSizeOfMainRecordStruct), mrDef.RecordHeaderStruct, '') do begin
+    with TwbRecordHeaderStruct.Create(Self, CurrentPtr, PAnsiChar(CurrentPtr) + wbSizeOfMainRecordStruct, mrDef.RecordHeaderStruct, '') do begin
       Include(dcFlags, dcfDontSave);
       SetSortOrder(-1);
       SetMemoryOrder(Low(Integer));
@@ -7927,8 +7927,8 @@ var
   RecordDef : PwbRecordDef;
 begin
   if Assigned(dcEndPtr) then begin
-    dcDataBasePtr := Pointer( Cardinal( dcBasePtr ) + wbSizeOfMainRecordStruct );
-    dcDataEndPtr := Pointer( Cardinal( dcDataBasePtr ) + mrStruct.mrsDataSize );
+    dcDataBasePtr := PAnsiChar( dcBasePtr ) + wbSizeOfMainRecordStruct ;
+    dcDataEndPtr := PAnsiChar( dcDataBasePtr ) + mrStruct.mrsDataSize ;
     dcEndPtr := dcDataEndPtr;
   end;
 
@@ -8083,7 +8083,7 @@ begin
     RecordHeader := GetElementBySortOrder( (-1) + GetAdditionalElementCount );
     if Assigned(RecordHeader) then begin
       BasePtr := p;
-      RecordHeader.InformStorage(BasePtr, Pointer( Cardinal(BasePtr) + wbSizeOfMainRecordStruct ) );
+      RecordHeader.InformStorage(BasePtr, PAnsiChar(BasePtr) + wbSizeOfMainRecordStruct );
     end;
   end;
 
@@ -8792,7 +8792,7 @@ begin
       GroupRecord := nil;
 
       BasePtr := dcBasePtr;
-      with TwbRecordHeaderStruct.Create(Self, BasePtr, Pointer( Cardinal(BasePtr) + wbSizeOfMainRecordStruct), mrDef.RecordHeaderStruct, '') do begin
+      with TwbRecordHeaderStruct.Create(Self, BasePtr, PAnsiChar(BasePtr) + wbSizeOfMainRecordStruct, mrDef.RecordHeaderStruct, '') do begin
         Include(dcFlags, dcfDontSave);
         SetSortOrder(-1);
         SetMemoryOrder(Low(Integer));
@@ -10364,7 +10364,7 @@ var
   Container  : IwbContainer;
 begin
   if Assigned(dcBasePtr) then begin
-    dcDataBasePtr := Pointer( Cardinal( dcBasePtr ) + SizeOf(TwbSubRecordHeaderStruct) );
+    dcDataBasePtr := PAnsiChar( dcBasePtr ) + SizeOf(TwbSubRecordHeaderStruct);
 
     lDataSize := srStruct.srsDataSize;
 
@@ -10381,7 +10381,7 @@ begin
       end;
     end;
 
-    dcDataEndPtr := Pointer( Cardinal( dcDataBasePtr ) + lDataSize );
+    dcDataEndPtr := PAnsiChar(dcDataBasePtr ) + lDataSize;
     dcEndPtr := dcDataEndPtr;
   end else begin
     GetMem(dcBasePtr, SizeOf(TwbSubRecordHeaderStruct) );
@@ -11722,8 +11722,8 @@ var
   Dummy: Integer;
 begin
   if Assigned(dcEndPtr) then begin
-    dcDataBasePtr := Pointer( Cardinal( dcBasePtr ) + wbSizeOfMainRecordStruct );
-    dcDataEndPtr := Pointer( Cardinal( dcBasePtr ) + grStruct.grsGroupSize );
+    dcDataBasePtr := PAnsiChar( dcBasePtr ) + wbSizeOfMainRecordStruct;
+    dcDataEndPtr := PAnsiChar( dcBasePtr ) + grStruct.grsGroupSize;
     dcEndPtr := dcDataEndPtr;
     if not recSkipped then
       if grStruct.grsGroupType = 0 then
@@ -14818,18 +14818,18 @@ begin
       scNone: Assert(False);  // Getting there would be very funny :)
       scZComp:
         DecompressToUserBuf(
-          Pointer(Cardinal(dcDataBasePtr)),
+          dcDataBasePtr,
           GetDataSize,
           @dcDataStorage[0],
           PCardinal(dcDataBasePtr)^
         );
       scLZComp:
-        LZ4_decompress_safe(Pointer(Cardinal(dcDataBasePtr)), @dcDataStorage[0], GetDataSize, szUncompressedSize);
+        LZ4_decompress_safe(PAnsiChar(dcDataBasePtr), @dcDataStorage[0], GetDataSize, szUncompressedSize);
       else
         Assert(False);  // Something hasn't been updated yet.
     end;
 
-    dcDataEndPtr := Pointer( Cardinal(@dcDataStorage[0]) + szUncompressedSize );
+    dcDataEndPtr := PAnsiChar(@dcDataStorage[0]) + szUncompressedSize;
     dcDataBasePtr := @dcDataStorage[0];
   except
     dcDataBasePtr := nil;
@@ -15079,32 +15079,32 @@ begin
       t := aContainer.Def.Name;
     if SameText(t, 'Unknown') and (not Assigned(aBasePtr) or (aBasePtr <> aEndPtr)) then
       for i := 0 to 3 do begin
-        BasePtr := Pointer( Cardinal(aBasePtr) + i );
+        BasePtr := PAnsiChar(aBasePtr) + i;
         Element := TwbArray.Create(aContainer, BasePtr, aEndPtr, wbArray('Offset '+IntToStr(i)+' AsU8', wbInteger('AsU8', itU8)), '', True);
-        BasePtr := Pointer( Cardinal(aBasePtr) + i );
+        BasePtr := PAnsiChar(aBasePtr) + i;
         Element := TwbArray.Create(aContainer, BasePtr, aEndPtr, wbArray('Offset '+IntToStr(i)+' AsS8', wbInteger('AsS8', itS8)), '', True);
-        BasePtr := Pointer( Cardinal(aBasePtr) + i );
+        BasePtr := PAnsiChar(aBasePtr) + i;
         Element := TwbArray.Create(aContainer, BasePtr, aEndPtr, wbArray('Offset '+IntToStr(i)+' AsU16', wbInteger('AsU16', itU16)), '', True);
-        BasePtr := Pointer( Cardinal(aBasePtr) + i );
+        BasePtr := PAnsiChar(aBasePtr) + i;
         Element := TwbArray.Create(aContainer, BasePtr, aEndPtr, wbArray('Offset '+IntToStr(i)+' AsS16', wbInteger('AsS16', itS16)), '', True);
-        BasePtr := Pointer( Cardinal(aBasePtr) + i );
+        BasePtr := PAnsiChar(aBasePtr) + i;
         Element := TwbArray.Create(aContainer, BasePtr, aEndPtr, wbArray('Offset '+IntToStr(i)+' AsU32', wbInteger('AsU32', itU32)), '', True);
-        BasePtr := Pointer( Cardinal(aBasePtr) + i );
+        BasePtr := PAnsiChar(aBasePtr) + i;
         Element := TwbArray.Create(aContainer, BasePtr, aEndPtr, wbArray('Offset '+IntToStr(i)+' AsS32', wbInteger('AsS32', itS32)), '', True);
-        BasePtr := Pointer( Cardinal(aBasePtr) + i );
+        BasePtr := PAnsiChar(aBasePtr) + i;
         Element := TwbArray.Create(aContainer, BasePtr, aEndPtr, wbArray('Offset '+IntToStr(i)+' AsS64', wbInteger('AsS64', itS64)), '', True);
-        BasePtr := Pointer( Cardinal(aBasePtr) + i );
+        BasePtr := PAnsiChar(aBasePtr) + i;
         Element := TwbArray.Create(aContainer, BasePtr, aEndPtr, wbArray('Offset '+IntToStr(i)+' AsFormID', wbInteger('AsFormID', itU32, wbFormID)), '', True);
-        BasePtr := Pointer( Cardinal(aBasePtr) + i );
+        BasePtr := PAnsiChar(aBasePtr) + i;
         Element := TwbArray.Create(aContainer, BasePtr, aEndPtr, wbArray('Offset '+IntToStr(i)+' AsChar4', wbInteger('AsChar4', itU32, wbChar4)), '', True);
-        BasePtr := Pointer( Cardinal(aBasePtr) + i );
+        BasePtr := PAnsiChar(aBasePtr) + i;
         Element := TwbArray.Create(aContainer, BasePtr, aEndPtr, wbArray('Offset '+IntToStr(i)+' AsFloat', wbFloat('AsFloat')), '', True);
-        BasePtr := Pointer( Cardinal(aBasePtr) + i );
+        BasePtr := PAnsiChar(aBasePtr) + i;
         Element := TwbArray.Create(aContainer, BasePtr, aEndPtr, wbArray('Offset '+IntToStr(i)+' AsString', wbString('AsString')), '', True);
         if wbToolSource in [tsSaves] then begin
-          BasePtr := Pointer( Cardinal(aBasePtr) + i );
+          BasePtr := PAnsiChar(aBasePtr) + i;
           Element := TwbArray.Create(aContainer, BasePtr, aEndPtr, wbArray('Offset '+IntToStr(i)+' AsRefID', wbRefID('RefID')), '', True);
-          BasePtr := Pointer( Cardinal(aBasePtr) + i );
+          BasePtr := PAnsiChar(aBasePtr) + i;
           Element := TwbArray.Create(aContainer, BasePtr, aEndPtr, wbArray('Offset '+IntToStr(i)+' AsU6to30', wbInteger('AsU6to30', itU6to30)), '', True);
         end;
       end;
@@ -15642,7 +15642,7 @@ var
 begin
   fBasePtr := aBasePtr;
   Size := fIntegerDef.Size[aBasePtr, aEndPtr, GetContainer];
-  fEndPtr := Pointer( Cardinal(fBasePtr) + Size );
+  fEndPtr := PAnsiChar(fBasePtr) + Size;
   if Cardinal(fEndPtr) > Cardinal(aEndPtr) then
     fEndPtr := aEndPtr;
 end;
@@ -15951,7 +15951,7 @@ begin
     if NeedsCopy then
       Move(dcDataBasePtr^, dcDataStorage[0], Min(OldSize, aNewSize));
     dcDataBasePtr := @dcDataStorage[0];
-    dcDataEndPtr := Pointer( Cardinal(dcDataBasePtr) + aNewSize );
+    dcDataEndPtr := PAnsiChar(dcDataBasePtr) + aNewSize;
 
     BasePtr := dcDataBasePtr;
     Inc(PByte(BasePtr), GetDataPrefixSize);
@@ -16042,7 +16042,7 @@ begin
   SetLength(NewStorage, inherited GetDataSize + GetDataPrefixSize);
   if Length(NewStorage) > 0 then begin
     BasePtr := @NewStorage[0];
-    EndPtr := Pointer( Cardinal(BasePtr) + Cardinal(Length(NewStorage)) );
+    EndPtr := PAnsiChar(BasePtr) + Length(NewStorage);
     PrefixSize := GetDataPrefixSize;
     if (PrefixSize > 0) then
       Move(dcDataBasePtr^, BasePtr^, PrefixSize);
@@ -16051,7 +16051,7 @@ begin
 
     dcDataStorage := NewStorage;
     dcDataBasePtr := @NewStorage[0];
-    dcDataEndPtr := Pointer( Cardinal(dcDataBasePtr) + Cardinal(Length(dcDataStorage)) );
+    dcDataEndPtr := PAnsiChar(dcDataBasePtr) + Length(dcDataStorage);
     Assert(dcDataEndPtr = EndPtr);
   end else begin
     dcDataStorage := nil;
@@ -16352,7 +16352,7 @@ begin
   if (GetDataBasePtr <> nil) and (Cardinal(dcDataEndPtr)>=Cardinal(dcDataBasePtr)) then begin
     Size := vbValueDef.Size[dcDataBasePtr, dcDataEndPtr, Self];
     if Size < High(Integer) then begin
-      dcDataEndPtr := Pointer( Cardinal(dcDataBasePtr) + Cardinal(Size) );
+      dcDataEndPtr := PAnsiChar( dcDataBasePtr ) + Cardinal(Size);
       if Cardinal(dcDataEndPtr) > Cardinal(dcEndPtr) then
         dcDataEndPtr := dcEndPtr
       else
@@ -16524,7 +16524,7 @@ begin
       end;
 
     p := MainRecordInternal.mrStruct;
-    InformStorage(p, Pointer(Cardinal(p) + wbSizeOfMainRecordStruct ));
+    InformStorage(p, PAnsiChar(p) + wbSizeOfMainRecordStruct);
 
     with MainRecordInternal do begin
       if ToggleDeleted then
@@ -16961,7 +16961,6 @@ var
   MasterFiles : IwbContainerElementRef;
   fPath       : String;
   i           : Integer;
-  modOffset   : Cardinal;
   modPtr      : Pointer;
   mods        : TwbArray;
 begin
@@ -16973,8 +16972,7 @@ begin
       [wbFileMagic, String(Header.FileMagic), flFileName]);
 
   if Pos('Absolute:', wbFilePlugins)=1 then begin
-    modOffset := Cardinal(flView)+StrToInt(Copy(wbFilePlugins, 10, Length(wbFilePlugins)));
-    modPtr := Pointer(modOffset);
+    modPtr := PAnsiChar(flView) + StrToInt(Copy(wbFilePlugins, 10, Length(wbFilePlugins)));
     mods := TwbArray.Create(nil, modPtr, flEndPtr, wbArray('Modules', wbLenString('PluginName', 2), -4), '', False);
     Supports(mods, IwbContainerElementRef, MasterFiles);
   end else
@@ -17067,8 +17065,7 @@ begin
     Exit;
 
   if Pos('Absolute:', wbFilePlugins)=1 then begin
-    modOffset := Cardinal(flView)+StrToInt(Copy(wbFilePlugins, 10, Length(wbFilePlugins)));
-    modPtr := Pointer(modOffset);
+    modPtr := PAnsiChar(flView) + StrToInt(Copy(wbFilePlugins, 10, Length(wbFilePlugins)));
     mods := TwbArray.Create(nil, modPtr, flEndPtr, wbArray('Modules', wbLenString('PluginName', 2), -4), '', False);
     Supports(mods, IwbContainerElementRef, MasterFiles);
   end else
