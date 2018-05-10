@@ -821,6 +821,7 @@ begin
     // start loader thread
     SetLoaderState(lsActive);
     LoaderThread := TLoaderThread.Create;
+    LoaderThread.FreeOnTerminate := True;
     Result := True;
   except
     on x: Exception do begin  
@@ -841,6 +842,7 @@ begin
     // start loader thread
     SetLoaderState(lsActive);
     LoaderThread := TLoaderThread.Create;
+    LoaderThread.FreeOnTerminate := True;
     Result := True;
   except
     on x: Exception do begin 
