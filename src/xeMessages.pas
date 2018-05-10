@@ -19,6 +19,8 @@ uses
   procedure ClearMessages; cdecl;
   procedure GetExceptionMessageLength(len: PInteger); cdecl;
   function GetExceptionMessage(str: PWideChar; len: Integer): WordBool; cdecl;
+  procedure GetExceptionStackLength(len: PInteger); cdecl;
+  function GetExceptionStack(str: PWideChar; len: Integer): WordBool; cdecl;
   {$endregion}
 
 const
@@ -27,7 +29,7 @@ const
 var
   LogPosition: Integer;
   Messages: WideString;
-  ExceptionMessage: WideString;
+  ExceptionMessage, ExceptionStack: WideString;
 
 implementation
 
@@ -37,13 +39,12 @@ uses
 
 {$region 'Native functions'}
 procedure ExceptionHandler(x: Exception);
-var
-  msg: String;
 begin
-  msg := x.Message;
-  if msg = '' then
-    msg := 'Unknown exception.';
-  ExceptionMessage := Format('%s'#13#10'%s', [msg, x.StackTrace]);
+  ExceptionMessage := x.Message;
+  if ExceptionMessage = '' then
+    ExceptionMessage := 'Unknown exception.';
+  ExceptionStack := x.StackTrace;
+  AddMessage(ExceptionMessage + LineBreak + ExceptionStack);
 end;
 
 procedure SoftException(const msg: String);
@@ -72,6 +73,24 @@ end;
 {$endregion}
 
 {$region 'API functions'}
+procedure GetExceptionStackLength(len: PInteger); cdecl;
+begin
+  len^ := Length(ExceptionStack);
+end;
+
+function GetExceptionStack(str: PWideChar; len: Integer): WordBool; cdecl;
+begin
+  Result := False;
+  try
+    if Length(ExceptionStack) = 0 then exit;
+    Result := xStrCopy(ExceptionStack, str, len);
+    ExceptionStack := '';
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
 procedure GetExceptionMessageLength(len: PInteger); cdecl;
 begin
   len^ := Length(ExceptionMessage);
@@ -81,11 +100,10 @@ function GetExceptionMessage(str: PWideChar; len: Integer): WordBool; cdecl;
 begin
   Result := False;
   try
-    if Length(ExceptionMessage) > 0 then begin
-      Result := xStrCopy(ExceptionMessage, str, len);
-      ExceptionMessage := '';
-      Result := True;
-    end;
+    if Length(ExceptionMessage) = 0 then exit;
+    Result := xStrCopy(ExceptionMessage, str, len);
+    ExceptionMessage := '';
+    Result := True;
   except
     on x: Exception do ExceptionHandler(x);
   end;
@@ -121,5 +139,6 @@ initialization
   LogPosition := 0;
   Messages := '';
   ExceptionMessage := '';
+  ExceptionStack := '';
 
 end.

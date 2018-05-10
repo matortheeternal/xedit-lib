@@ -48,7 +48,7 @@ exports
   ResetStore,
   // MESSAGE METHODS
   GetMessagesLength, GetMessages, ClearMessages, GetExceptionMessageLength,
-  GetExceptionMessage,
+  GetExceptionMessage, GetExceptionStackLength, GetExceptionStack,
   // LOADING AND SET UP METHODS
   GetGamePath, SetGamePath, SetLanguage, SetBackupPath, SetGameMode, GetLoadOrder,
   GetActivePlugins, LoadPlugins, LoadPlugin, LoadPluginHeader, BuildReferences,
