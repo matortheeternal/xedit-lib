@@ -4,6 +4,7 @@ uses
   SysUtils,
   xeHelpers in 'src\xeHelpers.pas',
   xeTypes in 'src\xeTypes.pas',
+  xeStackTrace in 'src\xeStackTrace.pas',
   xeMessages in 'src\xeMessages.pas',
   xeConfiguration in 'src\xeConfiguration.pas',
   xeMeta in 'src\xeMeta.pas',
@@ -32,8 +33,7 @@ uses
   wbLocalization in 'lib\xedit\wbLocalization.pas',
   wbStreams in 'lib\xedit\wbStreams.pas',
   Argo in 'lib\Argo\Argo.pas',
-  ArgoTypes in 'lib\Argo\ArgoTypes.pas',
-  xeStackTrace in 'src\xeStackTrace.pas';
+  ArgoTypes in 'lib\Argo\ArgoTypes.pas';
 
 {$R *.RES}
 {$MAXSTACKSIZE 2097152}
