@@ -8,7 +8,7 @@ uses
 
   {$region 'Native functions'}
   procedure ExceptionHandler(x: Exception);
-  procedure SoftException(const msg: String);
+  function SoftException(const msg: String): Boolean;
   procedure AddMessage(const msg: String);
   procedure SaveMessages;
   {$endregion}
@@ -47,8 +47,9 @@ begin
   AddMessage(ExceptionMessage + LineBreak + ExceptionStack);
 end;
 
-procedure SoftException(const msg: String);
+function SoftException(const msg: String): Boolean;
 begin
+  Result := True;
   ExceptionMessage := msg;
   AddMessage(ExceptionMessage);
 end;

@@ -1272,8 +1272,8 @@ begin
   Result := False;
   try
     element := NativeAddElement(_id, string(path));
-    if not Assigned(element) then
-      SoftException('Failed to add element at path: ' + string(path));
+    if not Assigned(element) and
+      SoftException('Failed to add element at path: ' + string(path)) then exit;
     _res^ := Store(element);
     Result := True;
   except
