@@ -75,8 +75,8 @@ begin
     Result := True;
   except
     on x: Exception do
-      ExceptionHandler(Exception.Create(Format('Failed to allocate string buffer.  ' +
-        'source: %s, maxLen: %d, error: %s', [source, maxLen, x.Message])));
+      SoftException(Format('Failed to allocate string buffer.  ' +
+        'source: %s, maxLen: %d, error: %s', [source, maxLen, x.Message]));
   end;
 end;
 
