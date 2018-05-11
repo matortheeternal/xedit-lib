@@ -1669,6 +1669,7 @@ var
 begin
   Result := False;
   try
+    createdArray := False;
     element := NativeGetElement(_id, path);
     if not Assigned(element) then begin
       element := CreateElement(Resolve(_id), path);
