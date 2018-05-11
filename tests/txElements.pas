@@ -629,7 +629,7 @@ begin
           It('Should be able to create a new element on a record', procedure
             begin
               TestAddElement(ar2, 'EDID - Editor ID');
-              TestAddElement(ar2, 'Destructable');
+              TestAddElement(ar2, 'Destructible');
             end);
 
           It('Should be able to push a new element onto an array', procedure
@@ -673,7 +673,7 @@ begin
 
           It('Should be able to remove elements from records', procedure
             begin
-              TestRemoveElement(ar2, 'Destructable');
+              TestRemoveElement(ar2, 'Destructible');
             end);
 
           It('Should be able to remove an element from an array', procedure
@@ -823,7 +823,7 @@ begin
                 'VMAD - Virtual Machine Adapter', 'OBND - Object Bounds', 'FULL - Name',
                 'EITM - Object Effect', 'EAMT - Enchantment Amount', 'Male world model',
                 'Icon', 'Female world model', 'Icon 2 (female)', 'Biped Body Template',
-                'Destructable', 'YNAM - Sound - Pick Up', 'ZNAM - Sound - Put Down',
+                'Destructible', 'YNAM - Sound - Pick Up', 'ZNAM - Sound - Put Down',
                 'BMCT - Ragdoll Constraint Template', 'ETYP - Equipment Type',
                 'BIDS - Bash Impact Data Set', 'BAMT - Alternate Block Material', 'RNAM - Race',
                 'KSIZ - Keyword Count', 'KWDA - Keywords', 'DESC - Description', 'Armature',
