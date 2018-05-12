@@ -91,8 +91,9 @@
         <DCC_SymbolReferenceInfo>0</DCC_SymbolReferenceInfo>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win64)'!=''">
-        <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=0.4.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=0.4;Comments=</VerInfo_Keys>
+        <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=0.4.1.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=0.4;Comments=</VerInfo_Keys>
         <VerInfo_AutoGenVersion>false</VerInfo_AutoGenVersion>
+        <VerInfo_Release>1</VerInfo_Release>
     </PropertyGroup>
     <ItemGroup>
         <DelphiCompile Include="$(MainSource)">
@@ -100,6 +101,7 @@
         </DelphiCompile>
         <DCCReference Include="src\xeHelpers.pas"/>
         <DCCReference Include="src\xeTypes.pas"/>
+        <DCCReference Include="src\xeStackTrace.pas"/>
         <DCCReference Include="src\xeMessages.pas"/>
         <DCCReference Include="src\xeConfiguration.pas"/>
         <DCCReference Include="src\xeMeta.pas"/>
@@ -129,7 +131,6 @@
         <DCCReference Include="lib\xedit\wbStreams.pas"/>
         <DCCReference Include="lib\Argo\Argo.pas"/>
         <DCCReference Include="lib\Argo\ArgoTypes.pas"/>
-        <DCCReference Include="src\xeStackTrace.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>
