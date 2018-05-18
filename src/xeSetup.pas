@@ -30,7 +30,6 @@ type
   procedure LoadLoadOrder(const sLoadPath: String; var slLoadOrder, slPlugins: TStringList);
   procedure RemoveCommentsAndEmpty(var sl: TStringList);
   procedure RemoveMissingFiles(var sl: TStringList);
-  procedure RemoveESLs(var sl: TStringList);
   procedure AddMissingFiles(var sl: TStringList);
   procedure AddBaseMasters(var sl: TStringList);
   procedure FixLoadOrder(var sl: TStringList; const filename: String; var index: Integer);
@@ -429,7 +428,6 @@ begin
   // remove comments and missing files
   RemoveCommentsAndEmpty(sl);
   RemoveMissingFiles(sl);
-  RemoveESLs(sl);
 end;
 
 procedure LoadLoadOrder(const sLoadPath: String; var slLoadOrder, slPlugins: TStringList);
@@ -447,7 +445,6 @@ begin
   RemoveCommentsAndEmpty(slLoadOrder);
   RemoveMissingFiles(slLoadOrder);
   AddMissingFiles(slLoadOrder);
-  RemoveESLs(slLoadOrder);
 end;
 
 { Remove comments and empty lines from a stringlist }
@@ -473,16 +470,6 @@ var
 begin
   for i := Pred(sl.Count) downto 0 do
     if not FileExists(wbDataPath + sl.Strings[i]) then
-      sl.Delete(i);
-end;
-
-{ Remove ESLs from stringlist }
-procedure RemoveESLs(var sl: TStringList);
-var
-  i: integer;
-begin
-  for i := Pred(sl.Count) downto 0 do
-    if StrEndsWith(sl[i], '.esl') then
       sl.Delete(i);
 end;
 
@@ -516,7 +503,7 @@ begin
     // search for missing plugins and masters
     if FindFirst(wbDataPath + '*.*', faAnyFile, F) = 0 then try
       repeat
-        if not (IsFileESM(F.Name) or IsFileESP(F.Name)) then
+        if not (IsFileESM(F.Name) or IsFileESP(F.Name) or IsFileESL(F.Name)) then
           continue;
         if sl.IndexOf(F.Name) = -1 then begin
           fileSortKey := GetPluginDate(wbDataPath + F.Name);
