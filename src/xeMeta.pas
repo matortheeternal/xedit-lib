@@ -401,10 +401,13 @@ begin
 end;
 
 function ReleaseNodes(_id: Cardinal): WordBool; cdecl;
+var
+  nodes: TDynViewNodeDatas;
 begin
   Result := False;
   try
-    _nodesStore[_id] := nil;
+    nodes := _nodesStore[_id];
+    SetLength(nodes, 0);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
