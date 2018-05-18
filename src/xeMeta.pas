@@ -41,9 +41,8 @@ type
 
 var
   _store: TInterfaceList;
-  _releasedIDs: TList<Cardinal>;
   _nodesStore: TList<TDynViewNodeDatas>;
-  nextID: Cardinal;
+  _nextID: Cardinal;
   resultStr: WideString;
   resultArray: TCardinalArray;
   SortBy: Byte;
@@ -258,15 +257,27 @@ begin
   end;
 end;
 
+procedure GetNextId;
+var
+  c: Integer;
+begin
+  c := _store.Count;
+  Inc(_nextId);
+  while _nextId < c do begin
+    if _store[_nextId] = nil then exit;
+    Inc(_nextId);
+  end;
+  _nextId := 0;
+end;
+
 function Store(const x: IInterface): Cardinal;
 var
   i: Integer;
 begin
-  if _releasedIDs.Count > 0 then begin
-    i := _releasedIDs[0];
-    _store[i] := x;
-    _releasedIDs.Delete(0);
-    Result := i;
+  if _nextId > 0 then begin
+    _store[_nextId] := x;
+    Result := _nextId;
+    GetNextId;
   end
   else
     Result := _store.Add(x);
@@ -284,7 +295,6 @@ begin
   // initialize variables
   _store := TInterfaceList.Create;
   _nodesStore := TList<TDynViewNodeDatas>.Create;
-  _releasedIDs := TList<Cardinal>.Create;
   _store.Add(nil);
   _nodesStore.Add(nil);
   resultStr := '';
@@ -300,7 +310,6 @@ end;
 
 procedure CloseXEdit; cdecl;
 begin
-  _releasedIDs.Free;
   _store.Free;
   _nodesStore.Free;
   SetLength(xFiles, 0);
@@ -383,7 +392,8 @@ begin
     if (_id = 0) or (_id >= Cardinal(_store.Count))
     or (_store[_id] = nil) then exit;
     _store[_id] := nil;
-    _releasedIDs.Add(_id);
+    if (_nextId = 0) or (_id < _nextId) then
+      _nextId := _id;
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
@@ -409,7 +419,6 @@ begin
     or (_id2 = 0) or (_id2 >= Cardinal(_store.Count)) then exit;
     _store[_id] := _store[_id2];
     _store[_id2] := nil;
-    _releasedIDs.Add(_id2);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
@@ -451,16 +460,12 @@ begin
   Result := False;
   try
     i := Pred(_store.Count);
-    _releasedIDs.Clear;
     while _store[i] = nil do begin
       _store.Delete(i);
       Dec(i);
     end;
-    while i > 0 do begin
-      if _store[i] = nil then
-        _releasedIDs.Add(i);
-      Dec(i);
-    end;
+    if i < _nextId then
+      _nextId := 0;
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
@@ -472,7 +477,7 @@ begin
   Result := False;
   try
     _store.Clear;
-    _releasedIDs.Clear;
+    _nextId := 0;
     _store.Add(nil);
     Result := True;
   except
