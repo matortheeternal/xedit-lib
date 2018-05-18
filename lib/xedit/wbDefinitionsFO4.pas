@@ -10285,51 +10285,6 @@ begin
   ]);}
 
   if wbSimpleRecords then begin
-
-    wbRecord(NAVI, 'Navigation Mesh Info Map', [
-      wbEDID,
-      wbInteger(NVER, 'Version', itU32),
-      wbRArray('Navigation Map Infos',
-        wbStruct(NVMI, 'Navigation Map Info', [
-          wbFormIDCk('Navigation Mesh', [NAVM]),
-          wbByteArray('Data', 20),
-          wbArray('Merged To', wbFormIDCk('Mesh', [NAVM]), -1),
-          wbArray('Preferred Merges', wbFormIDCk('Mesh', [NAVM]), -1),
-          wbArray('Linked Doors', wbStruct('Door', [
-            wbByteArray('Unknown', 4),
-            wbFormIDCk('Door Ref', [REFR])
-          ]), -1),
-          wbInteger('Is Island', itU8, wbBoolEnum),
-          wbUnion('Island', wbNAVIIslandDataDecider, [
-            wbNull,
-            wbStruct('Island Data', [
-              wbByteArray('Unknown', 24),
-              wbArray('Triangles', wbByteArray('Triangle', 6), -1),
-              wbArray('Vertices', wbByteArray('Vertex', 12), -1)
-            ])
-          ]),
-          wbByteArray('Unknown', 4),
-          wbFormIDCk('Parent Worldspace', [WRLD, NULL]),
-          wbUnion('Parent', wbNAVIParentDecider, [
-            wbStruct('Coordinates', [
-              wbInteger('Grid Y', itS16),
-              wbInteger('Grid X', itS16)
-            ]),
-            wbFormIDCk('Parent Cell', [CELL])
-          ])
-        ])
-      ),
-      wbStruct(NVPP, 'Preferred Pathing', [
-        wbArray('NavMeshes', wbArray('Set', wbFormIDCk('', [NAVM]), -1), -1),
-        wbArray('NavMesh Tree?', wbStruct('', [
-          wbFormIDCk('NavMesh', [NAVM]),
-          wbInteger('Index/Node', itU32)
-        ]), -1)
-      ]),
-      //wbArray(NVSI, 'Unknown', wbFormIDCk('Navigation Mesh', [NAVM]))
-      wbUnknown(NVSI)
-    ]);
-
     wbRecord(NAVM, 'Navigation Mesh',
       wbFlags(wbRecordFlagsFlags, wbFlagsList([
         {0x00040000} 18, 'Compressed',
@@ -10373,66 +10328,6 @@ begin
     ], False, wbNAVMAddInfo);
 
   end else begin
-
-    wbRecord(NAVI, 'Navigation Mesh Info Map', [
-      wbEDID,
-      wbInteger(NVER, 'Version', itU32),
-      wbRArray('Navigation Map Infos',
-        wbStruct(NVMI, 'Navigation Map Info', [
-          wbFormIDCk('Navigation Mesh', [NAVM]),
-          wbByteArray('Unknown', 4),
-          wbFloat('X'),
-          wbFloat('Y'),
-          wbFloat('Z'),
-          wbInteger('Preferred Merges Flag', itU32),
-          wbArray('Merged To', wbFormIDCk('Mesh', [NAVM]), -1),
-          wbArray('Preferred Merges', wbFormIDCk('Mesh', [NAVM]), -1),
-          wbArray('Linked Doors', wbStruct('Door', [
-            wbByteArray('Unknown', 4),
-            wbFormIDCk('Door Ref', [REFR])
-          ]), -1),
-          wbInteger('Is Island', itU8, wbBoolEnum),
-          wbUnion('Island', wbNAVIIslandDataDecider, [
-            wbNull,
-            wbStruct('Island Data', [
-              wbFloat('Min X'),
-              wbFloat('Min Y'),
-              wbFloat('Min Z'),
-              wbFloat('Max X'),
-              wbFloat('Max Y'),
-              wbFloat('Max Z'),
-              wbArray('Triangles',
-                wbStruct('Triangle', [
-                  wbArray('Vertices', wbInteger('Vertex', itS16), 3)
-                ])
-              , -1),
-              wbArray('Vertices', wbStruct('Vertex', [
-                wbFloat('X'),
-                wbFloat('Y'),
-                wbFloat('Z')
-              ]), -1)
-            ])
-          ]),
-          wbByteArray('Unknown', 4),
-          wbFormIDCk('Parent Worldspace', [WRLD, NULL]),
-          wbUnion('Parent', wbNAVIParentDecider, [
-            wbStruct('Coordinates', [
-              wbInteger('Grid Y', itS16),
-              wbInteger('Grid X', itS16)
-            ]),
-            wbFormIDCk('Parent Cell', [CELL])
-          ])
-        ])
-      ),
-      wbStruct(NVPP, 'Preferred Pathing', [
-        wbArray('NavMeshes', wbArray('Set', wbFormIDCk('', [NAVM]), -1), -1),
-        wbArray('NavMesh Tree?', wbStruct('', [
-          wbFormIDCk('NavMesh', [NAVM]),
-          wbInteger('Index/Node', itU32)
-        ]), -1)
-      ]),
-      wbArray(NVSI, 'Unknown', wbFormIDCk('Navigation Mesh', [NAVM]))
-    ]);
 
     wbRecord(NAVM, 'Navigation Mesh',
       wbFlags(wbRecordFlagsFlags, wbFlagsList([
@@ -10497,6 +10392,117 @@ begin
         ])
       ])
     ], False, wbNAVMAddInfo);
+
+  end;
+
+  if wbAdvancedNavi then begin
+
+    wbRecord(NAVI, 'Navigation Mesh Info Map', [
+      wbEDID,
+      wbInteger(NVER, 'Version', itU32),
+      wbRArray('Navigation Map Infos',
+        wbStruct(NVMI, 'Navigation Map Info', [
+          wbFormIDCk('Navigation Mesh', [NAVM]),
+          wbByteArray('Unknown', 4),
+          wbFloat('X'),
+          wbFloat('Y'),
+          wbFloat('Z'),
+          wbInteger('Preferred Merges Flag', itU32),
+          wbArray('Merged To', wbFormIDCk('Mesh', [NAVM]), -1),
+          wbArray('Preferred Merges', wbFormIDCk('Mesh', [NAVM]), -1),
+          wbArray('Linked Doors', wbStruct('Door', [
+            wbByteArray('Unknown', 4),
+            wbFormIDCk('Door Ref', [REFR])
+          ]), -1),
+          wbInteger('Is Island', itU8, wbBoolEnum),
+          wbUnion('Island', wbNAVIIslandDataDecider, [
+            wbNull,
+            wbStruct('Island Data', [
+              wbFloat('Min X'),
+              wbFloat('Min Y'),
+              wbFloat('Min Z'),
+              wbFloat('Max X'),
+              wbFloat('Max Y'),
+              wbFloat('Max Z'),
+              wbArray('Triangles',
+                wbStruct('Triangle', [
+                  wbArray('Vertices', wbInteger('Vertex', itS16), 3)
+                ])
+              , -1),
+              wbArray('Vertices', wbStruct('Vertex', [
+                wbFloat('X'),
+                wbFloat('Y'),
+                wbFloat('Z')
+              ]), -1)
+            ])
+          ]),
+          wbByteArray('Unknown', 4),
+          wbFormIDCk('Parent Worldspace', [WRLD, NULL]),
+          wbUnion('Parent', wbNAVIParentDecider, [
+            wbStruct('Coordinates', [
+              wbInteger('Grid Y', itS16),
+              wbInteger('Grid X', itS16)
+            ]),
+            wbFormIDCk('Parent Cell', [CELL])
+          ])
+        ])
+      ),
+      wbStruct(NVPP, 'Preferred Pathing', [
+        wbArray('NavMeshes', wbArray('Set', wbFormIDCk('', [NAVM]), -1), -1),
+        wbArray('NavMesh Tree?', wbStruct('', [
+          wbFormIDCk('NavMesh', [NAVM]),
+          wbInteger('Index/Node', itU32)
+        ]), -1)
+      ]),
+      wbArray(NVSI, 'Unknown', wbFormIDCk('Navigation Mesh', [NAVM]))
+    ]);
+
+  end
+  else begin
+
+    wbRecord(NAVI, 'Navigation Mesh Info Map', [
+      wbEDID,
+      wbInteger(NVER, 'Version', itU32),
+      wbRArray('Navigation Map Infos',
+        wbStruct(NVMI, 'Navigation Map Info', [
+          wbFormIDCk('Navigation Mesh', [NAVM]),
+          wbByteArray('Data', 20),
+          wbArray('Merged To', wbFormIDCk('Mesh', [NAVM]), -1),
+          wbArray('Preferred Merges', wbFormIDCk('Mesh', [NAVM]), -1),
+          wbArray('Linked Doors', wbStruct('Door', [
+            wbByteArray('Unknown', 4),
+            wbFormIDCk('Door Ref', [REFR])
+          ]), -1),
+          wbInteger('Is Island', itU8, wbBoolEnum),
+          wbUnion('Island', wbNAVIIslandDataDecider, [
+            wbNull,
+            wbStruct('Island Data', [
+              wbByteArray('Unknown', 24),
+              wbArray('Triangles', wbByteArray('Triangle', 6), -1),
+              wbArray('Vertices', wbByteArray('Vertex', 12), -1)
+            ])
+          ]),
+          wbByteArray('Unknown', 4),
+          wbFormIDCk('Parent Worldspace', [WRLD, NULL]),
+          wbUnion('Parent', wbNAVIParentDecider, [
+            wbStruct('Coordinates', [
+              wbInteger('Grid Y', itS16),
+              wbInteger('Grid X', itS16)
+            ]),
+            wbFormIDCk('Parent Cell', [CELL])
+          ])
+        ])
+      ),
+      wbStruct(NVPP, 'Preferred Pathing', [
+        wbArray('NavMeshes', wbArray('Set', wbFormIDCk('', [NAVM]), -1), -1),
+        wbArray('NavMesh Tree?', wbStruct('', [
+          wbFormIDCk('NavMesh', [NAVM]),
+          wbInteger('Index/Node', itU32)
+        ]), -1)
+      ]),
+      //wbArray(NVSI, 'Unknown', wbFormIDCk('Navigation Mesh', [NAVM]))
+      wbUnknown(NVSI)
+    ]);
 
   end;
 

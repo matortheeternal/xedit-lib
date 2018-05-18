@@ -8252,7 +8252,7 @@ begin
   ], False, wbNAVMAddInfo);
 
 
-  if wbSimpleRecords then
+  if wbAdvancedNAVI then
     wbNAVIslandData :=
       wbStruct('Island Data', [
         wbByteArray('Unknown', 24),

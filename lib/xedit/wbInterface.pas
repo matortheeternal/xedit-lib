@@ -45,6 +45,7 @@ threadvar
 var
   wbDisplayLoadOrderFormID : Boolean  = False;
   wbSimpleRecords          : Boolean  = True;
+  wbAdvancedNAVI           : Boolean  = False;
   wbFixupPGRD              : Boolean  = False;
   wbIKnowWhatImDoing       : Boolean  = False;
   wbHideUnused             : Boolean  = True;
