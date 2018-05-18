@@ -52,12 +52,16 @@ end;
 procedure TestGetRecords(h: Cardinal; path, search: PWideChar; includeOverrides: WordBool; expectedCount: Integer);
 var
   len: Integer;
+  a: CardinalArray;
+  i: Integer;
 begin
   if path <> '' then
     ExpectSuccess(GetElement(h, path, @h));
   ExpectSuccess(GetRecords(h, search, includeOverrides, @len));
   ExpectEqual(len, expectedCount);
-  gra(len);
+  a := gra(len);
+  for i := Low(a) to High(a) do
+    Release(a[i]);
 end;
 
 function TestFindNextRecord(context: Cardinal; search: PWideChar; byEdid, byName: WordBool; expectedEdid: String): Cardinal;
