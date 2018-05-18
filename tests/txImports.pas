@@ -166,5 +166,9 @@ type
   function GetErrorString(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function RemoveIdenticalRecords(_id: Cardinal; removeITMs, removeITPOs: WordBool): WordBool; cdecl; external 'XEditLib.dll';
 
+  // FILTER FUNCTIONS
+  function FilterRecord(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
+  function ResetFilter: WordBool; cdecl; external 'XEditLib.dll';
+
 implementation
 end.
