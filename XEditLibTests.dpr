@@ -6,7 +6,7 @@ uses
   SysUtils,
   {$IFDEF USE_DLL}
   txImports in 'tests\txImports.pas',
-  {$ENDIF}
+  {$ENDIF }
   {$IFNDEF USE_DLL}
   xeTypes in 'src\xeTypes.pas',
   xeMessages in 'src\xeMessages.pas',
@@ -33,7 +33,7 @@ uses
   wbHelpers in 'lib\xedit\wbHelpers.pas',
   wbLocalization in 'lib\xedit\wbLocalization.pas',
   wbStreams in 'lib\xedit\wbStreams.pas',
-  {$ENDIF}
+  {$ENDIF }
   txMeta in 'tests\txMeta.pas',
   txMessages in 'tests\txMessages.pas',
   txSetup in 'tests\txSetup.pas',
@@ -46,7 +46,9 @@ uses
   txErrors in 'tests\txErrors.pas',
   Argo in 'lib\Argo\Argo.pas',
   ArgoTypes in 'lib\Argo\ArgoTypes.pas',
-  Mahogany in 'lib\mahogany\Mahogany.pas';
+  Mahogany in 'lib\mahogany\Mahogany.pas',
+  xeFilter in 'src\xeFilter.pas',
+  txFilter in 'tests\txFilter.pas';
 
 {$R XEditLib.RES}
 {$MAXSTACKSIZE 2097152}
@@ -67,6 +69,7 @@ begin
   BuildRecordHandlingTests;
   BuildSerializationTests;
   BuildPluginErrorTests;
+  BuildFilterTests;
   BuildFinalTests;
   {$ENDIF}
   {$IFDEF SSE}
