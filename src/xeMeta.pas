@@ -259,9 +259,9 @@ end;
 
 procedure GetNextId;
 var
-  c: Integer;
+  c: Cardinal;
 begin
-  c := _store.Count;
+  c := Cardinal(_store.Count);
   Inc(_nextId);
   while _nextId < c do begin
     if _store[_nextId] = nil then exit;
@@ -458,16 +458,16 @@ end;
 
 function CleanStore: WordBool; cdecl;
 var
-  i: Integer;
+  i: Cardinal;
 begin
   Result := False;
   try
     i := Pred(_store.Count);
-    while _store[i] = nil do begin
+    while (i > 0) and (_store[i] = nil) do begin
       _store.Delete(i);
       Dec(i);
     end;
-    if i < _nextId then
+    if i < Integer(_nextId) then
       _nextId := 0;
     Result := True;
   except
