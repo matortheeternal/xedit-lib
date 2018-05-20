@@ -67,6 +67,7 @@ begin
       raise Exception.Create(name + ' not loaded.');
     ResourceList := TStringList.Create;
     try
+      wbContainerHandler.ContainerResourceList(name, ResourceList);
       SetResultFromList(ResourceList, len);
     finally
       ResourceList.Free;
