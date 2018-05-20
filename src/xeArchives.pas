@@ -110,7 +110,7 @@ begin
     if wbContainerHandler.ContainerExists(containerName) then
       raise Exception.Create(containerName + ' already loaded.');
     if FileExists(sFilePath) then begin
-      if ExtractFileExt(containerName) = 'bsa' then
+      if ExtractFileExt(containerName) = '.bsa' then
         wbContainerHandler.AddBSA(sFilePath)
       else
         wbContainerHandler.AddBA2(sFilePath);
