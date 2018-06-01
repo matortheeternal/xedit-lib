@@ -883,8 +883,7 @@ begin
   Result := nil;
 
   if Assigned(aSource) and (aSource.ElementType = etMainRecord) then begin
-    if not aSource.Equals(aMainRecord) then
-      Result := aMainRecord;
+    Result := aMainRecord;
     Exit;
   end;
 
