@@ -115,11 +115,11 @@ begin
     BackupPath := dataPath + 'zEdit Backups\';
 
   // fix language for FO4
-  if (wbGameMode = gmFO4) and (Language = 'English') then
+  GameMode := GameArray[id];
+  if (GameMode.gameMode = gmFO4) and (Language = 'English') then
     Language := 'en';
 
   // update xEdit vars
-  GameMode := GameArray[id];
   wbGameName := GameMode.gameName;
   wbGameName2 := GameMode.regName;
   wbGameMode := GameMode.gameMode;

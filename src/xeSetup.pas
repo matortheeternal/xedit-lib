@@ -71,9 +71,9 @@ uses
 {$region 'TLoaderThread'}
 procedure TLoaderThread.Execute;
 begin
-  try     
-    LoadPluginFiles;
+  try
     LoadResources;
+    LoadPluginFiles;
     UpdateFileCount;
 
     // done loading
