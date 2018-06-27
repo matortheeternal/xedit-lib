@@ -20,6 +20,7 @@ uses
 
 const
   TestLoadOrder =
+    {$IFDEF SKYRIM}
     {$IFDEF LOAD_DLC}
     'Dawnguard.esm'#13 +
     'HearthFires.esm'#13 +
@@ -30,6 +31,15 @@ const
     'xtest-3.esp'#13 +
     'xtest-4.esp'#13 +
     'xtest-5.esp';
+    {$ENDIF}
+    {$IFDEF FO4}
+    'DLCCoast.esm'#13 +
+    'DLCNukaWorld.esm'#13 +
+    'DLCRobot.esm'#13 +
+    'DLCworkshop01.esm'#13 +
+    'DLCworkshop02.esm'#13 +
+    'DLCworkshop03.esm';
+    {$ENDIF}
 
 procedure BackupFile(filePath: String);
 begin
@@ -432,7 +442,7 @@ begin
             begin
               Expect(Pos('Fallout4.esm', plugins) > 0, 'Fallout4.esm should be present');
               Expect(Pos('DLCCoast.esm', plugins) > 0, 'DLCCoast.esm should be present');
-              Expect(Pos('DLCNukaworld.esm', plugins) > 0, 'DLCNukaworld.esm should be present');
+              Expect(Pos('DLCNukaWorld.esm', plugins) > 0, 'DLCNukaWorld.esm should be present');
               Expect(Pos('DLCRobot.esm', plugins) > 0, 'DLCRobot.esm should be present');
               Expect(Pos('DLCworkshop01.esm', plugins) > 0, 'DLCworkshop01.esm should be present');
               Expect(Pos('DLCworkshop02.esm', plugins) > 0, 'DLCworkshop02.esm should be present');
@@ -446,6 +456,20 @@ begin
             begin
               ExpectSuccess(GetLoadOrder(@len));
               plugins := grs(len);
+            end);
+        end);
+
+      Describe('LoadPlugins', procedure
+        begin
+          It('Should load plugins based on input load order', procedure
+            begin
+              TestLoadPlugins(TestLoadOrder, 10);
+            end);
+
+          It('Should set FileCount global', procedure
+            begin
+              ExpectSuccess(GetGlobal('FileCount', @len));
+              ExpectEqual(grs(len), '8');
             end);
         end);
     end);

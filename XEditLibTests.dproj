@@ -224,6 +224,7 @@
         <DCCReference Include="src\xeErrors.pas"/>
         <DCCReference Include="src\xeRecords.pas"/>
         <DCCReference Include="src\xeSerialization.pas"/>
+        <DCCReference Include="src\xeFilter.pas"/>
         <DCCReference Include="lib\xedit\wbImplementation.pas"/>
         <DCCReference Include="lib\xedit\wbInterface.pas"/>
         <DCCReference Include="lib\xedit\wbBSA.pas"/>
@@ -247,11 +248,10 @@
         <DCCReference Include="tests\txSerialization.pas"/>
         <DCCReference Include="tests\txRecords.pas"/>
         <DCCReference Include="tests\txErrors.pas"/>
+        <DCCReference Include="tests\txFilter.pas"/>
         <DCCReference Include="lib\Argo\Argo.pas"/>
         <DCCReference Include="lib\Argo\ArgoTypes.pas"/>
         <DCCReference Include="lib\mahogany\Mahogany.pas"/>
-        <DCCReference Include="src\xeFilter.pas"/>
-        <DCCReference Include="tests\txFilter.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>

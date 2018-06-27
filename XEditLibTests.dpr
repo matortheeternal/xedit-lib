@@ -20,6 +20,7 @@ uses
   xeErrors in 'src\xeErrors.pas',
   xeRecords in 'src\xeRecords.pas',
   xeSerialization in 'src\xeSerialization.pas',
+  xeFilter in 'src\xeFilter.pas',
   wbImplementation in 'lib\xedit\wbImplementation.pas',
   wbInterface in 'lib\xedit\wbInterface.pas',
   wbBSA in 'lib\xedit\wbBSA.pas',
@@ -44,11 +45,10 @@ uses
   txSerialization in 'tests\txSerialization.pas',
   txRecords in 'tests\txRecords.pas',
   txErrors in 'tests\txErrors.pas',
+  txFilter in 'tests\txFilter.pas',
   Argo in 'lib\Argo\Argo.pas',
   ArgoTypes in 'lib\Argo\ArgoTypes.pas',
-  Mahogany in 'lib\mahogany\Mahogany.pas',
-  xeFilter in 'src\xeFilter.pas',
-  txFilter in 'tests\txFilter.pas';
+  Mahogany in 'lib\mahogany\Mahogany.pas';
 
 {$R XEditLib.RES}
 {$MAXSTACKSIZE 2097152}
