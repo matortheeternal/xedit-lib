@@ -28,7 +28,7 @@ type
   {$endregion}
 
 var
-  Globals: TStringList;
+  Globals, slLanguageMap: TStringList;
   wbAppDataPath, wbMyGamesPath, BackupPath: String;
   GameMode: TGameMode;
   ProgramVersion, GamePath, Language: String;
@@ -96,6 +96,13 @@ begin
   end;
 end;
 
+function GetLanguageFileSuffix: String;
+begin
+  Result := Language;
+  if (wbGameMode = gmFO4) and (slLanguageMap.IndexOfName(Result) > -1) then
+    Result := slLanguageMap.Values[Result];
+end;
+
 { Sets the game mode in the TES5Edit API }
 procedure SetGame(id: integer);
 var
@@ -114,12 +121,8 @@ begin
   if BackupPath = '' then
     BackupPath := dataPath + 'zEdit Backups\';
 
-  // fix language for FO4
-  GameMode := GameArray[id];
-  if (GameMode.gameMode = gmFO4) and (Language = 'English') then
-    Language := 'en';
-
   // update xEdit vars
+  GameMode := GameArray[id];
   wbGameName := GameMode.gameName;
   wbGameName2 := GameMode.regName;
   wbGameMode := GameMode.gameMode;
@@ -136,7 +139,7 @@ begin
   wbHideUnused := True;
   wbFlagsAsArray := True;
   wbRequireLoadOrder := True;
-  wbLanguage := Language;
+  wbLanguage := GetLanguageFileSuffix;
   wbStringEncoding := seUTF8;
   wbEditAllowed := True;
   wbLoaderDone := True;
@@ -204,8 +207,21 @@ initialization
   GamePath := '';
   HideChildGroups := True;
   Language := 'English';
+  slLanguageMap := TStringList.Create;
+  slLanguageMap.Text :=
+    'English=en'#13 +
+    'French=fr'#13 +
+    'German=de'#13 +
+    'Italian=it'#13 +
+    'Spanish=es'#13 +
+    'Russian=ru'#13 +
+    'Polish=pl'#13 +
+    'Japanese=ja'#13 +
+    'Portugese=pt'#13 +
+    'Chinese=zh';
 
 finalization
   Globals.Free;
+  slLanguageMap.Free;
 
 end.
