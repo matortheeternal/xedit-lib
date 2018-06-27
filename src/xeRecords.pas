@@ -16,8 +16,8 @@ type
   {$endregion}
 
   {$region 'API functions'}
-  function GetFormID(_id: Cardinal; formID: PCardinal; local: WordBool): WordBool; cdecl;
-  function SetFormID(_id: Cardinal; formID: Cardinal; local, fixReferences: WordBool): WordBool; cdecl;
+  function GetFormID(_id: Cardinal; formID: PCardinal; native: WordBool): WordBool; cdecl;
+  function SetFormID(_id: Cardinal; formID: Cardinal; native, fixReferences: WordBool): WordBool; cdecl;
   function GetRecord(_id: Cardinal; formID: Cardinal; _res: PCardinal): WordBool; cdecl;
   function GetRecords(_id: Cardinal; search: PWideChar; includeOverrides: WordBool; len: PInteger): WordBool; cdecl;
   function GetOverrides(_id: Cardinal; count: PInteger): WordBool; cdecl;
@@ -325,7 +325,7 @@ end;
 {$endregion}
 
 {$region 'API functions'}
-function GetFormID(_id: Cardinal; formID: PCardinal; local: WordBool): WordBool; cdecl;
+function GetFormID(_id: Cardinal; formID: PCardinal; native: WordBool): WordBool; cdecl;
 var
   rec: IwbMainRecord;
 begin
@@ -333,8 +333,8 @@ begin
   try
     if not Supports(Resolve(_id), IwbMainRecord, rec) then
       raise Exception.Create('Interface must be a main record.');
-    if local then
-      formID^ := rec._File.LoadOrderFormIDtoFileFormID(rec.LoadOrderFormID)
+    if native then
+      formID^ := rec.FixedFormID
     else
       formID^ := rec.LoadOrderFormID;
     Result := True;
@@ -343,7 +343,7 @@ begin
   end;
 end;
 
-function SetFormID(_id: Cardinal; formID: Cardinal; local, fixReferences: WordBool): WordBool; cdecl;
+function SetFormID(_id: Cardinal; formID: Cardinal; native, fixReferences: WordBool): WordBool; cdecl;
 var
   rec: IwbMainRecord;
   oldFormID, newFormID: Cardinal;
@@ -354,7 +354,7 @@ begin
     if not Supports(Resolve(_id), IwbMainRecord, rec) then
       raise Exception.Create('Interface must be a main record.');
     oldFormID := rec.FormID;
-    if local then
+    if native then
       rec.LoadOrderFormID := rec._File.FileFormIDtoLoadOrderFormID(formID)
     else
       rec.LoadOrderFormID := formID;
