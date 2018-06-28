@@ -175,14 +175,7 @@ begin
       Describe('AddFile', procedure
         begin
           AfterAll(procedure
-            var
-              i: Integer;
             begin
-              for i := 254 downto 0 do
-                if FileByName(PWideChar(IntToStr(i) + '.esp'), @h) then
-                  ExpectSuccess(UnloadPlugin(h))
-                else
-                  Break;
               ExpectSuccess(FileByName('abc.esp', @h));
               ExpectSuccess(UnloadPlugin(h));
             end);
@@ -195,17 +188,6 @@ begin
           It('Should return false if the file already exists', procedure
             begin
               ExpectFailure(AddFile('Dawnguard.esm', @h));
-            end);
-
-          It('Should return false if the load order is already full', procedure
-            var
-              i, start: Integer;
-            begin
-              ExpectSuccess(GetGlobal('FileCount', @len));
-              start := StrToInt(grs(len));
-              for i := start to 254 do
-                ExpectSuccess(AddFile(PWideChar(IntToStr(i) + '.esp'), @h));
-              ExpectFailure(AddFile('255.esp', @h));
             end);
         end);
 

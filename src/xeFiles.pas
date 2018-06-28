@@ -52,7 +52,6 @@ end;
 
 function NativeAddFile(const filename: string): IwbFile;
 var
-  LoadOrder : Integer;
   _file: IwbFile;
   filePath: String;
 begin
@@ -61,13 +60,8 @@ begin
   if FileExists(filePath) then
     raise Exception.Create(Format('File with name %s already exists.', [filename]));
 
-  // fail if maximum load order reached
-  LoadOrder := NextLoadOrder;
-  if LoadOrder > 254 then
-    raise Exception.Create('Maximum plugin count of 254 reached.');
-
   // create new file
-  _file := wbNewFile(filePath, LoadOrder);
+  _file := wbNewFile(filePath, NextLoadOrder);
   SetLength(xFiles, Succ(Length(xFiles)));
   xFiles[High(xFiles)] := _file;
   _file._AddRef;
