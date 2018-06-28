@@ -4454,6 +4454,10 @@ function TwbContainer.GetElement(aIndex: Integer): IwbElement;
 var
   SelfRef : IwbContainerElementRef;
 begin
+  if aIndex < 0 then begin
+    Result := nil;
+    exit;
+  end;
   SelfRef := Self as IwbContainerElementRef;
 
   DoInit;
