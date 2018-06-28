@@ -651,11 +651,11 @@ type
     procedure ForceLoadOrder(aValue: Integer);
     procedure SetLoadOrder(aValue: Integer);
 
-    function LoadOrderFormIDtoFileFormID(aFormID: Cardinal): Cardinal;
-    function FileFormIDtoLoadOrderFormID(aFormID: Cardinal): Cardinal;
+    function LoadOrderFormIDtoFileFormID(aFormID: UInt64): UInt64;
+    function FileFormIDtoLoadOrderFormID(aFormID: UInt64): UInt64;
 
-    function LoadOrderFileIDtoFileFileID(aFileID: Byte): Byte;
-    function FileFileIDtoLoadOrderFileID(aFileID: Byte): Byte;
+    function LoadOrderFileIDtoFileFileID(aFileID: Cardinal): Cardinal;
+    function FileFileIDtoLoadOrderFileID(aFileID: Cardinal): Cardinal;
 
     procedure AddMasters(aMasters: TStrings);
     procedure AddMasterIfMissing(const aMaster: string);
@@ -891,7 +891,7 @@ type
   TwbMainRecord = class(TwbRecord, IwbMainRecord, IwbMainRecordInternal, IwbMainRecordEntry, IwbContainedIn)
   protected
     mrDef              : IwbRecordDef;
-    mrLoadOrderFormID  : Cardinal;
+    mrLoadOrderFormID  : UInt64;
     mrFixedFormID      : Cardinal;
     mrMaster           : Pointer{IwbMainRecord};
     mrOverrides        : TDynMainRecords;
@@ -1021,7 +1021,7 @@ type
     function GetChildGroup: IwbGroupRecord;
     function EnsureChildGroup: IwbGroupRecord;
     function GetBaseRecord: IwbMainRecord;
-    function GetBaseRecordID: Cardinal;
+    function GetBaseRecordID: UInt64;
 
     procedure MakeHeaderWriteable;
 
@@ -1830,13 +1830,6 @@ begin
   Result := CompareStr(IwbElement(Item).SortKey[True], PString(Value)^);
 end;
 
-function SearchByRecord(Item1, Item2: Pointer): Integer;
-begin
-  Result := CmpW32(IwbMainRecord(Item1).LoadOrderFormID , IwbMainRecord(Item2).LoadOrderFormID);
-  if Result = 0 then
-    Result := CmpW32(IwbMainRecord(Item1)._File.LoadOrder, IwbMainRecord(Item2)._File.LoadOrder);
-end;
-
 function wbBinarySearch(aList: PwbPointerArray; L, H: Integer; aValue: Pointer; aCompare: TSearchCompare; var Index: Integer): Boolean; overload;
 var
   I, C: Integer;
@@ -2430,7 +2423,7 @@ begin
   inherited;
 end;
 
-function TwbFile.FileFileIDtoLoadOrderFileID(aFileID: Byte): Byte;
+function TwbFile.FileFileIDtoLoadOrderFileID(aFileID: Cardinal): Cardinal;
 var
   NewFileID : Integer;
 begin
@@ -2445,7 +2438,7 @@ begin
   Result := NewFileID;
 end;
 
-function TwbFile.FileFormIDtoLoadOrderFormID(aFormID: Cardinal): Cardinal;
+function TwbFile.FileFormIDtoLoadOrderFormID(aFormID: UInt64): UInt64;
 var
   FileID    : Integer;
   NewFileID : Integer;
@@ -2464,7 +2457,7 @@ begin
   if NewFileID < 0 then
     raise Exception.Create('File FormID ['+IntToHex64(aFormID, 8)+'] can not be mapped to load order FormID for file "'+GetFileName+'"');
 
-  Result := (aFormID and $00FFFFFF) or (Cardinal(NewFileID) shl 24);
+  Result := (aFormID and $00FFFFFF) or (UInt64(NewFileID) shl 24);
 end;
 
 function TwbFile.FindEditorID(const aEditorID: string; var rec: IwbMainRecord): Boolean;
@@ -3001,7 +2994,7 @@ begin
     end;
 end;
 
-function TwbFile.LoadOrderFileIDtoFileFileID(aFileID: Byte): Byte;
+function TwbFile.LoadOrderFileIDtoFileFileID(aFileID: Cardinal): Cardinal;
 var
   NewFileID : Integer;
   i         : Integer;
@@ -3020,7 +3013,7 @@ begin
   Result := NewFileID;
 end;
 
-function TwbFile.LoadOrderFormIDtoFileFormID(aFormID: Cardinal): Cardinal;
+function TwbFile.LoadOrderFormIDtoFileFormID(aFormID: UInt64): UInt64;
 var
   FileID    : Integer;
   NewFileID : Integer;
@@ -3043,7 +3036,7 @@ begin
       end;
   if NewFileID < 0 then
     raise Exception.Create('Load order FormID ['+IntToHex64(aFormID, 8)+'] can not be mapped to file FormID for file "'+GetFileName+'"');
-  Result := (aFormID and $00FFFFFF) or (Cardinal(NewFileID) shl 24);
+  Result := (aFormID and $00FFFFFF) or (UInt64(NewFileID) shl 24);
 end;
 
 function TwbFile.NewFormID: Cardinal;
@@ -6665,7 +6658,7 @@ begin
   while L <= H do begin
     I := (L + H) shr 1;
 
-    C := CmpW32(mrReferencedBy[I].LoadOrderFormID , aMainRecord.LoadOrderFormID);
+    C := CmpI64(mrReferencedBy[I].LoadOrderFormID , aMainRecord.LoadOrderFormID);
     if C = 0 then
       C := CmpW32(mrReferencedBy[I]._File.LoadOrder, aMainRecord._File.LoadOrder);
 
@@ -6800,7 +6793,7 @@ begin
       Result := RecordByFormID[mrBaseRecordID, True];
 end;
 
-function TwbMainRecord.GetBaseRecordID: Cardinal;
+function TwbMainRecord.GetBaseRecordID: UInt64;
 begin
   if not (mrsBaseRecordChecked in mrStates) then
     GetBaseRecord;
