@@ -994,8 +994,8 @@ type
     function GetElementType: TwbElementType; override;
     function GetFormID: Cardinal;
     function GetFixedFormID: Cardinal;
-    function GetLoadOrderFormID: Cardinal;
-    procedure SetLoadOrderFormID(aFormID: Cardinal);
+    function GetLoadOrderFormID: UInt64;
+    procedure SetLoadOrderFormID(aFormID: UInt64);
     function GetEditorID: string;
     function GetCanHaveEditorID: Boolean;
     procedure SetEditorID(const aValue: string);
@@ -7542,11 +7542,11 @@ begin
     Result := Length(mrOverrides) < 1;
 end;
 
-function TwbMainRecord.GetLoadOrderFormID: Cardinal;
+function TwbMainRecord.GetLoadOrderFormID: UInt64;
 var
   _File   : IwbFile;
   _Master : IwbFile;
-  FileID  : Cardinal;
+  FileID  : UInt64;
 begin
   Result := mrLoadOrderFormID;
   if Result = 0 then begin
@@ -8900,7 +8900,7 @@ begin
   end;
 end;
 
-procedure TwbMainRecord.SetLoadOrderFormID(aFormID: Cardinal);
+procedure TwbMainRecord.SetLoadOrderFormID(aFormID: UInt64);
 var
   _File: IwbFileInternal;
   FileID: Integer;

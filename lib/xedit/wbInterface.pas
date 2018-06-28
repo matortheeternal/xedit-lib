@@ -974,8 +974,8 @@ type
     ['{F06FD5E2-621D-4422-BA00-CB3CA72B3691}']
     function GetFormID: Cardinal;
     function GetFixedFormID: Cardinal;
-    function GetLoadOrderFormID: Cardinal;
-    procedure SetLoadOrderFormID(aFormID: Cardinal);
+    function GetLoadOrderFormID: UInt64;
+    procedure SetLoadOrderFormID(aFormID: UInt64);
     function GetEditorID: string;
     function GetCanHaveEditorID: Boolean;
     procedure SetEditorID(const aValue: string);
@@ -1066,7 +1066,7 @@ type
       read GetFormID;
     property FixedFormID: Cardinal
       read GetFixedFormID;
-    property LoadOrderFormID: Cardinal
+    property LoadOrderFormID: UInt64
       read GetLoadOrderFormID
       write SetLoadOrderFormID;
     property EditorID: string
