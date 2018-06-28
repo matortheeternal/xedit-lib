@@ -271,8 +271,6 @@ begin
 end;
 
 function Store(const x: IInterface): Cardinal;
-var
-  i: Integer;
 begin
   if _nextId > 0 then begin
     _store[_nextId] := x;
@@ -467,7 +465,7 @@ begin
       _store.Delete(i);
       Dec(i);
     end;
-    if i < Integer(_nextId) then
+    if i < _nextId then
       _nextId := 0;
     Result := True;
   except

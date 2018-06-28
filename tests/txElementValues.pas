@@ -216,6 +216,16 @@ begin
             end);
         end);
 
+      Describe('LongName', procedure
+        begin
+          It('Should allow hexadecimal FormID overflow', procedure
+            begin
+              ExpectSuccess(AddElement(0, 'NewFile-1.esp\ARMO\ARMO', @h));
+              ExpectSuccess(LongName(h, @len));
+              ExpectEqual(grs(len), '[ARMO:100000800]');
+            end);
+        end);
+
       Describe('Path', procedure
         begin
           It('Should resolve file names', procedure

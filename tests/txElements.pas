@@ -2,16 +2,13 @@ unit txElements;
 
 interface
 
-uses
-  SysUtils;
-
   // PUBLIC TESTING INTERFACE
   procedure BuildElementHandlingTests;
 
 implementation
 
 uses
-  classes,
+  classes, SysUtils,
   Mahogany,
 {$IFDEF USE_DLL}
   txImports,
@@ -20,6 +17,20 @@ uses
   xeMeta, xeFiles, xeMasters, xeElements, xeElementValues, xeRecords,
 {$ENDIF}
   txMeta, txRecords;
+
+procedure CreatePaddingPlugins;
+var
+  h: Cardinal;
+  count, i: Integer;
+  filename: PWideChar;
+begin
+  ExpectSuccess(ElementCount(0, @count));
+  for i := count + 1 to 256 do begin
+    filename := PWideChar('Empty-' + IntToStr(i) + '.esp');
+    ExpectSuccess(AddElement(0, filename, @h));
+    ExpectSuccess(Release(h));
+  end;
+end;
 
 procedure TestHasElement(h: Cardinal; path: PWideChar; expectedValue: WordBool = True);
 var
@@ -289,7 +300,7 @@ procedure BuildElementHandlingTests;
 var
   b: WordBool;
   h, rec, skyrim, xt3, xt5, armo1, ar1, keywords, keyword, dnam, element, armo2,
-  ar2, ar3, refr, lvli, entries, armature: Cardinal;
+  ar2, ar3, refr, lvli, entries, armature, empty256: Cardinal;
   records: CardinalArray;
   len: Integer;
   enum: Byte;
@@ -298,6 +309,8 @@ begin
     begin
       BeforeAll(procedure
         begin
+          CreatePaddingPlugins;
+          ExpectSuccess(GetElement(0, 'Empty-256.esp', @empty256));
           ExpectSuccess(GetElement(0, 'Skyrim.esm', @skyrim));
           ExpectSuccess(GetElement(skyrim, 'ARMO', @armo1));
           ExpectSuccess(GetElement(armo1, '00012E46', @ar1));
@@ -758,7 +771,7 @@ begin
           It('Should resolve root children (files)', procedure
             begin
               ExpectSuccess(GetElements(0, '', False, False, @len));
-              ExpectEqual(len, 9);
+              ExpectEqual(len, 257);
               TestNames(gra(len), 'Skyrim.esm', 'NewFile-1.esp');
             end);
 
@@ -981,7 +994,7 @@ begin
         begin
           It('Should return number of files if null handle is passed', procedure
             begin
-              TestElementCount(0, 9);
+              TestElementCount(0, 257);
             end);
 
           It('Should return number of elements in a file', procedure

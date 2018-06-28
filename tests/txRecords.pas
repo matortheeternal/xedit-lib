@@ -233,18 +233,18 @@ begin
                 begin
                   TestGetRecords(0, '', 'DOBJ', False, 1);
                   TestGetRecords(0, '', 'DOBJ', True, 2);
-                  TestGetRecords(0, '', 'ARMO', False, 2763);
-                  TestGetRecords(0, '', 'ARMO', True, 2808);
+                  TestGetRecords(0, '', 'ARMO', False, 2764);
+                  TestGetRecords(0, '', 'ARMO', True, 2809);
                 end);
 
               It('Should be able to handle multiple signatures', procedure
                 begin
-                  TestGetRecords(0, '', 'ARMO,WEAP,MISC', False, 2763 + 2484 + 371);
+                  TestGetRecords(0, '', 'ARMO,WEAP,MISC', False, 2764 + 2484 + 371);
                 end);
 
               It('Should map names to signatures', procedure
                 begin
-                  TestGetRecords(0, '', 'Armor', False, 2763);
+                  TestGetRecords(0, '', 'Armor', False, 2764);
                   TestGetRecords(0, '', 'Constructible Object,Non-Player Character (Actor)', False, 606 + 5119);
                 end);
             end);
