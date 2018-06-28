@@ -132,7 +132,7 @@ var
   rec: IwbMainRecord;
 begin
   if Supports(e, IwbFile, _file) then
-    Result := _file.DisplayName
+    Result := IntToHex(_file.LoadOrder, 4) + _File.Name
   else if Supports(e, IwbGroupRecord, group) then
     Result := String(TwbSignature(group.GroupLabel))
   else if Supports(e, IwbMainRecord, rec) then
