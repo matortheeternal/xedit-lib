@@ -260,7 +260,9 @@ var
   rec: IwbMainRecord;
 begin
   Result := nil;
-  if ParseFormID(key, formID) then begin
+  if ParseFileFormID(key, formID) then
+    Result := group._File.RecordByFormID[formID, True]
+  else if ParseFormID(key, formID) then begin
     fixedFormID := group._File.LoadOrderFormIDtoFileFormID(formID);
     Result := group._File.RecordByFormID[fixedFormID, True];
   end
@@ -303,7 +305,9 @@ var
   rec: IwbMainRecord;
   group: IwbGroupRecord;
 begin
-  if ParseFormID(key, formID) then begin
+  if ParseFileFormID(key, formID) then
+    Result := _file.RecordByFormID[formID, True]
+  else if ParseFormID(key, formID) then begin
     formID := _file.LoadOrderFormIDtoFileFormID(formID);
     Result := _file.RecordByFormID[formID, True];
   end
