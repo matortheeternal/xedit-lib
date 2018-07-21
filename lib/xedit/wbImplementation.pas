@@ -654,8 +654,8 @@ type
     function LoadOrderFormIDtoFileFormID(aFormID: UInt64): UInt64;
     function FileFormIDtoLoadOrderFormID(aFormID: UInt64): UInt64;
 
-    function LoadOrderFileIDtoFileFileID(aFileID: Cardinal): Cardinal;
-    function FileFileIDtoLoadOrderFileID(aFileID: Cardinal): Cardinal;
+    function LoadOrderFileIDtoFileFileID(aFileID: Byte): Byte;
+    function FileFileIDtoLoadOrderFileID(aFileID: Byte): Byte;
 
     procedure AddMasters(aMasters: TStrings);
     procedure AddMasterIfMissing(const aMaster: string);
@@ -2423,7 +2423,7 @@ begin
   inherited;
 end;
 
-function TwbFile.FileFileIDtoLoadOrderFileID(aFileID: Cardinal): Cardinal;
+function TwbFile.FileFileIDtoLoadOrderFileID(aFileID: Byte): Byte;
 var
   NewFileID : Integer;
 begin
@@ -2994,7 +2994,7 @@ begin
     end;
 end;
 
-function TwbFile.LoadOrderFileIDtoFileFileID(aFileID: Cardinal): Cardinal;
+function TwbFile.LoadOrderFileIDtoFileFileID(aFileID: Byte): Byte;
 var
   NewFileID : Integer;
   i         : Integer;

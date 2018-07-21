@@ -797,8 +797,8 @@ type
     procedure BuildReachable;
     procedure SetIsEditable(state: Boolean);
 
-    function LoadOrderFormIDtoFileFormID(aFormID: Cardinal): Cardinal;
-    function FileFormIDtoLoadOrderFormID(aFormID: Cardinal): Cardinal;
+    function LoadOrderFormIDtoFileFormID(aFormID: UInt64): UInt64;
+    function FileFormIDtoLoadOrderFormID(aFormID: UInt64): UInt64;
 
     function LoadOrderFileIDtoFileFileID(aFileID: Byte): Byte;
     function FileFileIDtoLoadOrderFileID(aFileID: Byte): Byte;
@@ -998,7 +998,7 @@ type
     function GetChildGroup: IwbGroupRecord;
     function EnsureChildGroup: IwbGroupRecord;
     function GetBaseRecord: IwbMainRecord;
-    function GetBaseRecordID: Cardinal;
+    function GetBaseRecordID: UInt64;
 
     function GetConflictAll: TConflictAll;
     procedure SetConflictAll(aValue: TConflictAll);
@@ -1060,7 +1060,7 @@ type
 
     property BaseRecord: IwbMainRecord
       read GetBaseRecord;
-    property BaseRecordID: Cardinal
+    property BaseRecordID: UInt64
       read GetBaseRecordID;
     property FormID: Cardinal
       read GetFormID;
