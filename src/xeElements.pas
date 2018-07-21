@@ -18,7 +18,6 @@ type
     vtEnum, vtColor, vtArray, vtStruct );
 
   {$region 'Native functions'}
-  function ResolveRecord(const group: IwbGroupRecord; const key, nextPath: String): IInterface;
   function ResolveGroupOrRecord(const group: IwbGroupRecord; const key, nextPath: String): IInterface; overload;
   function ResolveFromGroup(const group: IwbGroupRecord; const path: String): IInterface;
   function ResolveElement(const e: IInterface; const path: String): IInterface;
@@ -251,25 +250,6 @@ begin
         exit;
       end;
   end;
-end;
-
-function ResolveRecord(const group: IwbGroupRecord; const key, nextPath: String): IInterface;
-var
-  name: String;
-  formID, fileFormID: Cardinal;
-begin
-  if ParseFileFormID(key, fileFormID) then
-    Result := group._File.RecordByFormID[fileFormID, True]
-  else if ParseFormID(key, formID) then begin
-    fileFormID := group._File.LoadOrderFormIDtoFileFormID(formID);
-    Result := group._File.RecordByFormID[fileFormID, True]
-  end
-  else if ParseFullName(key, name) then
-    Result := group.MainRecordByName[name]
-  else
-    Result := group.MainRecordByEditorID[key];
-  if Assigned(Result) and (nextPath <> '') then
-    Result := ResolveFromRecord(Result as IwbMainRecord, nextPath);
 end;
 
 function ResolveGroupOrRecord(const group: IwbGroupRecord; const key, nextPath: String): IInterface; overload;
