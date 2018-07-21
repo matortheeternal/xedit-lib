@@ -271,8 +271,6 @@ begin
 end;
 
 function Store(const x: IInterface): Cardinal;
-var
-  i: Integer;
 begin
   if _nextId > 0 then begin
     _store[_nextId] := x;
@@ -458,7 +456,7 @@ end;
 
 function CleanStore: WordBool; cdecl;
 var
-  i: Cardinal;
+  i: Integer;
 begin
   Result := False;
   try
