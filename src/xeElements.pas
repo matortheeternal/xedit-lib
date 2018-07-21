@@ -128,12 +128,12 @@ begin
   Result := (index > -1) and (index <= maxIndex);
 end;
 
-function IsHexStr(const key: String): Boolean;
+function IsHexStr(const key: String; const start: Integer = 1): Boolean;
 var
   i: Integer;
 begin
   Result := False;
-  for i := 1 to Length(key) do
+  for i := start to Length(key) do
     if not CharInSet(key[i], ['A'..'F','0'..'9']) then exit;
   Result := True;
 end;
@@ -143,6 +143,13 @@ begin
   Result := (Length(key) = 8) and IsHexStr(key);
   if Result then
     formID := StrToInt('$' + key);
+end;
+
+function ParseFileFormID(const key: String; var formID: Cardinal): Boolean;
+begin
+  Result := (key[1] = '&') and (Length(key) = 9) and IsHexStr(key, 2);
+  if Result then
+    formID := StrToInt('$' + Copy(key, 2, 8));
 end;
 
 function ParseFullName(const value: String; var fullName: String): Boolean;
@@ -249,11 +256,13 @@ end;
 function ResolveRecord(const group: IwbGroupRecord; const key, nextPath: String): IInterface;
 var
   name: String;
-  formID, fixedFormID: Cardinal;
+  formID, fileFormID: Cardinal;
 begin
-  if ParseFormID(key, formID) then begin
-    fixedFormID := group._File.LoadOrderFormIDtoFileFormID(formID);
-    Result := group._File.RecordByFormID[fixedFormID, True]
+  if ParseFileFormID(key, fileFormID) then
+    Result := group._File.RecordByFormID[fileFormID, True]
+  else if ParseFormID(key, formID) then begin
+    fileFormID := group._File.LoadOrderFormIDtoFileFormID(formID);
+    Result := group._File.RecordByFormID[fileFormID, True]
   end
   else if ParseFullName(key, name) then
     Result := group.MainRecordByName[name]
