@@ -656,7 +656,7 @@ begin
   bfStream.Position := FileTablePosition;
   SetLength(bfFiles, FileCount);
   for i := Low(bfFiles) to High(bfFiles) do begin
-    bfFiles[i].Name := bfStream.ReadStringLen16;
+    bfFiles[i].Name := StringReplace(bfStream.ReadStringLen16, '/', '\', [rfReplaceAll]);
   end;
   bfStream.Position := OldPos;
 
