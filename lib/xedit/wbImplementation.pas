@@ -47,6 +47,7 @@ var
 procedure wbMastersForFile(const aFileName: string; aMasters: TStrings);
 function wbFile(const aFileName: string; aLoadOrder: Integer = -1; aCompareTo: string = '';
   IsTemporary: Boolean = False; aOnlyHeader: Boolean = False): IwbFile;
+function GetHardcodedFile: IwbFile;
 function wbNewFile(const aFileName: string; aLoadOrder: Integer): IwbFile;
 procedure wbFileForceClosed; overload;
 procedure wbFileForceClosed(_File: IwbFile); overload;
@@ -2832,11 +2833,15 @@ var
   FileID : Byte;
   Master : IwbFile;
 begin
+  Result := nil;
   FileID := aFormID shr 24;
 
-  if FileID >= Cardinal(GetMasterCount) then begin
-    Result := nil;
-  end else begin
+  if (aFormID < $800) and not (fsIsHardcoded in flStates) then begin
+    Master := GetHardcodedFile;
+    if Assigned(Master) then
+      Result := Master.RecordByFormID[aFormID, aAllowInjected];
+  end
+  else if FileID < Cardinal(GetMasterCount) then begin
     Master := flMasters[FileID];
     Result := Master.RecordByFormID[(aFormID and $00FFFFFF) or (Cardinal(Master.MasterCount) shl 24), aAllowInjected];
   end;
@@ -7487,7 +7492,9 @@ end;
 function TwbMainRecord.GetIsInjected: Boolean;
 begin
   if not (mrsIsInjectedChecked in mrStates) then begin
-    if not Assigned(mrMaster) and (mrStruct.mrsFormID <> 0) and( (mrStruct.mrsFormID shr 24) < Cardinal(GetFile.MasterCount) ) and not (fsIsHardcoded in GetFile.FileStates) then
+    if not Assigned(mrMaster) and (mrStruct.mrsFormID <> 0)
+    and( (mrStruct.mrsFormID shr 24) < Cardinal(GetFile.MasterCount) )
+    and not (fsIsHardcoded in GetFile.FileStates) then
       Include(mrStates, mrsIsInjected)
     else
       Exclude(mrStates, mrsIsInjected);
@@ -15408,6 +15415,18 @@ begin
     // File neither found nor replaced, ignore if in xDump
     if not (wbToolMode in [tmDump, tmExport]) then Raise;
   end;
+end;
+
+function GetHardcodedFile: IwbFile;
+var
+  i: Integer;
+begin
+  for i := Low(Files) to High(Files) do begin
+    Result := Files[i];
+    if fsIsHardcoded in Files[i].FileStates then
+      exit;
+  end;
+  Result := nil;
 end;
 
 function wbNewFile(const aFileName: string; aLoadOrder: Integer): IwbFile;
