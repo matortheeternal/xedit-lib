@@ -288,8 +288,8 @@ end;
 procedure BuildElementHandlingTests;
 var
   b: WordBool;
-  h, rec, skyrim, xt3, xt5, armo1, ar1, keywords, keyword, dnam, element, armo2,
-  ar2, ar3, refr, lvli, entries, armature: Cardinal;
+  h, rec, skyrim, xt3, xt4, xt5, armo1, ar1, keywords, keyword, dnam, element,
+  armo2, ar2, ar3, refr, lvli, entries, armature: Cardinal;
   records: CardinalArray;
   len: Integer;
   enum: Byte;
@@ -307,6 +307,7 @@ begin
           ExpectSuccess(GetElement(0, 'xtest-2.esp\00012E46', @ar2));
           ExpectSuccess(GetElement(ar2, 'Armature', @armature));
           ExpectSuccess(GetElement(0, 'xtest-3.esp', @xt3));
+          ExpectSuccess(GetElement(0, 'xtest-4.esp', @xt4));
           ExpectSuccess(GetElement(0, 'xtest-5.esp', @xt5));
           ExpectSuccess(GetElement(xt3, 'ARMO', @armo2));
           ExpectSuccess(GetElement(armo2, '00012E46', @ar3));
@@ -458,6 +459,20 @@ begin
               It('Should fail if the record does not exist', procedure
                 begin
                   ExpectFailure(GetElement(skyrim, '00FFFFFF', @h));
+                end);
+            end);
+
+          Describe('File record resolution by FileFormID', procedure
+            begin
+              It('Should return a handle if the record exists', procedure
+                begin
+                  TestGetElement(xt4, '&03000802'); // resolve new record "UESTest"
+                  TestGetElement(xt4, '&02000800'); // resolve override "ITMTest"
+                end);
+
+              It('Should fail if the record does not exist', procedure
+                begin
+                  ExpectFailure(GetElement(xt4, '&03FFFFFF', @h));
                 end);
             end);
 

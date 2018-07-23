@@ -20,7 +20,7 @@ uses
 
 procedure BuildFilterTests;
 var
-  testFile, armo, rec, cell, refr, dnam, h: Cardinal;
+  testFile, armo, rec, cell, refr, dnam: Cardinal;
   len: Integer;
 begin
   Describe('Serialization', procedure
