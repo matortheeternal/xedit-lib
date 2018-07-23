@@ -267,10 +267,10 @@ begin
         LoadBSAs(slBSAFileNames, slErrors);
       end;
 
-      for i := BaseFileIndex to High(xFiles) do begin
+      for i := BaseFileIndex to Pred(slLoadOrder.Count) do begin
         slBSAFileNames.Clear;
         slErrors.Clear;
-        modName := ChangeFileExt(xFiles[i].GetFileName, '');
+        modName := ChangeFileExt(slLoadOrder[i], '');
         HasBSAs(modName, wbDataPath, bExact, bModIni, slBSAFileNames, slErrors);
         LoadBSAs(slBSAFileNames, slErrors);
       end;
