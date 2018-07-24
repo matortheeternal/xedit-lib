@@ -2836,14 +2836,16 @@ begin
   Result := nil;
   FileID := aFormID shr 24;
 
-  if (aFormID < $800) and not (fsIsHardcoded in flStates) then begin
+  if FileID < Cardinal(GetMasterCount) then begin
+    Master := flMasters[FileID];
+    Result := Master.RecordByFormID[(aFormID and $00FFFFFF) or (Cardinal(Master.MasterCount) shl 24), aAllowInjected];
+  end;
+
+  if not Assigned(Result) and (aFormID < $800)
+  and not (fsIsHardcoded in flStates) then begin
     Master := GetHardcodedFile;
     if Assigned(Master) then
       Result := Master.RecordByFormID[aFormID, aAllowInjected];
-  end
-  else if FileID < Cardinal(GetMasterCount) then begin
-    Master := flMasters[FileID];
-    Result := Master.RecordByFormID[(aFormID and $00FFFFFF) or (Cardinal(Master.MasterCount) shl 24), aAllowInjected];
   end;
 end;
 
