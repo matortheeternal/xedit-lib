@@ -81,10 +81,11 @@ exports
   GetFlag, SetFlag, GetEnabledFlags, SetEnabledFlags, GetAllFlags, GetEnumOptions,
   SignatureFromName, NameFromSignature, GetSignatureNameMap,
   // RECORD HANDLING METHODS
-  GetFormID, SetFormID, GetRecord, GetRecords, GetOverrides, GetReferencedBy,
-  GetMasterRecord, GetPreviousOverride, GetWinningOverride, FindNextRecord,
-  FindPreviousRecord, FindValidReferences, ExchangeReferences, IsMaster, IsInjected,
-  IsOverride, IsWinningOverride, GetNodes, GetConflictData, GetNodeElements,
+  GetFormID, SetFormID, GetRecord, GetRecords, GetRecordsByRef, GetOverrides,
+  GetReferencedBy, GetMasterRecord, GetPreviousOverride, GetWinningOverride,
+  FindNextRecord, FindPreviousRecord, FindValidReferences, ExchangeReferences,
+  IsMaster, IsInjected, IsOverride, IsWinningOverride, GetNodes,
+  GetConflictData, GetNodeElements,
   // FILTERING METHODS
   FilterRecord, ResetFilter;
 

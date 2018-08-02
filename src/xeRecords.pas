@@ -8,6 +8,7 @@ uses
 
 type
   TDynSignatures = array of TwbSignature;
+  TRecCallback = reference to procedure(rec: IwbMainRecord);
 
   {$region 'Native functions'}
   function EditorIDToFormID(const _file: IwbFile; const editorID: String): Cardinal;
@@ -20,6 +21,7 @@ type
   function SetFormID(_id: Cardinal; formID: Cardinal; native, fixReferences: WordBool): WordBool; cdecl;
   function GetRecord(_id: Cardinal; formID: Cardinal; _res: PCardinal): WordBool; cdecl;
   function GetRecords(_id: Cardinal; search: PWideChar; includeOverrides: WordBool; len: PInteger): WordBool; cdecl;
+  function GetRecordsByRef(_id: Cardinal; search, path, target: PWideChar; includeOverrides: WordBool; len: PInteger): WordBool; cdecl;
   function GetOverrides(_id: Cardinal; count: PInteger): WordBool; cdecl;
   function GetMasterRecord(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function GetPreviousOverride(_id, _id2: Cardinal; _res: PCardinal): WordBool; cdecl;
@@ -98,7 +100,7 @@ begin
 end;
 
 procedure FindRecords(const _file: IwbFile; signatures: TFastStringList;
-  includeOverrides: Boolean; lst: TList); overload;
+  callback: TRecCallback); overload;
 var
   allRecords: Boolean;
   i, j: Integer;
@@ -111,23 +113,21 @@ begin
       group := _file.GroupBySignature[StrToSignature(signatures[i])];
       if not Assigned(group) then continue;
       for j := 0 to Pred(group.ElementCount) do
-        if Supports(group.Elements[j], IwbMainRecord, rec)
-        and (includeOverrides or rec.IsMaster) then
-          lst.Add(Pointer(rec));
+        if Supports(group.Elements[j], IwbMainRecord, rec) then
+          callback(rec);
     end;
   end
   else begin
     for i := 0 to Pred(_file.RecordCount) do begin
       rec := _file.Records[i];
-      if (includeOverrides or rec.IsMaster) and (allRecords
-      or (signatures.IndexOf(string(rec.Signature)) > -1)) then
-        lst.Add(Pointer(rec));
+      if (allRecords or (signatures.IndexOf(string(rec.Signature)) > -1)) then
+        callback(rec);
     end;
   end;
 end;
 
 procedure FindRecords(const group: IwbGroupRecord; signatures: TFastStringList;
-  includeOverrides: Boolean; lst: TList); overload;
+  callback: TRecCallback); overload;
 var
   allRecords: Boolean;
   i: Integer;
@@ -138,16 +138,15 @@ begin
   allRecords := signatures.Count = 0;
   for i := 0 to Pred(group.ElementCount) do begin
     element := group.Elements[i];
-    if Supports(element, IwbMainRecord, rec) and (includeOverrides or rec.IsMaster)
+    if Supports(element, IwbMainRecord, rec)
     and (allRecords or (signatures.IndexOf(string(rec.Signature)) > -1)) then
-      lst.Add(Pointer(rec))
+      callback(rec)
     else if Supports(element, IwbGroupRecord, subgroup) then
-      FindRecords(subgroup, signatures, includeOverrides, lst);
+      FindRecords(subgroup, signatures, callback);
   end;
 end;
 
-procedure NativeGetRecords(_id: Cardinal; signatures: TFastStringList;
-  includeOverrides: Boolean; lst: TList);
+procedure NativeGetRecords(_id: Cardinal; signatures: TFastStringList; callback: TRecCallback);
 var
   i: Integer;
   e: IInterface;
@@ -157,17 +156,17 @@ var
 begin
   if _id = 0 then begin
     for i := Low(xFiles) to High(xFiles) do
-      FindRecords(xFiles[i], signatures, includeOverrides, lst);
+      FindRecords(xFiles[i], signatures, callback);
   end
   else begin
     e := Resolve(_id);
     if Supports(e, IwbFile, _file) then
-      FindRecords(_file, signatures, includeOverrides, lst)
+      FindRecords(_file, signatures, callback)
     else if Supports(e, IwbGroupRecord, group) then
-      FindRecords(group, signatures, includeOverrides, lst)
+      FindRecords(group, signatures, callback)
     else if Supports(e, IwbMainRecord, rec) then begin
       if Assigned(rec.ChildGroup) then
-        FindRecords(rec.ChildGroup, signatures, includeOverrides, lst);
+        FindRecords(rec.ChildGroup, signatures, callback);
     end
     else
       raise Exception.Create('Interface must be a file, group, or main record.');
@@ -400,19 +399,64 @@ function GetRecords(_id: Cardinal; search: PWideChar; includeOverrides: WordBool
 var
   lst: TList;
   signatures: TFastStringList;
+  callback: TRecCallback;
 begin
   Result := False;
   try
     lst := TList.Create;
     signatures := TFastStringList.Create;
+    callback := procedure(rec: IwbMainRecord)
+    begin
+      if includeOverrides or rec.IsMaster then
+        lst.Add(Pointer(rec));
+    end;
     try
       GetSignatures(string(search), signatures);
-      NativeGetRecords(_id, signatures, includeOverrides, lst);
+      NativeGetRecords(_id, signatures, callback);
       StoreList(lst, len);
       Result := True;
     finally
       lst.Free;
       signatures.Free;
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetRecordsByRef(_id: Cardinal; search, path, target: PWideChar;
+  includeOverrides: WordBool; len: PInteger): WordBool; cdecl;
+var
+  lst: TList;
+  signatures, targetSignatures: TFastStringList;
+  callback: TRecCallback;
+begin
+  Result := False;
+  try
+    lst := TList.Create;
+    signatures := TFastStringList.Create;
+    targetSignatures := TFastStringList.Create;
+    callback := procedure(rec: IwbMainRecord)
+    var
+      e: IwbElement;
+      linkedRec: IwbMainRecord;
+    begin
+      if not (includeOverrides or rec.IsMaster) then exit;
+      e := rec.ElementByPath[path];
+      if Assigned(e) and Supports(e.LinksTo, IwbMainRecord, linkedRec)
+      and (targetSignatures.IndexOf(string(linkedRec.Signature)) > -1) then
+        lst.Add(Pointer(rec));
+    end;
+    try
+      GetSignatures(string(search), signatures);
+      GetSignatures(string(target), targetSignatures);
+      NativeGetRecords(_id, signatures, callback);
+      StoreList(lst, len);
+      Result := True;
+    finally
+      lst.Free;
+      signatures.Free;
+      targetSignatures.Free;
     end;
   except
     on x: Exception do ExceptionHandler(x);
