@@ -64,6 +64,19 @@ begin
     Release(a[i]);
 end;
 
+procedure TestGetREFRs(h: Cardinal; search: PWideChar; flags, expectedCount: Integer);
+var
+  len: Integer;
+  a: CardinalArray;
+  i: Integer;
+begin
+  ExpectSuccess(GetREFRs(h, search, flags, @len));
+  ExpectEqual(len, expectedCount);
+  a := gra(len);
+  for i := Low(a) to High(a) do
+    Release(a[i]);
+end;
+
 function TestFindNextRecord(context: Cardinal; search: PWideChar; byEdid, byName: WordBool; expectedEdid: String): Cardinal;
 var
   len: Integer;
@@ -256,6 +269,20 @@ begin
                   Benchmark(5, procedure
                     begin
                       TestGetRecords(0, 'Skyrim.esm', '', False, 869692);
+                    end);
+                end);
+            end);
+        end);
+
+      Describe('GetREFRs', procedure
+        begin
+          Describe('Speed', procedure
+            begin
+              It('Should load records quickly', procedure
+                begin
+                  Benchmark(5, procedure
+                    begin
+                      TestGetREFRs(0, 'DOOR', 0, 3535);
                     end);
                 end);
             end);
