@@ -32,7 +32,6 @@ var
   wbAppDataPath, wbMyGamesPath, BackupPath: String;
   GameMode: TGameMode;
   ProgramVersion, GamePath, Language: String;
-  HideChildGroups: Boolean;
 
 const
   {$region 'Game modes'}
@@ -205,7 +204,6 @@ initialization
   ProgramVersion := GetVersionMem;
   Globals := TStringList.Create;
   GamePath := '';
-  HideChildGroups := True;
   Language := 'English';
   slLanguageMap := TStringList.Create;
   slLanguageMap.Text :=
