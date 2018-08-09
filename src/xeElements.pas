@@ -855,13 +855,12 @@ begin
   if Assigned(Container) then begin
     if Supports(Container, IwbMainRecord, MainRecord) then
       Container := MainRecord.HighestOverrideOrSelf[aFile.LoadOrder];
-    Target := CopyElementToFile(Container, aFile, False, False)
+    Target := CopyElementToFile(Container, aFile, False, False);
+    if Assigned(Target) then
+      Result := Target.AddIfMissing(aSource, aAsNew, aDeepCopy, '', '', '');
   end
   else
     Result := aFile;
-
-  if Assigned(Target) then
-    Result := Target.AddIfMissing(aSource, aAsNew, aDeepCopy, '', '', '');
 end;
 
 function CopyElementToRecord(const aSource: IwbElement; const aMainRecord: IwbMainRecord; aAsNew, aDeepCopy: Boolean): IwbElement;
