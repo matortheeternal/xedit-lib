@@ -362,7 +362,7 @@ begin
       raise Exception.Create('Input interface must be a file.');
     for i := Pred(_file.RecordCount) downto 0 do begin
       rec := _file.Records[i];
-      if rec.IsMaster then continue;
+      if rec.IsMaster or Assigned(rec.ChildGroup) then continue;
       RemoveIdenticalRecord(rec, removeITMs, removeITPOs);
     end;
     Result := True;
