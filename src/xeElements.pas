@@ -640,19 +640,15 @@ var
   g: IwbGroupRecord;
 begin
   SetLength(resultArray, container.ElementCount);
-  if HideChildGroups then begin
-    n := 0;
-    for i := 0 to Pred(container.ElementCount) do begin
-      e := container.Elements[i];
-      if Supports(e, IwbGroupRecord, g) and IsChildGroup(g) then continue;
-      resultArray[n] := Store(container.Elements[i]);
-      Inc(n);
-    end;
-    SetLength(resultArray, n);
-  end
-  else
-    for i := 0 to Pred(container.ElementCount) do
-      resultArray[i] := Store(container.Elements[i]);
+  n := 0;
+  for i := 0 to Pred(container.ElementCount) do begin
+    e := container.Elements[i];
+    if Supports(e, IwbGroupRecord, g) and IsChildGroup(g)
+    and Assigned(g.ChildrenOf) then continue;
+    resultArray[n] := Store(container.Elements[i]);
+    Inc(n);
+  end;
+  SetLength(resultArray, n);
 end;
 
 procedure GetChildrenElements(const element: IInterface);
