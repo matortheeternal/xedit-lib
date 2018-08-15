@@ -250,16 +250,17 @@ begin
   try
     if not Supports(Resolve(_id), IwbFile, _file) then
       raise Exception.Create('Interface must be a file.');
-    if filePath <> '' then begin
+    if filePath = '' then
+      path := wbDataPath + _file.FileName + '.save'
+    else begin
       ForceDirectories(ExtractFilePath(filePath));
       path := filePath;
-    end
-    else
-      path := wbDataPath + _file.FileName + '.save';
+    end;
     FileStream := TFileStream.Create(path, fmCreate);
     try
       _file.WriteToStream(FileStream, False);
-      if filePath = '' then slSavedFiles.Add(path);
+      if (filePath = '') and (slSavedFiles.IndexOf(path) = -1) then
+        slSavedFiles.Add(path);
       Result := True;
     finally
       FileStream.Free;
