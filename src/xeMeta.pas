@@ -398,14 +398,33 @@ begin
   end;
 end;
 
+procedure FreeChildNodes(var nodes: TArray<TViewNodeData>);
+var
+  i: Integer;
+begin
+  for i := Low(nodes) to High(nodes) do begin
+    if Length(nodes[i].ChildNodes) = 0 then continue;
+    FreeChildNodes(nodes[i].ChildNodes);
+    SetLength(nodes[i].ChildNodes, 0);
+    nodes[i].ChildNodes := nil;
+  end;
+end;
+
 function ReleaseNodes(_id: Cardinal): WordBool; cdecl;
 var
   nodes: TDynViewNodeDatas;
+  i: Integer;
 begin
   Result := False;
   try
     nodes := _nodesStore[_id];
+    for i := Low(nodes) to High(nodes) do begin
+      FreeChildNodes(nodes[i].ChildNodes);
+      SetLength(nodes[i].ChildNodes, 0);
+      nodes[i].ChildNodes := nil;
+    end;
     SetLength(nodes, 0);
+    _nodesStore[_id] := nil;
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
