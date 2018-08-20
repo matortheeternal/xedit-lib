@@ -262,6 +262,7 @@ begin
                 end);
             end);
 
+          {$IFNDEF SKIP_BENCHMARKS}
           Describe('Speed', procedure
             begin
               It('Should load records quickly', procedure
@@ -272,8 +273,10 @@ begin
                     end);
                 end);
             end);
+          {$ENDIF}
         end);
 
+      {$IFNDEF SKIP_BENCHMARKS}
       Describe('GetREFRs', procedure
         begin
           Describe('Speed', procedure
@@ -287,6 +290,7 @@ begin
                 end);
             end);
         end);
+      {$ENDIF}
 
       Describe('FindNextRecord', procedure
         begin
