@@ -66,12 +66,13 @@ type
 
   // native methods
   procedure ConflictLevelForMainRecord(const aMainRecord: IwbMainRecord; out aConflictAll: TConflictAll; out aConflictThis: TConflictThis);
-  function ConflictLevelForChildNodeDatas(var aNodeDatas: TDynViewNodeDatas; aSiblingCompare, aInjected: Boolean): TConflictAll;
+  function ConflictLevelForChildNodeDatas(var aNodeDatas: TDynViewNodeDatas;
+    aSiblingCompare, aInjected: Boolean; aStoreChildren: Boolean = False): TConflictAll;
   function ConflictLevelForNodeDatas(const aNodeDatas: PViewNodeDatas; aNodeCount: Integer; aSiblingCompare, aInjected: Boolean): TConflictAll;
   function ConflictAllForElements(e1, e2: IwbElement; aSiblingCompare, aInjected: Boolean): TConflictAll;
 
   // exposed methods
-  function GetRecordNodes(const aMainRecord: IwbMainRecord): TDynViewNodeDatas;
+  function GetRecordNodes(const aMainRecord: IwbMainRecord; store: Boolean = True): TDynViewNodeDatas;
   function FindNodeForElement(var aNodeDatas: TDynViewNodeDatas; const element: IwbElement): PViewNodeData; overload;
   function IsITPO(const rec: IwbMainRecord): Boolean;
   function IsITM(const rec: IwbMainRecord): Boolean;
@@ -413,7 +414,8 @@ begin
     end;
 end;
 
-function ConflictLevelForChildNodeDatas(var aNodeDatas: TDynViewNodeDatas; aSiblingCompare, aInjected: Boolean): TConflictAll;
+function ConflictLevelForChildNodeDatas(var aNodeDatas: TDynViewNodeDatas;
+  aSiblingCompare, aInjected: Boolean; aStoreChildren: Boolean = False): TConflictAll;
 var
   ChildCount, NodeCount: Cardinal;
   i, j: Integer;
@@ -441,10 +443,12 @@ begin
   InitChilds(@aNodeDatas[0], NodeCount, ChildCount);
 
   // initialize node trees
-  SetLength(ChildNodeArrays, NodeCount);
-  for i := 0 to Pred(NodeCount) do begin
-    ChildNodeArrays[i] := TArray<TViewNodeData>.Create();
-    SetLength(ChildNodeArrays[i], ChildCount);
+  if aStoreChildren then begin
+    SetLength(ChildNodeArrays, NodeCount);
+    for i := 0 to Pred(NodeCount) do begin
+      ChildNodeArrays[i] := TArray<TViewNodeData>.Create();
+      SetLength(ChildNodeArrays[i], ChildCount);
+    end;
   end;
 
   // build child conflict data
@@ -459,7 +463,7 @@ begin
     // if the node is not disabled, recurse
     if not (ivsDisabled in InitialStates) then begin
       if ivsHasChildren in InitialStates then
-        ConflictAll := ConflictLevelForChildNodeDatas(NodeDatas, aSiblingCompare, aInjected)
+        ConflictAll := ConflictLevelForChildNodeDatas(NodeDatas, aSiblingCompare, aInjected, aStoreChildren)
       else
         ConflictAll := ConflictLevelForNodeDatas(@NodeDatas[0], Length(NodeDatas), aSiblingCompare, aInjected);
 
@@ -497,13 +501,15 @@ begin
     end;
 
     // propagate child nodes to node tree
-    for j := 0 to Pred(NodeCount) do
-      ChildNodeArrays[j][i] := NodeDatas[j];
+    if aStoreChildren then
+      for j := 0 to Pred(NodeCount) do
+        ChildNodeArrays[j][i] := NodeDatas[j];
   end;
 
   // apply child nodes
-  for i := 0 to Pred(NodeCount) do
-    aNodeDatas[i].ChildNodes := ChildNodeArrays[i];
+  if aStoreChildren then
+    for i := 0 to Pred(NodeCount) do
+      aNodeDatas[i].ChildNodes := ChildNodeArrays[i];
 end;
 
 function ConflictLevelForNodeDatas(const aNodeDatas: PViewNodeDatas; aNodeCount: Integer; aSiblingCompare, aInjected: Boolean): TConflictAll;
@@ -728,7 +734,7 @@ begin
   end;
 end;
 
-function GetRecordNodes(const aMainRecord: IwbMainRecord): TDynViewNodeDatas;
+function GetRecordNodes(const aMainRecord: IwbMainRecord; store: Boolean = True): TDynViewNodeDatas;
 
   procedure FixConflictLevel(const aMainRecord: IwbMainRecord; aConflictAll: TConflictAll);
   begin
@@ -753,7 +759,7 @@ begin
   Master := aMainRecord.MasterOrSelf;
   NodeDatas := NodeDatasForMainRecord(aMainRecord);
   bIsInjected := aMainRecord.MasterOrSelf.IsInjected and not (aMainRecord.Signature = 'GMST');
-  aConflictAll := ConflictLevelForChildNodeDatas(NodeDatas, False, bIsInjected);
+  aConflictAll := ConflictLevelForChildNodeDatas(NodeDatas, False, bIsInjected, store);
 
   // assign conflict levels to record nodes
   for i := Low(NodeDatas) to High(NodeDatas) do
@@ -767,6 +773,10 @@ begin
       end;
 
   // return nodes
+  if not store then begin
+    SetLength(NodeDatas, 0);
+    NodeDatas := nil;
+  end;
   Result := NodeDatas;
 end;
 

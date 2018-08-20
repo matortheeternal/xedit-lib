@@ -787,21 +787,88 @@ begin
   end;
 end;
 
+procedure BuildNode(const node: PViewNodeData; const element: IwbElement;
+  ct: TConflictThis);
+var
+  container: IwbContainerElementRef;
+begin
+  node.Element := element;
+  node.ConflictAll := caNoConflict;
+  node.ConflictThis := ct;
+  if Assigned(element) then
+    Supports(element, IwbContainerElementRef, node.container);
+end;
+
+function HasContainer(const nodeDatas: TDynViewNodeDatas): Boolean;
+var
+  i: Integer;
+begin
+  Result := True;
+  for i := Low(nodeDatas) to High(nodeDatas) do
+    if Assigned(nodeDatas[i].Container) then exit;
+  Result := False;
+end;
+
+procedure GetElementConflictData(const element: IwbElement; conflictAll, conflictThis: PByte);
+var
+  rec: IwbMainRecord;
+  e: IwbElement;
+  nodeDatas: TDynViewNodeDatas;
+  node: PViewNodeData;
+  path: String;
+  i: Integer;
+  isInjected: Boolean;
+begin
+  if Supports(element, IwbMainRecord, rec) then begin
+    GetRecordNodes(rec, False);
+    conflictAll^ := Ord(rec.ConflictAll);
+    conflictThis^ := Ord(rec.ConflictThis);
+    exit;
+  end;
+  rec := element.ContainingMainRecord.MasterOrSelf;
+  isInjected := rec.IsInjected and (rec.Signature <> 'GMST');
+  path := GetPath(element, false, true);
+  SetLength(nodeDatas, rec.OverrideCount + 1);
+  if Supports(ResolveElement(rec, path), IwbElement, e) then
+    BuildNode(@nodeDatas[0], e, ctMaster);
+  for i := 0 to Pred(rec.OverrideCount) do
+    if Supports(ResolveElement(rec.Overrides[i], path), IwbElement, e) then
+      BuildNode(@nodeDatas[i + 1], e, ctOverride);
+  if HasContainer(nodeDatas) then
+      ConflictLevelForChildNodeDatas(nodeDatas, False, isInjected)
+    else
+      ConflictLevelForNodeDatas(@nodeDatas[0], Length(nodeDatas), False, isInjected);
+  for i := Low(nodeDatas) to High(nodeDatas) do begin
+    node := @nodeDatas[i];
+    if Assigned(node.Element) and node.Element.Equals(element) then begin
+      conflictAll^ := Ord(node.ConflictAll);
+      conflictThis^ := Ord(node.ConflictThis);
+      exit;
+    end;
+  end;
+end;
+
 function GetConflictData(_id: Cardinal; _id2: Cardinal; conflictAll, conflictThis: PByte): WordBool; cdecl;
 var
   nodeDatas: TDynViewNodeDatas;
   element: IwbElement;
   node: PViewNodeData;
+  rec: IwbMainRecord;
 begin
   Result := False;
   try
-    nodeDatas := ResolveNodes(_id);
     if not Supports(Resolve(_id2), IwbElement, element) then
       raise Exception.Create('Interface must be an element.');
-    node := FindNodeForElement(nodeDatas, element);
-    if not Assigned(node) then exit;
-    conflictAll^ := Ord(node.ConflictAll);
-    conflictThis^ := Ord(node.ConflictThis);
+    if _id = 0 then
+      GetElementConflictData(element, conflictAll, conflictThis)
+    else begin
+      nodeDatas := ResolveNodes(_id);
+      node := FindNodeForElement(nodeDatas, element);
+      if not Assigned(node) then
+        raise Exception.Create('Could not find node for ' + element.Name);
+      conflictAll^ := Ord(node.ConflictAll);
+      conflictThis^ := Ord(node.ConflictThis);
+    end;
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
