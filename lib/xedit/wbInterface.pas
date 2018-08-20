@@ -1640,6 +1640,8 @@ type
   IwbFormID = interface(IwbIntegerDefFormater)
     ['{71C4A255-B983-488C-9837-0A720132348A}']
     function GetMainRecord(aInt: Int64; const aElement: IwbElement): IwbMainRecord;
+    function Assign(const aTarget : IwbElement; aIndex  : Integer;
+                    const aSource : IwbElement; aOnlySK : Boolean): IwbElement;
   end;
 
   IwbRefID = interface(IwbFormID)
@@ -4810,6 +4812,8 @@ type
 
     {---IwbFormID---}
     function GetMainRecord(aInt: Int64; const aElement: IwbElement): IwbMainRecord; virtual;
+    function Assign(const aTarget : IwbElement; aIndex  : Integer;
+                    const aSource : IwbElement; aOnlySK : Boolean): IwbElement;
   end;
 
   TwbRefID = class(TwbFormID, IwbRefID)
@@ -11547,6 +11551,17 @@ begin
     if Assigned(_File) then
       Result := _File.RecordByFormID[aInt, True];
   end;
+end;
+
+function TwbFormID.Assign(const aTarget: IwbElement; aIndex: Integer;
+  const aSource: IwbElement; aOnlySK: Boolean): IwbElement;
+var
+  sourceFormID, loadOrderFormID, targetFormID: Cardinal;
+begin
+  sourceFormID := aSource.NativeValue;
+  loadOrderFormID := aSource._File.FileFormIDtoLoadOrderFormID(sourceFormID);
+  targetFormID := aTarget._File.LoadOrderFormIDtoFileFormID(loadOrderFormID);
+  aTarget.SetNativeValue(targetFormID);
 end;
 
 function TwbFormID.IsValid(const aSignature: TwbSignature): Boolean;
