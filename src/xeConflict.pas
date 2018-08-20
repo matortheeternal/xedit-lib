@@ -66,13 +66,13 @@ type
 
   // native methods
   procedure ConflictLevelForMainRecord(const aMainRecord: IwbMainRecord; out aConflictAll: TConflictAll; out aConflictThis: TConflictThis);
-  function ConflictLevelForChildNodeDatas(const aNodeDatas: TDynViewNodeDatas; aSiblingCompare, aInjected: Boolean): TConflictAll;
+  function ConflictLevelForChildNodeDatas(var aNodeDatas: TDynViewNodeDatas; aSiblingCompare, aInjected: Boolean): TConflictAll;
   function ConflictLevelForNodeDatas(const aNodeDatas: PViewNodeDatas; aNodeCount: Integer; aSiblingCompare, aInjected: Boolean): TConflictAll;
   function ConflictAllForElements(e1, e2: IwbElement; aSiblingCompare, aInjected: Boolean): TConflictAll;
 
   // exposed methods
   function GetRecordNodes(const aMainRecord: IwbMainRecord): TDynViewNodeDatas;
-  function FindNodeForElement(const aNodeDatas: TDynViewNodeDatas; const element: IwbElement): PViewNodeData; overload;
+  function FindNodeForElement(var aNodeDatas: TDynViewNodeDatas; const element: IwbElement): PViewNodeData; overload;
   function IsITPO(const rec: IwbMainRecord): Boolean;
   function IsITM(const rec: IwbMainRecord): Boolean;
 
@@ -413,7 +413,7 @@ begin
     end;
 end;
 
-function ConflictLevelForChildNodeDatas(const aNodeDatas: TDynViewNodeDatas; aSiblingCompare, aInjected: Boolean): TConflictAll;
+function ConflictLevelForChildNodeDatas(var aNodeDatas: TDynViewNodeDatas; aSiblingCompare, aInjected: Boolean): TConflictAll;
 var
   ChildCount, NodeCount: Cardinal;
   i, j: Integer;
@@ -683,11 +683,11 @@ begin
         case Priority of
           cpBenign: Result := caConflictBenign;
           cpCritical: begin
-              if UniqueValues.Find('', i) then
-                UniqueValues.Delete(i);
-              if UniqueValues.Count > 1 then
-                Result := caConflictCritical;
-            end;
+            if UniqueValues.Find('', i) then
+              UniqueValues.Delete(i);
+            if UniqueValues.Count > 1 then
+              Result := caConflictCritical;
+          end;
         end;
 
       if Priority > cpBenign then
@@ -770,7 +770,7 @@ begin
   Result := NodeDatas;
 end;
 
-function FindRecordNodeForElement(const aNodeDatas: TDynViewNodeDatas; const element: IwbElement): PViewNodeData;
+function FindRecordNodeForElement(var aNodeDatas: TDynViewNodeDatas; const element: IwbElement): PViewNodeData;
 var
   rec: IwbMainRecord;
   i: Integer;
@@ -800,7 +800,7 @@ begin
   Result := nil;
 end;
 
-function FindNodeForElement(const aNodeDatas: TDynViewNodeDatas; const element: IwbElement): PViewNodeData; overload;
+function FindNodeForElement(var aNodeDatas: TDynViewNodeDatas; const element: IwbElement): PViewNodeData; overload;
 var
   elementNode: PViewNodeData;
 begin
