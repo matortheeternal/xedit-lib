@@ -541,6 +541,25 @@ begin
   end;
 end;
 
+procedure AddCCPlugins(var sl: TStringList; var index: Integer);
+var
+  cccPath: String;
+  slCCC: TStringList;
+  i: Integer;
+begin
+  cccPath := wbDataPath + '..\' + wbGameName + '.ccc';
+  if not FileExists(cccPath) then exit;
+  slCCC := TStringList.Create;
+  try
+    slCCC.LoadFromFile(cccPath);
+    for i := 0 to Pred(slCCC.Count) do
+      if FileExists(wbDataPath + slCCC[i]) then
+        FixLoadOrder(sl, slCCC[i], index);
+  finally
+    slCCC.Free;
+  end;
+end;
+
 procedure AddBaseMasters(var sl: TStringList);
 var
   index: Integer;
@@ -554,6 +573,7 @@ begin
     FixLoadOrder(sl, 'Dawnguard.esm', index);
     FixLoadOrder(sl, 'HearthFires.esm', index);
     FixLoadOrder(sl, 'Dragonborn.esm', index);
+    AddCCPlugins(sl, index);
   end
   else if (wbGameMode = gmFO4) then begin
     FixLoadOrder(sl, 'DLCRobot.esm', index);
@@ -563,6 +583,7 @@ begin
     FixLoadOrder(sl, 'DLCworkshop03.esm', index);
     FixLoadOrder(sl, 'DLCNukaWorld.esm', index);
     FixLoadOrder(sl, 'DLCUltraHighResolution.esm', index);
+    AddCCPlugins(sl, index);
   end;
 end;
 
