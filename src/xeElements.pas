@@ -822,7 +822,7 @@ var
 begin
   for i := 0 to Pred(container.ElementCount) do
     if NativeElementMatches(container.Elements[i], path, value) then begin
-      container.RemoveElement(i);
+      container.Elements[i].Remove;
       break;
     end;
 end;
@@ -1327,7 +1327,7 @@ begin
       element := container as IwbElement;
       container := element.Container;
     end;
-    container.RemoveElement(container.IndexOf(element));
+    element.Remove;
     Result := Release(_id);
   except
     on x: Exception do ExceptionHandler(x);
