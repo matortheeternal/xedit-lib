@@ -789,8 +789,6 @@ end;
 
 procedure BuildNode(const node: PViewNodeData; const element: IwbElement;
   ct: TConflictThis);
-var
-  container: IwbContainerElementRef;
 begin
   node.Element := element;
   node.ConflictAll := caNoConflict;
@@ -853,7 +851,6 @@ var
   nodeDatas: TDynViewNodeDatas;
   element: IwbElement;
   node: PViewNodeData;
-  rec: IwbMainRecord;
 begin
   Result := False;
   try
