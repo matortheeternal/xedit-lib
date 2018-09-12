@@ -419,7 +419,7 @@ end;
 
 function SetFormID(_id: Cardinal; formID: Cardinal; native, fixReferences: WordBool): WordBool; cdecl;
 var
-  rec: IwbMainRecord;
+  rec, ref: IwbMainRecord;
   oldFormID, newFormID: Cardinal;
   i: Integer;
 begin
@@ -427,17 +427,22 @@ begin
   try
     if not Supports(Resolve(_id), IwbMainRecord, rec) then
       raise Exception.Create('Interface must be a main record.');
-    oldFormID := rec.FormID;
+    oldFormID := rec.LoadOrderFormID;
     if native then
-      rec.LoadOrderFormID := rec._File.FileFormIDtoLoadOrderFormID(formID)
+      newFormID := rec._File.FileFormIDtoLoadOrderFormID(formID)
     else
-      rec.LoadOrderFormID := formID;
+      newFormID := formID;
     if fixReferences then begin
-      rec._File.BuildRef;
-      newFormID := rec.FormID;
       for i := Pred(rec.ReferencedByCount) downto 0 do
         rec.ReferencedBy[i].CompareExchangeFormID(oldFormID, newFormID);
+      if rec.ReferencedByCount > 0 then
+        raise Exception.Create('Failed to fix ' + IntToStr(rec.ReferencedByCount) + ' references');
+      for i := Pred(rec.OverrideCount) downto 0 do
+        rec.Overrides[i].LoadOrderFormID := newFormID;
+      if rec.OverrideCount > 0 then
+        raise Exception.Create('Failed to renumber ' + IntToStr(rec.OverrideCount) + ' overrides');
     end;
+    rec.LoadOrderFormID := newFormID;
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
