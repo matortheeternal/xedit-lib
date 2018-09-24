@@ -914,11 +914,8 @@ begin
     if not Supports(Resolve(_id), IwbFile, _file)
     or not Supports(_file, IwbContainer, container) then
       raise Exception.Create('Interface must be a file.');
-    if csRefsBuild in container.GetContainerStates then
-      raise Exception.Create('Cannot unload plugin which has had refs built.');
-    for i := Low(xFiles) to High(xFiles) do
-      if NativeFileHasMaster(xFiles[i], _file) then
-        raise Exception.Create(Format('Cannot unload plugin %s, it is required by %s.', [_file.FileName, xFiles[i].FileName]));
+    if not xFiles[i].Equals(_file) then
+      raise Exception.Create('Can only unload last plugin loaded.');
     ForceClose(_file);
     Result := Release(_id);
   except
