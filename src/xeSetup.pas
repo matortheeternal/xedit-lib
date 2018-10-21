@@ -907,14 +907,13 @@ function UnloadPlugin(_id: Cardinal): WordBool; cdecl;
 var
   _file: IwbFile;
   container: IwbContainer;
-  i: Integer;
 begin
   Result := False;
   try
     if not Supports(Resolve(_id), IwbFile, _file)
     or not Supports(_file, IwbContainer, container) then
       raise Exception.Create('Interface must be a file.');
-    if not xFiles[i].Equals(_file) then
+    if not xFiles[High(xFiles)].Equals(_file) then
       raise Exception.Create('Can only unload last plugin loaded.');
     ForceClose(_file);
     Result := Release(_id);
