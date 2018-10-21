@@ -51,7 +51,7 @@ procedure OverrideRecord(hexFormID: String; f: Cardinal; winningOverride: Boolea
 var
   rec: Cardinal;
 begin
-  ExpectSuccess(GetRecord(0, StrToInt('$' + hexFormID), @rec));
+  ExpectSuccess(GetRecord(0, StrToInt('$' + hexFormID), False, @rec));
   if winningOverride then
     ExpectSuccess(GetWinningOverride(rec, @rec));
   ExpectSuccess(AddRequiredMasters(rec, f, False));
@@ -204,7 +204,7 @@ begin
 
           It('Should remove ITM and ITPO records from the plugin', procedure
             begin
-              TestRemoveIdenticalRecords('xtest-6.esp', 4);
+              TestRemoveIdenticalRecords('xtest-6.esp', 3);
             end);
         end);
 

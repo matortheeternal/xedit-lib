@@ -635,7 +635,7 @@ type
     function HasMaster(const aFileName: string): Boolean;
     function GetMaster(aIndex: Integer): IwbFile;
     function GetMasterCount: Integer;
-    function GetRecordByFormID(aFormID: Cardinal; aAllowInjected: Boolean): IwbMainRecord;
+    function GetRecordByFormID(aFormID: Cardinal; aAllowInjected: Boolean; aSearchMasters: Boolean = True): IwbMainRecord;
     function GetRecordByEditorID(const aEditorID: string): IwbMainRecord;
     function GetRecordByName(const aName: string): IwbMainRecord;
     function GetGroupBySignature(const aSignature: TwbSignature): IwbGroupRecord;
@@ -2838,14 +2838,14 @@ begin
 
   if FileID < Cardinal(GetMasterCount) then begin
     Master := flMasters[FileID];
-    Result := Master.RecordByFormID[(aFormID and $00FFFFFF) or (Cardinal(Master.MasterCount) shl 24), aAllowInjected];
+    Result := Master.RecordByFormID[(aFormID and $00FFFFFF) or (Cardinal(Master.MasterCount) shl 24), aAllowInjected, True];
   end;
 
   if not Assigned(Result) and (aFormID < $800)
   and not (fsIsHardcoded in flStates) then begin
     Master := GetHardcodedFile;
     if Assigned(Master) then
-      Result := Master.RecordByFormID[aFormID, aAllowInjected];
+      Result := Master.RecordByFormID[aFormID, aAllowInjected, True];
   end;
 end;
 
@@ -2910,7 +2910,7 @@ begin
         break;
 end;
 
-function TwbFile.GetRecordByFormID(aFormID: Cardinal; aAllowInjected: Boolean): IwbMainRecord;
+function TwbFile.GetRecordByFormID(aFormID: Cardinal; aAllowInjected, aSearchMasters: Boolean): IwbMainRecord;
 var
   i: Integer;
 begin
@@ -2922,7 +2922,8 @@ begin
     Exit;
   end;
 
-  Result := GetMasterRecordByFormID(aFormID, aAllowInjected);
+  if aSearchMasters then
+    Result := GetMasterRecordByFormID(aFormID, aAllowInjected);
 end;
 
 function TwbFile.GetRecordCount: Integer;
@@ -5932,7 +5933,7 @@ var
 
     aFormID := (aFormID and $00FFFFFF) or (Cardinal(Files[FileID].MasterCount) shl 24);
 
-    MainRecord := Files[FileID].RecordByFormID[aFormID, True];
+    MainRecord := Files[FileID].RecordByFormID[aFormID, True, True];
     if Assigned(MainRecord) then
       if aAdd then
         MainRecord.AddReferencedBy(SelfIntf)
@@ -6804,7 +6805,7 @@ begin
   end;
   if mrBaseRecordID <> 0 then
     with GetFile do
-      Result := RecordByFormID[mrBaseRecordID, True];
+      Result := RecordByFormID[mrBaseRecordID, True, True];
 end;
 
 function TwbMainRecord.GetBaseRecordID: Cardinal;
@@ -7427,7 +7428,7 @@ begin
     _File := GetFile;
     j := 0;
     for i := Low(mrReferences) to High(mrReferences) do begin
-      Rec := _File.RecordByFormID[mrReferences[i], True];
+      Rec := _File.RecordByFormID[mrReferences[i], True, True];
       if Assigned(Rec) then
         if not _File.Equals(Rec._File) then begin
           Rec := Rec.MasterOrSelf;
@@ -7803,7 +7804,7 @@ begin
     if Length(mrReferences) > 0 then begin
       _File := GetFile;
       for i := Low(mrReferences) to High(mrReferences) do begin
-        Rec := _File.RecordByFormID[mrReferences[i], True];
+        Rec := _File.RecordByFormID[mrReferences[i], True, True];
         if Assigned(Rec) then begin
           RecFile := Rec._File;
           if not _File.Equals(RecFile) then begin
@@ -8419,7 +8420,7 @@ begin
       if Result and (Length(mrReferences) > 0) then begin
         _File := GetFile;
         for i := Low(mrReferences) to High(mrReferences) do begin
-          Rec := _File.RecordByFormID[mrReferences[i], True];
+          Rec := _File.RecordByFormID[mrReferences[i], True, True];
           if Assigned(Rec) then
             (Rec as IwbElementInternal).Reached;
         end;
@@ -8958,7 +8959,7 @@ begin
       Exit;
     end;
 
-  Master := _File.RecordByFormID[aFormID, False];
+  Master := _File.RecordByFormID[aFormID, False, True];
   if Assigned(Master) and ((Master._File as IwbFileInternal) = _File) then
     raise Exception.Create('FormID ['+IntToHex64(aFormID, 8)+'] is already present in file ' + _File.Name);
 
@@ -10847,7 +10848,7 @@ begin
     Exit;
 
   IsInjected := False;
-  MainRecord := _File.RecordByFormID[FormID, True];
+  MainRecord := _File.RecordByFormID[FormID, True, True];
   if Assigned(MainRecord) then begin
     if _File.Equals(MainRecord._File) then
       raise Exception.Create('FormID ['+IntToHex64(FormID, 8)+'] is already defined in file "'+_File.Name+'"');
@@ -11325,7 +11326,7 @@ var
 begin
   inherited;
   if GetGroupType in [1, 6, 7] then begin
-    Rec := (GetFile as IwbFileInternal).RecordByFormID[GetGroupLabel, False];
+    Rec := (GetFile as IwbFileInternal).RecordByFormID[GetGroupLabel, False, True];
     if Assigned(Rec) then begin
       if Rec._File.Equals(GetFile) then
         (Rec as IwbMainRecordInternal).SetChildGroup(Self)
@@ -11520,7 +11521,7 @@ function TwbGroupRecord.GetChildrenOf: IwbMainRecord;
 begin
   Result := nil;
   if grStruct.grsGroupType in [1, 6..10] then
-    Result := GetFile.RecordByFormID[grStruct.grsLabel, True];
+    Result := GetFile.RecordByFormID[grStruct.grsLabel, True, True];
 end;
 
 function TwbGroupRecord.GetElementType: TwbElementType;
@@ -11883,7 +11884,7 @@ begin
   end;
   Result := inherited Reached;
   if Result and (GetGroupType in [1, 6..10]) then begin
-    Rec := (GetFile as IwbFileInternal).RecordByFormID[GetGroupLabel, False];
+    Rec := (GetFile as IwbFileInternal).RecordByFormID[GetGroupLabel, False, True];
     if Assigned(Rec) then
       (Rec as IwbElementInternal).Reached;
   end;
@@ -16813,7 +16814,7 @@ begin
       _File := GetFile;
       MainRecord := GetContainer as IwbMainRecord;
       OldGroup := MainRecord.Container as IwbGroupRecord;
-      NewOwner := _File.RecordByFormID[NewFormID, False];
+      NewOwner := _File.RecordByFormID[NewFormID, False, True];
       if not Assigned(NewOwner) then begin
         if Assigned(dcDataBasePtr) then
           PCardinal(dcDataBasePtr)^ := OldFormID;

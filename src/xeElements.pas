@@ -261,10 +261,10 @@ var
 begin
   Result := nil;
   if ParseFileFormID(key, formID) then
-    Result := group._File.RecordByFormID[formID, True]
+    Result := group._File.RecordByFormID[formID, True, False]
   else if ParseFormID(key, formID) then begin
     fixedFormID := group._File.LoadOrderFormIDtoFileFormID(formID);
-    Result := group._File.RecordByFormID[fixedFormID, True];
+    Result := group._File.RecordByFormID[fixedFormID, True, False];
   end
   else if ParseFullName(key, name) then
     Result := group.MainRecordByName[name]
@@ -306,10 +306,10 @@ var
   group: IwbGroupRecord;
 begin
   if ParseFileFormID(key, formID) then
-    Result := _file.RecordByFormID[formID, True]
+    Result := _file.RecordByFormID[formID, True, False]
   else if ParseFormID(key, formID) then begin
     formID := _file.LoadOrderFormIDtoFileFormID(formID);
-    Result := _file.RecordByFormID[formID, True];
+    Result := _file.RecordByFormID[formID, True, False];
   end
   else if ParseFullName(key, name) then begin
     _file.FindName(name, rec);
@@ -493,7 +493,7 @@ var
   rec: IwbMainRecord;
 begin
   sig := TwbSignature(group.GroupLabel);
-  Result := group._File.RecordByFormID[formID, true];
+  Result := group._File.RecordByFormID[formID, True, True];
   if not Supports(Result, IwbMainRecord, rec) then exit;
   if rec.Signature <> sig then
     raise Exception.Create(Format('Found record %s does not match expected ' +
@@ -553,7 +553,7 @@ var
   rec: IwbMainRecord;
 begin
   formID := _file.LoadOrderFormIDToFileFormID(formID);
-  Result := _file.RecordByFormID[formID, true];
+  Result := _file.RecordByFormID[formID, True, True];
   if not Supports(Result, IwbMainRecord, rec) then exit;
   OverrideRecordIfNecessary(rec, _file, Result);
   if Assigned(Result) and (nextPath <> '') then

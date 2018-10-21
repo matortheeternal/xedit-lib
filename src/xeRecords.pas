@@ -18,7 +18,7 @@ type
   {$region 'API functions'}
   function GetFormID(_id: Cardinal; formID: PCardinal; native: WordBool): WordBool; cdecl;
   function SetFormID(_id: Cardinal; formID: Cardinal; native, fixReferences: WordBool): WordBool; cdecl;
-  function GetRecord(_id: Cardinal; formID: Cardinal; _res: PCardinal): WordBool; cdecl;
+  function GetRecord(_id: Cardinal; formID: Cardinal; searchMasters: WordBool; _res: PCardinal): WordBool; cdecl;
   function GetRecords(_id: Cardinal; search: PWideChar; includeOverrides: WordBool; len: PInteger): WordBool; cdecl;
   function GetREFRs(_id: Cardinal; search: PWideChar; flags: Cardinal; len: PInteger): WordBool; cdecl;
   function GetOverrides(_id: Cardinal; count: PInteger): WordBool; cdecl;
@@ -419,7 +419,7 @@ end;
 
 function SetFormID(_id: Cardinal; formID: Cardinal; native, fixReferences: WordBool): WordBool; cdecl;
 var
-  rec, ref: IwbMainRecord;
+  rec: IwbMainRecord;
   oldFormID, newFormID: Cardinal;
   i: Integer;
 begin
@@ -449,7 +449,7 @@ begin
   end;
 end;
 
-function GetRecord(_id: Cardinal; formID: Cardinal; _res: PCardinal): WordBool; cdecl;
+function GetRecord(_id: Cardinal; formID: Cardinal; searchMasters: WordBool; _res: PCardinal): WordBool; cdecl;
 var
   rec: IwbMainRecord;
   fileOrdinal: Cardinal;
@@ -465,7 +465,7 @@ begin
     else
       if not Supports(Resolve(_id), IwbFile, _file) then
         raise Exception.Create('Interface must be a file.');
-    rec := _file.RecordByFormID[formID, True];
+    rec := _file.RecordByFormID[formID, True, searchMasters];
     if not Assigned(rec) then
       raise Exception.Create('Failed to find record with FormID: ' + IntToHex(formID, 8));
     _res^ := Store(rec);

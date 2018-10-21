@@ -45,7 +45,7 @@ uses
 
 function TestGetRecord(h: Cardinal; formID: Cardinal): Cardinal;
 begin
-  ExpectSuccess(GetRecord(h, formID, @Result));
+  ExpectSuccess(GetRecord(h, formID, False, @Result));
   Expect(Result > 0, 'Should return a handle');
 end;
 

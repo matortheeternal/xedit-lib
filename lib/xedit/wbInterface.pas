@@ -786,7 +786,7 @@ type
     function GetMasterCount: Integer;
     function FindEditorID(const aEditorID: String; var rec: IwbMainRecord): Boolean;
     function FindName(const aName: String; var rec: IwbMainRecord): Boolean;
-    function GetRecordByFormID(aFormID: Cardinal; aAllowInjected: Boolean): IwbMainRecord;
+    function GetRecordByFormID(aFormID: Cardinal; aAllowInjected, aSearchMasters: Boolean): IwbMainRecord;
     function GetRecordByEditorID(const aEditorID: string): IwbMainRecord;
     function GetRecordByName(const aName: string): IwbMainRecord;
     function GetLoadOrder: Integer;
@@ -847,7 +847,7 @@ type
     property MasterCount: Integer
       read GetMasterCount;
 
-    property RecordByFormID[aFormID: Cardinal; aAllowInjected: Boolean]: IwbMainRecord
+    property RecordByFormID[aFormID: Cardinal; aAllowInjected, aSearchMasters: Boolean]: IwbMainRecord
       read GetRecordByFormID;
     property RecordByEditorID[const aEditorID: string]: IwbMainRecord
       read GetRecordByEditorID;
@@ -11109,7 +11109,7 @@ begin
     _File := aElement._File;
     if Assigned(_File) then begin
       try
-        MainRecord := _File.RecordByFormID[aInt, True];
+        MainRecord := _File.RecordByFormID[aInt, True, True];
         if Assigned(MainRecord) then
           Exit;
       except
@@ -11246,7 +11246,7 @@ begin
       CheckedFiles.Free;
     end;
   end else try
-    Result := _File.RecordByFormID[aInt, True];
+    Result := _File.RecordByFormID[aInt, True, True];
   except end;
 end;
 
@@ -11536,7 +11536,7 @@ begin
   if Assigned(aElement) then begin
     _File := aElement._File;
     if Assigned(_File) then try
-      Result := _File.RecordByFormID[aInt, True];
+      Result := _File.RecordByFormID[aInt, True, True];
     except end;
   end;
 end;
@@ -11549,7 +11549,7 @@ begin
   if Assigned(aElement) then begin
     _File := aElement._File;
     if Assigned(_File) then
-      Result := _File.RecordByFormID[aInt, True];
+      Result := _File.RecordByFormID[aInt, True, True];
   end;
 end;
 
@@ -11784,7 +11784,7 @@ begin
     _File := aElement._File;
     if Assigned(_File) then begin
       try
-        MainRecord := _File.RecordByFormID[aInt, True];
+        MainRecord := _File.RecordByFormID[aInt, True, True];
         if Assigned(MainRecord) then begin
           Result := MainRecord.Name;
           if wbReportMode then
@@ -12232,7 +12232,7 @@ begin
           if (aInt <> $0) and (aInt <> $14) and ((Length(NotFoundFormIDAtOffSet) < Succ(OffSet)) or (NotFoundFormIDAtOffSet[Offset] < 1)) then begin
             MainRecord := nil;
             try
-              MainRecord := _File.RecordByFormID[aInt, True];
+              MainRecord := _File.RecordByFormID[aInt, True, True];
             except
               on E: Exception do begin
                 MainRecord := nil;
@@ -12791,7 +12791,7 @@ begin
     _File := aElement._File;
     if Assigned(_File) then begin
       try
-        MainRecord := _File.RecordByFormID[aInt, True];
+        MainRecord := _File.RecordByFormID[aInt, True, True];
         if Assigned(MainRecord) then begin
           Found := MainRecord.Signature;
           if fidcValidRefs.IndexOf(Found) < 0 then
