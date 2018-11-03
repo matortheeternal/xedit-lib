@@ -1075,11 +1075,23 @@ begin
   Result := GetDefType(element) in [dtSubRecordArray, dtArray];
 end;
 
+function GetValueDef(const element: IwbElement): IwbValueDef;
+var
+  subDef: IwbSubRecordDef;
+  unionDef: IwbUnionDef;
+begin
+  Result := element.ValueDef;
+  if Supports(Result, IwbSubRecordDef, subDef) then
+    Result := subDef.Value;
+  if Supports(Result, IwbUnionDef, unionDef) then
+    Result := DecideUnion(element, unionDef);
+end;
+
 function IsFormID(const element: IwbElement): Boolean;
 var
   intDef: IwbIntegerDef;
 begin
-  Result := Supports(element.ValueDef, IwbIntegerDef, intDef)
+  Result := Supports(GetValueDef(element), IwbIntegerDef, intDef)
     and Supports(intDef.Formater[element], IwbFormID);
 end;
 

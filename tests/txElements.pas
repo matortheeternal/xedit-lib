@@ -944,6 +944,11 @@ begin
               TestGetLinksTo(ar1, 'RNAM', 'Default Race');
             end);
 
+          It('Should work on unions', procedure
+            begin
+              TestGetLinksTo(skyrim, '0009CD51\DATA\Teaches', 'Flames');
+            end);
+
           It('Should work with navmesh edge links', procedure
             begin
               ExpectSuccess(GetElement(skyrim, '000FF1DE', @h));
