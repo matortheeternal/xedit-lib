@@ -91,9 +91,10 @@
         <DCC_SymbolReferenceInfo>0</DCC_SymbolReferenceInfo>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win64)'!=''">
-        <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=0.5.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=0.5;Comments=</VerInfo_Keys>
+        <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=0.5.1.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=0.5;Comments=</VerInfo_Keys>
         <VerInfo_AutoGenVersion>false</VerInfo_AutoGenVersion>
         <VerInfo_MinorVer>5</VerInfo_MinorVer>
+        <VerInfo_Release>1</VerInfo_Release>
     </PropertyGroup>
     <ItemGroup>
         <DelphiCompile Include="$(MainSource)">

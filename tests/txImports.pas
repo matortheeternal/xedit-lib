@@ -141,7 +141,7 @@ type
   // RECORD HANDLING METHODS
   function GetFormID(_id: Cardinal; formID: PCardinal; local: WordBool): WordBool; cdecl; external 'XEditLib.dll';
   function SetFormID(_id: Cardinal; formID: Cardinal; local, fixReferences: WordBool): WordBool; cdecl; external 'XEditLib.dll';
-  function GetRecord(_id: Cardinal; formID: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
+  function GetRecord(_id: Cardinal; formID: Cardinal; searchMasters: WordBool; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function GetRecords(_id: Cardinal; search: PWideChar; includeOverrides: WordBool; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetREFRs(_id: Cardinal; search: PWideChar; flags: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetOverrides(_id: Cardinal; count: PInteger): WordBool; cdecl; external 'XEditLib.dll';
