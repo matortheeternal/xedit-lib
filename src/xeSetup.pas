@@ -285,7 +285,7 @@ end;
 function IndexOfFile(const _file: IwbFile): Integer;
 begin
   for Result := Low(xFiles) to High(xFiles) do
-    if xFiles[Result] = _file then exit;
+    if xFiles[Result].Equals(_file) then exit;
   Result := -1;
 end;
 
@@ -913,7 +913,7 @@ begin
     if not Supports(Resolve(_id), IwbFile, _file)
     or not Supports(_file, IwbContainer, container) then
       raise Exception.Create('Interface must be a file.');
-    if not xFiles[High(xFiles)].Equals(_file) then
+    if IndexOfFile(_file) <> High(xFiles) then
       raise Exception.Create('Can only unload last plugin loaded.');
     ForceClose(_file);
     Result := Release(_id);
