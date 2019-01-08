@@ -10,6 +10,7 @@ uses
   xeMeta in 'src\xeMeta.pas',
   xeSetup in 'src\xeSetup.pas',
   xeArchives in 'src\xeArchives.pas',
+  xeTextures in 'src\xeTextures.pas',
   xeFiles in 'src\xeFiles.pas',
   xeMasters in 'src\xeMasters.pas',
   xeElements in 'src\xeElements.pas',
@@ -43,9 +44,9 @@ const
 
 exports
   // META METHODS
-  InitXEdit, CloseXEdit, GetResultString, GetResultArray, GetGlobal, GetGlobals,
-  SetSortMode, Release, ReleaseNodes, Switch, GetDuplicateHandles, CleanStore,
-  ResetStore,
+  InitXEdit, CloseXEdit, GetResultString, GetResultArray, GetResultBytes,
+  GetGlobal, GetGlobals, SetSortMode, Release, ReleaseNodes, Switch,
+  GetDuplicateHandles, CleanStore, ResetStore,
   // MESSAGE METHODS
   GetMessagesLength, GetMessages, ClearMessages, GetExceptionMessageLength,
   GetExceptionMessage, GetExceptionStackLength, GetExceptionStack,
@@ -55,6 +56,8 @@ exports
   GetLoaderStatus, UnloadPlugin,
   // ARCHIVE HANDLING METHODS
   ExtractContainer, ExtractFile, GetContainerFiles, GetLoadedContainers, LoadContainer,
+  // TEXTURE HANDLING METHODS
+  GetBitmapResource,
   // FILE HANDLING METHODS
   AddFile, FileByIndex, FileByLoadOrder, FileByName, FileByAuthor, NukeFile,
   RenameFile, SaveFile, GetRecordCount, GetOverrideRecordCount, MD5Hash, CRCHash,

@@ -18,7 +18,7 @@ type
   procedure GetSortedElements(const container: IwbContainer; var elements: TDynElements);
   procedure StoreIfAssigned(const x: IInterface; var _res: PCardinal; var Success: WordBool);
   function Store(const x: IInterface): Cardinal;
-  function StoreNodes(nodes: TDynViewNodeDatas): Cardinal; overload;
+  function StoreNodes(nodes: TDynViewNodeDatas): Cardinal;
   function xStrCopy(source: WideString; dest: PWideChar; maxLen: Integer): WordBool;
   procedure SetResultFromList(var sl: TStringList; len: PInteger);
   {$endregion}
@@ -28,6 +28,7 @@ type
   procedure CloseXEdit; cdecl;
   function GetResultString(str: PWideChar; maxLen: Integer): WordBool; cdecl;
   function GetResultArray(_res: PCardinal; maxLen: Integer): WordBool; cdecl;
+  function GetResultBytes(_res: PByte; maxLen: Integer): WordBool; cdecl;
   function GetGlobal(key: PWideChar; len: PInteger): WordBool; cdecl;
   function GetGlobals(len: PInteger): WordBool; cdecl;
   function SetSortMode(_sortBy: Byte; _reverse: WordBool): WordBool; cdecl;
@@ -45,6 +46,7 @@ var
   _nextID: Cardinal;
   resultStr: WideString;
   resultArray: TCardinalArray;
+  resultBytes: TBytes;
   SortBy: Byte;
   Reverse: Boolean;
 
@@ -281,7 +283,7 @@ begin
     Result := _store.Add(x);
 end;
 
-function StoreNodes(nodes: TDynViewNodeDatas): Cardinal; overload;
+function StoreNodes(nodes: TDynViewNodeDatas): Cardinal;
 begin
   Result := _nodesStore.Add(nodes);
 end;
@@ -336,6 +338,23 @@ begin
       _res[i] := resultArray[i];
     end;
     SetLength(resultArray, 0);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetResultBytes(_res: PByte; maxLen: Integer): WordBool; cdecl;
+var
+  i: Integer;
+begin
+  Result := False;
+  try
+    for i := 0 to High(resultBytes) do begin
+      if i >= maxLen then break;
+      _res[i] := resultBytes[i];
+    end;
+    SetLength(resultBytes, 0);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
