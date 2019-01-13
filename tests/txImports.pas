@@ -15,6 +15,7 @@ type
   procedure CloseXEdit; cdecl; external 'XEditLib.dll';
   function GetResultString(str: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
   function GetResultArray(_res: PCardinal; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
+  function GetResultBytes(_res: PByte; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
   function GetGlobal(key: PWideChar; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetGlobals(len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function SetSortMode(_sortBy: Byte; _reverse: WordBool): WordBool; cdecl; external 'XEditLib.dll';
@@ -60,6 +61,16 @@ type
   function SortEditorIDs(_id: Cardinal; sig: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
   function SortNames(_id: Cardinal; sig: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
   function GetFileLoadOrder(_id: Cardinal; loadOrder: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+
+  // ARCHIVE HANDLING METHODS
+  function ExtractContainer(name, destination: PWideChar; replace: WordBool): WordBool; cdecl; external 'XEditLib.dll';
+  function ExtractFile(name, source, destination: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
+  function GetContainerFiles(name, path: PWideChar; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function GetLoadedContainers(len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function LoadContainer(filePath: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
+
+  // TEXTURE HANDLING METHODS
+  function GetBitmapResource(resourceName: PWideChar; width, height: PInteger): WordBool; cdecl; external 'XEditLib.dll';
 
   // MASTER HANDLING METHODS
   function CleanMasters(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
