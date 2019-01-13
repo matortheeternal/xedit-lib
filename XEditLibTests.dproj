@@ -184,6 +184,7 @@
         <DCC_Define>SKYRIM;SKIP_BENCHMARKS;$(DCC_Define)</DCC_Define>
         <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
         <Manifest_File>(None)</Manifest_File>
+        <ILINK_MapFileType>DetailedSegments</ILINK_MapFileType>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">
         <DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>
@@ -218,6 +219,8 @@
         <DCCReference Include="src\xeMeta.pas"/>
         <DCCReference Include="src\xeSetup.pas"/>
         <DCCReference Include="src\xeFiles.pas"/>
+        <DCCReference Include="src\xeArchives.pas"/>
+        <DCCReference Include="src\xeTextures.pas"/>
         <DCCReference Include="src\xeMasters.pas"/>
         <DCCReference Include="src\xeElements.pas"/>
         <DCCReference Include="src\xeElementValues.pas"/>
@@ -242,6 +245,8 @@
         <DCCReference Include="tests\txMessages.pas"/>
         <DCCReference Include="tests\txSetup.pas"/>
         <DCCReference Include="tests\txFiles.pas"/>
+        <DCCReference Include="tests\txTextures.pas"/>
+        <DCCReference Include="tests\txArchives.pas"/>
         <DCCReference Include="tests\txMasters.pas"/>
         <DCCReference Include="tests\txElements.pas"/>
         <DCCReference Include="tests\txElementValues.pas"/>

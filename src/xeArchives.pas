@@ -21,16 +21,6 @@ uses
   SysUtils,
   xeMessages, xeMeta;
 
-procedure FilterStringList(var sl: TStringList; filter: String);
-var
-  i: Integer;
-begin
-  if filter = '' then exit;
-  for i := Pred(sl.Count) downto 0 do
-    if not sl[i].StartsWith(filter, true) then
-      sl.Delete(i);
-end;
-
 function ExtractContainer(name, destination: PWideChar; replace: WordBool): WordBool; cdecl;
 var
   ResourceList: TStringList;
@@ -78,8 +68,7 @@ begin
       raise Exception.Create(name + ' not loaded.');
     ResourceList := TStringList.Create;
     try
-      wbContainerHandler.ContainerResourceList(name, ResourceList);
-      FilterStringList(ResourceList, path);
+      wbContainerHandler.ContainerResourceList(name, ResourceList, path);
       SetResultFromList(ResourceList, len);
     finally
       ResourceList.Free;
