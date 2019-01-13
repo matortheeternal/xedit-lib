@@ -24,6 +24,7 @@ type
   function grs(len: Integer): WideString;
   function gem(len: Integer): WideString;
   function gra(len: Integer): CardinalArray;
+  function grb(len: Integer): TBytes;
 
 implementation
 
@@ -91,6 +92,19 @@ begin
   SetLength(Result, len);
   cBuffer := PCardinal(Result);
   ExpectSuccess(GetResultArray(cBuffer, len));
+end;
+
+function grb(len: Integer): TBytes;
+var
+  bBuffer: PByte;
+begin
+  if len = 0 then begin
+    SetLength(Result, 0);
+    exit;
+  end;
+  SetLength(Result, len);
+  bBuffer := PByte(Result);
+  ExpectSuccess(GetResultBytes(bBuffer, len));
 end;
 
 procedure WriteArray(a: CardinalArray);
