@@ -10,7 +10,7 @@ uses
   {$region 'API functions'}
   function ExtractContainer(name, destination: PWideChar; replace: WordBool): WordBool; cdecl;
   function ExtractFile(name, source, destination: PWideChar): WordBool; cdecl;
-  function GetContainerFiles(name: PWideChar; len: PInteger): WordBool; cdecl;
+  function GetContainerFiles(name, path: PWideChar; len: PInteger): WordBool; cdecl;
   function GetLoadedContainers(len: PInteger): WordBool; cdecl;
   function LoadContainer(filePath: PWideChar): WordBool; cdecl;
   {$endregion}
@@ -20,6 +20,16 @@ implementation
 uses
   SysUtils,
   xeMessages, xeMeta;
+
+procedure FilterStringList(var sl: TStringList; filter: String);
+var
+  i: Integer;
+begin
+  if filter = '' then exit;
+  for i := Pred(sl.Count) downto 0 do
+    if not sl[i].StartsWith(filter, true) then
+      sl.Delete(i);
+end;
 
 function ExtractContainer(name, destination: PWideChar; replace: WordBool): WordBool; cdecl;
 var
@@ -57,17 +67,19 @@ begin
   end;
 end;
 
-function GetContainerFiles(name: PWideChar; len: PInteger): WordBool; cdecl;
+function GetContainerFiles(name, path: PWideChar; len: PInteger): WordBool; cdecl;
 var
   ResourceList: TStringList;
+  i: Integer;
 begin
   Result := False;
   try
-    if not wbContainerHandler.ContainerExists(name) then
+    if (name <> '') and not wbContainerHandler.ContainerExists(name) then
       raise Exception.Create(name + ' not loaded.');
     ResourceList := TStringList.Create;
     try
       wbContainerHandler.ContainerResourceList(name, ResourceList);
+      FilterStringList(ResourceList, path);
       SetResultFromList(ResourceList, len);
     finally
       ResourceList.Free;
