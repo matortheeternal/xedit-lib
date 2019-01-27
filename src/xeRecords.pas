@@ -419,7 +419,7 @@ end;
 
 function SetFormID(_id: Cardinal; formID: Cardinal; native, fixReferences: WordBool): WordBool; cdecl;
 var
-  rec: IwbMainRecord;
+  rec, mRec: IwbMainRecord;
   oldFormID, newFormID: Cardinal;
   i: Integer;
 begin
@@ -433,14 +433,17 @@ begin
     else
       newFormID := formID;
     if fixReferences then begin
-      for i := Pred(rec.ReferencedByCount) downto 0 do
-        rec.ReferencedBy[i].CompareExchangeFormID(oldFormID, newFormID);
-      if rec.ReferencedByCount > 0 then
-        raise Exception.Create('Failed to fix ' + IntToStr(rec.ReferencedByCount) + ' references');
-      for i := Pred(rec.OverrideCount) downto 0 do
-        rec.Overrides[i].LoadOrderFormID := newFormID;
-      if rec.OverrideCount > 0 then
-        raise Exception.Create('Failed to renumber ' + IntToStr(rec.OverrideCount) + ' overrides');
+      mRec := rec.MasterOrSelf;
+      for i := Pred(mRec.ReferencedByCount) downto 0 do
+        mRec.ReferencedBy[i].CompareExchangeFormID(oldFormID, newFormID);
+      if mRec.ReferencedByCount > 0 then
+        raise Exception.Create('Failed to fix ' + IntToStr(mRec.ReferencedByCount) + ' references');
+      if rec.IsMaster then begin
+        for i := Pred(rec.OverrideCount) downto 0 do
+          rec.Overrides[i].LoadOrderFormID := newFormID;
+        if rec.OverrideCount > 0 then
+          raise Exception.Create('Failed to renumber ' + IntToStr(rec.OverrideCount) + ' overrides');
+      end;
     end;
     rec.LoadOrderFormID := newFormID;
     Result := True;
