@@ -100,7 +100,7 @@ var
 begin
   for i := Low(xFiles) to High(xFiles) do begin
     Result := xFiles[i];
-    if Result.FileName = name then
+    if SameText(Result.FileName, name) then
       exit;
   end;
   Result := nil;
