@@ -766,7 +766,9 @@ begin
   Result := False;
   try
     slPlugins := TStringList.Create;
+    slPlugins.CaseSensitive := False;
     slLoadOrder := TStringList.Create;
+    slLoadOrder.CaseSensitive := False;
 
     try
       sLoadPath := Globals.Values['AppDataPath'];
