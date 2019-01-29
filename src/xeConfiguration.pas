@@ -28,7 +28,7 @@ type
   {$endregion}
 
 var
-  Globals, slLanguageMap: TStringList;
+  Globals, slLanguageMap, slUTF8Languages: TStringList;
   wbAppDataPath, wbMyGamesPath, BackupPath: String;
   GameMode: TGameMode;
   ProgramVersion, GamePath, Language: String;
@@ -102,6 +102,13 @@ begin
     Result := slLanguageMap.Values[Result];
 end;
 
+function GetLanguageEncoding: TwbStringEncoding;
+begin
+  Result := seCP1252;
+  if (slUTF8Languages.IndexOf(Language) > -1) then
+    Result := seUTF8;
+end;
+
 { Sets the game mode in the TES5Edit API }
 procedure SetGame(id: integer);
 var
@@ -139,7 +146,7 @@ begin
   wbFlagsAsArray := True;
   wbRequireLoadOrder := True;
   wbLanguage := GetLanguageFileSuffix;
-  wbStringEncoding := seUTF8;
+  wbStringEncoding := GetLanguageEncoding;
   wbEditAllowed := True;
   wbLoaderDone := True;
   wbContainerHandler := wbCreateContainerHandler;
@@ -217,6 +224,10 @@ initialization
     'Japanese=ja'#13 +
     'Portugese=pt'#13 +
     'Chinese=zh';
+  slUTF8Languages := TStringList.Create;
+  slUTF8Languages.Text :=
+    'Japanese'#13 +
+    'Chinese';
 
 finalization
   Globals.Free;
