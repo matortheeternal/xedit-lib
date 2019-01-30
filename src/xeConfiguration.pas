@@ -56,6 +56,11 @@ const
       appIDs: '377160'; )
   );
   {$endregion}
+  {$region 'TES4Languages'}
+  TES4Languages: array[1..4] of String = (
+    'German', 'French', 'Spanish', 'Italian'
+  );
+  {$endregion}
 
 implementation
 
@@ -84,18 +89,18 @@ begin
     Result := appDataPath + wbGameName2 + '\';
 end;
 
-function GetGameIniPath: String;
+function GetGameIniPath(myGamesPath: String; GameMode: TGameMode): String;
 begin
   Result := '';
-  if wbMyGamesPath <> '' then begin
-    if wbGameMode in [gmFO3, gmFNV] then
-      Result := wbMyGamesPath + 'Fallout.ini'
+  if myGamesPath <> '' then begin
+    if GameMode.gameMode in [gmFO3, gmFNV] then
+      Result := myGamesPath + 'Fallout.ini'
     else
-      Result := wbMyGamesPath + wbGameName + '.ini';
+      Result := myGamesPath + GameMode.gameName + '.ini';
   end;
 end;
 
-function GetLanguageFileSuffix: String;
+function GetLanguage: String;
 begin
   Result := Language;
   if (wbGameMode = gmFO4) and (slLanguageMap.IndexOfName(Result) > -1) then
@@ -145,15 +150,15 @@ begin
   wbHideUnused := True;
   wbFlagsAsArray := True;
   wbRequireLoadOrder := True;
-  wbLanguage := GetLanguageFileSuffix;
-  wbStringEncoding := GetLanguageEncoding;
   wbEditAllowed := True;
   wbLoaderDone := True;
   wbContainerHandler := wbCreateContainerHandler;
   wbContainerHandler._AddRef;
   wbAppDataPath := GetAppDataPath;
   wbMyGamesPath := GetMyGamesPath;
-  wbTheGameIniFileName := GetGameIniPath;
+  wbTheGameIniFileName := GetGameIniPath(wbMyGamesPath, GameMode);
+  wbLanguage := GetLanguage;
+  wbStringEncoding := GetLanguageEncoding;
 
   // load definitions
   case wbGameMode of

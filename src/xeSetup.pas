@@ -39,6 +39,7 @@ type
 
   {$region 'API functions'}
   function SetGamePath(path: PWideChar): WordBool; cdecl;
+  function GetGameLanguage(mode: Integer; len: PInteger): WordBool; cdecl;
   function SetLanguage(lang: PWideChar): WordBool; cdecl;
   function SetBackupPath(path: PWideChar): WordBool; cdecl;
   function SetGameMode(mode: Integer): WordBool; cdecl;
@@ -64,7 +65,7 @@ var
 implementation
 
 uses
-  Windows, SysUtils, ShlObj,
+  Windows, SysUtils, ShlObj, IniFiles,
   // xelib units
   xeHelpers, xeMeta, xeConfiguration, xeMessages, xeMasters;
 
@@ -692,6 +693,37 @@ begin
   Result := False;
   try
     GamePath := string(path);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetGameLanguage(mode: Integer; len: PInteger): WordBool; cdecl;
+var
+  gameIniFilePath: String;
+  iLanguage: Integer;
+begin
+  Result := False;
+  try
+    resultStr := '';
+    gameIniFilePath := GetGameIniPath(GetMyGamesPath, GameArray[mode]);
+    if not FileExists(gameIniFilePath) then exit;
+    with TMemIniFile.Create(gameIniFilePath) do try
+      if mode = Ord(gmTES4) then begin
+        iLanguage := ReadInteger('Controls', 'iLanguage', 0);
+        if (iLanguage >= Low(TES4Languages))
+        and (iLanguage <= High(TES4Languages)) then
+          resultStr := TES4Languages[iLanguage];
+      end
+      else
+        resultStr := Trim(ReadString('General', 'sLanguage', '')).ToLower;
+    finally
+      Free;
+    end;
+    if resultStr = '' then
+      resultStr := 'English';
+    len^ := Length(resultStr);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);

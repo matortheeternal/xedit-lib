@@ -51,9 +51,9 @@ exports
   GetMessagesLength, GetMessages, ClearMessages, GetExceptionMessageLength,
   GetExceptionMessage, GetExceptionStackLength, GetExceptionStack,
   // LOADING AND SET UP METHODS
-  GetGamePath, SetGamePath, SetLanguage, SetBackupPath, SetGameMode, GetLoadOrder,
-  GetActivePlugins, LoadPlugins, LoadPlugin, LoadPluginHeader, BuildReferences,
-  GetLoaderStatus, UnloadPlugin,
+  GetGamePath, SetGamePath, GetGameLanguage, SetLanguage, SetBackupPath,
+  SetGameMode, GetLoadOrder, GetActivePlugins, LoadPlugins, LoadPlugin,
+  LoadPluginHeader, BuildReferences, GetLoaderStatus, UnloadPlugin,
   // ARCHIVE HANDLING METHODS
   ExtractContainer, ExtractFile, GetContainerFiles, GetLoadedContainers, LoadContainer,
   // TEXTURE HANDLING METHODS
