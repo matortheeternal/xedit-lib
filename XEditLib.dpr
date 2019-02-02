@@ -55,7 +55,8 @@ exports
   SetGameMode, GetLoadOrder, GetActivePlugins, LoadPlugins, LoadPlugin,
   LoadPluginHeader, BuildReferences, GetLoaderStatus, UnloadPlugin,
   // ARCHIVE HANDLING METHODS
-  ExtractContainer, ExtractFile, GetContainerFiles, GetLoadedContainers, LoadContainer,
+  ExtractContainer, ExtractFile, GetContainerFiles, GetFileContainer,
+  GetLoadedContainers, LoadContainer,
   // TEXTURE HANDLING METHODS
   GetBitmapResource,
   // FILE HANDLING METHODS

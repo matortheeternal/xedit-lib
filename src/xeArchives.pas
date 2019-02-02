@@ -11,6 +11,7 @@ uses
   function ExtractContainer(name, destination: PWideChar; replace: WordBool): WordBool; cdecl;
   function ExtractFile(name, source, destination: PWideChar): WordBool; cdecl;
   function GetContainerFiles(name, path: PWideChar; len: PInteger): WordBool; cdecl;
+  function GetFileContainer(path: PWideChar; len: PInteger): WordBool; cdecl;
   function GetLoadedContainers(len: PInteger): WordBool; cdecl;
   function LoadContainer(filePath: PWideChar): WordBool; cdecl;
   {$endregion}
@@ -73,6 +74,19 @@ begin
     finally
       ResourceList.Free;
     end;
+    Result := True;
+  except
+    on x: Exception do
+      ExceptionHandler(x);
+  end;
+end;
+
+function GetFileContainer(path: PWideChar; len: PInteger): WordBool; cdecl;
+begin
+  Result := False;
+  try
+    resultStr := wbContainerHandler.GetResourceContainer(path);
+    len^ := Length(resultStr);
     Result := True;
   except
     on x: Exception do
