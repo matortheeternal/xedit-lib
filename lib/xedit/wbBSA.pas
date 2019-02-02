@@ -62,6 +62,7 @@ type
     procedure ContainerResourceList(const aContainerName: string; const aList: TStrings;
       const aFolder: string = '');
     function ResourceExists(const aFileName: string): Boolean;
+    function GetResourceContainer(const aFileName: string): String;
     function ResolveHash(const aHash: Int64): TDynStrings;
     function ResourceCount(const aFileName: string; aContainers: TStrings = nil): Integer;
     procedure ResourceCopy(const aContainerName, aFileName, aPathOut: string);
@@ -348,6 +349,19 @@ begin
       Result := True;
       Exit;
     end;
+end;
+
+function TwbContainerHandler.GetResourceContainer(const aFileName: string): String;
+var
+  i: Integer;
+begin
+  Result := False;
+  for i := High(chContainers) downto Low(chContainers) do
+    if chContainers[i].ResourceExists(aFileName) then begin
+      Result := chContainers[i].Name;
+      Exit;
+    end;
+  raise Exception.Create('Resource ' + aFileName + ' does not exist.');
 end;
 
 function TwbContainerHandler.ResolveHash(const aHash: Int64): TDynStrings;

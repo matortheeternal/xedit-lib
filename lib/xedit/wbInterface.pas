@@ -1805,6 +1805,7 @@ type
     procedure ContainerResourceList(const aContainerName: string; const aList: TStrings;
       const aFolder: string = '');
     function ResourceExists(const aFileName: string): Boolean;
+    function GetResourceContainer(const aFileName: string): String;
     function ResourceCount(const aFileName: string; aContainers: TStrings = nil): Integer;
     procedure ResourceCopy(const aContainerName, aFileName, aPathOut: string);
   end;
