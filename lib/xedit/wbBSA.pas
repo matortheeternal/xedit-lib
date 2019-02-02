@@ -240,9 +240,18 @@ end;
 { TwbContainerHandler }
 
 procedure TwbContainerHandler.AddContainer(const aContainer: IwbResourceContainer);
+var
+  i: Integer;
 begin
   SetLength(chContainers, Succ(Length(chContainers)));
-  chContainers[High(chContainers)] := aContainer;
+  i := High(chContainers);
+  if not Supports(aContainer, IwbFolder) then
+    while i > 0 do begin
+      if not Supports(chContainers[i - 1], IwbFolder) then break;
+      chContainers[i] := chContainers[i - 1];
+      Dec(i);
+    end;
+  chContainers[i] := aContainer;
 end;
 
 function TwbContainerHandler.ContainerExists(aContainerName: string): Boolean;
