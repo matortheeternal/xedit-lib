@@ -3,9 +3,7 @@ unit xeArchives;
 interface
 
 uses
-  Classes,
-  // xedit units
-  wbInterface;
+  Classes;
 
   {$region 'API functions'}
   function ExtractContainer(name, destination: PWideChar; replace: WordBool): WordBool; cdecl;
@@ -20,6 +18,9 @@ implementation
 
 uses
   SysUtils,
+  // xedit modules
+  wbInterface, wbBSArchive,
+  // xelib modules
   xeMessages, xeMeta;
 
 function ExtractContainer(name, destination: PWideChar; replace: WordBool): WordBool; cdecl;
@@ -134,6 +135,64 @@ begin
       wbContainerHandler.AddFolder(sFilePath)
     else
       raise Exception.Create('Failed to load ' + containerName + ', path does not exist');
+    Result := True;
+  except
+    on x: Exception do
+      ExceptionHandler(x);
+  end;
+end;
+
+function BuildArchive(name, folder, filePaths: PWideChar; archiveType: Integer;
+  bCompress, bShare: WordBool; af, ff: PWideChar): WordBool; cdecl;
+var
+  slFiles: TStringList;
+  bsa: TwbBSArchive;
+  i: Integer;
+begin
+  Result := False;
+  try
+    slFiles := TStringList.Create;
+    bsa := TwbBSArchive.Create;
+    try
+      if Trim(filePaths) = '' then
+        raise Exception.Create('No files to compress.');
+
+      slFiles.Text := filePaths;
+      bsa.Compress := bCompress;
+      bsa.ShareData := bShare;
+
+      // create archive
+      try
+        bsa.CreateArchive(name, TBSArchiveType(archiveType), slFiles);
+      except
+        on x: Exception do
+          raise Exception.Create('Archive creation error: ' + x.Message);
+      end;
+
+      // set custom flags
+      if af <> '' then bsa.ArchiveFlags := StrToInt('$' + af);
+      if ff <> '' then bsa.FileFlags := StrToInt('$' + ff);
+
+      // add files to archive
+      for i := 0 to Pred(slFiles.Count) do try
+        bsa.AddFile(folder, folder + slFiles[i]);
+      except
+        on x: Exception do
+          raise Exception.Create(Format('File packing error "%s%s": %s',
+            [folder, slFiles[i], x.Message]));
+      end;
+
+      // save archive
+      try
+        bsa.Save;
+      except
+        on x: Exception do
+          raise Exception.Create('Archive saving error: ' + x.Message);
+      end;
+    finally
+      slFiles.Free;
+      bsa.Free;
+    end;
     Result := True;
   except
     on x: Exception do
