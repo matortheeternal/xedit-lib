@@ -88,9 +88,9 @@ exports
   // RECORD HANDLING METHODS
   GetFormID, SetFormID, GetRecord, GetRecords, GetREFRs, GetOverrides,
   GetReferencedBy, GetMasterRecord, GetPreviousOverride, GetWinningOverride,
-  FindNextRecord, FindPreviousRecord, FindValidReferences, ExchangeReferences,
-  IsMaster, IsInjected, IsOverride, IsWinningOverride, GetNodes,
-  GetConflictData, GetNodeElements,
+  GetInjectionTarget, FindNextRecord, FindPreviousRecord, FindValidReferences,
+  ExchangeReferences, IsMaster, IsInjected, IsOverride, IsWinningOverride,
+  GetNodes, GetConflictData, GetNodeElements,
   // FILTERING METHODS
   FilterRecord, ResetFilter;
 

@@ -1016,6 +1016,7 @@ type
     function GetSubrecordErrors: string;
     function GetIsWinningOverride: Boolean;
     function GetWinningOverride: IwbMainRecord;
+    function GetInjectionTarget: IwbFile;
     function GetHighestOverrideOrSelf(aMaxLoadOrder: Integer): IwbMainRecord;
     function GetFlags: TwbMainRecordStructFlags;
     function GetFlagsPtr: PwbMainRecordStructFlags;
@@ -7945,6 +7946,15 @@ begin
       Result := mrOverrides[High(mrOverrides)]
     else
       Result := Self;
+end;
+
+function TwbMainRecord.GetInjectionTarget: IwbFile;
+var
+  i: Integer;
+begin
+  if not GetIsInjected then exit;
+  i := GetFormID shr 24;
+  Result := GetFile.Masters[i];
 end;
 
 procedure TwbMainRecord.InformStorage(var aBasePtr: Pointer; aEndPtr: Pointer);

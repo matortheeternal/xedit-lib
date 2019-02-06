@@ -994,6 +994,7 @@ type
     function GetIsWinningOverride: Boolean;
     function GetWinningOverride: IwbMainRecord;
     function GetHighestOverrideOrSelf(aMaxLoadOrder: Integer): IwbMainRecord;
+    function GetInjectionTarget: IwbFile;
     function GetFlags: TwbMainRecordStructFlags;
     function GetChildGroup: IwbGroupRecord;
     function EnsureChildGroup: IwbGroupRecord;
@@ -1104,6 +1105,9 @@ type
       read GetWinningOverride;
     property HighestOverrideOrSelf[aMaxLoadOrder: Integer]: IwbMainRecord
       read GetHighestOverrideOrSelf;
+
+    property InjectionTarget: IwbFile
+      read GetInjectionTarget;
 
     property ReferencedBy[aIndex: Integer]: IwbMainRecord
       read GetReferencedBy;
