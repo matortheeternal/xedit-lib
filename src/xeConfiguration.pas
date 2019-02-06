@@ -23,6 +23,8 @@ type
   {$endregion}
 
   {$region 'Functions'}
+  function GetMyGamesPath: String;
+  function GetGameIniPath(myGamesPath: String; GameMode: TGameMode): String;
   procedure SetGame(id: integer);
   function NativeGetGamePath(mode: TGameMode): string;
   {$endregion}
