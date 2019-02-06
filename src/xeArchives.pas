@@ -12,6 +12,8 @@ uses
   function GetFileContainer(path: PWideChar; len: PInteger): WordBool; cdecl;
   function GetLoadedContainers(len: PInteger): WordBool; cdecl;
   function LoadContainer(filePath: PWideChar): WordBool; cdecl;
+  function BuildArchive(name, folder, filePaths: PWideChar; archiveType: Integer;
+    bCompress, bShare: WordBool; af, ff: PWideChar): WordBool; cdecl;
   {$endregion}
 
 implementation

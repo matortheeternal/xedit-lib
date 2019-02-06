@@ -33,6 +33,7 @@ uses
   wbHelpers in 'lib\xedit\wbHelpers.pas',
   wbLocalization in 'lib\xedit\wbLocalization.pas',
   wbStreams in 'lib\xedit\wbStreams.pas',
+  wbBSArchive in 'lib\BSArch\wbBSArchive.pas',
   Argo in 'lib\Argo\Argo.pas',
   ArgoTypes in 'lib\Argo\ArgoTypes.pas';
 
@@ -56,7 +57,7 @@ exports
   LoadPluginHeader, BuildReferences, GetLoaderStatus, UnloadPlugin,
   // ARCHIVE HANDLING METHODS
   ExtractContainer, ExtractFile, GetContainerFiles, GetFileContainer,
-  GetLoadedContainers, LoadContainer,
+  GetLoadedContainers, LoadContainer, BuildArchive,
   // TEXTURE HANDLING METHODS
   GetBitmapResource,
   // FILE HANDLING METHODS

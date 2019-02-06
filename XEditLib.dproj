@@ -1,4 +1,4 @@
-﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
         <ProjectGuid>{75B14327-BE37-4588-8BD4-BD6D40177D2E}</ProjectGuid>
         <MainSource>XEditLib.dpr</MainSource>
@@ -132,6 +132,7 @@
         <DCCReference Include="lib\xedit\wbHelpers.pas"/>
         <DCCReference Include="lib\xedit\wbLocalization.pas"/>
         <DCCReference Include="lib\xedit\wbStreams.pas"/>
+        <DCCReference Include="lib\BSArch\wbBSArchive.pas"/>
         <DCCReference Include="lib\Argo\Argo.pas"/>
         <DCCReference Include="lib\Argo\ArgoTypes.pas"/>
         <BuildConfiguration Include="Release">
