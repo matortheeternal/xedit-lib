@@ -108,8 +108,7 @@
         <DCCReference Include="src\xeConfiguration.pas"/>
         <DCCReference Include="src\xeMeta.pas"/>
         <DCCReference Include="src\xeSetup.pas"/>
-        <DCCReference Include="src\xeArchives.pas"/>
-        <DCCReference Include="src\xeTextures.pas"/>
+        <DCCReference Include="src\xeResources.pas"/>
         <DCCReference Include="src\xeFiles.pas"/>
         <DCCReference Include="src\xeMasters.pas"/>
         <DCCReference Include="src\xeElements.pas"/>

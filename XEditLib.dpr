@@ -9,8 +9,7 @@ uses
   xeConfiguration in 'src\xeConfiguration.pas',
   xeMeta in 'src\xeMeta.pas',
   xeSetup in 'src\xeSetup.pas',
-  xeArchives in 'src\xeArchives.pas',
-  xeTextures in 'src\xeTextures.pas',
+  xeResources in 'src\xeResources.pas',
   xeFiles in 'src\xeFiles.pas',
   xeMasters in 'src\xeMasters.pas',
   xeElements in 'src\xeElements.pas',
@@ -55,11 +54,9 @@ exports
   GetGamePath, SetGamePath, GetGameLanguage, SetLanguage, SetBackupPath,
   SetGameMode, GetLoadOrder, GetActivePlugins, LoadPlugins, LoadPlugin,
   LoadPluginHeader, BuildReferences, GetLoaderStatus, UnloadPlugin,
-  // ARCHIVE HANDLING METHODS
+  // RESOURCE HANDLING METHODS
   ExtractContainer, ExtractFile, GetContainerFiles, GetFileContainer,
-  GetLoadedContainers, LoadContainer, BuildArchive,
-  // TEXTURE HANDLING METHODS
-  GetBitmapResource,
+  GetLoadedContainers, LoadContainer, BuildArchive, GetTextureData,
   // FILE HANDLING METHODS
   AddFile, FileByIndex, FileByLoadOrder, FileByName, FileByAuthor, NukeFile,
   RenameFile, SaveFile, GetRecordCount, GetOverrideRecordCount, MD5Hash, CRCHash,
