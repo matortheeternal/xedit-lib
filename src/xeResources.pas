@@ -1,11 +1,9 @@
-unit xeArchives;
+unit xeResources;
 
 interface
 
 uses
-  Classes,
-  // xedit units
-  wbInterface;
+  Classes;
 
   {$region 'API functions'}
   function ExtractContainer(name, destination: PWideChar; replace: WordBool): WordBool; cdecl;
@@ -14,14 +12,42 @@ uses
   function GetFileContainer(path: PWideChar; len: PInteger): WordBool; cdecl;
   function GetLoadedContainers(len: PInteger): WordBool; cdecl;
   function LoadContainer(filePath: PWideChar): WordBool; cdecl;
+  function BuildArchive(name, folder, filePaths: PWideChar; archiveType: Integer;
+    bCompress, bShare: WordBool; af, ff: PWideChar): WordBool; cdecl;
+  function GetTextureData(resourceName: PWideChar; width, height: PInteger): WordBool; cdecl;
   {$endregion}
 
 implementation
 
 uses
-  SysUtils,
+  SysUtils, Vcl.Graphics,
+  // xedit modules
+  wbInterface, wbBSArchive, Imaging, ImagingTypes,
+  // xelib modules
   xeMessages, xeMeta;
 
+procedure StoreImageBytes(img: TImageData);
+var
+  x, y, offset: Integer;
+  rect: TColor32Rec;
+  bitmap: TImageData;
+begin
+  SetLength(resultBytes, img.Width * img.Height * 4);
+  InitImage(bitmap);
+  CloneImage(img, bitmap);
+  ConvertImage(bitmap, ifA8R8G8B8);
+  for y := 0 to Pred(bitmap.Height) do
+    for x := 0 to Pred(bitmap.Width) do begin
+      rect := GetPixel32(bitmap, x, y);
+      offset := (y * bitmap.Width + x) * 4;
+      resultBytes[offset]     := rect.R;
+      resultBytes[offset + 1] := rect.G;
+      resultBytes[offset + 2] := rect.B;
+      resultBytes[offset + 3] := rect.A;
+    end;
+end;
+
+{$region 'API functions'}
 function ExtractContainer(name, destination: PWideChar; replace: WordBool): WordBool; cdecl;
 var
   ResourceList: TStringList;
@@ -140,5 +166,87 @@ begin
       ExceptionHandler(x);
   end;
 end;
+
+function BuildArchive(name, folder, filePaths: PWideChar; archiveType: Integer;
+  bCompress, bShare: WordBool; af, ff: PWideChar): WordBool; cdecl;
+var
+  slFiles: TStringList;
+  bsa: TwbBSArchive;
+  i: Integer;
+begin
+  Result := False;
+  try
+    slFiles := TStringList.Create;
+    bsa := TwbBSArchive.Create;
+    try
+      if Trim(filePaths) = '' then
+        raise Exception.Create('No files to compress.');
+
+      slFiles.Text := filePaths;
+      bsa.Compress := bCompress;
+      bsa.ShareData := bShare;
+
+      // create archive
+      try
+        bsa.CreateArchive(name, TBSArchiveType(archiveType), slFiles);
+      except
+        on x: Exception do
+          raise Exception.Create('Archive creation error: ' + x.Message);
+      end;
+
+      // set custom flags
+      if af <> '' then bsa.ArchiveFlags := StrToInt('$' + af);
+      if ff <> '' then bsa.FileFlags := StrToInt('$' + ff);
+
+      // add files to archive
+      for i := 0 to Pred(slFiles.Count) do try
+        bsa.AddFile(folder, folder + slFiles[i]);
+      except
+        on x: Exception do
+          raise Exception.Create(Format('File packing error "%s%s": %s',
+            [folder, slFiles[i], x.Message]));
+      end;
+
+      // save archive
+      try
+        bsa.Save;
+      except
+        on x: Exception do
+          raise Exception.Create('Archive saving error: ' + x.Message);
+      end;
+    finally
+      slFiles.Free;
+      bsa.Free;
+    end;
+    Result := True;
+  except
+    on x: Exception do
+      ExceptionHandler(x);
+  end;
+end;
+
+function GetTextureData(resourceName: PWideChar; width, height: PInteger): WordBool; cdecl;
+var
+  data: TBytes;
+  img: TImageData;
+begin
+  Result := False;
+  try
+    data := wbContainerHandler.OpenResourceData('', string(resourceName));
+    if not LoadImageFromMemory(@data[0], Length(data), img) then
+      Exit;
+    try
+      width^ := img.Width;
+      height^ := img.Height;
+      StoreImageBytes(img);
+      Result := True;
+    finally
+      FreeImage(img);
+    end;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+{$endregion}
 
 end.

@@ -355,7 +355,6 @@ function TwbContainerHandler.GetResourceContainer(const aFileName: string): Stri
 var
   i: Integer;
 begin
-  Result := False;
   for i := High(chContainers) downto Low(chContainers) do
     if chContainers[i].ResourceExists(aFileName) then begin
       Result := chContainers[i].Name;

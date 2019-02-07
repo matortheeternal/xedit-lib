@@ -25,6 +25,7 @@ type
   function GetMasterRecord(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function GetPreviousOverride(_id, _id2: Cardinal; _res: PCardinal): WordBool; cdecl;
   function GetWinningOverride(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
+  function GetInjectionTarget(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function FindNextRecord(_id: Cardinal; search: PWideChar; byEdid, byName: WordBool; _res: PCardinal): WordBool; cdecl;
   function FindPreviousRecord(_id: Cardinal; search: PWideChar; byEdid, byName: Wordbool; _res: PCardinal): WordBool; cdecl;
   function FindValidReferences(_id: Cardinal; signature, search: PWideChar; limitTo: Integer; len: PInteger): WordBool; cdecl;
@@ -586,6 +587,21 @@ begin
     if not Supports(Resolve(_id), IwbMainRecord, rec) then
       raise Exception.Create('Interface must be a main record.');
     _res^ := Store(rec.WinningOverride);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetInjectionTarget(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
+var
+  rec: IwbMainRecord;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbMainRecord, rec) then
+      raise Exception.Create('Interface must be a main record.');
+    _res^ := Store(rec.InjectionTarget);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);

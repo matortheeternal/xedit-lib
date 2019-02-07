@@ -1,4 +1,4 @@
-﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
         <ProjectGuid>{75B14327-BE37-4588-8BD4-BD6D40177D2E}</ProjectGuid>
         <MainSource>XEditLib.dpr</MainSource>
@@ -42,7 +42,7 @@
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base)'!=''">
         <DCC_UsePackage>rtl;vcl;xmlrtl;vclactnband;vclx;VclSmp;vclimg;svnui;svn;bdertl;TeeUI;TeeDB;Tee;vcldb;dbrtl;vcldbx;vcltouch;dsnap;dsnapcon;vclib;ibxpress;adortl;IndyCore;IndySystem;IndyProtocols;inet;intrawebdb_110_150;Intraweb_110_150;vclie;websnap;webdsnap;inetdb;inetdbbde;inetdbxpress;soaprtl;vclribbon;dbexpress;DbxCommonDriver;DataSnapIndy10ServerTransport;DataSnapProviderClient;DbxClientDriver;DataSnapClient;dbxcds;DataSnapServer;AzureCloud;DBXInterBaseDriver;DBXMySQLDriver;DBXFirebirdDriver;DBXSybaseASEDriver;DBXSybaseASADriver;DBXOracleDriver;DBXMSSQLDriver;DBXInformixDriver;DBXDb2Driver;VirtualTreesD17;madBasic_;madDisAsm_;madExcept_;JclDeveloperTools;Jcl;JclVcl;JclContainers;JvCore;JvSystem;JvStdCtrls;JvAppFrm;JvBands;JvDB;JvDlgs;JvBDE;JvControls;JvCmp;JvCrypt;JvCustom;JvDocking;JvDotNetCtrls;JvGlobus;JvHMI;JvJans;JvManagedThreads;JvMM;JvNet;JvPageComps;JvPascalInterpreter;JvPluginSystem;JvPrintPreview;JvRuntimeDesign;JvTimeFramework;JvWizards;JvXPCtrls;$(DCC_UsePackage)</DCC_UsePackage>
-        <DCC_UnitSearchPath>lib\mte;lib\Imaging;lib\xedit;lib\Imaging\zlib;lib\xedit\zlib;lib\xedit\lz4;lib\Argo;lib\FastMM;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+        <DCC_UnitSearchPath>lib\mte;lib\Imaging;lib\xedit;lib\Imaging\zlib;lib\xedit\zlib;lib\xedit\lz4;lib\Argo;lib\FastMM;lib\BSArch;lib\TForge;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <DCC_DcuOutput>.\$(Config)\$(Platform)</DCC_DcuOutput>
         <DCC_E>false</DCC_E>
         <DCC_ImageBase>00400000</DCC_ImageBase>
@@ -108,8 +108,7 @@
         <DCCReference Include="src\xeConfiguration.pas"/>
         <DCCReference Include="src\xeMeta.pas"/>
         <DCCReference Include="src\xeSetup.pas"/>
-        <DCCReference Include="src\xeArchives.pas"/>
-        <DCCReference Include="src\xeTextures.pas"/>
+        <DCCReference Include="src\xeResources.pas"/>
         <DCCReference Include="src\xeFiles.pas"/>
         <DCCReference Include="src\xeMasters.pas"/>
         <DCCReference Include="src\xeElements.pas"/>
@@ -132,6 +131,7 @@
         <DCCReference Include="lib\xedit\wbHelpers.pas"/>
         <DCCReference Include="lib\xedit\wbLocalization.pas"/>
         <DCCReference Include="lib\xedit\wbStreams.pas"/>
+        <DCCReference Include="lib\BSArch\wbBSArchive.pas"/>
         <DCCReference Include="lib\Argo\Argo.pas"/>
         <DCCReference Include="lib\Argo\ArgoTypes.pas"/>
         <BuildConfiguration Include="Release">

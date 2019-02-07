@@ -9,8 +9,7 @@ uses
   xeConfiguration in 'src\xeConfiguration.pas',
   xeMeta in 'src\xeMeta.pas',
   xeSetup in 'src\xeSetup.pas',
-  xeArchives in 'src\xeArchives.pas',
-  xeTextures in 'src\xeTextures.pas',
+  xeResources in 'src\xeResources.pas',
   xeFiles in 'src\xeFiles.pas',
   xeMasters in 'src\xeMasters.pas',
   xeElements in 'src\xeElements.pas',
@@ -33,6 +32,7 @@ uses
   wbHelpers in 'lib\xedit\wbHelpers.pas',
   wbLocalization in 'lib\xedit\wbLocalization.pas',
   wbStreams in 'lib\xedit\wbStreams.pas',
+  wbBSArchive in 'lib\BSArch\wbBSArchive.pas',
   Argo in 'lib\Argo\Argo.pas',
   ArgoTypes in 'lib\Argo\ArgoTypes.pas';
 
@@ -54,11 +54,9 @@ exports
   GetGamePath, SetGamePath, GetGameLanguage, SetLanguage, SetBackupPath,
   SetGameMode, GetLoadOrder, GetActivePlugins, LoadPlugins, LoadPlugin,
   LoadPluginHeader, BuildReferences, GetLoaderStatus, UnloadPlugin,
-  // ARCHIVE HANDLING METHODS
+  // RESOURCE HANDLING METHODS
   ExtractContainer, ExtractFile, GetContainerFiles, GetFileContainer,
-  GetLoadedContainers, LoadContainer,
-  // TEXTURE HANDLING METHODS
-  GetBitmapResource,
+  GetLoadedContainers, LoadContainer, BuildArchive, GetTextureData,
   // FILE HANDLING METHODS
   AddFile, FileByIndex, FileByLoadOrder, FileByName, FileByAuthor, NukeFile,
   RenameFile, SaveFile, GetRecordCount, GetOverrideRecordCount, MD5Hash, CRCHash,
@@ -87,9 +85,9 @@ exports
   // RECORD HANDLING METHODS
   GetFormID, SetFormID, GetRecord, GetRecords, GetREFRs, GetOverrides,
   GetReferencedBy, GetMasterRecord, GetPreviousOverride, GetWinningOverride,
-  FindNextRecord, FindPreviousRecord, FindValidReferences, ExchangeReferences,
-  IsMaster, IsInjected, IsOverride, IsWinningOverride, GetNodes,
-  GetConflictData, GetNodeElements,
+  GetInjectionTarget, FindNextRecord, FindPreviousRecord, FindValidReferences,
+  ExchangeReferences, IsMaster, IsInjected, IsOverride, IsWinningOverride,
+  GetNodes, GetConflictData, GetNodeElements,
   // FILTERING METHODS
   FilterRecord, ResetFilter;
 
