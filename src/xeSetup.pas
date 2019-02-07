@@ -38,12 +38,12 @@ type
   {$endregion}
 
   {$region 'API functions'}
+  function GetGamePath(mode: Integer; len: PInteger): WordBool; cdecl;
   function SetGamePath(path: PWideChar): WordBool; cdecl;
   function GetGameLanguage(mode: Integer; len: PInteger): WordBool; cdecl;
   function SetLanguage(lang: PWideChar): WordBool; cdecl;
   function SetBackupPath(path: PWideChar): WordBool; cdecl;
   function SetGameMode(mode: Integer): WordBool; cdecl;
-  function GetGamePath(mode: Integer; len: PInteger): WordBool; cdecl;
   function GetLoadOrder(len: PInteger): WordBool; cdecl;
   function GetActivePlugins(len: PInteger): WordBool; cdecl;
   function LoadPlugins(loadOrder: PWideChar; smartLoad: WordBool): WordBool; cdecl;

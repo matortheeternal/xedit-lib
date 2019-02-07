@@ -48,7 +48,7 @@ type
   private
     chContainers: array of IwbResourceContainer;
   protected
-    procedure AddContainer(const aContainer: IwbResourceContainer);
+    procedure AddContainer(aContainer: IwbResourceContainer);
 
     {---IwbContainerHandler---}
     procedure AddFolder(const aPath: string);
@@ -240,7 +240,7 @@ end;
 
 { TwbContainerHandler }
 
-procedure TwbContainerHandler.AddContainer(const aContainer: IwbResourceContainer);
+procedure TwbContainerHandler.AddContainer(aContainer: IwbResourceContainer);
 var
   i: Integer;
 begin
