@@ -32,7 +32,6 @@ uses
   wbHelpers in 'lib\xedit\wbHelpers.pas',
   wbLocalization in 'lib\xedit\wbLocalization.pas',
   wbStreams in 'lib\xedit\wbStreams.pas',
-  wbBSArchive in 'lib\BSArch\wbBSArchive.pas',
   Argo in 'lib\Argo\Argo.pas',
   ArgoTypes in 'lib\Argo\ArgoTypes.pas';
 
