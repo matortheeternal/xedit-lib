@@ -33,11 +33,12 @@ type
   function GetExceptionMessage(str: PWideChar; len: Integer): WordBool; cdecl; external 'XEditLib.dll';
 
   // LOADING AND SET UP METHODS
+  function GetGamePath(mode: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function SetGamePath(path: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
+  function GetGameLanguage(mode: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function SetLanguage(lang: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
   function SetBackupPath(path: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
   function SetGameMode(mode: Integer): WordBool; cdecl; external 'XEditLib.dll';
-  function GetGamePath(mode: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetLoadOrder(len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetActivePlugins(len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function LoadPlugins(loadOrder: PWideChar; smartLoad: WordBool): WordBool; cdecl; external 'XEditLib.dll';
@@ -62,12 +63,15 @@ type
   function SortNames(_id: Cardinal; sig: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
   function GetFileLoadOrder(_id: Cardinal; loadOrder: PInteger): WordBool; cdecl; external 'XEditLib.dll';
 
-  // Resource HANDLING METHODS
+  // RESOURCE HANDLING METHODS
   function ExtractContainer(name, destination: PWideChar; replace: WordBool): WordBool; cdecl; external 'XEditLib.dll';
   function ExtractFile(name, source, destination: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
   function GetContainerFiles(name, path: PWideChar; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function GetFileContainer(path: PWideChar; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetLoadedContainers(len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function LoadContainer(filePath: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
+  function BuildArchive(name, folder, filePaths: PWideChar; archiveType: Integer;
+    bCompress, bShare: WordBool; af, ff: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
   function GetTextureData(resourceName: PWideChar; width, height: PInteger): WordBool; cdecl; external 'XEditLib.dll';
 
   // MASTER HANDLING METHODS
@@ -156,6 +160,7 @@ type
   function GetOverrides(_id: Cardinal; count: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetMasterRecord(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function GetWinningOverride(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
+  function GetInjectionTarget(_id: Cardinal; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function FindNextRecord(_id: Cardinal; search: PWideChar; byEdid, byName: WordBool; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function FindPreviousRecord(_id: Cardinal; search: PWideChar; byEdid, byName: Wordbool; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function FindValidReferences(_id: Cardinal; signature, search: PWideChar; limitTo: Integer; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
