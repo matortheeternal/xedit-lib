@@ -14,8 +14,7 @@ uses
   xeMeta in 'src\xeMeta.pas',
   xeSetup in 'src\xeSetup.pas',
   xeFiles in 'src\xeFiles.pas',
-  xeArchives in 'src\xeArchives.pas',
-  xeTextures in 'src\xeTextures.pas',
+  xeResources in 'src\xeResources.pas',
   xeMasters in 'src\xeMasters.pas',
   xeElements in 'src\xeElements.pas',
   xeElementValues in 'src\xeElementValues.pas',
@@ -41,8 +40,7 @@ uses
   txMessages in 'tests\txMessages.pas',
   txSetup in 'tests\txSetup.pas',
   txFiles in 'tests\txFiles.pas',
-  txTextures in 'tests\txTextures.pas',
-  txArchives in 'tests\txArchives.pas',
+  txResources in 'tests\txResources.pas',
   txMasters in 'tests\txMasters.pas',
   txElements in 'tests\txElements.pas',
   txElementValues in 'tests\txElementValues.pas',
@@ -67,8 +65,7 @@ begin
   BuildMetaTests;
   BuildMessageTests;
   BuildFileHandlingTests;
-  BuildTextureTests;
-  BuildArchiveTests;
+  BuildResourceTests;
   BuildMasterHandlingTests;
   BuildElementHandlingTests;
   BuildElementValueTests;

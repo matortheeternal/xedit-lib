@@ -62,15 +62,13 @@ type
   function SortNames(_id: Cardinal; sig: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
   function GetFileLoadOrder(_id: Cardinal; loadOrder: PInteger): WordBool; cdecl; external 'XEditLib.dll';
 
-  // ARCHIVE HANDLING METHODS
+  // Resource HANDLING METHODS
   function ExtractContainer(name, destination: PWideChar; replace: WordBool): WordBool; cdecl; external 'XEditLib.dll';
   function ExtractFile(name, source, destination: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
   function GetContainerFiles(name, path: PWideChar; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetLoadedContainers(len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function LoadContainer(filePath: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
-
-  // TEXTURE HANDLING METHODS
-  function GetBitmapResource(resourceName: PWideChar; width, height: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function GetTextureData(resourceName: PWideChar; width, height: PInteger): WordBool; cdecl; external 'XEditLib.dll';
 
   // MASTER HANDLING METHODS
   function CleanMasters(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';

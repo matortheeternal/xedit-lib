@@ -1,9 +1,9 @@
-unit txArchives;
+unit txResources;
 
 interface
 
   // public testing interface
-  procedure BuildArchiveTests;
+  procedure BuildResourceTests;
 
 implementation
 
@@ -14,7 +14,7 @@ uses
   txImports,
 {$ENDIF}
 {$IFNDEF USE_DLL}
-  xeArchives, xeMeta,
+  xeResources, xeMeta,
 {$ENDIF}
   txMeta;
 
@@ -35,10 +35,11 @@ begin
   end;
 end;
 
-procedure BuildArchiveTests;
+procedure BuildResourceTests;
 var
-  len: Integer;
+  len, w, h: Integer;
   dataPath, container: String;
+  bytes: TBytes;
 begin
   Describe('Archive Functions', procedure
     begin
@@ -65,6 +66,20 @@ begin
             begin
               container := dataPath + 'Skyrim - Textures.bsa';
               TestGetContainerFiles(PWideChar(container), 'textures\sky\', 47);
+            end);
+        end);
+
+      Describe('GetBitmapResource', procedure
+        begin
+          It('Should fail if the resource does not exist', procedure
+            begin
+              ExpectFailure(GetTextureData('abcdefghijk', @w, @h));
+            end);
+
+          It('Should return correct bitmap if resource exists', procedure
+            begin
+              ExpectSuccess(GetTextureData('textures\sky\skyrimclouds01.dds', @w, @h));
+              bytes := grb(w * h * 4);
             end);
         end);
     end);
