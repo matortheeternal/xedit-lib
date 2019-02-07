@@ -67,6 +67,8 @@ mod-dump/Skyrim/plugins/*.esm
 
 # OSX files to ignore
 .DS_STORE
+
+# Other files
 mod-dump/Debug/
 mod-dump/Skyrim/
 mod-dump/mod_dump_log.txt
@@ -77,5 +79,6 @@ Release/
 *.mes
 SSE Debug/
 FO4 Debug/
-
 *.jdbg
+lib/BSArch/*.dpr
+lib/BSArch/*.dproj
