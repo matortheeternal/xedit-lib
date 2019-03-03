@@ -22,8 +22,8 @@ uses
   Classes,
   Windows,
   SysUtils,
-  Graphics,
-  Forms,
+  Vcl.Graphics,
+  Vcl.Forms,
   ShellAPI,
   ShlObj,
   IniFiles,
@@ -1098,11 +1098,10 @@ begin
 
     Elems   := Container.ElementByName[anArrayName];
     if not Assigned(Elems) then
-      if Element.GetNativeValue <> 0 then
-        Element.SetNativeValue(0)
-      // if count = 0 and counter element is not required, then just remove it
-      else if not Element.Def.Required then
-        Container.RemoveElement(aCounterName);
+      if not Element.Def.Required then
+        Container.RemoveElement(aCounterName)
+      else
+        Element.SetNativeValue(0);
 
     Result := True; // Counter member exists
   finally

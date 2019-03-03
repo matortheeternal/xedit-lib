@@ -2,19 +2,18 @@
 
 ## Various
 
-- [ ] Added `wbAdvancedNAVI` - [2cbe7e](https://github.com/matortheeternal/xedit-lib/commit/2cbe7ea6390ced0c89b5c3ca9a5e2312e7c09ef3#diff-884f2fb29b253fc525156c1bd50cd538)
-- [ ] Added support for 64-bit build
+- [x] Added `wbAdvancedNAVI` - [2cbe7e](https://github.com/matortheeternal/xedit-lib/commit/2cbe7ea6390ced0c89b5c3ca9a5e2312e7c09ef3#diff-884f2fb29b253fc525156c1bd50cd538)
+- [x] Added support for 64-bit build
 
 ## wbImplementation.pas
 
 - [ ] Improved finding records by EditorID/Name - [a919e6](https://github.com/matortheeternal/xedit-lib/commit/a919e68c918b8b5320e23a4f0168775c4f8907df#diff-884f2fb29b253fc525156c1bd50cd538), [e28176](https://github.com/matortheeternal/xedit-lib/commit/e28176370451ae47eaaddfa77f9946beb025d92e#diff-884f2fb29b253fc525156c1bd50cd538)
 - [ ] Added `AddGroup` method to `IwbGroupRecord` - [149342](https://github.com/matortheeternal/xedit-lib/commit/149342425b1d8985195dbe1775e4ec0be0549032#diff-884f2fb29b253fc525156c1bd50cd538)
 - [ ] Added `wbAllowErrors` - [271bbf](https://github.com/matortheeternal/xedit-lib/commit/271bbf77aa86682587a70f3750ae1935f8aac032#diff-884f2fb29b253fc525156c1bd50cd538)
-- [ ] Improved handling of unordered subrecords - [ff0afb](https://github.com/matortheeternal/xedit-lib/commit/ff0afb3ea4cb13bfaf194e99e2976ed7694094b5#diff-884f2fb29b253fc525156c1bd50cd538)
+- [ ] Improved handling of unordered subrecords - [ff0afb](https://github.com/matortheeternal/xedit-lib/commit/ff0afb3ea4cb13bfaf194e99e2976ed7694094b5#diff-884f2fb29b253fc525156c1bd50cd538), [ffaf14](https://github.com/matortheeternal/xedit-lib/commit/ffaf14ff474692acec310f4609931f1bfba2c172#diff-1c52c6c99b8608acd96b2af323687072)
 - [ ] Added `TwbFile.SetFileName` - [ccdf6f](https://github.com/matortheeternal/xedit-lib/commit/ccdf6fab0f5ae60aaf5f98053a7d95fb63f3cd01#diff-884f2fb29b253fc525156c1bd50cd538), [3153e9](https://github.com/matortheeternal/xedit-lib/commit/3153e9d2708e91b9920942c7633b80eb11b0676e#diff-1c52c6c99b8608acd96b2af323687072)
 - [ ] Added `TwbFile.SetIsEditable` - [4b023f](https://github.com/matortheeternal/xedit-lib/commit/4b023f2ebef9e79a1ea83104b46f929da4173d3d#diff-884f2fb29b253fc525156c1bd50cd538)
 
-- [ ] Improved handling of unordered subrecords - [ff0afb](https://github.com/matortheeternal/xedit-lib/commit/ff0afb3ea4cb13bfaf194e99e2976ed7694094b5#diff-884f2fb29b253fc525156c1bd50cd538), [ffaf14](https://github.com/matortheeternal/xedit-lib/commit/ffaf14ff474692acec310f4609931f1bfba2c172#diff-1c52c6c99b8608acd96b2af323687072)
 - [ ] Fixed bug in `TwbFile.Create` which caused `fsIsHardcoded` to not be set in file states properly - [0eeb6e](https://github.com/matortheeternal/xedit-lib/commit/0eeb6e8b767820886d9e5df4809bd4ab58c5a9db#diff-884f2fb29b253fc525156c1bd50cd538) 
 - [ ] Added custom element filtering system - [1731a8](https://github.com/matortheeternal/xedit-lib/commit/1731a8f6fe3efc5739562ce78516adc28e531e99#diff-884f2fb29b253fc525156c1bd50cd538), [ab4a74](https://github.com/matortheeternal/xedit-lib/commit/ab4a74a1a36a9e2f29250312374df71232abc9e8#diff-884f2fb29b253fc525156c1bd50cd538)
 - [ ] Assigning `TwbFormID` elements now works through native values - [3e1501](https://github.com/matortheeternal/xedit-lib/commit/3e150117d23840d736030fe475419ac60c47b253#diff-884f2fb29b253fc525156c1bd50cd538)
@@ -33,7 +32,7 @@
 
 ## wbHelpers.pas
 
-- [ ] Fixed issue with `wbCounterContainerAfterSet` not deleting counter fields when their corresponding array gets deleted - [3c1400](https://github.com/matortheeternal/xedit-lib/commit/3c14008f7fc022967cea7baed7ec7e89f5f848f2#diff-2e19e9aa97d57dbad9528ff622aac594)
+- [x] Fixed issue with `wbCounterContainerAfterSet` not deleting counter fields when their corresponding array gets deleted - [3c1400](https://github.com/matortheeternal/xedit-lib/commit/3c14008f7fc022967cea7baed7ec7e89f5f848f2#diff-2e19e9aa97d57dbad9528ff622aac594)
 
 ## wbBSA.pas
 
