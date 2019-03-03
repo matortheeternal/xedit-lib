@@ -651,7 +651,8 @@ type
 
     //the following entries must match TwbElementErrorType:
     esReportedErrorReading,
-    esReportedErrorUnusedData
+    esReportedErrorUnusedData,
+    esFilterShow
   );
 
   TwbElementStates = set of TwbElementState;
@@ -867,6 +868,7 @@ type
 
     procedure Hide;
     procedure Show;
+    procedure Filter(show: Boolean);
     function GetIsHidden: Boolean;
 
     procedure MoveUp;
