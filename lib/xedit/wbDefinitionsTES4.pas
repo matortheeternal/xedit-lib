@@ -319,7 +319,7 @@ var
   wbCTDA: IwbSubRecordUnionDef;
   wbSCHR: IwbSubRecordUnionDef;
   wbCTDAs: IwbSubRecordArrayDef;
-  wbSCROs: IwbSubRecordArrayDef;
+  wbSCROs: IwbRecordMemberDef;
   wbPGRP: IwbSubRecordDef;
   wbResultScript: IwbSubRecordStructDef;
 //  wbResultScriptOld: IwbSubRecordStructDef;
@@ -1745,7 +1745,7 @@ begin
         if Connection.Elements[j].NativeValue = 65535 then begin
           if not FirstRemoved then begin
             FirstRemoved := True;
-            Connections.MarkModifiedRecursive;
+            Connections.MarkModifiedRecursive(AllElementTypes);
           end;
           Connection.Elements[j].Remove;
           Removed := True;
@@ -2010,7 +2010,7 @@ begin
     wbInteger('Data Size', itU32, nil, cpIgnore),
     wbRecordFlags,
     wbFormID('FormID', cpFormID),
-    wbByteArray('Unknown', 4, cpIgnore)
+    wbByteArray('Version Control Info', 4, cpIgnore).SetToStr(wbVCI1ToStrBeforeFO4)
   ]);
 
   wbSizeOfMainRecordStruct := 20;
@@ -2023,7 +2023,7 @@ begin
 
   wbEDID := wbString(EDID, 'Editor ID', 0, cpNormal); // not cpBenign according to Arthmoor
   wbFULL := wbStringKC(FULL, 'Name', 0, cpTranslate);
-  wbFULLReq := wbStringKC(FULL, 'Name', 0, cpNormal, True);
+  wbFULLReq := wbStringKC(FULL, 'Name', 0, cpTranslate, True);
   wbDESC := wbStringKC(DESC, 'Description', 0, cpTranslate);
   wbXSCL := wbFloat(XSCL, 'Scale');
 
@@ -2057,7 +2057,7 @@ begin
 
   wbMODL :=
     wbRStructSK([0], 'Model', [
-      wbString(MODL, 'Model Filename'),
+      wbString(MODL, 'Model FileName'),
       wbFloat(MODB, 'Bound Radius', cpBenign),
       wbByteArray(MODT, 'Texture Files Hashes', 0, cpIgnore)
 //      wbArray(MODT, 'Unknown',
@@ -2077,7 +2077,7 @@ begin
     wbByteArray('Unused', 3)
   ]);
 
-  wbRecord(ACHR, 'Placed NPC', [
+  wbRefRecord(ACHR, 'Placed NPC', [
     wbEDID,
     wbFormIDCk(NAME, 'Base', [NPC_], False, cpNormal, True),
     wbRStruct('Unused', [
@@ -2093,10 +2093,10 @@ begin
     wbDATAPosRot
   ], True, wbPlacedAddInfo, cpNormal, False, wbREFRAfterLoad);
 
-  wbXOWN := wbFormIDCk(XOWN, 'Owner', [FACT, NPC_]);
+  wbXOWN := wbFormIDCkNoReach(XOWN, 'Owner', [FACT, NPC_]);
   wbXGLB := wbFormIDCk(XGLB, 'Global variable', [GLOB]);
 
-  wbRecord(ACRE, 'Placed Creature', [
+  wbRefRecord(ACRE, 'Placed Creature', [
     wbEDID,
     wbFormIDCk(NAME, 'Base', [CREA], False, cpNormal, True),
     wbRStruct('Ownership', [
@@ -2118,7 +2118,7 @@ begin
     wbFormIDCk(SNAM, 'Sound', [SOUN])
   ]);
 
-  wbICON := wbString(ICON, 'Icon filename');
+  wbICON := wbString(ICON, 'Icon FileName');
 
   wbActorValueEnum :=
     wbEnum([
@@ -2265,7 +2265,8 @@ begin
         wbFormID('Param #2 - FormID'),
         wbStringMgefCode('Param #2 - Magic Effect Code', 4),
         wbFormIDCk('Param #2 - Actor Value', [ACVA])
-      ])
+      ]),
+      wbUnknown
     ], cpNormal, True, nil, -1, wbEFITAfterLoad);
 
   wbMagicSchoolEnum :=
@@ -2469,27 +2470,27 @@ begin
       wbByteArray('Unused', 1)
     ], cpNormal, True),
     wbRStruct('Male biped model', [
-      wbString(MODL, 'Model Filename'),
+      wbString(MODL, 'Model FileName'),
       wbFloat(MODB, 'Bound Radius', cpBenign),
       wbByteArray(MODT, 'Texture Files Hashes', 0, cpIgnore)
     ], []),
     wbRStruct('Male world model', [
-      wbString(MOD2, 'Model Filename'),
+      wbString(MOD2, 'Model FileName'),
       wbFloat(MO2B, 'Bound Radius', cpBenign),
       wbByteArray(MO2T, 'Texture Files Hashes', 0, cpIgnore)
     ], []),
-    wbString(ICON, 'Male icon filename'),
+    wbString(ICON, 'Male icon FileName'),
     wbRStruct('Female biped model', [
-      wbString(MOD3, 'Model Filename'),
+      wbString(MOD3, 'Model FileName'),
       wbFloat(MO3B, 'Bound Radius', cpBenign),
       wbByteArray(MO3T, 'Texture Files Hashes', 0, cpIgnore)
     ], []),
     wbRStruct('Female world model', [
-      wbString(MOD4, 'Model Filename'),
+      wbString(MOD4, 'Model FileName'),
       wbFloat(MO4B, 'Bound Radius', cpBenign),
       wbByteArray(MO4T, 'Texture Files Hashes', 0, cpIgnore)
     ], []),
-    wbString(ICO2, 'Female icon filename'),
+    wbString(ICO2, 'Female icon FileName'),
     wbStruct(DATA, '', [
       wbInteger('Armor', itU16, wbDiv(100)),
       wbInteger('Value', itU32),
@@ -2683,27 +2684,27 @@ begin
       wbByteArray('Unused', 1)
     ], cpNormal, True),
     wbRStruct('Male biped model', [
-      wbString(MODL, 'Model Filename'),
+      wbString(MODL, 'Model FileName'),
       wbFloat(MODB, 'Bound Radius', cpBenign),
       wbByteArray(MODT, 'Texture Files Hashes', 0, cpIgnore)
     ], []),
     wbRStruct('Male world model', [
-      wbString(MOD2, 'Model Filename'),
+      wbString(MOD2, 'Model FileName'),
       wbFloat(MO2B, 'Bound Radius', cpBenign),
       wbByteArray(MO2T, 'Texture Files Hashes', 0, cpIgnore)
     ], []),
-    wbString(ICON, 'Male icon filename'),
+    wbString(ICON, 'Male icon FileName'),
     wbRStruct('Female biped model', [
-      wbString(MOD3, 'Model Filename'),
+      wbString(MOD3, 'Model FileName'),
       wbFloat(MO3B, 'Bound Radius', cpBenign),
       wbByteArray(MO3T, 'Texture Files Hashes', 0, cpIgnore)
     ], []),
     wbRStruct('Female world model', [
-      wbString(MOD4, 'Model Filename'),
+      wbString(MOD4, 'Model FileName'),
       wbFloat(MO4B, 'Bound Radius', cpBenign),
       wbByteArray(MO4T, 'Texture Files Hashes', 0, cpIgnore)
     ], []),
-    wbString(ICO2, 'Female icon filename'),
+    wbString(ICO2, 'Female icon FileName'),
     wbStruct(DATA, '', [
       wbInteger('Value', itU32),
       wbFloat('Weight')
@@ -2944,8 +2945,8 @@ begin
 
   wbRecord(DIAL, 'Dialog Topic', [
     wbEDID,
-    wbRArrayS('Quests', wbFormIDCk(QSTI, 'Quest', [QUST], False, cpBenign)),
-    wbRArrayS('Quests?', wbFormIDCk(QSTR, 'Quest?', [QUST], False, cpBenign)),
+    wbRArrayS('Quests', wbFormIDCkNoReach(QSTI, 'Quest', [QUST], False, cpBenign)),
+    wbRArrayS('Quests?', wbFormIDCkNoReach(QSTR, 'Quest?', [QUST], False, cpBenign)),
     wbFULL,
     wbInteger(DATA, 'Type', itU8, wbEnum([
       {0} 'Topic',
@@ -3143,7 +3144,7 @@ begin
 
   wbXNAM :=
     wbStructSK(XNAM, [0], 'Relation', [
-      wbFormIDCk('Faction', [FACT, RACE]),
+      wbFormIDCkNoReach('Faction', [FACT, RACE]),
       wbInteger('Modifier', itS32)
     ]);
 
@@ -3187,7 +3188,11 @@ begin
 
   wbRecord(GLOB, 'Global', [
     wbEDID,
-    wbInteger(FNAM, 'Type', itU8, wbGLOBFNAM, nil, cpNormal, True),
+    wbInteger(FNAM, 'Type', itU8, wbEnum([], [
+      Ord('s'), 'Short',
+      Ord('l'), 'Long',
+      Ord('f'), 'Float'
+    ]), cpNormal, True).SetDefaultEditValue('Float'),
     wbFloat(FLTV, 'Value', cpNormal, True)
   ]);
 
@@ -3337,49 +3342,49 @@ begin
 
   wbCTDA :=
     wbRUnion('Condition', [
-      wbStruct(CTDA, 'Condition', [
-        wbInteger('Type', itU8, wbCtdaType),
-        wbByteArray('Unused', 3),
-        wbUnion('Comparison Value', wbCTDACompValueDecider, [
+      wbStructSK(CTDA, [3, 4], 'Condition', [
+     {0}wbInteger('Type', itU8, wbCtdaType),
+     {1}wbByteArray('Unused', 3),
+     {2}wbUnion('Comparison Value', wbCTDACompValueDecider, [
           wbFloat('Comparison Value - Float'),
           wbFormIDCk('Comparison Value - Global', [GLOB])
         ]),
-        wbInteger('Function', itU32, wbCTDAFunctionToStr, wbCTDAFunctionToInt),
-        wbUnion('Parameter #1', wbCTDAParam1Decider, [
+     {3}wbInteger('Function', itU32, wbCTDAFunctionToStr, wbCTDAFunctionToInt),
+     {4}wbUnion('Parameter #1', wbCTDAParam1Decider, [
           {00} wbByteArray('Unknown', 4),
-          {01} wbByteArray('None', 4, cpIgnore),
+          {01} wbByteArray('None', 4, cpIgnore).IncludeFlag(dfZeroSortKey),
           {02} wbInteger('Integer', itS32),
-          {03} wbInteger('Variable Name (INVALID)', itS32),
+          {03} wbInteger('Variable Name (INVALID)', itS32).IncludeFlag(dfZeroSortKey),
           {04} wbInteger('Sex', itU32, wbSexEnum),
           {05} wbFormIDCk('Actor Value', [ACVA]),
 //          {05} wbInteger('Actor Value', itS32, wbActorValueEnum),
           {06} wbInteger('Crime Type', itU32, wbCrimeTypeEnum),
           {07} wbInteger('Axis', itU32, wbAxisEnum),
           {08} wbInteger('Form Type', itU32, wbFormTypeEnum),
-          {09} wbInteger('Quest Stage (INVALID)', itS32),
-          {10} wbFormIDCk('Object Reference', [PLYR, REFR, ACHR, ACRE, TRGT]),
-          {12} wbFormIDCk('Inventory Object', [ARMO, AMMO, MISC, WEAP, INGR, SLGM, SGST, BOOK, KEYM, CLOT, ALCH, APPA, LIGH]),
-          {13} wbFormIDCk('Actor', [PLYR, ACHR, ACRE, TRGT]),
-          {14} wbFormIDCk('Quest', [QUST]),
-          {15} wbFormIDCk('Faction', [FACT]),
-          {16} wbFormIDCk('Cell', [CELL]),
-          {17} wbFormIDCk('Class', [CLAS]),
-          {18} wbFormIDCk('Race', [RACE]),
-          {19} wbFormIDCk('Actor Base', [NPC_, CREA, ACTI]),
-          {20} wbFormIDCk('Global', [GLOB]),
-          {21} wbFormIDCk('Weather', [WTHR]),
-          {22} wbFormIDCk('Package', [PACK]),
-          {23} wbFormIDCk('Owner', [FACT, NPC_]),
-          {24} wbFormIDCk('Birthsign', [BSGN]),
-          {25} wbFormIDCk('Furniture', [FURN]),
-          {26} wbFormIDCk('Magic Item', [SPEL]),
-          {27} wbFormIDCk('Magic Effect', [MGEF]),
-          {28} wbFormIDCk('Worldspace', [WRLD]),
-          {29} wbFormIDCk('Referenceable Object', [CREA, NPC_, TREE, SBSP, LVLC, SOUN, ACTI, DOOR, FLOR, STAT, FURN, CONT, ARMO, AMMO, MISC, WEAP, INGR, SLGM, SGST, BOOK, KEYM, CLOT, ALCH, APPA, LIGH, GRAS])
+          {09} wbInteger('Quest Stage (INVALID)', itS32).IncludeFlag(dfZeroSortKey),
+          {10} wbFormIDCkNoReach('Object Reference', [PLYR, REFR, ACHR, ACRE, TRGT]),
+          {12} wbFormIDCkNoReach('Inventory Object', [ARMO, AMMO, MISC, WEAP, INGR, SLGM, SGST, BOOK, KEYM, CLOT, ALCH, APPA, LIGH]),
+          {13} wbFormIDCkNoReach('Actor', [PLYR, ACHR, ACRE, TRGT]),
+          {14} wbFormIDCkNoReach('Quest', [QUST]),
+          {15} wbFormIDCkNoReach('Faction', [FACT]),
+          {16} wbFormIDCkNoReach('Cell', [CELL]),
+          {17} wbFormIDCkNoReach('Class', [CLAS]),
+          {18} wbFormIDCkNoReach('Race', [RACE]),
+          {19} wbFormIDCkNoReach('Actor Base', [NPC_, CREA, ACTI]),
+          {20} wbFormIDCkNoReach('Global', [GLOB]),
+          {21} wbFormIDCkNoReach('Weather', [WTHR]),
+          {22} wbFormIDCkNoReach('Package', [PACK]),
+          {23} wbFormIDCkNoReach('Owner', [FACT, NPC_]),
+          {24} wbFormIDCkNoReach('Birthsign', [BSGN]),
+          {25} wbFormIDCkNoReach('Furniture', [FURN]),
+          {26} wbFormIDCkNoReach('Magic Item', [SPEL]),
+          {27} wbFormIDCkNoReach('Magic Effect', [MGEF]),
+          {28} wbFormIDCkNoReach('Worldspace', [WRLD]),
+          {29} wbFormIDCkNoReach('Referenceable Object', [CREA, NPC_, TREE, SBSP, LVLC, SOUN, ACTI, DOOR, FLOR, STAT, FURN, CONT, ARMO, AMMO, MISC, WEAP, INGR, SLGM, SGST, BOOK, KEYM, CLOT, ALCH, APPA, LIGH, GRAS])
         ]),
         wbUnion('Parameter #2', wbCTDAParam2Decider, [
           {00} wbByteArray('Unknown', 4),
-          {01} wbByteArray('None', 4, cpIgnore),
+          {01} wbByteArray('None', 4, cpIgnore).IncludeFlag(dfZeroSortKey),
           {02} wbInteger('Integer', itS32),
           {03} wbInteger('Variable Name', itS32, wbCTDAParam2VariableNameToStr, wbCTDAParam2VariableNameToInt),
           {04} wbInteger('Sex', itU32, wbSexEnum),
@@ -3389,37 +3394,37 @@ begin
           {07} wbInteger('Axis', itU32, wbAxisEnum),
           {08} wbInteger('Form Type', itU32, wbFormTypeEnum),
           {09} wbInteger('Quest Stage', itS32, wbCTDAParam2QuestStageToStr, wbCTDAParam2QuestStageToInt),
-          {10} wbFormIDCk('Object Reference', [PLYR, REFR, ACHR, ACRE, TRGT]),
-          {12} wbFormIDCk('Inventory Object', [ARMO, AMMO, MISC, WEAP, INGR, SLGM, SGST, BOOK, KEYM, CLOT, ALCH, APPA, LIGH]),
-          {13} wbFormIDCk('Actor', [PLYR, ACHR, ACRE, TRGT]),
-          {14} wbFormIDCk('Quest', [QUST]),
-          {15} wbFormIDCk('Faction', [FACT]),
-          {16} wbFormIDCk('Cell', [CELL]),
-          {17} wbFormIDCk('Class', [CLAS]),
-          {18} wbFormIDCk('Race', [RACE]),
-          {19} wbFormIDCk('Actor Base', [NPC_, CREA, ACTI]),
-          {20} wbFormIDCk('Global', [GLOB]),
-          {21} wbFormIDCk('Weather', [WTHR]),
-          {22} wbFormIDCk('Package', [PACK]),
-          {23} wbFormIDCk('Owner', [FACT, NPC_]),
-          {24} wbFormIDCk('Birthsign', [BSGN]),
-          {25} wbFormIDCk('Furniture', [FURN]),
-          {26} wbFormIDCk('Magic Item', [SPEL]),
-          {27} wbFormIDCk('Magic Effect', [MGEF]),
-          {28} wbFormIDCk('Worldspace', [WRLD]),
-          {29} wbFormIDCk('Referenceable Object', [CREA, NPC_, TREE, SBSP, LVLC, SOUN, ACTI, DOOR, FLOR, STAT, FURN, CONT, ARMO, AMMO, MISC, WEAP, INGR, SLGM, SGST, BOOK, KEYM, CLOT, ALCH, APPA, LIGH, GRAS])
+          {10} wbFormIDCkNoReach('Object Reference', [PLYR, REFR, ACHR, ACRE, TRGT]),
+          {12} wbFormIDCkNoReach('Inventory Object', [ARMO, AMMO, MISC, WEAP, INGR, SLGM, SGST, BOOK, KEYM, CLOT, ALCH, APPA, LIGH]),
+          {13} wbFormIDCkNoReach('Actor', [PLYR, ACHR, ACRE, TRGT]),
+          {14} wbFormIDCkNoReach('Quest', [QUST]),
+          {15} wbFormIDCkNoReach('Faction', [FACT]),
+          {16} wbFormIDCkNoReach('Cell', [CELL]),
+          {17} wbFormIDCkNoReach('Class', [CLAS]),
+          {18} wbFormIDCkNoReach('Race', [RACE]),
+          {19} wbFormIDCkNoReach('Actor Base', [NPC_, CREA, ACTI]),
+          {20} wbFormIDCkNoReach('Global', [GLOB]),
+          {21} wbFormIDCkNoReach('Weather', [WTHR]),
+          {22} wbFormIDCkNoReach('Package', [PACK]),
+          {23} wbFormIDCkNoReach('Owner', [FACT, NPC_]),
+          {24} wbFormIDCkNoReach('Birthsign', [BSGN]),
+          {25} wbFormIDCkNoReach('Furniture', [FURN]),
+          {26} wbFormIDCkNoReach('Magic Item', [SPEL]),
+          {27} wbFormIDCkNoReach('Magic Effect', [MGEF]),
+          {28} wbFormIDCkNoReach('Worldspace', [WRLD]),
+          {29} wbFormIDCkNoReach('Referenceable Object', [CREA, NPC_, TREE, SBSP, LVLC, SOUN, ACTI, DOOR, FLOR, STAT, FURN, CONT, ARMO, AMMO, MISC, WEAP, INGR, SLGM, SGST, BOOK, KEYM, CLOT, ALCH, APPA, LIGH, GRAS])
         ]),
         wbInteger('Unused', itU32, nil, cpIgnore)
       ], cpNormal, False, nil, 6),
-      wbStruct(CTDT, 'Condition (old format)', [
-        wbInteger('Type', itU8, wbCtdaType),
-        wbByteArray('Unused', 3),
-        wbUnion('Comparison Value', wbCTDACompValueDecider, [
+      wbStructSK(CTDT, [3, 4], 'Condition (old format)', [
+     {0}wbInteger('Type', itU8, wbCtdaType),
+     {1}wbByteArray('Unused', 3),
+     {2}wbUnion('Comparison Value', wbCTDACompValueDecider, [
           wbFloat('Comparison Value - Float'),
           wbFormIDCk('Comparison Value - Global', [GLOB])
         ]),
-        wbInteger('Function', itU32, wbCTDAFunctionToStr, wbCTDAFunctionToInt),
-        wbUnion('Parameter #1', wbCTDAParam1Decider, [
+     {3}wbInteger('Function', itU32, wbCTDAFunctionToStr, wbCTDAFunctionToInt),
+     {4}wbUnion('Parameter #1', wbCTDAParam1Decider, [
           {00} wbByteArray('Unknown', 4),
           {01} wbByteArray('None', 4, cpIgnore),
           {02} wbInteger('Integer', itS32),
@@ -3431,25 +3436,25 @@ begin
           {07} wbInteger('Axis', itU32, wbAxisEnum),
           {08} wbInteger('Form Type', itU32, wbFormTypeEnum),
           {09} wbInteger('Quest Stage (INVALID)', itS32),
-          {10} wbFormIDCk('Object Reference', [PLYR, REFR, ACHR, ACRE, TRGT]),
-          {12} wbFormIDCk('Inventory Object', [ARMO, AMMO, MISC, WEAP, INGR, SLGM, SGST, BOOK, KEYM, CLOT, ALCH, APPA, LIGH]),
-          {13} wbFormIDCk('Actor', [PLYR, ACHR, ACRE, TRGT]),
-          {14} wbFormIDCk('Quest', [QUST]),
-          {15} wbFormIDCk('Faction', [FACT]),
-          {16} wbFormIDCk('Cell', [CELL]),
-          {17} wbFormIDCk('Class', [CLAS]),
-          {18} wbFormIDCk('Race', [RACE]),
-          {19} wbFormIDCk('Actor Base', [NPC_, CREA, ACTI]),
-          {20} wbFormIDCk('Global', [GLOB]),
-          {21} wbFormIDCk('Weather', [WTHR]),
-          {22} wbFormIDCk('Package', [PACK]),
-          {23} wbFormIDCk('Owner', [FACT, NPC_]),
-          {24} wbFormIDCk('Birthsign', [BSGN]),
-          {25} wbFormIDCk('Furniture', [FURN]),
-          {26} wbFormIDCk('Magic Item', [SPEL]),
-          {27} wbFormIDCk('Magic Effect', [MGEF]),
-          {28} wbFormIDCk('Worldspace', [WRLD]),
-          {29} wbFormIDCk('Referenceable Object', [CREA, NPC_, TREE, SBSP, LVLC, SOUN, ACTI, DOOR, FLOR, STAT, FURN, CONT, ARMO, AMMO, MISC, WEAP, INGR, SLGM, SGST, BOOK, KEYM, CLOT, ALCH, APPA, LIGH, GRAS])
+          {10} wbFormIDCkNoReach('Object Reference', [PLYR, REFR, ACHR, ACRE, TRGT]),
+          {12} wbFormIDCkNoReach('Inventory Object', [ARMO, AMMO, MISC, WEAP, INGR, SLGM, SGST, BOOK, KEYM, CLOT, ALCH, APPA, LIGH]),
+          {13} wbFormIDCkNoReach('Actor', [PLYR, ACHR, ACRE, TRGT]),
+          {14} wbFormIDCkNoReach('Quest', [QUST]),
+          {15} wbFormIDCkNoReach('Faction', [FACT]),
+          {16} wbFormIDCkNoReach('Cell', [CELL]),
+          {17} wbFormIDCkNoReach('Class', [CLAS]),
+          {18} wbFormIDCkNoReach('Race', [RACE]),
+          {19} wbFormIDCkNoReach('Actor Base', [NPC_, CREA, ACTI]),
+          {20} wbFormIDCkNoReach('Global', [GLOB]),
+          {21} wbFormIDCkNoReach('Weather', [WTHR]),
+          {22} wbFormIDCkNoReach('Package', [PACK]),
+          {23} wbFormIDCkNoReach('Owner', [FACT, NPC_]),
+          {24} wbFormIDCkNoReach('Birthsign', [BSGN]),
+          {25} wbFormIDCkNoReach('Furniture', [FURN]),
+          {26} wbFormIDCkNoReach('Magic Item', [SPEL]),
+          {27} wbFormIDCkNoReach('Magic Effect', [MGEF]),
+          {28} wbFormIDCkNoReach('Worldspace', [WRLD]),
+          {29} wbFormIDCkNoReach('Referenceable Object', [CREA, NPC_, TREE, SBSP, LVLC, SOUN, ACTI, DOOR, FLOR, STAT, FURN, CONT, ARMO, AMMO, MISC, WEAP, INGR, SLGM, SGST, BOOK, KEYM, CLOT, ALCH, APPA, LIGH, GRAS])
         ]),
         wbUnion('Parameter #2', wbCTDAParam2Decider, [
           {00} wbByteArray('Unknown', 4),
@@ -3463,25 +3468,25 @@ begin
           {07} wbInteger('Axis', itU32, wbAxisEnum),
           {08} wbInteger('Form Type', itU32, wbFormTypeEnum),
           {09} wbInteger('Quest Stage', itS32, wbCTDAParam2QuestStageToStr, wbCTDAParam2QuestStageToInt),
-          {10} wbFormIDCk('Object Reference', [PLYR, REFR, ACHR, ACRE, TRGT]),
-          {12} wbFormIDCk('Inventory Object', [ARMO, AMMO, MISC, WEAP, INGR, SLGM, SGST, BOOK, KEYM, CLOT, ALCH, APPA, LIGH]),
-          {13} wbFormIDCk('Actor', [PLYR, ACHR, ACRE, TRGT]),
-          {14} wbFormIDCk('Quest', [QUST]),
-          {15} wbFormIDCk('Faction', [FACT]),
-          {16} wbFormIDCk('Cell', [CELL]),
-          {17} wbFormIDCk('Class', [CLAS]),
-          {18} wbFormIDCk('Race', [RACE]),
-          {19} wbFormIDCk('Actor Base', [NPC_, CREA, ACTI]),
-          {20} wbFormIDCk('Global', [GLOB]),
-          {21} wbFormIDCk('Weather', [WTHR]),
-          {22} wbFormIDCk('Package', [PACK]),
-          {23} wbFormIDCk('Owner', [FACT, NPC_]),
-          {24} wbFormIDCk('Birthsign', [BSGN]),
-          {25} wbFormIDCk('Furniture', [FURN]),
-          {26} wbFormIDCk('Magic Item', [SPEL]),
-          {27} wbFormIDCk('Magic Effect', [MGEF]),
-          {28} wbFormIDCk('Worldspace', [WRLD]),
-          {29} wbFormIDCk('Referenceable Object', [CREA, NPC_, TREE, SBSP, LVLC, SOUN, ACTI, DOOR, FLOR, STAT, FURN, CONT, ARMO, AMMO, MISC, WEAP, INGR, SLGM, SGST, BOOK, KEYM, CLOT, ALCH, APPA, LIGH, GRAS])
+          {10} wbFormIDCkNoReach('Object Reference', [PLYR, REFR, ACHR, ACRE, TRGT]),
+          {12} wbFormIDCkNoReach('Inventory Object', [ARMO, AMMO, MISC, WEAP, INGR, SLGM, SGST, BOOK, KEYM, CLOT, ALCH, APPA, LIGH]),
+          {13} wbFormIDCkNoReach('Actor', [PLYR, ACHR, ACRE, TRGT]),
+          {14} wbFormIDCkNoReach('Quest', [QUST]),
+          {15} wbFormIDCkNoReach('Faction', [FACT]),
+          {16} wbFormIDCkNoReach('Cell', [CELL]),
+          {17} wbFormIDCkNoReach('Class', [CLAS]),
+          {18} wbFormIDCkNoReach('Race', [RACE]),
+          {19} wbFormIDCkNoReach('Actor Base', [NPC_, CREA, ACTI]),
+          {20} wbFormIDCkNoReach('Global', [GLOB]),
+          {21} wbFormIDCkNoReach('Weather', [WTHR]),
+          {22} wbFormIDCkNoReach('Package', [PACK]),
+          {23} wbFormIDCkNoReach('Owner', [FACT, NPC_]),
+          {24} wbFormIDCkNoReach('Birthsign', [BSGN]),
+          {25} wbFormIDCkNoReach('Furniture', [FURN]),
+          {26} wbFormIDCkNoReach('Magic Item', [SPEL]),
+          {27} wbFormIDCkNoReach('Magic Effect', [MGEF]),
+          {28} wbFormIDCkNoReach('Worldspace', [WRLD]),
+          {29} wbFormIDCkNoReach('Referenceable Object', [CREA, NPC_, TREE, SBSP, LVLC, SOUN, ACTI, DOOR, FLOR, STAT, FURN, CONT, ARMO, AMMO, MISC, WEAP, INGR, SLGM, SGST, BOOK, KEYM, CLOT, ALCH, APPA, LIGH, GRAS])
         ]),
         wbEmpty('Unused', cpIgnore)
       ])
@@ -3529,7 +3534,7 @@ begin
 //           LVLC, CSTY, WATR, WRLD, SCPT, BSGN, TREE, ENCH, NULL]),
         wbInteger(SCRV, 'Local Variable', itU32)
       ], [])
-    );
+    ).IncludeFlag(dfNotAlignable);
 
   wbResultScript := wbRStruct('Result Script', [
     wbSCHR,
@@ -3579,9 +3584,9 @@ begin
         {0x0040} 'Run for Rumors'
       ]))
     ], cpNormal, True),
-    wbFormIDCk(QSTI, 'Quest', [QUST], False, cpNormal, True),
+    wbFormIDCkNoReach(QSTI, 'Quest', [QUST], False, cpNormal, True),
     wbFormIDCk(TPIC, 'Topic', [DIAL]),
-    wbFormIDCk(PNAM, 'Previous INFO', [INFO, NULL]),
+    wbFormIDCkNoReach(PNAM, 'Previous INFO', [INFO, NULL]),
     wbRArray('Add topics', wbFormIDCk(NAME, 'Topic', [DIAL])),
     wbRArray('Responses',
       wbRStruct('Response', [
@@ -3785,9 +3790,9 @@ begin
     wbICON,
     wbDESC,
     wbRArrayS('Locations', wbStructSK(LNAM, [0, 1], 'Location', [
-      wbFormIDCk('Direct', [CELL, WRLD, NULL]),
+      wbFormIDCkNoReach('Direct', [CELL, WRLD, NULL]),
       wbStructSK([0, 1], 'Indirect', [
-        wbFormIDCk('World', [NULL, WRLD]),
+        wbFormIDCkNoReach('World', [NULL, WRLD]),
         wbStructSK([0,1], 'Grid', [
           wbInteger('Y', itS16),
           wbInteger('X', itS16)
@@ -4212,11 +4217,11 @@ begin
         {5} 'Object type'
       ])),
       wbUnion('Location', wbPxDTLocationDecider, [
-        wbFormIDCk('Reference', [REFR, ACHR, ACRE, PLYR], True),
-        wbFormIDCk('Cell', [CELL]),
+        wbFormIDCkNoReach('Reference', [REFR, ACHR, ACRE, PLYR], True),
+        wbFormIDCkNoReach('Cell', [CELL]),
         wbFormIDCk('Unused', [NULL]),
         wbFormIDCk('Unused', [NULL]),
-        wbFormIDCk('Object ID', [ACTI, DOOR, FLOR, STAT, FURN, CREA, SPEL, NPC_, CONT, ARMO, AMMO, MISC, WEAP, INGR, SLGM, SGST, BOOK, KEYM, CLOT, ALCH, APPA, LIGH]),
+        wbFormIDCkNoReach('Object ID', [ACTI, DOOR, FLOR, STAT, FURN, CREA, SPEL, NPC_, CONT, ARMO, AMMO, MISC, WEAP, INGR, SLGM, SGST, BOOK, KEYM, CLOT, ALCH, APPA, LIGH]),
         wbInteger('Object type', itU32)
       ]),
       wbInteger('Radius', itS32)
@@ -4249,8 +4254,8 @@ begin
         {2} 'Object type'
       ])),
       wbUnion('Target', wbPxDTLocationDecider, [
-        wbFormIDCk('Reference', [ACHR, ACRE, REFR, PLYR], True),
-        wbFormIDCk('Object ID', [ACTI, DOOR, FLOR, STAT, FURN, CREA, SPEL, NPC_, CONT, ARMO, AMMO, MISC, WEAP, INGR, SLGM, SGST, BOOK, KEYM, CLOT, ALCH, APPA, LIGH]),
+        wbFormIDCkNoReach('Reference', [ACHR, ACRE, REFR, PLYR], True),
+        wbFormIDCkNoReach('Object ID', [ACTI, DOOR, FLOR, STAT, FURN, CREA, SPEL, NPC_, CONT, ARMO, AMMO, MISC, WEAP, INGR, SLGM, SGST, BOOK, KEYM, CLOT, ALCH, APPA, LIGH]),
         wbInteger('Object type', itU32)
       ]),
       wbInteger('Count', itS32)
@@ -4318,13 +4323,13 @@ begin
           {0x01} 'Complete quest'
         ])),
         wbCTDAs,
-        wbString(CNAM, 'Log Entry', 0, cpTranslate),
+        wbStringKC(CNAM, 'Log Entry', 0, cpTranslate),
         wbResultScript
       ], []))
     ], [])),
     wbRArray('Targets', wbRStruct('Target', [
       wbStruct(QSTA, 'Target', [
-        wbFormIDCk('Target', [REFR, ACRE, ACHR], True),
+        wbFormIDCkNoReach('Target', [REFR, ACRE, ACHR], True),
         wbInteger('Flags', itU8, wbFlags([
           {0x01} 'Compass marker ignores locks'
         ])),
@@ -4437,7 +4442,7 @@ begin
     wbByteArray(SNAM, 'Unknown', 2, cpNormal, True)
   ], True);
 
-  wbRecord(REFR, 'Placed Object', [
+  wbRefRecord(REFR, 'Placed Object', [
     wbEDID,
     wbFormIDCk(NAME, 'Base', [TREE, SBSP, LVLC, SOUN, ACTI, DOOR, FLOR, STAT, FURN, CONT, ARMO, AMMO, MISC, WEAP, INGR, SLGM, SGST, BOOK, KEYM, CLOT, ALCH, APPA, LIGH, GRAS], False, cpNormal, True),
     wbStruct(XTEL, 'Teleport Destination', [
@@ -4527,7 +4532,7 @@ begin
       wbInteger('Blue', itU8),
       wbByteArray('Unused', 1)
     ], cpNormal, True),
-    wbFormIDCk(WNAM, 'Worldspace', [WRLD]),
+    wbFormIDCkNoReach(WNAM, 'Worldspace', [WRLD]),
 
     wbRArray('Region Areas', wbRStruct('Region Area', [
       wbInteger(RPLI, 'Edge Fall-off', itU32),
@@ -4727,7 +4732,7 @@ begin
 
   wbRecord(SOUN, 'Sound', [
     wbEDID,
-    wbString(FNAM, 'Sound Filename'),
+    wbString(FNAM, 'Sound FileName'),
     wbRUnion('Sound Data', [
       wbStruct(SNDX, 'Sound Data', [
         wbInteger('Minimum attenuation distance', itU8, wbMul(5)),
@@ -4825,17 +4830,22 @@ begin
     wbStruct(HEDR, 'Header', [
       wbFloat('Version'),
       wbInteger('Number of Records', itU32),
-      wbInteger('Next Object ID', itU32)
+      wbInteger('Next Object ID', itU32, wbNextObjectIDToString, wbNextObjectIDToInt)
     ], cpNormal, True),
     wbByteArray(OFST, 'Unknown', 0, cpIgnore),
     wbByteArray(DELE, 'Unknown', 0, cpIgnore),
     wbString(CNAM, 'Author', 0, cpTranslate, True),
     wbString(SNAM, 'Description', 0, cpTranslate),
     wbRArray('Master Files', wbRStruct('Master File', [
-      wbString(MAST, 'Filename', 0, cpNormal, True),
+      wbStringForward(MAST, 'FileName', 0, cpNormal, True),
       wbByteArray(DATA, 'Unused', 8, cpIgnore, True)
-    ], []))
+    ], [])).IncludeFlag(dfInternalEditOnly, not wbAllowMasterFilesEdit)
   ], False, nil, cpNormal, True, wbRemoveOFST);
+
+  wbRecord(PLYR, 'Player Reference', [
+    wbEDID,
+    wbFormID(PLYR, 'Player', cpNormal, True).SetDefaultNativeValue($7)
+  ]).IncludeFlag(dfInternalEditOnly);
 
   wbRecord(TREE, 'Tree', [
     wbEDID,
@@ -5145,6 +5155,7 @@ begin
   wbAddGroupOrder(WEAP);
   wbAddGroupOrder(AMMO);
   wbAddGroupOrder(NPC_);
+  wbAddGroupOrder(PLYR);
   wbAddGroupOrder(CREA);
   wbAddGroupOrder(LVLC);
   wbAddGroupOrder(SLGM);
@@ -5168,6 +5179,9 @@ begin
   wbAddGroupOrder(ANIO);
   wbAddGroupOrder(WATR);
   wbAddGroupOrder(EFSH);
+  wbNexusModsUrl := 'https://www.nexusmods.com/oblivion/mods/11536';
+  if wbToolMode = tmLODgen then
+    wbNexusModsUrl := 'https://www.nexusmods.com/oblivion/mods/15781';
 end;
 
 initialization

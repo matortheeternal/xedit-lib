@@ -34,19 +34,21 @@ type
 
   TwbLocalizationFile = class
   private
+    fEncoding    : array [Boolean] of TEncoding;
     fName        : string;
+    fLanguage    : string;
     fFileName    : string;
     fFileType    : TwbLStringType;
     fStrings     : TStrings;
-    fModified    : boolean;
+    fModified    : Boolean;
     fNextID      : Cardinal;
 
     procedure Init;
     function FileStringType(aFileName: string): TwbLStringType;
-    function ReadZString(aStream: TMemoryStream): AnsiString;
-    function ReadLenZString(aStream: TMemoryStream): AnsiString;
-    procedure WriteZString(aStream: TMemoryStream; aString: AnsiString);
-    procedure WriteLenZString(aStream: TMemoryStream; aString: AnsiString);
+    function ReadZString(aStream: TMemoryStream): string;
+    function ReadLenZString(aStream: TMemoryStream): string;
+    procedure WriteZString(aStream: TMemoryStream; const aString: string);
+    procedure WriteLenZString(aStream: TMemoryStream; const aString: string);
     procedure ReadDirectory(aStream: TMemoryStream);
   protected
     function Get(Index: Cardinal): string;
@@ -56,28 +58,30 @@ type
     property Items: TStrings read fStrings;
     property Name: string read fName;
     property FileName: string read fFileName;
-    property Modified: boolean read fModified write fModified;
+    property Modified: Boolean read fModified write fModified;
     property NextID: Cardinal read fNextID;
     constructor Create(const aFileName: string); overload;
     constructor Create(const aFileName: string; aData: TBytes); overload;
     destructor Destroy; override;
     function Count: Integer;
     function IndexToID(Index: Integer): Cardinal;
-    function IDExists(ID: Cardinal): boolean;
-    function AddString(ID: Integer; const S: string): boolean;
+    function IDExists(ID: Cardinal): Boolean;
+    function AddString(ID: Integer; const S: string): Boolean;
+    function Find(ID: Cardinal; out s: string): Boolean;
     procedure WriteToStream(const aStream: TStream);
     procedure ExportToFile(const aFileName: string);
   end;
 
   TwbLocalizationHandler = class
   private
-    lFiles       : TStrings;
-    fReuseDup    : boolean;
+    lFiles       : TStringList;
+    fReuseDup    : Boolean;
   protected
     function Get(Index: Integer): TwbLocalizationFile;
     function GetStringsPath: string;
   public
-    NoTranslate: boolean;
+    Generation: Integer;
+    NoTranslate: Boolean;
     property _Files[Index: Integer]: TwbLocalizationFile read Get; default;
     property StringsPath: string read GetStringsPath;
     property ReuseDup: Boolean read fReuseDup write fReuseDup;
@@ -86,12 +90,12 @@ type
     procedure Clear;
     function Count: Integer;
     function LocalizedValueDecider(aElement: IwbElement): TwbLStringType;
-    function AvailableLanguages: TStringList;
-    function AvailableLocalizationFiles: TStringList;
+    procedure AvailableLanguages(aLanguages : TStringList);
+    procedure AvailableLocalizationFiles(aFiles: TStringList);
     procedure LoadForFile(aFileName: string);
     function AddLocalization(const aFileName: string): TwbLocalizationFile; overload;
     function AddLocalization(const aFileName: string; aData: TBytes): TwbLocalizationFile; overload;
-    function GetValue(ID: Cardinal; aElement: IwbElement): string;
+    function GetValue(ID: Cardinal; aElement: IwbElement; out aValue: string): Boolean;
     function SetValue(ID: Cardinal; aElement: IwbElement; aValue: string): Cardinal;
     function AddValue(aValue: string; aElement: IwbElement): Cardinal;
     function GetLocalizationFileNameByElement(aElement: IwbElement): string;
@@ -164,9 +168,54 @@ begin
 end;
 
 procedure TwbLocalizationFile.Init;
+var
+  i: Integer;
+  s: string;
 begin
   fModified := false;
   fName := ExtractFileName(fFileName);
+
+  fLanguage := ChangeFileExt(fName, '');
+  i := Length(fLanguage);
+  while (i > 0) and (fLanguage[i]<>'_') do
+    Dec(i);
+  Delete(fLanguage, 1, i);
+
+  fEncoding[False] := nil;
+  fEncoding[True] := nil;
+
+  s := ChangeFileExt(fFileName, '.cpoverride');
+  if FileExists(s) then try
+    with TStringList.Create do try
+      LoadFromFile(s);
+      if Count > 0 then begin
+        s := Strings[0].Trim;
+        if s <> '' then
+          fEncoding[False] := wbMBCSEncoding(s);
+      end;
+    finally
+      Free;
+    end;
+  except end;
+
+  s := '';
+
+  if Assigned(fEncoding[False]) then
+    s := Format('[%s] Using encoding (from override): %s', [fName, fEncoding[False].EncodingName])
+  else begin
+    fEncoding[False] := wbEncodingForLanguage(fLanguage, False);
+    s := Format('[%s] Using encoding (from language): %s', [fName, fEncoding[False].EncodingName]);
+  end;
+
+  fEncoding[True] := wbEncodingForLanguage(fLanguage, True);
+  if fEncoding[True] = fEncoding[False] then
+    fEncoding[True] := nil;
+
+  if Assigned(fEncoding[True]) then
+    s := s + ' with fallback (from languange) to: ' + fEncoding[True].EncodingName;
+
+  wbProgress(s);
+
   fFileType := FileStringType(fFileName);
   fStrings := TwbFastStringList.Create;
   fNextID := 1;
@@ -184,43 +233,104 @@ begin
       Result := i;
 end;
 
-function TwbLocalizationFile.ReadZString(aStream: TMemoryStream): AnsiString;
+function TwbLocalizationFile.Find(ID: Cardinal; out s: string): Boolean;
+var
+  idx: integer;
+begin
+  Result := False;
+  s := '';
+  idx := fStrings.IndexOfObject(Pointer(ID));
+  Result := idx >= 0;
+  if Result then
+    s := fStrings[idx]
+  else
+    s := '<Error: Unknown lstring ID ' + IntToHex(ID, 8) + '>';
+end;
+
+function TwbLocalizationFile.ReadZString(aStream: TMemoryStream): string;
 var
   Position : Integer;
+  p: PByte;
+  i, j: Integer;
+  b: TBytes;
 begin
   Position := aStream.Position;
-  Result := PAnsiChar(@PByte(aStream.Memory)[Position]);
-  aStream.Position := aStream.Position + Succ(Length(Result));
+  p := @PByte(aStream.Memory)[Position];
+  i := 0;
+  j := aStream.Size - Position;
+  while (i < j) and (p[i] <> 0) do
+    Inc(i);
+  if i > 0 then begin
+    b := BytesOf(p, i);
+    try
+      Result := fEncoding[False].GetString(b);
+    except
+      on E: EEncodingError do begin
+        if not Assigned(fEncoding[True]) then
+          raise;
+        Result := fEncoding[True].GetString(b);
+      end;
+    end;
+  end else
+    Result := '';
+  aStream.Position := Position + Succ(i);
 end;
 
-function TwbLocalizationFile.ReadLenZString(aStream: TMemoryStream): AnsiString;
+function TwbLocalizationFile.ReadLenZString(aStream: TMemoryStream): string;
 var
-  Len: Cardinal;
+  Position : Integer;
+  p: PByte;
+  i, j: Integer;
+  b: TBytes;
 begin
-  aStream.ReadBuffer(Len, 4);
-  Dec(Len); // trailing null
-  SetLength(Result, Len);
-  if Len > 0 then
-    aStream.ReadBuffer(Result[1], Len);
+  Position := aStream.Position;
+  p := @PByte(aStream.Memory)[Position];
+  i := PInteger(p)^;
+  Inc(PInteger(p), 1);
+  Dec(i);
+  if i > 0 then begin
+    b := BytesOf(p, i);
+    try
+      Result := fEncoding[False].GetString(b);
+    except
+      on E: EEncodingError do begin
+        if not Assigned(fEncoding[True]) then
+          raise;
+        Result := fEncoding[True].GetString(b);
+      end;
+    end;
+  end else
+    Result := '';
+  aStream.Position := Position + Succ(i) + SizeOf(Integer);
 end;
 
-procedure TwbLocalizationFile.WriteZString(aStream: TMemoryStream; aString: AnsiString);
+procedure TwbLocalizationFile.WriteZString(aStream: TMemoryStream; const aString: string);
+var
+  b: TBytes;
+  i: Integer;
 const
   z: Byte = 0;
 begin
-  aStream.WriteBuffer(aString[1], Length(aString));
+  b := fEncoding[False].GetBytes(aString);
+  i := Length(b);
+  if i > 0 then
+    aStream.WriteBuffer(b[0], i);
   aStream.WriteBuffer(z, SizeOf(z));
 end;
 
-procedure TwbLocalizationFile.WriteLenZString(aStream: TMemoryStream; aString: AnsiString);
+procedure TwbLocalizationFile.WriteLenZString(aStream: TMemoryStream; const aString: string);
+var
+  b    : TBytes;
+  i, j : Integer;
 const
   z: Byte = 0;
-var
-  l: Cardinal;
 begin
-  l := Length(aString) + SizeOf(z);
-  aStream.WriteBuffer(l, SizeOf(Cardinal));
-  aStream.WriteBuffer(aString[1], Length(aString));
+  b := fEncoding[False].GetBytes(aString);
+  i := Length(b);
+  j := Succ(i);
+  aStream.WriteBuffer(j, SizeOf(j));
+  if i > 0 then
+    aStream.WriteBuffer(b[0], i);
   aStream.WriteBuffer(z, SizeOf(z));
 end;
 
@@ -229,7 +339,7 @@ var
   i: integer;
   scount, id, offset: Cardinal;
   oldPos: int64;
-  s: AnsiString;
+  s: string;
 begin
   if aStream.Size < 8 then
     Exit;
@@ -246,7 +356,7 @@ begin
         s := ReadZString(aStream)
       else
         s := ReadLenZString(aStream);
-      fStrings.AddObject(wbAnsiToString(s, nil), pointer(id));
+      fStrings.AddObject(s, pointer(id));
       if Succ(id) > fNextID then
         fNextID := Succ(id);
       aStream.Position := oldPos;
@@ -271,9 +381,9 @@ begin
       c := data.Position;
       dir.WriteBuffer(c, SizeOf(c)); // relative position
       if fFileType = lsString then
-        WriteZString(data, wbStringToAnsi(fStrings[i], nil))
+        WriteZString(data, fStrings[i])
       else
-        WriteLenZString(data, wbStringToAnsi(fStrings[i], nil));
+        WriteLenZString(data, fStrings[i]);
     end;
     c := data.Size;
     dir.Position := 4;
@@ -300,7 +410,7 @@ begin
     Result := 0;
 end;
 
-function TwbLocalizationFile.IDExists(ID: Cardinal): boolean;
+function TwbLocalizationFile.IDExists(ID: Cardinal): Boolean;
 begin
   Result := fStrings.IndexOfObject(Pointer(ID)) <> -1;
 end;
@@ -329,7 +439,7 @@ begin
     end;
 end;
 
-function TwbLocalizationFile.AddString(ID: Integer; const S: string): boolean;
+function TwbLocalizationFile.AddString(ID: Integer; const S: string): Boolean;
 begin
   Result := false;
   if ID < NextID then
@@ -384,6 +494,7 @@ begin
   for i := 0 to Pred(Count) do
     _Files[i].Destroy;
   lFiles.Clear;
+  Inc(Generation);
 end;
 
 function TwbLocalizationHandler.Get(Index: Integer): TwbLocalizationFile;
@@ -395,15 +506,31 @@ begin
 end;
 
 function TwbLocalizationHandler.AddLocalization(const aFileName: string): TwbLocalizationFile;
+var
+  i: Integer;
+  s: string;
 begin
-  Result := TwbLocalizationFile.Create(aFileName);
-  lFiles.AddObject(ExtractFileName(aFileName), Result);
+  s := ExtractFileName(aFileName);
+  if lFiles.Find(s, i) then
+    Result := lFiles.Objects[i] as TwbLocalizationFile
+  else begin
+    Result := TwbLocalizationFile.Create(aFileName);
+    lFiles.AddObject(s, Result);
+  end;
 end;
 
 function TwbLocalizationHandler.AddLocalization(const aFileName: string; aData: TBytes): TwbLocalizationFile;
+var
+  i: Integer;
+  s: string;
 begin
-  Result := TwbLocalizationFile.Create(aFileName, aData);
-  lFiles.AddObject(ExtractFileName(aFileName), Result);
+  s := ExtractFileName(aFileName);
+  if lFiles.Find(s, i) then
+    Result := lFiles.Objects[i] as TwbLocalizationFile
+  else begin
+    Result := TwbLocalizationFile.Create(aFileName, aData);
+    lFiles.AddObject(s, Result);
+  end;
 end;
 
 function TwbLocalizationHandler.LocalizedValueDecider(aElement: IwbElement): TwbLStringType;
@@ -430,61 +557,99 @@ begin
   Result := wbDataPath + 'Strings\';
 end;
 
-function TwbLocalizationHandler.AvailableLanguages: TStringList;
+procedure TwbLocalizationHandler.AvailableLanguages(aLanguages : TStringList);
 var
-  F: TSearchRec;
-  p: integer;
-  s: string;
-begin
-  Result := TStringList.Create;
-  if FindFirst(StringsPath + '*.*STRINGS', faAnyFile, F) = 0 then try
-    repeat
-      s := LowerCase(ChangeFileExt(F.Name, ''));
-      p := LastDelimiter('_', s);
-      if p > 0 then begin
-        s := Copy(s, p + 1, length(s));
-        if s = '' then Continue;
-        s := AnsiUpperCase(s[1]) + Copy(s, 2, Length(s));
-        if Result.IndexOf(s) = -1 then
-          Result.Add(s);
-      end;
-    until FindNext(F) <> 0;
-  finally
-    FindClose(F);
+  F  : TSearchRec;
+  p  : integer;
+  s  : string;
+
+  procedure ParseString;
+  begin
+    p := LastDelimiter('_', s);
+    if p > 0 then begin
+      s := Copy(s, p + 1, length(s));
+      if s = '' then
+        Exit;
+      s := AnsiUpperCase(s[1]) + Copy(s, 2, Length(s));
+      if aLanguages.IndexOf(s) = -1 then
+        aLanguages.Add(s);
+    end;
   end;
+
+var
+  sl : TStringList;
+  i  : Integer;
+begin
+  if Assigned(wbContainerHandler) then begin
+    sl := TStringList.Create;
+    try
+      wbContainerHandler.ContainerResourceList('', sl, 'strings');
+      for i := 0 to Pred(sl.Count) do begin
+        s := sl[i];
+        if s.EndsWith('strings', True) then begin
+          s := ChangeFileExt(s, '').ToLower;
+          ParseString;
+        end;
+      end;
+    finally
+      sl.Free;
+    end;
+  end else
+    if FindFirst(StringsPath + '*.*STRINGS', faAnyFile, F) = 0 then try
+      repeat
+        s := LowerCase(ChangeFileExt(F.Name, ''));
+        ParseString;
+      until FindNext(F) <> 0;
+    finally
+      FindClose(F);
+    end;
 end;
 
-function TwbLocalizationHandler.AvailableLocalizationFiles: TStringList;
+procedure TwbLocalizationHandler.AvailableLocalizationFiles(aFiles: TStringList);
 var
   F: TSearchRec;
+  sl : TStringList;
+  i  : Integer;
+  s  : string;
 begin
-  Result := TStringList.Create;
-  if FindFirst(StringsPath + '*.*STRINGS', faAnyFile, F) = 0 then try
-    repeat
-      Result.Add(F.Name);
-    until FindNext(F) <> 0;
-  finally
-    FindClose(F);
-  end;
+  if Assigned(wbContainerHandler) then begin
+    sl := TStringList.Create;
+    try
+      wbContainerHandler.ContainerResourceList('', sl, 'strings');
+      for i := 0 to Pred(sl.Count) do begin
+        s := sl[i];
+        if s.EndsWith('strings', True) then
+          aFiles.Add(ExtractFileName(s));
+      end;
+    finally
+      sl.Free;
+    end;
+  end else
+    if FindFirst(StringsPath + '*.*STRINGS', faAnyFile, F) = 0 then try
+      repeat
+        aFiles.Add(F.Name);
+      until FindNext(F) <> 0;
+    finally
+      FindClose(F);
+    end;
 end;
 
 procedure TwbLocalizationHandler.LoadForFile(aFileName: string);
 var
-  ls: TwbLStringType;
-  s: string;
-  res: TDynResources;
+  ls   : TwbLStringType;
+  i    : Integer;
+  s, t : string;
+  res  : TDynResources;
 begin
   if not Assigned(wbContainerHandler) then
     Exit;
 
   for ls := Low(TwbLStringType) to High(TwbLStringType) do begin
     s := wbLocalizationHandler.GetLocalizationFileNameByType(aFileName, ls);
-    if lFiles.IndexOf(ExtractFileName(s)) = -1 then begin
+    if not lFiles.Find(ExtractFileName(s), i) then begin
       res := wbContainerHandler.OpenResource(s);
-      if length(res) > 0 then begin
-        //wbProgressCallback('[' + s + '] Loading Localization.');
+      if length(res) > 0 then
         wbLocalizationHandler.AddLocalization(wbDataPath + s, res[High(res)].GetData);
-      end;
     end;
   end;
 end;
@@ -588,40 +753,41 @@ begin
 end;
 
 
-function TwbLocalizationHandler.GetValue(ID: Cardinal; aElement: IwbElement): string;
+function TwbLocalizationHandler.GetValue(ID: Cardinal; aElement: IwbElement; out aValue: string): Boolean;
 var
   lFileName: string;
   idx: integer;
 begin
-  Result := '';
+  aValue := '';
 
   if NoTranslate then begin
-    Result := IntToHex(ID, 8);
-    Exit;
+    aValue := IntToHex(ID, 8);
+    Exit(True);
   end;
 
   if ID = 0 then
-    Exit;
+    Exit(True);
 
   lFileName := ExtractFileName(GetLocalizationFileNameByElement(aElement));
 
   if lFileName = '' then
-    Exit;
+    Exit(False);
 
   idx := lFiles.IndexOf(lFileName);
 
   // load strings files if absent
-  if idx = - 1 then
-    LoadForFile(aElement._File.FileName);
-
-  // get file again
-  idx := lFiles.IndexOf(lFileName);
   if idx = - 1 then begin
-    Result := '<Error: No strings file for lstring ID ' + IntToHex(ID, 8) + '>';
-    Exit;
+    LoadForFile(aElement._File.FileName);
+    // get file again
+    idx := lFiles.IndexOf(lFileName);
   end;
 
-  Result := _Files[idx][ID];
+  if idx < 0 then begin
+    aValue := '<Error: No strings file for lstring ID ' + IntToHex(ID, 8) + '>';
+    Exit(False);
+  end;
+
+  Result := _Files[idx].Find(ID, aValue);
 end;
 
 procedure TwbLocalizationHandler.GetStringsFromFile(aFileName: string; const aList: TStrings);

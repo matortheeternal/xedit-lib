@@ -24,19 +24,20 @@ uses
 var
   wbApplicationTitle   : string;
   wbScriptToRun        : string;
-  wbPluginsFileName    : String;
   wbSettingsFileName   : string;
-  wbModGroupFileName   : string;
   wbPluginToUse        : string;  // Passed a specific plugin as parameter
   wbLogFile            : string;  // Optional log file for this session
   wbMyProfileName      : string;
 
   wbMasterUpdateDone   : Boolean;
-  wbDontSave           : Boolean;
   wbDontBackup         : Boolean = False;
   wbRemoveTempPath     : Boolean = True;
   wbQuickShowConflicts : Boolean;
+  wbVeryQuickShowConflicts : Boolean;
   wbQuickClean         : Boolean;
+  wbQuickCleanAutoSave : Boolean;
+  wbAutoLoad           : Boolean;
+  wbAutoGameLink       : Boolean;
 
   wbParamIndex         : integer = 1;     // First unused parameter
   wbPluginsToUse       : TStringList;
@@ -48,9 +49,12 @@ function wbFindCmdLineParam(const aSwitch : string; out aValue : string): Boolea
 function wbLoadMOHookFile: Boolean;
 procedure SwitchToCoSave;
 
+function wbDoInit: Boolean;
+
 implementation
 
 uses
+  System.UITypes,
   SysUtils,
   Windows,
   Registry,
@@ -62,12 +66,14 @@ uses
   wbHelpers,
   wbInterface,
   wbImplementation,
+  wbLocalization,
   wbDefinitionsFNV,
   wbDefinitionsFNVSaves,
   wbDefinitionsFO3,
   wbDefinitionsFO3Saves,
   wbDefinitionsFO4,
   wbDefinitionsFO4Saves,
+  wbDefinitionsFO76,
   wbDefinitionsTES3,
   wbDefinitionsTES4,
   wbDefinitionsTES4Saves,
@@ -87,23 +93,19 @@ begin
   aValue := '';
   for i := 1 to ParamCount do begin
     s := ParamStr(i);
-    if (aChars = []) or (s[1] in aChars) then
+    if (aChars = []) or (s[1] in aChars) then begin
+      Delete(s, 1, 1);
+      if s.StartsWith(aSwitch + ':', aIgnoreCase) then begin
+        aValue := Copy(s, Length(aSwitch) + 2, High(Integer));
+        Exit(True);
+      end;
       if aIgnoreCase then begin
-        if AnsiCompareText(Copy(s, 2, Length(aSwitch)), aSwitch) = 0 then begin
-          if (length(s)>(length(aSwitch)+2)) and (s[Length(aSwitch) + 2] = ':') then begin
-            aValue := Copy(s, Length(aSwitch) + 3, MaxInt);
-            Result := True;
-          end;
-          Exit;
-        end;
+        if SameText(s, aSwitch) then
+          Exit(True)
       end else
-        if AnsiCompareStr(Copy(s, 2, Length(aSwitch)), aSwitch) = 0 then begin
-          if s[Length(aSwitch) + 2] = ':' then begin
-            aValue := Copy(s, Length(aSwitch) + 3, MaxInt);
-            Result := True;
-          end;
-          Exit;
-        end;
+        if s = aSwitch then
+          Exit(True);
+    end;
   end;
 end;
 
@@ -144,12 +146,12 @@ end;
 
 function wbCheckForValidExtension(aFilePath : string; const anExtension : string): Boolean; overload;
 begin
-  Result := UpperCase(ExtractFileExt(aFilePath)) = UpperCase(anExtension);
+  Result := aFilePath.EndsWith(anExtension, True);
 end;
 
 function wbCheckForPluginExtension(aFilePath : string): Boolean;
 begin
-  Result := wbCheckForValidExtension(aFilePath, '.esp') or wbCheckForValidExtension(aFilePath, '.esm');
+  Result := wbIsPlugin(aFilePath);
 end;
 
 function wbCheckForValidExtension(aFilePath : string): Boolean; overload;
@@ -188,22 +190,75 @@ end;
 // several ini settings should be read before record definitions
 // they may affect definitions like wbSimpleRecords
 // and should be overridden by command line parameters
-procedure ReadSettings;
+function ReadSettings: Boolean;
 var
+  ResetSettings: Boolean;
   Settings: TMemIniFile;
+  Shift,Ctrl,Alt: Boolean;
+  s : string;
+  sl: TStringList;
+  i: Integer;
 begin
-  try
+  Result := True;
+
+  if FileExists(wbSettingsFileName) then begin
+    ResetSettings := FindCmdLineSwitch('resetsettings');
+    if not ResetSettings then begin
+      Shift := GetAsyncKeyState(VK_SHIFT) < 0;
+      Ctrl := GetAsyncKeyState(VK_CONTROL) < 0;
+      Alt := GetAsyncKeyState(VK_MENU) < 0;
+      if Shift and Ctrl and Alt then
+        ResetSettings := MessageDlg('Reset ALL settings? (Existing settings file will be backed up.)',
+          mtConfirmation, [mbYes, mbNo], 0, mbNo) = mrYes;
+    end;
+
+    if ResetSettings then begin
+      s := wbSettingsFileName + '.backup.' + FormatDateTime('yyyy_mm_dd_hh_nn_ss', Now);
+
+      if not RenameFile(PChar(wbSettingsFileName), PChar(s)) then begin
+        ShowMessage(Format('Could not rename existing settings file to "%s".', [s]));
+        Exit(False);
+      end else
+        ShowMessage(Format('ALL settings have been reset. Existing settings file has been renamed to "%s".', [s]));
+    end;
+  end;
+
+  if FileExists(wbSettingsFileName) then try
     Settings := TMemIniFile.Create(wbSettingsFileName);
     try
       wbLoadBSAs := Settings.ReadBool('Options', 'LoadBSAs', wbLoadBSAs);
       wbSimpleRecords := Settings.ReadBool('Options', 'SimpleRecords', wbSimpleRecords);
       wbShowFlagEnumValue := Settings.ReadBool('Options', 'ShowFlagEnumValue', wbShowFlagEnumValue);
       wbTrackAllEditorID := Settings.ReadBool('Options', 'TrackAllEditorID', wbTrackAllEditorID);
+      wbAllowDirectSave := Settings.ReadBool('Options', 'AllowDirectSave', wbAllowDirectSave);
+      wbSortINFO := Settings.ReadBool('Options', 'SortINFO', wbSortINFO);
+      wbFillPNAM := Settings.ReadBool('Options', 'FillPNAM', wbFillPNAM);
+      sl := TStringList.Create;
+      try
+        Settings.ReadSection('cpoverride', sl);
+        for i := 0 to Pred(sl.Count) do try
+          s := sl[i];
+          wbAddLEncodingIfMissing(s, Settings.ReadString('cpoverride', s, ''), False);
+        except
+          on E:Exception do
+            ShowMessage('Could not add code page override "'+sl[i]+'" from wbSettingsFileName: ['+E.ClassName+'] ' + E.Message);
+        end;
+      finally
+        sl.Free;
+      end;
+
+      if not Settings.ReadBool('Init', 'FirstStart', False) then try
+        Settings.WriteBool('Init', 'FirstStart', True);
+        if VersionString.Minor mod 2 = 0 then begin
+          wbNoGitHubCheck := True;
+          Settings.WriteBool('Options', 'NoGitHubCheck', wbNoGitHubCheck);
+        end;
+        Settings.UpdateFile;
+      except end;
     finally
       Settings.Free;
     end;
-  finally
-  end;
+  except end;
 end;
 
 function GetCSIDLShellFolder(CSIDLFolder: integer): string;
@@ -216,30 +271,30 @@ begin
 end;
 
 function CheckAppPath: string;
-const
-  ExeName : array[TwbGameMode] of string = (
-    'FalloutNV.exe',  // gmFNV
-    'Fallout3.exe',   // gmFO3
-    'Morrowind.exe',  // gmTES3
-    'Oblivion.exe',   // gmTES4
-    'TESV.exe',       // gmTES5
-    'SkyrimVR.exe',   // gmTES5VR
-    'SkyrimSE.exe',   // gmSSE
-    'Fallout4.exe',   // gmFO4
-    'Fallout4VR.exe'  // gmFO4VR
-  );
 var
   s: string;
 begin
   Result := '';
   s := ExtractFilePath(ParamStr(0));
   while Length(s) > 3 do begin
-    if FileExists(s + ExeName[wbGameMode]) and DirectoryExists(s + 'Data') then begin
+    if FileExists(s + wbGameExeName) and DirectoryExists(s + 'Data') then begin
       Result := s;
       Exit;
     end;
     s := ExtractFilePath(ExcludeTrailingPathDelimiter(s));
   end;
+end;
+
+function PathRelativeToFull(const BasePath: string; const AddPath: string) : string;
+var CDir : string;
+begin
+  CDir := GetCurrentDir;
+  try
+    SetCurrentDir(BasePath);
+    Result := ExpandFileName(AddPath);
+  finally
+    SetCurrentDir(CDir);
+  end
 end;
 
 {===SafeLoadLibrary============================================================}
@@ -303,10 +358,12 @@ end;
 procedure DoInitPath(const ParamIndex: Integer);
 const
   sBethRegKey             = '\SOFTWARE\Bethesda Softworks\';
-  sBethRegKey64           = '\SOFTWARE\Wow6432Node\Bethesda Softworks\';
+  sUninstallRegKey        = '\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\';
+  sSureAIRegKey           = '\Software\SureAI\';
+
 var
-  s: string;
-  IniFile : TIniFile;
+  s, regPath, regKey, client: string;
+  IniFile : TMemIniFile;
 begin
   wbModGroupFileName := wbProgramPath + wbAppName + wbToolName + '.modgroups';
 
@@ -321,30 +378,57 @@ begin
   if not wbFindCmdLineParam('D', wbDataPath) then begin
     wbDataPath := CheckAppPath;
 
-    if wbDataPath = '' then with TRegistry.Create do try
+    if (wbDataPath = '') then with TRegistry.Create do try
+      Access  := KEY_READ or KEY_WOW64_32KEY;
       RootKey := HKEY_LOCAL_MACHINE;
+      client  := 'Steam';
 
-      if not OpenKeyReadOnly(sBethRegKey + wbGameNameReg + '\') then
-        if not OpenKeyReadOnly(sBethRegKey64 + wbGameNameReg + '\') then begin
-          s := 'Fatal: Could not open registry key: ' + sBethRegKey + wbGameNameReg + '\';
-//          if wbGameMode = gmTES5 then // All game exists on steam now
-          ShowMessage(s + #13#10'This can happen after Steam updates, run game''s launcher to restore registry settings');
+      case wbGameMode of
+      gmTES3, gmTES4, gmFO3, gmFNV, gmTES5, gmFO4, gmSSE, gmTES5VR, gmFO4VR: begin
+        regPath := sBethRegKey + wbGameNameReg + '\';
+      end;
+      gmEnderal: begin
+        RootKey := HKEY_CURRENT_USER;
+        regPath := sSureAIRegKey + wbGameNameReg + '\';
+      end;
+      gmFO76: begin
+        regPath := sUninstallRegKey + wbGameNameReg + '\';
+        client  := 'Bethesda.net Launcher';
+      end;
+      end;
+
+      if not OpenKey(regPath, False) then begin
+        Access := KEY_READ or KEY_WOW64_64KEY;
+        if not OpenKey(regPath, False) then begin
+          s := 'Fatal: Could not open registry key: ' + regPath;
+          ShowMessage(Format('%s'#13#10'This can happen after %s updates, run the game''s launcher to restore registry settings', [s, client]));
           wbDontSave := True;
           Exit;
         end;
+      end;
 
-      wbDataPath := ReadString('Installed Path');
+      case wbGameMode of
+      gmTES3, gmTES4, gmFO3, gmFNV, gmTES5, gmFO4, gmSSE, gmTES5VR, gmFO4VR:
+                  regKey := 'Installed Path';
+      gmEnderal:  regKey := 'Install_Path';
+      gmFO76:     regKey := 'Path';
+      end;
 
-      if wbDataPath = '' then begin
-        s := 'Fatal: Could not determine ' + wbGameName2 + ' installation path, no "Installed Path" registry key';
-        ShowMessage(s + #13#10'This can happen after Steam updates, run game''s launcher to restore registry settings');
+      wbDataPath := ReadString(regKey);
+      wbDataPath := StringReplace(wbDataPath, '"', '', [rfReplaceAll]);
+
+      if (wbDataPath = '') then begin
+        s := Format('Fatal: Could not determine %s installation path, no "%s" registry key', [wbGameName2, regKey]);
+        ShowMessage(Format('%s'#13#10'This can happen after %s updates, run the game''s launcher to restore registry settings', [s, client]));
         wbDontSave := True;
       end;
     finally
       Free;
     end;
-    if wbDataPath <>'' then
+
+    if (wbDataPath <> '') then
       wbDataPath := IncludeTrailingPathDelimiter(wbDataPath) + 'Data\';
+
   end else
     wbDataPath := IncludeTrailingPathDelimiter(wbDataPath);
 
@@ -365,12 +449,14 @@ begin
       ShowMessage('Fatal: Could not determine my documents folder');
       Exit;
     end;
-    wbMyGamesTheGamePath := wbMyProfileName + 'My Games\' + wbGameName2 + '\';
+
+    if wbGameMode in [gmFO76] then
+      wbMyGamesTheGamePath := wbMyProfileName + 'My Games\' + wbGameNameReg + '\'
+    else
+      wbMyGamesTheGamePath := wbMyProfileName + 'My Games\' + wbGameName2 + '\';
 
     if wbGameMode in [gmFO3, gmFNV] then
       wbTheGameIniFileName := wbMyGamesTheGamePath + 'Fallout.ini'
-    else if wbGameMode = gmFO4 then
-      wbTheGameIniFileName := wbMyGamesTheGamePath + 'Fallout4.ini'
     else
       wbTheGameIniFileName := wbMyGamesTheGamePath + wbGameName + '.ini';
 
@@ -385,14 +471,14 @@ begin
 
     s := 'Saves\';
     if FileExists(wbTheGameIniFileName) then begin
-      IniFile := TIniFile.Create(wbTheGameIniFileName);
+      IniFile := TMemIniFile.Create(wbTheGameIniFileName);
       try
         s := IniFile.ReadString('General', 'SLocalSavePath', s);
       finally
         FreeAndNil(IniFile);
       end;
     end;
-    wbSavePath := wbMyGamesTheGamePath + s;
+    wbSavePath := PathRelativeToFull(wbMyGamesTheGamePath, s);
   end;
   wbSavePath := IncludeTrailingPathDelimiter(wbSavePath);
 
@@ -410,6 +496,8 @@ begin
 
       wbPluginsFileName := wbPluginsFileName + wbGameName2 + '\Plugins.txt';
     end;
+  if ExtractFilePath(wbPluginsFileName) = '' then
+    wbPluginsFileName := ExpandFileName(wbPluginsFileName);
 
   // settings in the ini file next to app, or in the same folder with plugins.txt
   wbSettingsFileName := wbProgramPath + wbAppName + wbToolName + '.ini';
@@ -419,6 +507,19 @@ begin
   wbBackupPath := '';
   if not (wbDontSave or wbFindCmdLineParam('B', wbBackupPath)) then
     wbBackupPath := wbDataPath + wbAppName + 'Edit Backups\';
+
+  wbCachePath := '';
+  if not (wbDontCache or wbFindCmdLineParam('C', wbCachePath)) then
+    if wbDataPath <> '' then
+      wbCachePath := wbDataPath + wbAppName + 'Edit Cache\';
+  if wbCachePath = '' then
+    wbDontCache := True;
+  if not wbDontCache then
+    if not DirectoryExists(wbCachePath) then
+      if not ForceDirectories(wbCachePath) then
+        wbDontCache := True;
+  if wbDontCache then
+    wbCachePath := '';
 
   wbFindCmdLineParam('R', wbLogFile);
 end;
@@ -430,9 +531,9 @@ var
 procedure DetectAppMode;
 const
   SourceModes : array [1..2] of string = ('plugins', 'saves');
-  GameModes: array [1..8] of string = ('tes5vr', 'fo4vr', 'tes4', 'tes5', 'sse', 'fo3', 'fnv', 'fo4');
-  ToolModes: array [1..12] of string = (
-    'edit', 'view', 'lodgen', 'script', 'translate',
+  GameModes: array [1..10] of string = ('tes5vr', 'fo4vr', 'tes4', 'tes5', 'enderal', 'sse', 'fo3', 'fnv', 'fo4', 'fo76');
+  ToolModes: array [1..15] of string = (
+    'edit', 'view', 'lodgen', 'script', 'translate', 'onamupdate', 'masterupdate', 'masterrestore',
     'setesm', 'clearesm', 'sortandclean', 'sortandcleanmasters',
     'checkforerrors', 'checkforitm', 'checkfordr');
 var
@@ -440,7 +541,7 @@ var
 begin
   // Detecting game mode
   // check command line params first for mode overrides
-  // they should take precendence over application name detection
+  // they should take precedence over application name detection
   // AppSourceMode := SourceModes[1];
   for s in SourceModes do
     if FindCmdLineSwitch(s) or wbFindCmdLineParam(s, p) or (Pos(s, wbForcedModes) <> 0) then begin
@@ -517,15 +618,24 @@ begin
   end;
 end;
 
-procedure wbDoInit;
+function wbDoInit: Boolean;
 var
   s: string;
   ToolModes: TwbSetOfMode;
   ToolSources: TwbSetOfSource;
+  i: Integer;
+  ExeName: string;
 begin
+  ExeName := ChangeFileExt(ExtractFileName(ParamStr(0)), '').ToLowerInvariant;
+
+  if not wbIsAeroEnabled then
+    wbThemesSupported := False;
+
+  Result := True;
   wbReportMode := False;
   wbEditAllowed := True;
   wbDontSave    := False;
+  wbDevMode := FindCmdLineSwitch('devmode');
 
   CheckForcedMode;
   DetectAppMode;
@@ -547,6 +657,9 @@ begin
   end else if isMode('MasterUpdate') then begin
     wbToolMode    := tmMasterUpdate;
     wbToolName    := 'MasterUpdate';
+  end else if isMode('OnamUpdate') then begin
+    wbToolMode    := tmOnamUpdate;
+    wbToolName    := 'OnamUpdate';
   end else if isMode('MasterRestore') then begin
     wbToolMode    := tmMasterRestore;
     wbToolName    := 'MasterRestore';
@@ -583,10 +696,16 @@ begin
     wbToolMode    := tmEdit;
     wbToolName    := 'Edit';
   end else begin
-    ShowMessage('Application name must contain Edit, View, LODGen, MasterUpdate, MasterRestore, setESM, clearESM, sortAndCleanMasters, CheckForITM, CheckForDR or CheckForErrors to select mode.');
-    Exit;
+    ShowMessage('Application name must contain Edit, View, LODGen, OnamUpdate, MasterUpdate, MasterRestore, setESM, clearESM, sortAndCleanMasters, CheckForITM, CheckForDR or CheckForErrors to select mode.');
+    Exit(False);
   end;
 
+  if not (wbToolMode in [tmView, tmEdit]) then
+    wbPrettyFormID := False;
+
+  wbLanguage := 'English';
+
+  wbGameExeName := '';
   if isMode('FNV') then begin
     wbGameMode := gmFNV;
     wbAppName := 'FNV';
@@ -623,8 +742,18 @@ begin
     wbGameMode := gmTES5;
     wbAppName := 'TES5';
     wbGameName := 'Skyrim';
-    wbLanguage := 'English';
-    ToolModes := wbAlwaysMode + [tmTranslate];
+    wbGameExeName := 'TESV';
+    ToolModes := wbAlwaysMode + [tmOnamUpdate];
+    ToolSources := [tsPlugins, tsSaves];
+  end
+
+  else if isMode('Enderal') then begin
+    wbGameMode := gmEnderal;
+    wbAppName := 'Enderal';
+    wbGameName := 'Enderal';
+    wbGameExeName := 'TESV';
+    wbGameMasterEsm := 'Skyrim.esm';
+    ToolModes := wbAlwaysMode + [tmOnamUpdate];
     ToolSources := [tsPlugins, tsSaves];
   end
 
@@ -633,8 +762,9 @@ begin
     wbAppName := 'TES5VR';
     wbGameName := 'Skyrim';
     wbGameName2 := 'Skyrim VR';
-    wbLanguage := 'English';
-    ToolModes := wbAlwaysMode + [tmTranslate];
+    wbGameExeName := 'SkyrimVR';
+
+    ToolModes := wbAlwaysMode + [tmOnamUpdate];
     ToolSources := [tsPlugins];
   end
 
@@ -642,9 +772,9 @@ begin
     wbGameMode := gmSSE;
     wbAppName := 'SSE';
     wbGameName := 'Skyrim';
+    wbGameExeName := 'SkyrimSE';
     wbGameName2 := 'Skyrim Special Edition';
-    wbLanguage := 'English';
-    ToolModes := wbAlwaysMode + [tmTranslate];
+    ToolModes := wbAlwaysMode + [tmOnamUpdate];
     ToolSources := [tsPlugins, tsSaves];
   end
 
@@ -654,7 +784,7 @@ begin
     wbGameName := 'Fallout4';
     wbArchiveExtension := '.ba2';
     wbLanguage := 'En';
-    ToolModes := wbAlwaysMode + [tmTranslate];
+    ToolModes := wbAlwaysMode;
     ToolSources := [tsPlugins, tsSaves];
   end
 
@@ -662,32 +792,56 @@ begin
     wbGameMode := gmFO4VR;
     wbAppName := 'FO4VR';
     wbGameName := 'Fallout4';
+    wbGameExeName := 'Fallout4VR';
     wbGameName2 := 'Fallout4VR';
     wbGameNameReg := 'Fallout 4 VR';
     wbLanguage := 'En';
     wbArchiveExtension := '.ba2';
-    ToolModes := wbAlwaysMode + [tmTranslate];
+    ToolModes := wbAlwaysMode;
     ToolSources := [tsPlugins];
   end
 
+  else if isMode('FO76') then begin
+    wbGameMode := gmFO76;
+    wbAppName := 'FO76';
+    wbGameName := 'Fallout76';
+    wbGameNameReg := 'Fallout 76';
+    wbGameMasterEsm := 'SeventySix.esm';
+    wbLanguage := 'En';
+    wbArchiveExtension := '.ba2';
+    ToolModes := wbAlwaysMode;
+    ToolSources := [tsPlugins];
+    VersionString.Title := 'EXPERIMENTAL';
+  end
+
   else begin
-    ShowMessage('Application name must contain FNV, FO3, FO4, FO4VR, SSE, TES4, TES5 or TES5VR to select game.');
-    Exit;
+    ShowMessage('Application name must contain FNV, FO3, FO4, FO4VR, FO76, SSE, TES4, TES5, TES5VR, or Enderal to select game.');
+    Exit(False);
+  end;
+
+  if wbGameExeName = '' then
+    wbGameExeName := wbGameName;
+
+  wbGameExeName := wbGameExeName + csDotExe;
+
+  if wbGameMode in [gmFO3, gmFNV] then begin
+    wbUDRSetZ := False;
+    wbUDRSetZValue := -15000;
   end;
 
   if not (wbToolMode in ToolModes) then begin
     ShowMessage('Application ' + wbGameName + ' does not currently support ' + wbToolName);
-    Exit;
+    Exit(False);
   end;
 
   if not (wbToolSource in ToolSources) then begin
     ShowMessage('Application ' + wbGameName + ' does not currently support ' + wbSourceName);
-    Exit;
+    Exit(False);
   end;
 
   if (wbToolSource = tsSaves) and (wbToolMode = tmEdit) then begin
     ShowMessage('Application ' + wbGameName + ' does not currently support ' + wbSourceName + ' in ' + wbToolName + ' mode.');
-    Exit;
+    Exit(False);
   end;
 
   if wbGameName2 = '' then
@@ -696,89 +850,172 @@ begin
   if wbGameNameReg = '' then
     wbGameNameReg := wbGameName2;
 
+  if wbGameMasterEsm = '' then
+    wbGameMasterEsm := wbGameName + csDotEsm;
+
+  if FindCmdLineSwitch('DontCache') then
+    wbDontCache := True;
+  if FindCmdLineSwitch('DontCacheLoad') then
+    wbDontCacheLoad := True;
+  if FindCmdLineSwitch('DontCacheSave') then
+    wbDontCacheSave := True;
+  if wbDontCacheLoad and wbDontCacheSave then
+    wbDontCache := True;
+
   DoInitPath(wbParamIndex);
 
   // specific Game settings
-  if wbGameMode = gmFNV then begin
-    wbVWDInTemporary := True;
-    wbLoadBSAs := False;
-    ReadSettings;
-  end else if wbGameMode = gmFO3 then begin
-    wbVWDInTemporary := True;
-    wbLoadBSAs := False;
-    ReadSettings;
-  end else if wbGameMode = gmTES3 then begin
-    wbLoadBSAs := False;
-    wbAllowInternalEdit := false;
-    ReadSettings;
-  end else if wbGameMode = gmTES4 then begin
-    wbLoadBSAs := True;
-    wbAllowInternalEdit := false;
-    ReadSettings;
-  end else if wbGameMode in [gmTES5, gmTES5VR, gmSSE] then begin
-    wbVWDInTemporary := True;
-    wbLoadBSAs := True; // localization won't work otherwise
-    wbHideIgnored := False; // to show Form Version
-    ReadSettings;
-  end else if wbGameMode in [gmFO4, gmFO4VR] then begin
-    wbVWDInTemporary := True;
-    wbVWDAsQuestChildren := True;
-    wbLoadBSAs := True; // localization won't work otherwise
-    wbHideIgnored := False; // to show Form Version
-    ReadSettings;
-    //wbCreateContainedIn := False;
-  end else begin
-    Exit;
-  end;
-
-  // definitions
   case wbGameMode of
-    gmFNV: case wbToolSource of
-      tsSaves:   DefineFNVSaves;
-      tsPlugins: DefineFNV;
+    gmFNV: begin
+      wbVWDInTemporary := True;
+      wbLoadBSAs := False;
+      wbCanSortINFO := True;
     end;
-    gmFO3: case wbToolSource of
-      tsSaves:   DefineFO3Saves;
-      tsPlugins: DefineFO3;
+    gmFO3: begin
+      wbVWDInTemporary := True;
+      wbLoadBSAs := False;
+      wbCanSortINFO := True;
     end;
-    gmFO4, gmFO4VR: case wbToolSource of
-      tsSaves:   DefineFO4Saves;
-      tsPlugins: DefineFO4;
+    gmTES3: begin
+      wbLoadBSAs := False;
+      wbAllowInternalEdit := false;
     end;
-    gmTES3: case wbToolSource of
-      tsPlugins: DefineTES3;
+    gmTES4: begin
+      wbLoadBSAs := True;
+      wbAllowInternalEdit := false;
+      wbCanSortINFO := True;
     end;
-    gmTES4: case wbToolSource of
-      tsSaves:   DefineTES4Saves;
-      tsPlugins: DefineTES4;
+    gmTES5, gmEnderal, gmTES5VR, gmSSE: begin
+      wbVWDInTemporary := True;
+      wbLoadBSAs := True; // localization won't work otherwise
+      wbHideIgnored := False; // to show Form Version
+      wbCanSortINFO := True;
     end;
-    gmTES5, gmTES5VR: case wbToolSource of
-      tsSaves:   DefineTES5Saves;
-      tsPlugins: DefineTES5;
+    gmFO4, gmFO4VR: begin
+      wbVWDInTemporary := True;
+      wbVWDAsQuestChildren := True;
+      wbLoadBSAs := True; // localization won't work otherwise
+      wbHideIgnored := False; // to show Form Version
+      wbAlwaysSaveOnam := True;
+      wbAlwaysSaveOnamForce := True;
     end;
-    gmSSE: case wbToolSource of
-      tsSaves:   DefineTES5Saves;
-      tsPlugins: DefineTES5;
-    end
+    gmFO76: begin
+      wbVWDInTemporary := True;
+      wbVWDAsQuestChildren := True;
+      wbLoadBSAs := True; // localization won't work otherwise
+      wbHideIgnored := False; // to show Form Version
+      wbAlwaysSaveOnam := True;
+      wbAlwaysSaveOnamForce := True;
+    end;
+  else
+    ShowMessage('Unknown GameMode');
+    Exit(False);
   end;
 
-  if wbFindCmdLineParam('l', s) then
-    wbLanguage := s;
+  wbSortINFO := wbCanSortINFO;
 
-  if wbFindCmdLineParam('cp', s) then begin
-    if SameText(s, 'utf-8') then
-      wbStringEncoding := seUTF8;
+  if not ReadSettings then
+    Exit(False);
+
+  if wbCanSortINFO then begin
+    if FindCmdLineSwitch('sortinfo') then
+      wbSortINFO := True;
+
+    if FindCmdLineSwitch('nosortinfo') then
+      wbSortINFO := False;
+
+    if FindCmdLineSwitch('FillPNAM') then
+      wbFillPNAM := True;
+
+    if FindCmdLineSwitch('NoFillPNAM') then
+      wbFillPNAM := False;
   end;
 
-  if FindCmdLineSwitch('speed') then
-    wbSpeedOverMemory := True;
-  if FindCmdLineSwitch('memory') then
-    wbSpeedOverMemory := False;
+  // Was gmTES5, but is now gmEnderal
+  if wbGameMode <= gmEnderal then
+    wbAddDefaultLEncodingsIfMissing(False)
+  else begin
+    wbLEncodingDefault[False] := TEncoding.UTF8;
+    case wbGameMode of
+    gmSSE, gmTES5VR:
+      wbAddLEncodingIfMissing('english', '1252', False);
+    else {FO4, FO76}
+      wbAddLEncodingIfMissing('en', '1252', False);
+    end;
+  end;
 
-  if FindCmdLineSwitch('report') then
-    wbReportMode := (DebugHook <> 0);
-  if FindCmdLineSwitch('MoreInfoForIndex') then
-    wbMoreInfoForIndex := true;
+  wbAddDefaultLEncodingsIfMissing(True);
+
+  if wbFindCmdLineParam('AllowDirectSaves', s) then begin
+    wbAllowDirectSaveFor := TStringList.Create;
+    wbAllowDirectSaveFor.Sorted := True;
+    wbAllowDirectSaveFor.Duplicates := dupIgnore;
+    wbAllowDirectSaveFor.AddStrings(s.Split([',']).ForEach(Trim).RemoveEmpty);
+    if wbAllowDirectSaveFor.Count < 1 then begin
+      FreeAndNil(wbAllowDirectSaveFor);
+      wbAllowDirectSave := True;
+    end;
+  end else
+    if FindCmdLineSwitch('AllowDirectSaves') then
+      wbAllowDirectSave := True;
+
+  if FindCmdLineSwitch('IKnowWhatImDoing') then
+    wbIKnowWhatImDoing := True;
+
+  if wbIKnowWhatImDoing and FindCmdLineSwitch('AllowMasterFilesEdit') then
+    wbAllowMasterFilesEdit := True;
+
+  if wbIKnowWhatImDoing and FindCmdLineSwitch('StripEmptyMasters') then
+    wbStripEmptyMasters := True;
+
+  if wbToolMode = tmEdit then begin
+    if FindCmdLineSwitch('quickshowconflicts') or ExeName.Contains('quickshowconflicts') or ExeName.Contains('qsc') then
+      wbQuickShowConflicts := True;
+
+    if FindCmdLineSwitch('veryquickshowconflicts') or ExeName.Contains('veryquickshowconflicts') or ExeName.Contains('vqsc') then begin
+      wbQuickShowConflicts := True;
+      wbVeryQuickShowConflicts := True;
+      wbAutoLoad := True;
+    end;
+
+    if FindCmdLineSwitch('autoload') then
+      wbAutoLoad := True;
+
+    if FindCmdLineSwitch('autogamelink') or ExeName.Contains('autogamelink') or ExeName.Contains('agl') then begin
+      wbAutoLoad := True;
+      wbAutoGameLink := True;
+    end;
+
+    if wbAutoLoad then
+      if wbQuickShowConflicts then
+        wbVeryQuickShowConflicts := True;
+
+    if (FindCmdLineSwitch('quickclean') or ExeName.Contains('quickclean') or ExeName.Contains('qc')) and (wbToolSource in [tsPlugins]) then
+      wbQuickClean := True;
+
+    if (FindCmdLineSwitch('quickautoclean') or ExeName.Contains('quickautoclean') or ExeName.Contains('qac')) and (wbToolSource in [tsPlugins]) then begin
+      wbQuickClean := True;
+      wbQuickCleanAutoSave := wbQuickClean;
+    end;
+  end;
+
+  i := 0;
+  if wbQuickShowConflicts then
+    Inc(i);
+  if wbQuickClean then
+    Inc(i);
+  if wbAutoGameLink then
+    Inc(i);
+
+  if i > 1 then begin
+    ShowMessage('Can''t activate more than one out of Quick Clean, Quick Show Conflicts, or Auto GameLink modes same time.');
+    Exit(False);
+  end;
+
+  if wbQuickClean then begin
+    wbIKnowWhatImDoing := True;
+    wbAutoLoad := False;
+  end;
 
   if FindCmdLineSwitch('fixup') then
     wbAllowInternalEdit := True
@@ -800,70 +1037,179 @@ begin
   else if FindCmdLineSwitch('hidefixup') then
     wbShowInternalEdit := False;
 
-  if FindCmdLineSwitch('quickshowconflicts') then
-    wbQuickShowConflicts := True;
+  if wbQuickClean then begin
+    wbFixupPGRD := True;
+    wbAllowInternalEdit := True;
+    wbSimpleRecords := False;
+  end;
 
-  if FindCmdLineSwitch('IKnowWhatImDoing') then
-    wbIKnowWhatImDoing := True;
+  if wbFindCmdLineParam('l', s) then begin
+    wbLanguage := s;
+  end else
+    if FileExists(wbTheGameIniFileName) then begin
+      with TMemIniFile.Create(wbTheGameIniFileName) do try
+        case wbGameMode of
+          gmTES4: case ReadInteger('Controls', 'iLanguage', 0) of
+            1: s := 'German';
+            2: s := 'French';
+            3: s := 'Spanish';
+            4: s := 'Italian';
+          else
+            s := 'English';
+          end;
+        else
+          s := Trim(ReadString('General', 'sLanguage', '')).ToLower;
+        end;
+        if (s <> '') and not SameText(s, wbLanguage) then
+          wbLanguage := s;
+      finally
+        Free;
+      end;
+    end;
 
-  if FindCmdLineSwitch('quickclean') and (wbToolSource in [tsPlugins]) then
-    wbQuickClean := wbIKnowWhatImDoing;
+  wbEncodingTrans := wbEncodingForLanguage(wbLanguage, False);
+
+  if wbFindCmdLineParam('cp-general', s) then
+    wbEncoding :=  wbMBCSEncoding(s);
+
+  if wbFindCmdLineParam('cp', s) or wbFindCmdLineParam('cp-trans', s) then
+    wbEncodingTrans :=  wbMBCSEncoding(s);
+
+  // definitions
+  case wbGameMode of
+    gmFNV: case wbToolSource of
+      tsSaves:   DefineFNVSaves;
+      tsPlugins: DefineFNV;
+    end;
+    gmFO3: case wbToolSource of
+      tsSaves:   DefineFO3Saves;
+      tsPlugins: DefineFO3;
+    end;
+    gmFO4, gmFO4VR: case wbToolSource of
+      tsSaves:   DefineFO4Saves;
+      tsPlugins: DefineFO4;
+    end;
+    gmFO76: case wbToolSource of
+      tsPlugins: DefineFO76;
+    end;
+    gmTES3: case wbToolSource of
+      tsPlugins: DefineTES3;
+    end;
+    gmTES4: case wbToolSource of
+      tsSaves:   DefineTES4Saves;
+      tsPlugins: DefineTES4;
+    end;
+    gmTES5, gmTES5VR: case wbToolSource of
+      tsSaves:   DefineTES5Saves;
+      tsPlugins: DefineTES5;
+    end;
+    gmEnderal: case wbToolSource of
+      tsSaves:   DefineTES5Saves;
+      tsPlugins: DefineTES5;
+    end;
+    gmSSE: case wbToolSource of
+      tsSaves:   DefineTES5Saves;
+      tsPlugins: DefineTES5;
+    end
+  end;
+
+  if FindCmdLineSwitch('speed') then
+    wbSpeedOverMemory := True;
+  if FindCmdLineSwitch('memory') then
+    wbSpeedOverMemory := False;
+
+  if FindCmdLineSwitch('report') then
+    wbReportMode := (DebugHook <> 0);
+  if FindCmdLineSwitch('MoreInfoForIndex') then
+    wbMoreInfoForIndex := true;
+
+  if wbIKnowWhatImDoing and FindCmdLineSwitch('IKnowIllBreakMyGameWithThis') then
+    wbAllowEditGameMaster := True;
 
   if FindCmdLineSwitch('TrackAllEditorID') then
     wbTrackAllEditorID := True;
 
+  if FindCmdLineSwitch('IgnoreESL') then
+    wbIgnoreESL := True
+  else
+    if FindCmdLineSwitch('PseudoESL') then
+      wbPseudoESL := True;
+
+  if FindCmdLineSwitch('SimpleFormIDs') then
+    wbPrettyFormID := False;
+
   if wbToolMode in wbPluginModes then // look for the file name
     if not wbFindNextValidCmdLinePlugin(wbParamIndex, wbPluginToUse, wbDataPath) then begin
       ShowMessage(wbToolName+' mode requires a valid plugin name!');
-      Exit;
+      Exit(False);
     end;
 
   // specific Tool Mode settings overrides
-  if wbToolMode = tmLODgen then begin
-    wbIKnowWhatImDoing := True;
-    wbAllowInternalEdit := False;
-    wbShowInternalEdit := False;
-    wbLoadBSAs := True;
-    wbBuildRefs := False;
-  end
-
-  else if wbToolMode = tmScript then begin
-    wbIKnowWhatImDoing := True;
-    wbLoadBSAs := True;
-    wbBuildRefs := True;
-  end
-
-  else if wbToolMode in [tmMasterUpdate, tmESMify] then begin
-    wbIKnowWhatImDoing := True;
-    wbAllowInternalEdit := False;
-    wbShowInternalEdit := False;
-    wbLoadBSAs := False;
-    wbBuildRefs := False;
-    wbMasterUpdateFilterONAM := wbToolMode in [tmESMify];
-
-    if FindCmdLineSwitch('filteronam') then
-      wbMasterUpdateFilterONAM := True
-    else if FindCmdLineSwitch('noFilteronam') then
-      wbMasterUpdateFilterONAM := True;
-
-    if FindCmdLineSwitch('FixPersistence') then
-      wbMasterUpdateFixPersistence := True
-    else if FindCmdLineSwitch('NoFixPersistence') then
-      wbMasterUpdateFixPersistence := False;
-  end
-
-  else if wbToolMode in [tmMasterRestore, tmESPify, tmCheckForDR, tmCheckForITM, tmCheckForErrors] then begin
-    wbIKnowWhatImDoing := True;
-    wbAllowInternalEdit := False;
-    wbShowInternalEdit := False;
-    wbLoadBSAs := False;
-    wbBuildRefs := False;
-  end
-
-  else if wbToolMode = tmTranslate then begin
-    wbTranslationMode := True;
+  case wbToolMode of
+    tmLODgen: begin
+      wbIKnowWhatImDoing := True;
+      wbAllowInternalEdit := False;
+      wbShowInternalEdit := False;
+      wbLoadBSAs := True;
+      wbBuildRefs := False;
+    end;
+    tmScript: begin
+      wbIKnowWhatImDoing := True;
+      wbLoadBSAs := True;
+      wbBuildRefs := True;
+    end;
+    tmOnamUpdate, tmMasterUpdate, tmESMify: begin
+      wbIKnowWhatImDoing := True;
+      wbAllowInternalEdit := False;
+      wbShowInternalEdit := False;
+      wbLoadBSAs := False;
+      wbBuildRefs := False;
+      wbMasterUpdateFilterONAM := wbToolMode in [tmESMify];
+      if wbToolMode = tmOnamUpdate then begin
+        wbAlwaysSaveOnam := True;
+        wbAlwaysSaveOnamForce := True;
+      end;
+    end;
+    tmMasterRestore, tmESPify, tmCheckForDR, tmCheckForITM, tmCheckForErrors: begin
+      wbIKnowWhatImDoing := True;
+      wbAllowInternalEdit := False;
+      wbShowInternalEdit := False;
+      wbLoadBSAs := False;
+      wbBuildRefs := False;
+    end;
+    tmTranslate: begin
+      if wbGameMode >= gmTES5 then
+        wbLoadBSAs := True; //needed for localization
+      wbTranslationMode := True;
+      wbHideUnused := True;
+      wbHideIgnored := True;
+      wbHideNeverShow := True;
+    end;
   end;
 
+  if FindCmdLineSwitch('alwayssaveonam') then
+    wbAlwaysSaveOnam := True;
+
+  if FindCmdLineSwitch('filteronam') then
+    wbMasterUpdateFilterONAM := True
+  else if FindCmdLineSwitch('noFilteronam') then
+    wbMasterUpdateFilterONAM := False;
+
+  if FindCmdLineSwitch('FixPersistence') then
+    wbMasterUpdateFixPersistence := True
+  else if FindCmdLineSwitch('NoFixPersistence') then
+    wbMasterUpdateFixPersistence := False;
+
+  if wbVeryQuickShowConflicts then
+    wbSubMode := 'Very Quick Show Conflicts'
+  else if wbQuickShowConflicts then
+    wbSubMode := 'Quick Show Conflicts'
+  else if wbQuickCleanAutoSave then
+    wbSubMode := 'Quick Auto Clean'
+  else if wbQuickClean then
+    wbSubMode := 'Quick Clean'
+  else if wbAutoGameLink then
+    wbSubMode := 'Auto Game Link';
 
   wbApplicationTitle := wbAppName + wbToolName + ' ' + VersionString;
   {$IFDEF LiteVersion}
@@ -872,6 +1218,8 @@ begin
   {$IFDEF WIN64}
   wbApplicationTitle := wbApplicationTitle + ' x64';
   {$ENDIF WIN64}
+  if wbSubMode <> '' then
+    wbApplicationTitle := wbApplicationTitle + ' (' + wbSubMode + ')';
 
   if FindCmdLineSwitch('nobuildrefs') then
     wbBuildRefs := False;
@@ -895,11 +1243,10 @@ begin
     gmFO3:  SwitchToFO3CoSave;
     gmTES4: SwitchToTES4CoSave;
     gmTES5: SwitchToTES5CoSave;
+    gmEnderal:  SwitchToTES5CoSave;
     gmSSE:  SwitchToTES5CoSave;
   end;
 end;
 
 initialization
-  wbDoInit;
-
 end.

@@ -380,6 +380,7 @@ const
   LNAM : TwbSignature = 'LNAM';
   LSCR : TwbSignature = 'LSCR';
   LTEX : TwbSignature = 'LTEX';
+  MPCD : TwbSignature = 'MPCD';
   LTMP : TwbSignature = 'LTMP';
   LVLC : TwbSignature = 'LVLC';
   LVLD : TwbSignature = 'LVLD';
@@ -715,6 +716,8 @@ var
   wbSPLOs: IwbSubRecordArrayDef;
   wbCNTO: IwbSubRecordStructDef;
   wbCNTOs: IwbSubRecordArrayDef;
+  wbCNTONoReach: IwbSubRecordStructDef;
+  wbCNTOsNoReach: IwbSubRecordArrayDef;
   wbAIDT: IwbSubRecordDef;
   wbCSDT: IwbSubRecordStructDef;
   wbCSDTs: IwbSubRecordArrayDef;
@@ -758,7 +761,7 @@ var
   wbScriptPropertyObject: IwbUnionDef;
 	wbScriptProperties: IwbArrayDef;
   wbScriptFragments: IwbStructDef;
-  wbScriptFragmentsQuest: IwbStructDef;
+  wbScriptFragmentsQuest: IwbValueDef;
   wbScriptFragmentsInfo: IwbStructDef;
   wbScriptFragmentsPack: IwbStructDef;
   wbScriptFragmentsScen: IwbStructDef;
@@ -862,7 +865,7 @@ begin
     ctCheck: Result := wbActorValueEnum.Check(aInt, aElement);
     ctToEditValue: Result := wbActorValueEnum.ToEditValue(aInt, aElement);
     ctEditType: Result := 'ComboBox';
-    ctEditInfo: Result := wbActorValueEnum.EditInfo[aInt, aElement];
+    ctEditInfo: Result := wbActorValueEnum.EditInfo[aInt, aElement].ToCommaText;
   end;
 end;
 
@@ -1122,6 +1125,364 @@ function wbStringToInt(const aString: string; const aElement: IwbElement): Int64
 begin
   Result := StrToIntDef(aString, 0);
 end;
+
+function wbEdgeToStr(aEdge: Integer; aInt: Int64; const aElement: IwbElement; aType: TwbCallbackType): string;
+var
+  Triangle   : IwbContainerElementRef;
+  Flags      : Int64;
+  MainRecord : IwbMainRecord;
+  EdgeLinks  : IwbContainerElementRef;
+  EdgeLink   : IwbContainerElementRef;
+  FormID     : TwbFormID;
+begin
+  case aType of
+    ctToStr: begin
+      if aInt < 0 then
+        Exit('None');
+      Result := aInt.ToString;
+      if not Assigned(aElement) then
+        Exit;
+
+      Triangle := aElement.Container as IwbContainerElementRef;
+      if not Assigned(Triangle) then
+        Exit;
+      MainRecord := aElement.ContainingMainRecord;
+      if not Assigned(MainRecord) then
+        Exit;
+
+      Flags := Triangle.ElementNativeValues['Flags'];
+      if Flags and (1 shl aEdge) <> 0 then begin
+        if not Supports(MainRecord.ElementByPath['NVNM\Edge Links'], IwbContainerElementRef, EdgeLinks) then
+          Exit;
+        if aInt >= EdgeLinks.ElementCount then
+          Exit;
+        if aInt < 0 then
+          Exit;
+        EdgeLink := EdgeLinks.Elements[aInt] as IwbContainerElementRef;
+
+        MainRecord := nil;
+        if not Supports(EdgeLink.ElementByPath['Mesh'].LinksTo, IwbMainRecord, MainRecord) then
+          Exit;
+        aInt := EdgeLink.ElementNativeValues['Triangle'];
+
+        Result := Result + ' (#' + aInt.ToString + ' in ' + MainRecord.Name + ')';
+      end;
+    end;
+    ctToSortKey: begin
+      Result := '00000000' + IntToHex(aInt, 4);
+      if not Assigned(aElement) then
+        Exit;
+
+      Triangle := aElement.Container as IwbContainerElementRef;
+      if not Assigned(Triangle) then
+        Exit;
+      MainRecord := aElement.ContainingMainRecord;
+      if not Assigned(MainRecord) then
+        Exit;
+
+      FormID := MainRecord.LoadOrderFormID;
+
+      Flags := Triangle.ElementNativeValues['Flags'];
+      if Flags and (1 shl aEdge) <> 0 then begin
+        if not Supports(MainRecord.ElementByPath['NVNM\Edge Links'], IwbContainerElementRef, EdgeLinks) then
+          Exit;
+        if aInt >= EdgeLinks.ElementCount then
+          Exit;
+        EdgeLink := EdgeLinks.Elements[aInt] as IwbContainerElementRef;
+
+        MainRecord := nil;
+        if not Supports(EdgeLink.ElementByPath['Mesh'].LinksTo, IwbMainRecord, MainRecord) then
+          Exit;
+        if Assigned(MainRecord) then
+          FormID := MainRecord.LoadOrderFormID
+        else
+          FormID := TwbFormID.Null;
+        aInt := EdgeLink.ElementNativeValues['Triangle'];
+      end;
+
+      Result := FormID.ToString + IntToHex(aInt, 4);
+    end;
+    ctCheck: Result := '';
+    ctToEditValue: if aInt < 0 then
+                     Result := ''
+                   else
+                     Result := aInt.ToString;
+    ctEditType: Result := '';
+    ctEditInfo: Result := '';
+  end;
+end;
+
+function wbEdgeLinksTo(aEdge: Integer; const aElement: IwbElement): IwbElement;
+var
+  aInt       : Int64;
+  Triangle   : IwbContainerElementRef;
+  Triangles  : IwbContainerElementRef;
+  Flags      : Int64;
+  MainRecord : IwbMainRecord;
+  EdgeLinks  : IwbContainerElementRef;
+  EdgeLink   : IwbContainerElementRef;
+begin
+  Result := nil;
+  if not Assigned(aElement) then
+    Exit;
+
+  Triangle := aElement.Container as IwbContainerElementRef;
+  if not Assigned(Triangle) then
+    Exit;
+  MainRecord := aElement.ContainingMainRecord;
+  if not Assigned(MainRecord) then
+    Exit;
+
+  aInt := aElement.NativeValue;
+
+  Flags := Triangle.ElementNativeValues['Flags'];
+  if Flags and (1 shl aEdge) <> 0 then begin
+    if not Supports(MainRecord.ElementByPath['NVNM\Edge Links'], IwbContainerElementRef, EdgeLinks) then
+      Exit;
+    if aInt >= EdgeLinks.ElementCount then
+      Exit;
+    if aInt < 0 then
+      Exit;
+    EdgeLink := EdgeLinks.Elements[aInt] as IwbContainerElementRef;
+
+    MainRecord := nil;
+    if not Supports(EdgeLink.ElementByPath['Mesh'].LinksTo, IwbMainRecord, MainRecord) then
+      Exit;
+    aInt := EdgeLink.ElementNativeValues['Triangle'];
+  end;
+
+  if not Supports(MainRecord.ElementByPath['NVNM\Triangles'], IwbContainerElementRef, Triangles) then
+    Exit;
+
+  if aInt >= Triangles.ElementCount then
+    Exit;
+  if aInt < 0 then
+    Exit;
+  Triangle := Triangles.Elements[aInt] as IwbContainerElementRef;
+
+  Result := Triangle;
+end;
+
+function wbEdgeLinksTo0(const aElement: IwbElement): IwbElement;
+begin
+  Result := wbEdgeLinksTo(0, aElement);
+end;
+
+function wbEdgeLinksTo1(const aElement: IwbElement): IwbElement;
+begin
+  Result := wbEdgeLinksTo(1, aElement);
+end;
+
+function wbEdgeLinksTo2(const aElement: IwbElement): IwbElement;
+begin
+  Result := wbEdgeLinksTo(2, aElement);
+end;
+
+function wbTriangleLinksTo(const aElement: IwbElement): IwbElement;
+var
+  aInt       : Int64;
+  Triangle   : IwbContainerElementRef;
+  Triangles  : IwbContainerElementRef;
+  MainRecord : IwbMainRecord;
+begin
+  Result := nil;
+  if not Assigned(aElement) then
+    Exit;
+
+  Triangle := aElement.Container as IwbContainerElementRef;
+  if not Assigned(Triangle) then
+    Exit;
+  MainRecord := aElement.ContainingMainRecord;
+  if not Assigned(MainRecord) then
+    Exit;
+
+  aInt := aElement.NativeValue;
+
+  if not Supports(MainRecord.ElementByPath['NVNM\Triangles'], IwbContainerElementRef, Triangles) then
+    Exit;
+
+  if aInt >= Triangles.ElementCount then
+    Exit;
+  if aInt < 0 then
+    Exit;
+  Triangle := Triangles.Elements[aInt] as IwbContainerElementRef;
+
+  Result := Triangle;
+end;
+
+function wbVertexToStr(aVertex: Integer; aInt: Int64; const aElement: IwbElement; aType: TwbCallbackType): string;
+var
+  Triangle   : IwbContainerElementRef;
+  MainRecord : IwbMainRecord;
+  Vertices   : IwbContainerElementRef;
+  Vertex     : IwbContainerElementRef;
+begin
+  case aType of
+    ctToStr: begin
+      Result := aInt.ToString;
+      if not Assigned(aElement) then
+        Exit;
+
+      Triangle := aElement.Container as IwbContainerElementRef;
+      if not Assigned(Triangle) then
+        Exit;
+      MainRecord := aElement.ContainingMainRecord;
+      if not Assigned(MainRecord) then
+        Exit;
+
+      if not Supports(MainRecord.ElementByPath['NVNM\Vertices'], IwbContainerElementRef, Vertices) then
+        Exit;
+      if aInt >= Vertices.ElementCount then
+        Exit;
+      if aInt < 0 then
+        Exit;
+      Vertex := Vertices.Elements[aInt] as IwbContainerElementRef;
+
+      with Vertex do try
+        Result := Result + Format(' (%s, %s, %s)', [ElementEditValues['X'], ElementEditValues['Y'], ElementEditValues['Z']]);
+      except end;
+    end;
+    ctToSortKey: begin
+      Result := IntToHex(aInt, 4);
+      if not Assigned(aElement) then
+        Exit;
+
+      Triangle := aElement.Container as IwbContainerElementRef;
+      if not Assigned(Triangle) then
+        Exit;
+      MainRecord := aElement.ContainingMainRecord;
+      if not Assigned(MainRecord) then
+        Exit;
+
+      if not Supports(MainRecord.ElementByPath['NVNM\Vertices'], IwbContainerElementRef, Vertices) then
+        Exit;
+      if aInt >= Vertices.ElementCount then
+        Exit;
+      if aInt < 0 then
+        Exit;
+      Vertex := Vertices.Elements[aInt] as IwbContainerElementRef;
+
+      with Vertex do try
+        Result := SortKey[False];
+      except end;
+    end;
+    ctCheck: Result := '';
+    ctToEditValue: Result := aInt.ToString;
+    ctEditType: Result := '';
+    ctEditInfo: Result := '';
+  end;
+end;
+
+function wbVertexLinksTo(const aElement: IwbElement): IwbElement;
+var
+  aInt       : Int64;
+  Triangle   : IwbContainerElementRef;
+  MainRecord : IwbMainRecord;
+  Vertices   : IwbContainerElementRef;
+  Vertex     : IwbContainerElementRef;
+begin
+  Result := nil;
+  if not Assigned(aElement) then
+    Exit;
+
+  Triangle := aElement.Container as IwbContainerElementRef;
+  if not Assigned(Triangle) then
+    Exit;
+  MainRecord := aElement.ContainingMainRecord;
+  if not Assigned(MainRecord) then
+    Exit;
+
+  if not Supports(MainRecord.ElementByPath['NVNM\Vertices'], IwbContainerElementRef, Vertices) then
+    Exit;
+
+  aInt := aElement.NativeValue;
+
+  if aInt >= Vertices.ElementCount then
+    Exit;
+  if aInt < 0 then
+    Exit;
+
+  Vertex := Vertices.Elements[aInt] as IwbContainerElementRef;
+
+  Result := Vertex;
+end;
+
+function wbVertexToInt(aVertex: Integer; const aString: string; const aElement: IwbElement): Int64;
+begin
+  Result := StrToIntDef(aString, 0);
+end;
+
+function wbVertexToStr0(aInt: Int64; const aElement: IwbElement; aType: TwbCallbackType): string;
+begin
+  Result := wbVertexToStr(0, aInt, aElement, aType);
+end;
+
+function wbVertexToInt0(const aString: string; const aElement: IwbElement): Int64;
+begin
+  Result := wbVertexToInt(0, aString, aElement);
+end;
+
+function wbVertexToStr1(aInt: Int64; const aElement: IwbElement; aType: TwbCallbackType): string;
+begin
+  Result := wbVertexToStr(1, aInt, aElement, aType);
+end;
+
+function wbVertexToInt1(const aString: string; const aElement: IwbElement): Int64;
+begin
+  Result := wbVertexToInt(1, aString, aElement);
+end;
+
+function wbVertexToStr2(aInt: Int64; const aElement: IwbElement; aType: TwbCallbackType): string;
+begin
+  Result := wbVertexToStr(2, aInt, aElement, aType);
+end;
+
+function wbVertexToInt2(const aString: string; const aElement: IwbElement): Int64;
+begin
+  Result := wbVertexToInt(2, aString, aElement);
+end;
+
+function wbEdgeToInt(aEdge: Integer; const aString: string; const aElement: IwbElement): Int64;
+var
+  s: string;
+begin
+  s := Trim(aString);
+  if (s = '')  or SameText(s, 'None') then
+    Result := -1
+  else
+    Result := StrToIntDef(aString, 0);
+end;
+
+function wbEdgeToStr0(aInt: Int64; const aElement: IwbElement; aType: TwbCallbackType): string;
+begin
+  Result := wbEdgeToStr(0, aInt, aElement, aType);
+end;
+
+function wbEdgeToInt0(const aString: string; const aElement: IwbElement): Int64;
+begin
+  Result := wbEdgeToInt(0, aString, aElement);
+end;
+
+function wbEdgeToStr1(aInt: Int64; const aElement: IwbElement; aType: TwbCallbackType): string;
+begin
+  Result := wbEdgeToStr(1, aInt, aElement, aType);
+end;
+
+function wbEdgeToInt1(const aString: string; const aElement: IwbElement): Int64;
+begin
+  Result := wbEdgeToInt(1, aString, aElement);
+end;
+
+function wbEdgeToStr2(aInt: Int64; const aElement: IwbElement; aType: TwbCallbackType): string;
+begin
+  Result := wbEdgeToStr(2, aInt, aElement, aType);
+end;
+
+function wbEdgeToInt2(const aString: string; const aElement: IwbElement): Int64;
+begin
+  Result := wbEdgeToInt(2, aString, aElement);
+end;
+
 
 
 { Alias to string conversion, requires quest reference or quest record specific to record that references alias }
@@ -1620,7 +1981,7 @@ begin
       Result := wbEventFunctionAndMemberEditInfo;
       if Result = '' then try
         slMember := TStringList.Create;
-        slMember.CommaText := wbEventMemberEnum.EditInfo[0, nil];
+        slMember.AddStrings(wbEventMemberEnum.EditInfo[0, nil]);
         with TStringList.Create do try
           for i := 0 to Pred(wbEventFunctionEnum.NameCount) do
             for j := 0 to Pred(slMember.Count) do
@@ -2469,7 +2830,6 @@ end;
 function wbScriptFragmentsQuestCounter(aBasePtr: Pointer; aEndPtr: Pointer; const aElement: IwbElement): Cardinal;
 var
   Container     : IwbContainer;
-
 begin
   Result := 0;
   if aElement.ElementType = etValue then
@@ -2481,7 +2841,17 @@ begin
     Container := Container.Container;
   if not Assigned(Container) then Exit;
 
-  Result := Integer(Container.ElementNativeValues['fragmentCount']);
+  Result := Integer(Container.ElementNativeValues['FragmentCount']);
+end;
+
+procedure wbScriptFragmentsQuestAfterSet(const aElement: IwbElement; const aOldValue, aNewValue: Variant);
+begin
+  wbCounterContainerAfterSet('FragmentCount', 'Fragments', aElement);
+end;
+
+procedure wbScriptFragmentsQuestFragmentsAfterSet(const aElement: IwbElement; const aOldValue, aNewValue: Variant);
+begin
+  wbCounterAfterSet('FragmentCount', aElement);
 end;
 
 {>>> For VMAD <<<}
@@ -2510,7 +2880,7 @@ begin
   for i := 3 to 7 do begin
     if (F and 1) = 1 then begin
       Inc(Result);
-    if Assigned(wbProgressCallback) then
+    if wbHasProgressCallback then
       wbProgressCallback('==='+aElement.Name+'       ['+Container.Name+':'+Container.Path+'] = unknown info VMAD flag bit '+IntToStr(i));
   end;
     F := F shr 1;
@@ -2543,7 +2913,7 @@ begin
   for i := 3 to 7 do begin
     if (F and 1) = 1 then begin
       Inc(Result);
-  if Assigned(wbProgressCallback) then
+  if wbHasProgressCallback then
       wbProgressCallback('==='+aElement.Name+'       ['+Container.Name+':'+Container.Path+'] = unknown scene VMAD flag bit '+IntToStr(i));
   end;
     F := F shr 1;
@@ -2651,7 +3021,8 @@ type
     ptScene,              // SCEN
     ptWardState,          // enum
     ptEvent,              // Struct
-    ptEventData           // LCTN, KYWD or FLST
+    ptEventData,          // LCTN, KYWD or FLST
+    ptKnowable            // MGEF, WOOP
   );
 
   PCTDAFunction = ^TCTDAFunction;
@@ -2902,7 +3273,7 @@ const
 {N} (Index: 487; Name: 'IsCarryable'),
 {V} (Index: 488; Name: 'GetConcussed'),
 {V} (Index: 491; Name: 'GetMapMarkerVisible'),
-{N} (Index: 493; Name: 'PlayerKnows'; ParamType1: ptMagicEffect),
+{N} (Index: 493; Name: 'PlayerKnows'; ParamType1: ptKnowable),
 {V} (Index: 494; Name: 'GetPermanentActorValue'; ParamType1: ptActorValue),
 {V} (Index: 495; Name: 'GetKillingBlowLimb'),
 {N} (Index: 497; Name: 'CanPayCrimeGold'),
@@ -3396,7 +3767,6 @@ begin
          OutOfRange(StrToIntDef(Container.ElementEditValues['NAM9\Y'], 0))
       then
         wbProgressCallback('<Warning: Object Bounds in ' + MainRecord.Name + ' are abnormally large and can cause performance issues in game>');
-
   finally
     wbEndInternalEdit;
   end;
@@ -4222,14 +4592,14 @@ begin
     Element := Container.ElementByPath['Object Bounds\NAM0 - Min\X'];
     if Assigned(Element) then begin
       fResult :=  Element.NativeValue;
-      if fResult >= MaxInt then
+      if (fResult >= MaxInt) or (fResult <= 0) then
         Result := 0
       else
         Result := Trunc(fResult);
       Element := Container.ElementByPath['Object Bounds\NAM9 - Max\X'];
       if Assigned(Element) then begin
         fResult :=  Element.NativeValue;
-        if fResult >= MaxInt then
+        if (fResult >= (MaxInt - Result + 1)) or (fResult <= 1) then
           Result := 1
         else
           Result := Trunc(fResult) - Result + 1;
@@ -4566,6 +4936,16 @@ begin
   wbCOCT := wbInteger(COCT, 'Count', itU32, nil, cpBenign);
   wbCNTOs := wbRArrayS('Items', wbCNTO, cpNormal, False, nil, wbCNTOsAfterSet);
 
+  wbCNTONoReach :=
+    wbRStructExSK([0], [1], 'Item', [
+      wbStructExSK(CNTO, [0], [1], 'Item', [
+        wbFormIDCkNoReach('Item', [ARMO, AMMO, APPA, MISC, WEAP, BOOK, LVLI, KEYM, ALCH, INGR, LIGH, SLGM, SCRL]),
+        wbInteger('Count', itS32)
+      ]),
+      wbCOED
+    ], []);
+  wbCNTOsNoReach := wbRArrayS('Items', wbCNTONoReach, cpNormal, False, nil, wbCNTOsAfterSet);
+
   wbArmorTypeEnum := wbEnum([
     'Light Armor',
     'Heavy Armor',
@@ -4850,7 +5230,10 @@ begin
     wbInteger('Data Size', itU32, nil, cpIgnore),
     wbRecordFlags,
     wbFormID('FormID', cpFormID),
-    wbByteArray('Version Control Info 1', 4, cpIgnore),
+    wbUnion('Version Control Info 1', wbFormVer44Decider, [
+      wbByteArray('Version Control Info 1', 4, cpIgnore).SetToStr(wbVCI1ToStrBeforeFO4),
+      wbByteArray('Version Control Info 1', 4, cpIgnore).SetToStr(wbVCI1ToStrAfterFO4)
+    ]),
     wbInteger('Form Version', itU16, nil, cpIgnore),
     wbByteArray('Version Control Info 2', 2, cpIgnore)
   ]);
@@ -5064,7 +5447,7 @@ begin
     {9} 'Crossbow'
   ]);
 
-  wbEDID := wbString(EDID, 'Editor ID', 0, cpNormal); // not cpBenign according to Arthmoor
+  wbEDID := wbStringKC(EDID, 'Editor ID', 0, cpOverride);
   wbFULL := wbLStringKC(FULL, 'Name', 0, cpTranslate);
   wbFULLActor := wbLStringKC(FULL, 'Name', 0, cpTranslate, False, nil{wbActorTemplateUseBaseData});
   wbFULLReq := wbLStringKC(FULL, 'Name', 0, cpTranslate, True);
@@ -5119,7 +5502,7 @@ begin
   wbScriptPropertyObject := wbUnion('Object Union', wbScriptObjFormatDecider, [
     wbStructSK([1], 'Object v2', [
       wbInteger('Unused', itU16, nil, cpIgnore),
-      wbInteger('Alias', itS16, wbScriptObjectAliasToStr, wbStrToAlias),
+      wbInteger('Alias', itS16, wbScriptObjectAliasToStr, wbStrToAlias).SetDefaultEditValue('None'),
       wbFormID('FormID')
     ], [2, 1, 0]),
     wbStructSK([1], 'Object v1', [
@@ -5138,24 +5521,24 @@ begin
         {0x01} 'Edited',
         {0x02} '',
         {0x03} 'Removed'
-      ])),
+      ])).SetDefaultEditValue('Edited'),
       wbUnion('Value', wbScriptPropertyDecider, [
        {00} wbNull,
        {01} wbScriptPropertyObject,
-       {02} wbLenString('String', 2),
+       {02} wbLenString('String', 2).OverrideEncoding(wbEncodingVMAD),
        {03} wbInteger('Int32', itS32),
        {04} wbFloat('Float'),
        {05} wbInteger('Bool', itU8, wbEnum(['False', 'True'])),
        {11} wbArray('Array of Object', wbScriptPropertyObject, -1),
-       {12} wbArray('Array of String', wbLenString('Element', 2), -1),
+       {12} wbArray('Array of String', wbLenString('Element', 2).OverrideEncoding(wbEncodingVMAD), -1),
        {13} wbArray('Array of Int32', wbInteger('Element', itS32), -1),
        {14} wbArray('Array of Float', wbFloat('Element'), -1),
        {15} wbArray('Array of Bool', wbInteger('Element', itU8, wbEnum(['False', 'True'])), -1)
       ])
-    ]), -2, cpNormal, False, nil, nil, nil, False);
+    ]), -2, cpNormal, False, nil, nil, nil, wbCanAddScriptProperties);
 
   wbScriptEntry := wbStructSK([0], 'Script', [
-    wbLenString('scriptName', 2),
+    wbLenString('ScriptName', 2),
     wbScriptFlags,
     wbScriptProperties
   ]);
@@ -5166,12 +5549,12 @@ begin
       {1} 'OnBegin',
       {2} 'OnEnd'
     ])),
-    wbLenString('fileName', 2),
+    wbLenString('FileName', 2),
     wbArray('Fragments',  // Do NOT sort, ordered OnBegin, OnEnd
       wbStruct('Fragment', [
         wbInteger('Unknown', itS8),
-        wbLenString('scriptName', 2),
-        wbLenString('fragmentName', 2)
+        wbLenString('ScriptName', 2),
+        wbLenString('FragmentName', 2)
       ]), [], wbScriptFragmentsInfoCounter)
   ]);
 
@@ -5182,29 +5565,29 @@ begin
       {2} 'OnEnd',
       {4} 'OnChange'
     ])),
-    wbLenString('fileName', 2),
+    wbLenString('FileName', 2),
     wbArray('Fragments',  // Do NOT sort, ordered OnBegin, OnEnd, OnChange
       wbStruct('Fragment', [
         wbInteger('Unknown', itS8),
-        wbLenString('scriptName', 2),
-        wbLenString('fragmentName', 2)
+        wbLenString('ScriptName', 2),
+        wbLenString('FragmentName', 2)
       ]), [], wbScriptFragmentsPackCounter)
   ]);
 
   wbScriptFragmentsQuest := wbStruct('Script Fragments', [
     wbInteger('Unknown', itS8),
-    wbInteger('fragmentCount', itU16),
-    wbLenString('fileName', 2),
+    wbInteger('FragmentCount', itU16, nil, cpBenign),
+    wbLenString('FileName', 2),
     wbArrayS('Fragments',
       wbStructSK([0, 2], 'Fragment', [
         wbInteger('Quest Stage', itU16),
         wbInteger('Unknown', itS16),
         wbInteger('Quest Stage Index', itS32),
         wbInteger('Unknown', itS8),
-        wbLenString('scriptName', 2),
-        wbLenString('fragmentName', 2)
-      ]), wbScriptFragmentsQuestCounter)
-  ]);
+        wbLenString('ScriptName', 2),
+        wbLenString('FragmentName', 2)
+      ]), wbScriptFragmentsQuestCounter).SetAfterSet(wbScriptFragmentsQuestFragmentsAfterSet)
+  ]).SetAfterSet(wbScriptFragmentsQuestAfterSet);
 
   wbScriptFragmentsScen := wbStruct('Script Fragments', [
     wbInteger('Unknown', itS8),
@@ -5212,12 +5595,12 @@ begin
       {1} 'OnBegin',
       {2} 'OnEnd'
     ])),
-    wbLenString('fileName', 2),
+    wbLenString('FileName', 2),
     wbArray('Fragments',  // Do NOT sort, ordered OnBegin, OnEnd
       wbStruct('Fragment', [
         wbInteger('Unknown', itS8),
-        wbLenString('scriptName', 2),
-        wbLenString('fragmentName', 2)
+        wbLenString('ScriptName', 2),
+        wbLenString('FragmentName', 2)
       ]), [], wbScriptFragmentsSceneCounter),
     wbArray('Phase Fragments',
       wbStructSK([0, 1], 'Phase Fragment', [
@@ -5229,70 +5612,70 @@ begin
         wbInteger('Unknown', itS16),
         wbInteger('Unknown', itS8),
         wbInteger('Unknown', itS8),
-        wbLenString('scriptName', 2),
-        wbLenString('fragmentName', 2)
+        wbLenString('ScriptName', 2),
+        wbLenString('FragmentName', 2)
       ]), -2)
   ]);
 
   wbScriptFragments := wbStruct('Script Fragments', [
     wbInteger('Unknown', itS8),
-    wbLenString('fileName', 2),
+    wbLenString('FileName', 2),
     wbArrayS('Fragments',
       wbStructSK([0], 'Fragment', [
         wbInteger('Fragment Index', itU16),
         wbInteger('Unknown', itS16),
         wbInteger('Unknown', itS8),
-        wbLenString('scriptName', 2),
-        wbLenString('fragmentName', 2)
+        wbLenString('ScriptName', 2),
+        wbLenString('FragmentName', 2)
       ]), -2)
   ]);
 
   {>>> http://www.uesp.net/wiki/Tes5Mod:Mod_File_Format/VMAD_Field <<<}
 
   wbVMAD := wbStruct(VMAD, 'Virtual Machine Adapter', [
-    wbInteger('Version', itS16, nil, cpIgnore),
-    wbInteger('Object Format', itS16, nil, cpIgnore),
-    wbArrayS('Scripts', wbScriptEntry, -2, cpNormal, False, nil, nil, nil, False)
+    wbInteger('Version', itS16, nil, cpIgnore).SetDefaultNativeValue(5),
+    wbInteger('Object Format', itS16, nil, cpIgnore).SetDefaultNativeValue(2),
+    wbArrayS('Scripts', wbScriptEntry, -2, cpNormal, False, nil, nil, nil, wbCanAddScripts)
   ]);
 
   wbVMADFragmentedPERK := wbStruct(VMAD, 'Virtual Machine Adapter', [
-    wbInteger('Version', itS16, nil, cpIgnore),
-    wbInteger('Object Format', itS16, nil, cpIgnore),
-    wbArrayS('Scripts', wbScriptEntry, -2, cpNormal, False, nil, nil, nil, False),
+    wbInteger('Version', itS16, nil, cpIgnore).SetDefaultNativeValue(5),
+    wbInteger('Object Format', itS16, nil, cpIgnore).SetDefaultNativeValue(2),
+    wbArrayS('Scripts', wbScriptEntry, -2, cpNormal, False, nil, nil, nil, wbCanAddScripts),
     wbScriptFragments
   ], cpNormal, False, nil, 3);
 
   wbVMADFragmentedPACK := wbStruct(VMAD, 'Virtual Machine Adapter', [
-    wbInteger('Version', itS16, nil, cpIgnore),
-    wbInteger('Object Format', itS16, nil, cpIgnore),
-    wbArrayS('Scripts', wbScriptEntry, -2, cpNormal, False, nil, nil, nil, False),
+    wbInteger('Version', itS16, nil, cpIgnore).SetDefaultNativeValue(5),
+    wbInteger('Object Format', itS16, nil, cpIgnore).SetDefaultNativeValue(2),
+    wbArrayS('Scripts', wbScriptEntry, -2, cpNormal, False, nil, nil, nil, wbCanAddScripts),
     wbScriptFragmentsPack
   ], cpNormal, False, nil, 3);
 
   wbVMADFragmentedQUST := wbStruct(VMAD, 'Virtual Machine Adapter', [
-    wbInteger('Version', itS16, nil, cpIgnore),
-    wbInteger('Object Format', itS16, nil, cpIgnore),
-    wbArrayS('Scripts', wbScriptEntry, -2, cpNormal, False, nil, nil, nil, False),
+    wbInteger('Version', itS16, nil, cpIgnore).SetDefaultNativeValue(5),
+    wbInteger('Object Format', itS16, nil, cpIgnore).SetDefaultNativeValue(2),
+    wbArrayS('Scripts', wbScriptEntry, -2, cpNormal, False, nil, nil, nil, wbCanAddScripts),
     wbScriptFragmentsQuest,
     wbArrayS('Aliases', wbStructSK([0], 'Alias', [
       wbScriptPropertyObject,
-      wbInteger('Version', itS16, nil, cpIgnore),
-      wbInteger('Object Format', itS16, nil, cpIgnore),
-	    wbArrayS('Alias Scripts', wbScriptEntry, -2)
-	  ]), -2)
+      wbInteger('Version', itS16, nil, cpIgnore).SetDefaultNativeValue(5),
+      wbInteger('Object Format', itS16, nil, cpIgnore).SetDefaultNativeValue(2),
+      wbArrayS('Alias Scripts', wbScriptEntry, -2)
+    ]), -2)
   ], cpNormal, False, nil, 3);
 
   wbVMADFragmentedSCEN := wbStruct(VMAD, 'Virtual Machine Adapter', [
-    wbInteger('Version', itS16, nil, cpIgnore),
-    wbInteger('Object Format', itS16, nil, cpIgnore),
-    wbArrayS('Scripts', wbScriptEntry, -2, cpNormal, False, nil, nil, nil, False),
+    wbInteger('Version', itS16, nil, cpIgnore).SetDefaultNativeValue(5),
+    wbInteger('Object Format', itS16, nil, cpIgnore).SetDefaultNativeValue(2),
+    wbArrayS('Scripts', wbScriptEntry, -2, cpNormal, False, nil, nil, nil, wbCanAddScripts),
     wbScriptFragmentsScen
   ], cpNormal, False, nil, 3);
 
   wbVMADFragmentedINFO := wbStruct(VMAD, 'Virtual Machine Adapter', [
-    wbInteger('Version', itS16, nil, cpIgnore),
-    wbInteger('Object Format', itS16, nil, cpIgnore),
-    wbArrayS('Scripts', wbScriptEntry, -2, cpNormal, False, nil, nil, nil, False),
+    wbInteger('Version', itS16, nil, cpIgnore).SetDefaultNativeValue(5),
+    wbInteger('Object Format', itS16, nil, cpIgnore).SetDefaultNativeValue(2),
+    wbArrayS('Scripts', wbScriptEntry, -2, cpNormal, False, nil, nil, nil, wbCanAddScripts),
     wbScriptFragmentsInfo
   ], cpNormal, False, nil, 3);
 
@@ -5494,21 +5877,21 @@ begin
 
   wbMODL :=
     wbRStructSK([0], 'Model', [
-      wbString(MODL, 'Model Filename', 0, cpNormal, True),
+      wbString(MODL, 'Model FileName', 0, cpNormal, True),
       wbMODT,
       wbMODS
     ], [], cpNormal, False, nil, True);
 
   wbMODLActor :=
     wbRStructSK([0], 'Model', [
-      wbString(MODL, 'Model Filename', 0, cpNormal, True),
+      wbString(MODL, 'Model FileName', 0, cpNormal, True),
       wbMODT,
       wbMODS
     ], [], cpNormal, False, nil{wbActorTemplateUseModelAnimation}, True);
 
   wbMODLReq :=
     wbRStructSK([0], 'Model', [
-      wbString(MODL, 'Model Filename', 0, cpNormal, True),
+      wbString(MODL, 'Model FileName', 0, cpNormal, True),
       wbMODT,
       wbMODS
     ], [], cpNormal, True, nil, True);
@@ -5546,7 +5929,7 @@ begin
           wbInteger('Debris Count', itS32)
         ], cpNormal, True),
         wbRStructSK([0], 'Model', [
-          wbString(DMDL, 'Model Filename'),
+          wbString(DMDL, 'Model FileName'),
           wbDMDT,
           wbDMDSs
         ], [], cpNormal, False, nil),
@@ -5579,7 +5962,7 @@ begin
           wbInteger('Debris Count', itS32)
         ], cpNormal, True), // End DSTD
         wbRStructSK([0], 'Model', [ // Begin DMDL
-          wbString(DMDL, 'Model Filename')
+          wbString(DMDL, 'Model FileName')
         ], []), // End DMDL
         wbDMDT,
         wbDMDSs,
@@ -5625,7 +6008,7 @@ begin
 
   if wbSimpleRecords then begin
     wbMaxHeightDataCELL := wbByteArray(MHDT, 'Max Height Data', 0, cpNormal);
-    wbMaxHeightDataWRLD := wbByteArray(MHDT, 'Max Height Data', 0, cpNormal);
+    wbMaxHeightDataWRLD := wbByteArray(MHDT, 'Max Height Data', 0, cpNormalIgnoreEmpty);
   end
   else begin
     wbMaxHeightDataCELL := wbStruct(MHDT, 'Max Height Data', [
@@ -5638,14 +6021,14 @@ begin
     ]);
     wbMaxHeightDataWRLD := wbStruct(MHDT, 'Max Height Data', [
       wbStruct('Min', [
-        wbInteger('X', itS16),
-        wbInteger('Y', itS16)
+        wbInteger('X', itS16, nil, nil, cpNormalIgnoreEmpty),
+        wbInteger('Y', itS16, nil, nil, cpNormalIgnoreEmpty)
       ]),
       wbStruct('Max', [
-        wbInteger('X', itS16),
-        wbInteger('Y', itS16)
+        wbInteger('X', itS16, nil, nil, cpNormalIgnoreEmpty),
+        wbInteger('Y', itS16, nil, nil, cpNormalIgnoreEmpty)
       ]),
-      wbByteArray('Cell Data', 0)
+      wbByteArray('Cell Data', 0, cpNormalIgnoreEmpty)
       // way too verbose for no practical use
       {wbArray('Cell Data', wbStruct('Quad Height', [
         wbInteger('Bottom Left', itU8),
@@ -5653,7 +6036,7 @@ begin
         wbInteger('Top Left', itU8),
         wbInteger('Top Right', itU8)
       ]))}
-    ]);
+    ], cpNormalIgnoreEmpty);
   end;
 
   if wbSimpleRecords then
@@ -5672,7 +6055,7 @@ end;
 procedure DefineTES5b;
 begin
 
-  wbRecord(ACHR, 'Placed NPC',
+  wbRefRecord(ACHR, 'Placed NPC',
     wbFlags(wbRecordFlagsFlags, wbFlagsList([
       {0x00000200}  9, 'Starts Dead',
       {0x00000400} 10, 'Persistent',
@@ -5832,18 +6215,18 @@ begin
   ], False, nil, cpNormal, False, nil, wbKeywordsAfterSet);
 
   wbICON := wbRStruct('Icon', [
-    wbString(ICON, 'Large Icon filename', 0, cpNormal, True),
-    wbString(MICO, 'Small Icon filename')
+    wbString(ICON, 'Large Icon FileName', 0, cpNormal, True),
+    wbString(MICO, 'Small Icon FileName')
   ], [], cpNormal, False, nil, True);
 
   wbICONReq := wbRStruct('Icon', [
-    wbString(ICON, 'Large Icon filename', 0, cpNormal, True),
-    wbString(MICO, 'Small Icon filename')
+    wbString(ICON, 'Large Icon FileName', 0, cpNormal, True),
+    wbString(MICO, 'Small Icon FileName')
   ], [], cpNormal, True, nil, True);
 
   wbICO2 := wbRStruct('Icon 2 (female)', [
-    wbString(ICO2, 'Large Icon filename', 0, cpNormal, True),
-    wbString(MIC2, 'Small Icon filename')
+    wbString(ICO2, 'Large Icon FileName', 0, cpNormal, True),
+    wbString(MIC2, 'Small Icon FileName')
   ], [], cpNormal, False, nil, True);
 
   wbVatsValueFunctionEnum :=
@@ -6367,27 +6750,27 @@ begin
       wbInteger('Duration', itU32)
     ], cpNormal, True, nil, -1, wbEFITAfterLoad);
 
-  wbCTDA := wbRStruct('Condition', [
-    wbStruct(CTDA, '', [
-      wbInteger('Type', itU8, wbCtdaTypeToStr, wbCtdaTypeToInt, cpNormal, False, nil, wbCtdaTypeAfterSet),
-      wbByteArray('Unused', 3, cpIgnore, False, wbNeverShow),
-      wbUnion('Comparison Value', wbCTDACompValueDecider, [
+  wbCTDA := wbRStructSK([0], 'Condition', [
+    wbStructSK(CTDA, [{0, }3, 5{, 6, 7, 8, 9}], '', [
+   {0}wbInteger('Type', itU8, wbCtdaTypeToStr, wbCtdaTypeToInt, cpNormal, False, nil, wbCtdaTypeAfterSet),
+   {1}wbByteArray('Unused', 3, cpIgnore, False, wbNeverShow),
+   {2}wbUnion('Comparison Value', wbCTDACompValueDecider, [
         wbFloat('Comparison Value - Float'),
         wbFormIDCk('Comparison Value - Global', [GLOB])
       ]),
-      wbInteger('Function', itU16, wbCTDAFunctionToStr, wbCTDAFunctionToInt),
-      wbByteArray('Unused', 2, cpIgnore, False, wbNeverShow),
-      wbUnion('Parameter #1', wbCTDAParam1Decider, [
+   {3}wbInteger('Function', itU16, wbCTDAFunctionToStr, wbCTDAFunctionToInt),
+   {4}wbByteArray('Unused', 2, cpIgnore, False, wbNeverShow),
+   {5}wbUnion('Parameter #1', wbCTDAParam1Decider, [
         wbByteArray('Unknown', 4),
-        wbByteArray('None', 4, cpIgnore),
+        wbByteArray('None', 4, cpIgnore).IncludeFlag(dfZeroSortKey),
         wbInteger('Integer', itS32),
         wbFloat('Float'),
-        wbByteArray('Variable Name (unused)', 4, cpIgnore),
+        wbByteArray('Variable Name (unused)', 4, cpIgnore).IncludeFlag(dfZeroSortKey),
         wbInteger('Sex', itU32, wbSexEnum),
         wbInteger('Actor Value', itS32, wbActorValueEnum),
         wbInteger('Crime Type', itU32, wbCrimeTypeEnum),
         wbInteger('Axis', itU32, wbAxisEnum),
-        wbInteger('Quest Stage (unused)', itS32),
+        wbInteger('Quest Stage (unused)', itS32).IncludeFlag(dfZeroSortKey),
         wbInteger('Misc Stat', itU32, wbMiscStatEnum),
         wbInteger('Alignment', itU32, wbAlignmentEnum),
         wbFormIDCkNoReach('Equip Type', [EQUP]),
@@ -6416,8 +6799,9 @@ begin
         wbFormIDCkNoReach('Base Effect', [MGEF]),
         wbFormIDCkNoReach('Worldspace', [WRLD, FLST]),
         wbInteger('VATS Value Function', itU32, wbVATSValueFunctionEnum),
-        wbInteger('VATS Value Param (INVALID)', itU32),
-        wbFormIDCkNoReach('Referenceable Object', [NULL, NPC_, PROJ, TREE, SOUN, ACTI, DOOR, STAT, FURN, CONT, ARMO, AMMO, MISC, WEAP, BOOK, KEYM, ALCH, LIGH, GRAS, ASPC, IDLM, ARMA, MSTT, TACT, FLST, LVLI, LVSP, SPEL, SCRL, SHOU, SLGM, ENCH], [NPC_, PROJ, TREE, SOUN, ACTI, DOOR, STAT, FURN, CONT, ARMO, AMMO, MISC, WEAP, BOOK, KEYM, ALCH, LIGH, GRAS, ASPC, IDLM, ARMA, MSTT, TACT, LVLI, LVSP, SPEL, SCRL, SHOU, SLGM, ENCH]),
+        wbInteger('VATS Value Param (INVALID)', itU32).IncludeFlag(dfZeroSortKey),
+        wbFormIDCkNoReach('Referenceable Object', [NULL, NPC_, PROJ, TREE, SOUN, ACTI, DOOR, STAT, FURN, CONT, ARMO, AMMO, MISC, WEAP, BOOK, KEYM, ALCH, LIGH, GRAS, ASPC, IDLM, ARMA, MSTT, TACT, LVLI, LVSP, SPEL, SCRL, SHOU, SLGM, ENCH, FLOR, FLST],
+                                                        [NPC_, PROJ, TREE, SOUN, ACTI, DOOR, STAT, FURN, CONT, ARMO, AMMO, MISC, WEAP, BOOK, KEYM, ALCH, LIGH, GRAS, ASPC, IDLM, ARMA, MSTT, TACT, LVLI, LVSP, SPEL, SCRL, SHOU, SLGM, ENCH, FLOR]),
         wbFormIDCkNoReach('Region', [REGN]),
         wbFormIDCkNoReach('Keyword', [KYWD, NULL]),
         wbInteger('Player Action', itU32, wbAdvanceActionEnum),
@@ -6433,14 +6817,15 @@ begin
         wbFormIDCk('Scene', [NULL, SCEN]),
         wbInteger('Ward State', itU32, wbWardStateEnum),
         wbInteger('Event', itU32, wbEventFunctionAndMemberToStr, wbEventFunctionAndMemberToInt),
-        wbFormID('Event Data')
+        wbFormID('Event Data'),
+        wbFormIDCk('Knowable', [MGEF, WOOP])
       ]),
-      wbUnion('Parameter #2', wbCTDAParam2Decider, [
+   {6}wbUnion('Parameter #2', wbCTDAParam2Decider, [
         wbByteArray('Unknown', 4),
-        wbByteArray('None', 4, cpIgnore),
+        wbByteArray('None', 4, cpIgnore).IncludeFlag(dfZeroSortKey),
         wbInteger('Integer', itS32),
         wbFloat('Float'),
-        wbByteArray('Variable Name (unused)', 4, cpIgnore),
+        wbByteArray('Variable Name (unused)', 4, cpIgnore).IncludeFlag(dfZeroSortKey),
         wbInteger('Sex', itU32, wbSexEnum),
         wbInteger('Actor Value', itS32, wbActorValueEnum),
         wbInteger('Crime Type', itU32, wbCrimeTypeEnum),
@@ -6495,17 +6880,17 @@ begin
                 'Heal',
                 'Player Death'
           ])),
-         { 7} wbByteArray('Unknown', 4, cpIgnore),
-         { 8} wbByteArray('Unknown', 4, cpIgnore),
+         { 7} wbByteArray('Unknown', 4, cpIgnore).IncludeFlag(dfZeroSortKey),
+         { 8} wbByteArray('Unknown', 4, cpIgnore).IncludeFlag(dfZeroSortKey),
          { 9} wbFormIDCkNoReach('Critical Effect', [SPEL]),
          {10} wbFormIDCkNoReach('Critical Effect List', [FLST], [SPEL]),
-         {11} wbByteArray('Unknown', 4, cpIgnore),
-         {12} wbByteArray('Unknown', 4, cpIgnore),
-         {13} wbByteArray('Unknown', 4, cpIgnore),
-         {14} wbByteArray('Unknown', 4, cpIgnore),
+         {11} wbByteArray('Unknown', 4, cpIgnore).IncludeFlag(dfZeroSortKey),
+         {12} wbByteArray('Unknown', 4, cpIgnore).IncludeFlag(dfZeroSortKey),
+         {13} wbByteArray('Unknown', 4, cpIgnore).IncludeFlag(dfZeroSortKey),
+         {14} wbByteArray('Unknown', 4, cpIgnore).IncludeFlag(dfZeroSortKey),
          {15} wbInteger('Weapon Type', itU32, wbWeaponAnimTypeEnum),
-         {16} wbByteArray('Unknown', 4, cpIgnore),
-         {17} wbByteArray('Unknown', 4, cpIgnore),
+         {16} wbByteArray('Unknown', 4, cpIgnore).IncludeFlag(dfZeroSortKey),
+         {17} wbByteArray('Unknown', 4, cpIgnore).IncludeFlag(dfZeroSortKey),
          {18} wbInteger('Projectile Type', itU32, wbEnum([
                 'Missile',
                 'Lobber',
@@ -6534,9 +6919,10 @@ begin
         wbFormIDCk('Scene', [NULL, SCEN]),
         wbInteger('Ward State', itU32, wbWardStateEnum),
         wbInteger('Event', itU32, wbEventFunctionAndMemberToStr, wbEventFunctionAndMemberToInt),
-        wbFormID('Event Data')
+        wbFormID('Event Data'),
+        wbFormIDCk('Knowable', [MGEF, WOOP])
       ]),
-      wbInteger('Run On', itU32, wbEnum([
+   {7}wbInteger('Run On', itU32, wbEnum([
         {0} 'Subject',
         {1} 'Target',
         {2} 'Reference',
@@ -6546,11 +6932,11 @@ begin
         {6} 'Package Data',
         {7} 'Event Data'
       ]), cpNormal, False, nil, wbCTDARunOnAfterSet),
-      wbUnion('Reference', wbCTDAReferenceDecider, [
+   {8}wbUnion('Reference', wbCTDAReferenceDecider, [
         wbInteger('Unused', itU32, nil, cpIgnore),
         wbFormIDCkNoReach('Reference', [NULL, PLYR, ACHR, REFR, PGRE, PHZD, PMIS, PARW, PBAR, PBEA, PCON, PFLA], False)
       ]),
-      wbInteger('Parameter #3', itS32, nil, cpNormal, False, nil, nil, -1)
+   {9}wbInteger('Parameter #3', itS32, nil, cpNormal, False, nil, nil, -1)
     ], cpNormal, False{, nil, 0, wbCTDAAfterLoad}),
     wbString(CIS1, 'Parameter #1'),
     wbString(CIS2, 'Parameter #2')
@@ -6679,13 +7065,13 @@ begin
     wbEITM,
     wbInteger(EAMT, 'Enchantment Amount', itU16),
     wbRStruct('Male world model', [
-      wbString(MOD2, 'Model Filename'),
+      wbString(MOD2, 'Model FileName'),
       wbByteArray(MO2T, 'Texture Files Hashes', 0, cpIgnore, false, false, wbNeverShow),
       wbMO2S
     ], []),
     wbICON,
     wbRStruct('Female world model', [
-      wbString(MOD4, 'Model Filename'),
+      wbString(MOD4, 'Model FileName'),
       wbByteArray(MO4T, 'Texture Files Hashes', 0, cpIgnore, false, false, wbNeverShow),
       wbMO4S
     ], []),
@@ -6702,7 +7088,7 @@ begin
     wbKSIZ,
     wbKWDAs,
     wbDESC,
-    wbRArray('Armature', wbFormIDCK(MODL, 'Model Filename', [ARMA, NULL])),
+    wbRArray('Armature', wbFormIDCK(MODL, 'Model FileName', [ARMA, NULL])),
     wbStruct(DATA, 'Data', [
       wbInteger('Value', itS32),
       wbFloat('Weight')
@@ -6733,22 +7119,22 @@ begin
       wbFloat('Weapon Adjust')
     ], cpNormal, True),
     wbRStruct('Male world model', [
-      wbString(MOD2, 'Model Filename'),
+      wbString(MOD2, 'Model FileName'),
       wbByteArray(MO2T, 'Texture Files Hashes', 0, cpIgnore, false, false, wbNeverShow),
       wbMO2S
     ], [], cpNormal, False),
     wbRStruct('Female world model', [
-      wbString(MOD3, 'Model Filename'),
+      wbString(MOD3, 'Model FileName'),
       wbByteArray(MO3T, 'Texture Files Hashes', 0, cpIgnore, false, false, wbNeverShow),
       wbMO3S
     ], []),
     wbRStruct('Male 1st Person', [
-      wbString(MOD4, 'Model Filename'),
+      wbString(MOD4, 'Model FileName'),
       wbByteArray(MO4T, 'Texture Files Hashes', 0, cpIgnore, false, false, wbNeverShow),
       wbMO4S
     ], []),
     wbRStruct('Female 1st Person', [
-      wbString(MOD5, 'Model Filename'),
+      wbString(MOD5, 'Model FileName'),
       wbByteArray(MO5T, 'Texture Files Hashes', 0, cpIgnore, false, false, wbNeverShow),
       wbMO5S
     ], []),
@@ -6805,7 +7191,7 @@ procedure DefineTES5c;
 
   procedure ReferenceRecord(aSignature: TwbSignature; const aName: string);
   begin
-    wbRecord(aSignature, aName,
+    wbRefRecord(aSignature, aName,
       wbFlags(wbRecordFlagsFlags, wbFlagsList([
         {0x00000080}  7, 'Turn Off Fire',
         {0x00000400} 10, 'Persistent',
@@ -7199,7 +7585,7 @@ begin
           ])),
           wbStruct('Aggro', [
             wbInteger('Aggro Radius Behavior', itU8, wbEnum(['False', 'True'])),
-            wbInteger('Unknown', itU8),
+            wbInteger('Unused', itU8, nil, nil, cpIgnore),
             wbInteger('Warn', itU32),
             wbInteger('Warn/Attack', itU32),
             wbInteger('Attack', itU32)
@@ -7290,8 +7676,8 @@ begin
     wbEDID,
     wbFULL,
     wbFloat(PNAM, 'Priority', cpNormal, True, 1, -1, nil, nil, 50.0),
-    wbFormIDCk(BNAM, 'Branch', [DLBR, NULL]),
-    wbFormIDCk(QNAM, 'Quest', [QUST, NULL], False, cpNormal, False),
+    wbFormIDCkNoReach(BNAM, 'Branch', [DLBR, NULL]),
+    wbFormIDCkNoReach(QNAM, 'Quest', [QUST, NULL], False, cpNormal, False),
     wbStruct(DATA, 'Data', [
       // this should not be named Flags since TwbFile.BuildReachable
       // expects Top-Level flag here from FNV
@@ -7837,7 +8223,7 @@ begin
       wbInteger('Type', itU16, wbFurnitureAnimTypeEnum),
       wbInteger('Entry Points', itU16, wbFurnitureEntryTypeFlags)
     ])),
-    wbString(XMRK, 'Model Filename')
+    wbString(XMRK, 'Model FileName')
   ], False, nil, cpNormal, False, nil, wbKeywordsAfterSet);
 
 //----------------------------------------------------------------------------
@@ -7849,7 +8235,11 @@ begin
       {0x00000040}  6, 'Constant'
     ])), [
     wbEDID,
-    wbInteger(FNAM, 'Type', itU8, wbGLOBFNAM, nil, cpNormal, True),
+    wbInteger(FNAM, 'Type', itU8, wbEnum([], [
+      Ord('s'), 'Short',
+      Ord('l'), 'Long',
+      Ord('f'), 'Float'
+    ]), cpNormal, True).SetDefaultEditValue('Float'),
     wbFloat(FLTV, 'Value', cpNormal, True)
   ]);
 
@@ -7934,7 +8324,7 @@ begin
         'Tri',
         'Chargen Morph'
       ])),
-      wbString(NAM1, 'Filename', 0, cpTranslate, True)
+      wbString(NAM1, 'FileName', 0, cpTranslate, True)
     ], []),
     wbFormIDCk(TNAM, 'Texture Set', [TXST, NULL]),
     wbFormIDCk(CNAM, 'Color', [CLFM, NULL]),
@@ -8050,7 +8440,7 @@ begin
            wbFormIDCk('Collision Layer', [COLL, NULL])
     ], cpNormal, True, nil, 22),
     wbRStructSK([0], 'Muzzle Flash Model', [
-      wbString(NAM1, 'Model Filename'),
+      wbString(NAM1, 'Model FileName'),
       wbByteArray(NAM2, 'Texture Files Hashes', 0, cpIgnore, false, false, wbNeverShow)
     ], [], cpNormal, True),
     wbInteger(VNAM, 'Sound Level', itU32, wbSoundLevelEnum, cpNormal, True)
@@ -8118,7 +8508,8 @@ begin
   if wbSimpleRecords then
     wbNVNM :=
       wbStruct(NVNM, 'Geometry', [
-        wbByteArray('Unknown', 8),
+        wbInteger('Version', itU32).SetDefaultNativeValue(12),
+        wbByteArray('Magic', 4).SetDefaultEditValue('3C A0 E9 A5'),
         wbFormIDCk('Parent Worldspace', [WRLD, NULL]),
         wbUnion('Parent', wbNVNMParentDecider, [
           wbStruct('Coordinates', [
@@ -8127,105 +8518,125 @@ begin
           ]),
           wbFormIDCk('Parent Cell', [CELL])
         ]),
-        wbArray('Vertices', wbByteArray('Vertex', 12), -1),
-        wbArray('Triangles', wbByteArray('Triangle', 16), -1),
-        wbArray('External Connections',
-          wbStruct('Connection', [
-            wbByteArray('Unknown', 4),
-            wbFormIDCk('Mesh', [NAVM]),
-            wbInteger('Triangle', itS16)
-          ])
-        , -1),
-        wbArray('Door Triangles',
-          wbStruct('Door Triangle', [
-            wbInteger('Triangle before door', itS16),
-            wbByteArray('Unknown', 4),
-            wbFormIDCk('Door', [REFR])
-          ])
-        , -1),
-        wbUnknown
-      ])
-  else
-    wbNVNM :=
-      wbStruct(NVNM, 'Geometry', [
-        wbInteger('Unknown', itU32),
-        wbByteArray('Unknown', 4),
-        wbFormIDCk('Parent Worldspace', [WRLD, NULL]),
-        wbUnion('Parent', wbNVNMParentDecider, [
-          wbStruct('Coordinates', [
-            wbInteger('Grid Y', itS16),
-            wbInteger('Grid X', itS16)
-          ]),
-          wbFormIDCk('Parent Cell', [CELL])
-        ]),
-        wbArray('Vertices', wbStruct('Vertex', [
-          wbFloat('X'),
-          wbFloat('Y'),
-          wbFloat('Z')
-        ]), -1),
-        wbArray('Triangles',
-          wbStruct('Triangle', [
-            wbInteger('Vertex 0', itS16),
-            wbInteger('Vertex 1', itS16),
-            wbInteger('Vertex 2', itS16),
-            wbInteger('Edge 0-1', itS16),
-            wbInteger('Edge 1-2', itS16),
-            wbInteger('Edge 2-0', itS16),
-            wbInteger('Flags', itU16, wbFlags([
-              'Edge 0-1 link',
-              'Edge 1-2 link',
-              'Edge 2-0 link',
-              'Unknown 4',
-              'Unknown 5',
-              'Unknown 6',
-              'Preferred',
-              'Unknown 8',
-              'Unknown 9',
-              'Water',
-              'Door',
-              'Found',
-              'Unknown 13',
-              'Unknown 14',
-              'Unknown 15',
-              'Unknown 16'
-            ])),
-            wbInteger('Cover Flags', itU16, wbFlags([
-              'Edge 0-1 wall',
-              'Edge 0-1 ledge cover',
-              'Unknown 3',
-              'Unknown 4',
-              'Edge 0-1 left',
-              'Edge 0-1 right',
-              'Edge 1-2 wall',
-              'Edge 1-2 ledge cover',
-              'Unknown 9',
-              'Unknown 10',
-              'Edge 1-2 left',
-              'Edge 1-2 right',
-              'Unknown 13',
-              'Unknown 14',
-              'Unknown 15',
-              'Unknown 16'
-            ]))
-            //wbInteger('Cover Edge #1 Flags', itU8),
-            //wbInteger('Cover Edge #2 Flags', itU8)
-          ])
-        , -1),
+        wbArray('Vertices', wbByteArray('Vertex', 12), -1).IncludeFlag(dfNotAlignable),
+        wbArray('Triangles', wbByteArray('Triangle', 16), -1).IncludeFlag(dfNotAlignable),
         wbArray('Edge Links',
           wbStruct('Edge Link', [
             wbByteArray('Unknown', 4),
             wbFormIDCk('Mesh', [NAVM]),
             wbInteger('Triangle', itS16)
           ])
-        , -1),
-        wbArray('Door Triangles',
-          wbStruct('Door Triangle', [
+        , -1).IncludeFlag(dfNotAlignable),
+        wbArrayS('Door Triangles',
+          wbStructSK([0, 2], 'Door Triangle', [
             wbInteger('Triangle before door', itS16),
             wbByteArray('Unknown', 4),
             wbFormIDCk('Door', [REFR])
           ])
         , -1),
-        wbArray('Cover Triangles', wbInteger('Triangle', itS16), -1),
+        wbByteArray('NavMeshGrid')
+      ])
+  else
+    wbNVNM :=
+      wbStruct(NVNM, 'Geometry', [
+        wbInteger('Version', itU32).SetDefaultNativeValue(12),
+        wbByteArray('Magic', 4).SetDefaultEditValue('3C A0 E9 A5'),
+        wbFormIDCk('Parent Worldspace', [WRLD, NULL]),
+        wbUnion('Parent', wbNVNMParentDecider, [
+          wbStruct('Coordinates', [
+            wbInteger('Grid Y', itS16),
+            wbInteger('Grid X', itS16)
+          ]),
+          wbFormIDCk('Parent Cell', [CELL])
+        ]),
+        wbArray('Vertices', wbStructSK([0, 1, 2], 'Vertex', [
+          wbFloat('X'),
+          wbFloat('Y'),
+          wbFloat('Z')
+        ]), -1).IncludeFlag(dfNotAlignable),
+        wbArray('Triangles',
+          wbStruct('Triangle', [
+            wbInteger('Vertex 0', itS16, wbVertexToStr0, wbVertexToInt0).SetLinksToCallback(wbVertexLinksTo),
+            wbInteger('Vertex 1', itS16, wbVertexToStr1, wbVertexToInt1).SetLinksToCallback(wbVertexLinksTo),
+            wbInteger('Vertex 2', itS16, wbVertexToStr2, wbVertexToInt2).SetLinksToCallback(wbVertexLinksTo),
+            wbInteger('Edge 0-1', itS16, wbEdgeToStr0, wbEdgeToInt0).SetLinksToCallback(wbEdgeLinksTo0),
+            wbInteger('Edge 1-2', itS16, wbEdgeToStr1, wbEdgeToInt1).SetLinksToCallback(wbEdgeLinksTo1),
+            wbInteger('Edge 2-0', itS16, wbEdgeToStr2, wbEdgeToInt1).SetLinksToCallback(wbEdgeLinksTo2),
+            wbInteger('Flags', itU16, wbFlags([
+              'Edge 0-1 link',      // 0 $0001 1
+              'Edge 1-2 link',      // 1 $0002 2
+              'Edge 2-0 link',      // 2 $0004 4
+              'Deleted',            // 3 $0008 8    added by CK Fixes to mark pseudo-deleted triangles
+              'No Large Creatures',          // 4 $0010 16   used in CK source according to Nukem
+              'Overlapping',        // 5 $0020 32
+              'Preferred',          // 6 $0040 64
+              '',                   // 7 $0080 128
+              'Unknown 9',          // 8 $0100 256  used in CK source according to Nukem
+              'Water',              // 9 $0200 512
+              'Door',               //10 $0400 1024
+              'Found',              //11 $0800 2048
+              'Unknown 13',         //12 $1000 4096 used in CK source according to Nukem
+              '',                   //13 $2000 \
+              '',                   //14 $4000  |-- used as 3 bit counter inside CK, probably stripped before save
+              ''                    //15 $8000 /
+            ])),
+{ Flags below are wrong. The first 4 bit are an enum as follows:
+0000 = Open Edge No Cover
+1000 = wall no cover
+0100 = ledge cover
+1100 = UNUSED
+0010 = cover  64
+1010 = cover  80
+0110 = cover  96
+1110 = cover 112
+0001 = cover 128
+1001 = cover 144
+0101 = cover 160
+1101 = cover 176
+0011 = cover 192
+1011 = cover 208
+0111 = cover 224
+1111 = max cover
+then 2 bit flags, then another such enum, and the rest is probably flags.
+Can't properly represent that with current record definition methods.
+}
+            wbInteger('Cover Flags', itU16, wbFlags([
+              'Edge 0-1 Cover Value 1/4',
+              'Edge 0-1 Cover Value 2/4',
+              'Edge 0-1 Cover Value 3/4',
+              'Edge 0-1 Cover Value 4/4',
+              'Edge 0-1 Left',
+              'Edge 0-1 Right',
+              'Edge 1-2 Cover Value 1/4',
+              'Edge 1-2 Cover Value 2/4',
+              'Edge 1-2 Cover Value 3/4',
+              'Edge 1-2 Cover Value 4/4',
+              'Edge 1-2 Left',
+              'Edge 1-2 Right',
+              'Unknown 13',
+              'Unknown 14',
+              'Unknown 15',
+              'Unknown 16'
+            ]))
+          ])
+        , -1).IncludeFlag(dfNotAlignable),
+        wbArray('Edge Links',
+          wbStruct('Edge Link', [
+            wbByteArray('Unknown', 4, cpIgnore),
+            wbFormIDCk('Mesh', [NAVM], False, cpIgnore),
+            wbInteger('Triangle', itS16, nil, cpIgnore)
+          ], cpIgnore)
+        , -1, cpIgnore).IncludeFlag(dfNotAlignable),
+        wbArrayS('Door Triangles',
+          wbStructSK([0, 2], 'Door Triangle', [
+            wbInteger('Triangle before door', itS16).SetLinksToCallback(wbTriangleLinksTo),
+            wbByteArray('Unknown', 4),
+            wbFormIDCk('Door', [REFR])
+          ])
+        , -1),
+        wbArray('Cover Triangles',
+          wbInteger('Triangle', itS16).SetLinksToCallback(wbTriangleLinksTo)
+        , -1).IncludeFlag(dfNotAlignable),
         wbInteger('NavMeshGrid Divisor', itU32),
         wbFloat('Max X Distance'),
         wbFloat('Max Y Distance'),
@@ -8235,7 +8646,11 @@ begin
         wbFloat('Max X'),
         wbFloat('Max Y'),
         wbFloat('Max Z'),
-        wbArray('NavMeshGrid', wbArray('NavMeshGridCell', wbInteger('Triangle', itS16), -1))
+        wbArray('NavMeshGrid',
+          wbArray('NavMeshGridCell',
+            wbInteger('Triangle', itS16).SetLinksToCallback(wbTriangleLinksTo)
+          , -1).IncludeFlag(dfNotAlignable)
+        ).IncludeFlag(dfNotAlignable) // There are NavMeshGridSize^2 arrays to load
       ]);
 
   wbRecord(NAVM, 'Navigation Mesh',
@@ -8252,7 +8667,7 @@ begin
   ], False, wbNAVMAddInfo);
 
 
-  if wbAdvancedNAVI then
+  if wbSimpleNAVI then
     wbNAVIslandData :=
       wbStruct('Island Data', [
         wbByteArray('Unknown', 24),
@@ -8270,14 +8685,14 @@ begin
         wbFloat('Max Z'),
         wbArray('Triangles',
           wbStruct('Triangle', [
-            wbArray('Vertices', wbInteger('Vertex', itS16), 3)
+            wbArray('Vertices', wbInteger('Vertex', itS16), 3).IncludeFlag(dfNotAlignable)
           ])
-        , -1),
+        , -1).IncludeFlag(dfNotAlignable),
         wbArray('Vertices', wbStruct('Vertex', [
           wbFloat('X'),
           wbFloat('Y'),
           wbFloat('Z')
-        ]), -1)
+        ]), -1).IncludeFlag(dfNotAlignable)
       ]);
 
   wbRecord(NAVI, 'Navigation Mesh Info Map', [
@@ -8368,7 +8783,7 @@ begin
     wbRStructs('Models', 'Model', [
       wbStruct(DATA, 'Data', [
         wbInteger('Percentage', itU8),
-        wbString('Model Filename'),
+        wbString('Model FileName'),
         wbInteger('Flags', itU8, wbFlags([
           'Has Collision Data'
         ]))
@@ -8426,12 +8841,12 @@ begin
     ], cpNormal, False, nil, 3)
   ]);
 
-  wbTimeInterpolator := wbStruct('Data', [
+  wbTimeInterpolator := wbStructSK([0], 'Data', [
     wbFloat('Time'),
     wbFloat('Value')
   ]);
 
-  wbColorInterpolator := wbStruct('Data', [
+  wbColorInterpolator := wbStructSK([0], 'Data', [
     wbFloat('Time'),
     wbFloat('Red', cpNormal, False, 255, 0),
     wbFloat('Green', cpNormal, False, 255, 0),
@@ -8675,11 +9090,11 @@ begin
         // 7: EPFD=lstring
         wbLString(EPF2, 'Button Label', 0, cpTranslate),
         wbStruct(EPF3, 'Script Flags', [
-          wbInteger('Script Flags', itU8, wbFlags([
+          wbInteger('Script Flags', itU16, wbFlags([
             'Run Immediately',
             'Replace Default'
           ])),
-          wbByteArray('Unknown', 3)
+          wbInteger('Fragment Index', itU16)
         ]),
         wbUnion(EPFD, 'Data', wbEPFDDecider, [
           {0} wbByteArray('Unknown'),
@@ -8963,13 +9378,13 @@ begin
       wbFormIDCk('Location', [WRLD, CELL], False, cpBenign),
       wbInteger('Grid Y', itS16, nil, cpBenign),
       wbInteger('Grid X', itS16, nil, cpBenign)
-    ])),
+    ], cpBenign), 0, nil, nil, cpBenign),
     wbArray(LCPR, 'Location Cell Persistent Reference', wbStruct('', [
       wbFormIDCk('Actor', [PLYR, ACHR, REFR, PGRE, PHZD, PMIS, PARW, PBAR, PBEA, PCON, PFLA], False, cpBenign),
       wbFormIDCk('Location', [WRLD, CELL], False, cpBenign),
       wbInteger('Grid Y', itS16, nil, cpBenign),
       wbInteger('Grid X', itS16, nil, cpBenign)
-    ])),
+    ], cpBenign), 0, nil, nil, cpBenign),
     {>>> From Danwguard.esm, Does not follow similar previous patterns <<<}
     wbArray(RCPR, 'Reference Cell Persistent Reference', wbFormIDCk('Ref', [ACHR, REFR], False, cpBenign)),
 
@@ -8977,12 +9392,12 @@ begin
       wbFormIDCk('Actor', [NPC_], False, cpBenign),
       wbFormIDCk('Ref', [ACHR], False, cpBenign),
       wbFormIDCk('Location', [LCTN, NULL], False, cpBenign)
-    ])),
+    ], cpBenign), 0, nil, nil, cpBenign),
     wbArray(LCUN, 'Location Cell Unique', wbStruct('', [
       wbFormIDCk('Actor', [NPC_], False, cpBenign),
       wbFormIDCk('Ref', [ACHR], False, cpBenign),
       wbFormIDCk('Location', [LCTN, NULL], False, cpBenign)
-    ])),
+    ], cpBenign), 0, nil, nil, cpBenign),
     {>>> in Unofficial Skyrim patch <<<}
     wbArray(RCUN, 'Reference Cell Unique', wbFormIDCk('Actor', [NPC_], False, cpBenign)),
 
@@ -8992,14 +9407,14 @@ begin
       wbFormIDCk('Location', [WRLD, CELL], False, cpBenign),
       wbInteger('Grid Y', itS16, nil, cpBenign),
       wbInteger('Grid X', itS16, nil, cpBenign)
-    ])),
+    ], cpBenign), 0, nil, nil, cpBenign),
     wbArray(LCSR, 'Location Cell Static Reference', wbStruct('', [
       wbFormIDCk('Loc Ref Type', [LCRT], False, cpBenign),
       wbFormIDCk('Marker', [PLYR, ACHR, REFR, PGRE, PHZD, PMIS, PARW, PBAR, PBEA, PCON, PFLA], False, cpBenign),
       wbFormIDCk('Location', [WRLD, CELL], False, cpBenign),
       wbInteger('Grid Y', itS16, nil, cpBenign),
       wbInteger('Grid X', itS16, nil, cpBenign)
-    ])),
+    ], cpBenign), 0, nil, nil, cpBenign),
     {>>> Seen in Open Cities <<<}
     wbArray(RCSR, 'Reference Cell Static Reference', wbFormIDCk('Ref', [ACHR, REFR], False, cpBenign)),
 
@@ -9010,8 +9425,8 @@ begin
           wbInteger('Grid Y', itS16, nil, cpBenign),
           wbInteger('Grid X', itS16, nil, cpBenign)
         ]))
-      ])
-    ),
+      ], cpBenign)
+    , cpBenign),
     wbRArray('Location Cell Encounter Cell',
       wbStruct(LCEC, 'Unknown', [
         wbFormIDCk('Location', [WRLD, CELL], False, cpBenign),
@@ -9684,8 +10099,8 @@ begin
 
   wbRecord(SMBN, 'Story Manager Branch Node', [
     wbEDID,
-    wbFormIDCk(PNAM, 'Parent ', [SMQN, SMBN, SMEN, NULL]),
-    wbFormIDCk(SNAM, 'Child ', [SMQN, SMBN, SMEN, NULL]),
+    wbFormIDCkNoReach(PNAM, 'Parent ', [SMQN, SMBN, SMEN, NULL]),
+    wbFormIDCkNoReach(SNAM, 'Previous Sibling ', [SMQN, SMBN, SMEN, NULL], False, cpBenign),
     wbCITCReq,
     wbCTDAsCount,
     wbInteger(DNAM, 'Flags', itU32, wbSMNodeFlags),
@@ -9694,8 +10109,8 @@ begin
 
   wbRecord(SMQN, 'Story Manager Quest Node', [
     wbEDID,
-    wbFormIDCk(PNAM, 'Parent ', [SMQN, SMBN, SMEN, NULL]),
-    wbFormIDCk(SNAM, 'Child ', [SMQN, SMBN, SMEN, NULL]),
+    wbFormIDCkNoReach(PNAM, 'Parent ', [SMQN, SMBN, SMEN, NULL]),
+    wbFormIDCkNoReach(SNAM, 'Previous Sibling ', [SMQN, SMBN, SMEN, NULL], False, cpBenign),
     wbCITCReq,
     wbCTDAsCount,
     wbStruct(DNAM, 'Flags', [
@@ -9710,16 +10125,16 @@ begin
     wbInteger(MNAM, 'Num quests to run', itU32),
     wbInteger(QNAM, 'Quest Count', itU32, nil, cpBenign, True),
     wbRArray('Quests', wbRStructSK([0], 'Quest', [
-      wbFormIDCk(NNAM, 'Quest', [QUST]),
-      wbUnknown(FNAM),
-      wbFloat(RNAM, 'Hours until reset', cpNormal, False, 1/24)
-    ], []), cpNormal, False, nil, wbSMQNQuestsAfterSet)
+      wbFormIDCk(NNAM, 'Quest', [QUST], False, cpBenign),
+      wbUnknown(FNAM, cpBenign),
+      wbFloat(RNAM, 'Hours until reset', cpBenign, False, 1/24)
+    ], []), cpBenign, False, nil, wbSMQNQuestsAfterSet)
   ], False, nil, cpNormal, False, nil, wbConditionsAfterSet);
 
   wbRecord(SMEN, 'Story Manager Event Node', [
     wbEDID,
-    wbFormIDCk(PNAM, 'Parent ', [SMQN, SMBN, SMEN, NULL]),
-    wbFormIDCk(SNAM, 'Child ', [SMQN, SMBN, SMEN, NULL]),
+    wbFormIDCkNoReach(PNAM, 'Parent ', [SMQN, SMBN, SMEN, NULL]),
+    wbFormIDCkNoReach(SNAM, 'Previous Sibling ', [SMQN, SMBN, SMEN, NULL], False, cpBenign),
     wbCITCReq,
     wbCTDAsCount,
     wbInteger(DNAM, 'Flags', itU32, wbSMNodeFlags),
@@ -9732,7 +10147,7 @@ procedure DefineTES5j;
 begin
   wbRecord(DLBR, 'Dialog Branch', [
     wbEDID,
-    wbFormIDCk(QNAM, 'Quest', [QUST], False, cpNormal, True),
+    wbFormIDCkNoReach(QNAM, 'Quest', [QUST], False, cpNormal, True),
     wbInteger(TNAM, 'Unknown', itU32),
     wbInteger(DNAM, 'Flags', itU32, wbFlags([
       {0x01} 'Top-Level',
@@ -9751,9 +10166,9 @@ begin
     ]), cpNormal, True),
     wbFloat(FLTV, 'Duration'),
     wbFloat(DNAM, 'Fade-Out'),
-    wbString(ANAM, 'Track Filename'),
-    wbString(BNAM, 'Finale Filename'),
-    wbArray(FNAM, 'Cue Points', wbFloat('Point')),
+    wbString(ANAM, 'Track FileName'),
+    wbString(BNAM, 'Finale FileName'),
+    wbArray(FNAM, 'Cue Points', wbFloat('Point')).IncludeFlag(dfNotAlignable),
     wbStruct(LNAM, 'Loop Data', [
       wbFloat('Loop Begins'),
       wbFloat('Loop Ends'),
@@ -9796,7 +10211,7 @@ begin
         wbFormIDCk('Spell', [SPEL, NULL]),
         wbFloat('Recovery Time')
       ])
-    )
+    ).IncludeFlag(dfNotAlignable)
   ]);
 
   wbRecord(EQUP, 'Equip Type', [
@@ -9811,8 +10226,8 @@ begin
     ])), [
     wbEDID,
     wbStruct(DATA, 'Data', [
-      wbFormIDCk('Parent', [NPC_, NULL]),
-      wbFormIDCk('Child', [NPC_, NULL]),
+      wbFormIDCkNoReach('Parent', [NPC_, NULL]),
+      wbFormIDCkNoReach('Child', [NPC_, NULL]),
       wbInteger('Rank', itU16, wbEnum([
         'Lover',
         'Ally',
@@ -10259,7 +10674,7 @@ begin
   wbRecord(IDLE, 'Idle Animation', [
     wbEDID,
     wbCTDAs,
-    wbString(DNAM, 'Filename'),
+    wbString(DNAM, 'FileName'),
     wbString(ENAM, 'Animation Event'),
     wbArray(ANAM, 'Related Idle Animations', wbFormIDCk('Related Idle Animation', [AACT, IDLE, NULL]),
       ['Parent', 'Previous Sibling'], cpNormal, True),
@@ -10352,7 +10767,7 @@ begin
     {>>> END leftover from earlier CK versions <<<}
 
     wbLString(RNAM, 'Prompt', 0, cpTranslate),
-    wbFormIDCk(ANAM, 'Speaker', [NPC_]),
+    wbFormIDCkNoReach(ANAM, 'Speaker', [NPC_]),
     wbFormIDCk(TWAT, 'Walk Away Topic', [DIAL]),
     wbFormIDCk(ONAM, 'Audio Output Override', [SOPM])
   ], False, wbINFOAddInfo, cpNormal, False, nil{wbINFOAfterLoad});
@@ -10459,7 +10874,19 @@ begin
       wbFlags(wbRecordFlagsFlags, wbFlagsList([
         {0x00040000} 18, 'Compressed'
       ]), [18]), [
-      wbByteArray(DATA, 'Unknown'),
+      wbInteger(DATA, 'Flags', itU32, wbFlags([
+        'Vertex Normals / Height Map',
+        'Vertex Colours',
+        'Layers',
+        'Unknown 4',
+        'Unknown 5',
+        '',
+        '',
+        '',
+        '',
+        '',
+        'MPCD'
+      ])),
       wbArray(VNML, 'Vertex Normals', wbStruct('Row', [
         wbArray('Columns', wbStruct('Column', [
           wbInteger('X', itU8),
@@ -10472,7 +10899,7 @@ begin
         wbArray('Rows', wbStruct('Row', [
           wbArray('Columns', wbInteger('Column', itU8), 33)
         ]), 33),
-        wbByteArray('Unknown', 3)
+        wbByteArray('Unused', 3)
       ]),
       wbArray(VCLR, 'Vertex Colours', wbStruct('Row', [
         wbArray('Columns', wbStruct('Column', [
@@ -10487,7 +10914,7 @@ begin
           wbStructSK(BTXT, [1, 3], 'Base Layer Header', [
             wbFormIDCk('Texture', [LTEX, NULL]),
             wbInteger('Quadrant', itU8, wbQuadrantEnum),
-            wbByteArray('Unknown', 1),
+            wbByteArray('Unused', 1),
             wbInteger('Layer', itS16)
           ])
         ], []),
@@ -10495,18 +10922,19 @@ begin
           wbStructSK(ATXT, [1, 3], 'Alpha Layer Header', [
             wbFormIDCk('Texture', [LTEX, NULL]),
             wbInteger('Quadrant', itU8, wbQuadrantEnum),
-            wbByteArray('Unknown', 1),
+            wbByteArray('Unused', 1),
             wbInteger('Layer', itS16)
           ]),
           wbArrayS(VTXT, 'Alpha Layer Data', wbStructSK([0], 'Cell', [
             wbInteger('Position', itU16, wbAtxtPosition),
-            wbByteArray('Unknown', 2),
+            wbByteArray('Unused', 2),
             wbFloat('Opacity')
           ]))
         ], [])
       ], [])),
 
-      wbArray(VTEX, 'Textures', wbFormIDCk('Texture', [LTEX, NULL]))
+      wbArray(VTEX, 'Textures', wbFormIDCk('Texture', [LTEX, NULL])),
+      wbRArray('Unknown', wbUnknown(MPCD))
     ]);
 
   end;
@@ -10894,10 +11322,10 @@ begin
   wbRecord(COBJ, 'Constructible Object', [
     wbEDID,
     wbCOCT,
-    wbCNTOs,
+    wbCNTOsNoReach,
     wbCTDAs,
     wbFormID(CNAM, 'Created Object'),
-    wbFormIDCk(BNAM, 'Workbench Keyword', [KYWD]),
+    wbFormIDCkNoReach(BNAM, 'Workbench Keyword', [KYWD]),
     wbInteger(NAM1, 'Created Object Count', itU16)
   ], False, nil, cpNormal, False, nil, wbContainerAfterSet);
 
@@ -11468,7 +11896,7 @@ begin
           {0x02} 'Fail Quest'
         ])),
         wbCTDAs,
-        wbLString(CNAM, 'Log Entry', 0, cpTranslate),
+        wbLStringKC(CNAM, 'Log Entry', 0, cpTranslate),
         wbFormIDCk(NAM0, 'Next Quest', [QUST]),
         {>>> BEGIN leftover from earlier CK versions <<<}
         wbByteArray(SCHR, 'Unused', 0, cpIgnore, false, false, wbNeverShow),
@@ -11480,7 +11908,7 @@ begin
     wbRArray('Objectives', wbRStruct('Objective', [
       wbInteger(QOBJ, 'Objective Index', itU16),
       wbInteger(FNAM, 'Flags', itU32, wbFlags(['ORed With Previous'])),
-      wbLString(NNAM, 'Display Text', 0, cpTranslate, True),
+      wbLStringKC(NNAM, 'Display Text', 0, cpTranslate, True),
       wbRArray('Targets', wbRStruct('Target', [
         wbStruct(QSTA, 'Target', [
           wbInteger('Alias', itS32, wbQuestAliasToStr, wbStrToAlias),
@@ -11497,7 +11925,7 @@ begin
       wbRUnion('Alias', [
 
         // Reference Alias
-        wbRStruct('Alias', [
+        wbRStructSK([0], 'Alias', [
           wbInteger(ALST, 'Reference Alias ID', itU32),
           wbString(ALID, 'Alias Name'),
           wbQUSTAliasFlags,
@@ -11559,7 +11987,7 @@ begin
         ], [], cpNormal, False, nil, False, nil, wbContainerAfterSet),
 
         // Location Alias
-        wbRStruct('Alias', [
+        wbRStructSK([0], 'Alias', [
           wbInteger(ALLS, 'Location Alias ID', itU32),
           wbString(ALID, 'Alias Name'),
           wbQUSTAliasFlags,
@@ -12090,7 +12518,7 @@ begin
     wbFormIDCk(ONAM, 'Open Loot Sound', [SNDR, NULL]),
     wbFormIDCk(LNAM, 'Close Loot Sound', [SNDR, NULL]),
     {>>> When NAME is user defined wbBipedObjectEnum will be incorrect <<<}
-    wbRArray('Biped Object Names', wbString(NAME, 'Name')),
+    wbRArray('Biped Object Names', wbString(NAME, 'Name')).IncludeFlag(dfNotAlignable),
     wbRArrayS('Movement Types', wbRStructSK([0], 'Movement Types', [
       wbFormIDCk(MTYP, 'Movement Type', [MOVT, NULL]),
       wbStruct(SPED, 'Override Values', [
@@ -12151,7 +12579,7 @@ begin
   ], False, nil, cpNormal, False, wbRACEAfterLoad, wbRACEAfterSet);
 
 
-  wbRecord(REFR, 'Placed Object', wbFormaterUnion(wbREFRRecordFlagsDecider, [
+  wbRefRecord(REFR, 'Placed Object', wbFormaterUnion(wbREFRRecordFlagsDecider, [
     wbFlags(wbRecordFlagsFlags, wbFlagsList([
       {0x00000400} 10, 'Persistent',
       {0x00000800} 11, 'Initially Disabled',
@@ -12798,7 +13226,7 @@ begin
     ),
     wbArray(MNAM, 'Distant LOD',
       wbStruct('LOD', [
-        {>>> Contains null-terminated mesh filename followed by random data up to 260 bytes <<<}
+        {>>> Contains null-terminated mesh FileName followed by random data up to 260 bytes <<<}
         wbString(True, 'Mesh', 260)
         //wbByteArray('Mesh', 260, cpIgnore)
       ]), [
@@ -12820,16 +13248,16 @@ begin
     wbStruct(HEDR, 'Header', [
       wbFloat('Version'),
       wbInteger('Number of Records', itU32),
-      wbInteger('Next Object ID', itU32)
+      wbInteger('Next Object ID', itU32, wbNextObjectIDToString, wbNextObjectIDToInt)
     ], cpNormal, True),
     wbByteArray(OFST, 'Unknown', 0, cpIgnore),
     wbByteArray(DELE, 'Unknown', 0, cpIgnore),
     wbString(CNAM, 'Author', 0, cpTranslate, True),
     wbString(SNAM, 'Description', 0, cpTranslate),
     wbRArray('Master Files', wbRStruct('Master File', [
-      wbString(MAST, 'Filename', 0, cpNormal, True),
+      wbStringForward(MAST, 'FileName', 0, cpNormal, True),
       wbByteArray(DATA, 'Unknown', 8, cpIgnore, True)
-    ], [ONAM])),
+    ], [ONAM])).IncludeFlag(dfInternalEditOnly, not wbAllowMasterFilesEdit),
     wbArray(ONAM, 'Overridden Forms',
       wbFormIDCk('Form', [ACHR, LAND, NAVM, REFR, PGRE, PHZD, PMIS, PARW, PBAR, PBEA, PCON, PFLA]),
       0, nil, nil, cpNormal, False{, wbTES4ONAMDontShow}),
@@ -12837,6 +13265,11 @@ begin
     wbUnknown(INTV),
     wbUnknown(INCC)
   ], True, nil, cpNormal, True, wbRemoveOFST);
+
+  wbRecord(PLYR, 'Player Reference', [
+    wbEDID,
+    wbFormID(PLYR, 'Player', cpNormal, True).SetDefaultNativeValue($7)
+  ]).IncludeFlag(dfInternalEditOnly);
 end;
 
 procedure DefineTES5o;
@@ -13081,7 +13514,7 @@ begin
     wbKWDAs,
     wbDESC,
     wbRStruct('Has Scope', [
-      wbString(MOD3, 'Model Filename'),
+      wbString(MOD3, 'Model FileName'),
       wbByteArray(MO3T, 'Texture Files Hashes', 0, cpIgnore, false, false, wbNeverShow),
       wbMO3S
     ], []),
@@ -13161,20 +13594,18 @@ begin
     IsSSE(
       wbStruct(CRDT, 'Critical Data', [
         wbInteger('Damage', itU16),
-        wbByteArray('Unknown', 2),
+        wbByteArray('Unused', 2, cpIgnore),
         wbFloat('% Mult'),
         wbInteger('Flags', itU8, wbFlags([
           'On Death'
         ])),
-		// SSE
-        wbByteArray('Unused', 3, cpIgnore),
-        wbByteArray('Unknown', 4),
+        wbByteArray('Unused', 7, cpIgnore),
         wbFormIDCk('Effect', [SPEL, NULL]),
-        wbByteArray('Unknown', 4)
+        wbByteArray('Unused', 4, cpIgnore)
       ]),
       wbStruct(CRDT, 'Critical Data', [
         wbInteger('Damage', itU16),
-        wbByteArray('Unknown', 2),
+        wbByteArray('Unused', 2, cpIgnore),
         wbFloat('% Mult'),
         wbInteger('Flags', itU8, wbFlags([
           'On Death'
@@ -13200,10 +13631,10 @@ begin
           wbFormIDCk('Ref', [REFR], False, cpIgnore),
           wbInteger('Y', itS16, nil, cpIgnore),
           wbInteger('X', itS16, nil, cpIgnore)
-        ]), -1)
+        ]), -1).IncludeFlag(dfNotAlignable)
       ]),
       cpIgnore, False, nil, nil, wbNeverShow
-    ),
+    ).IncludeFlag(dfNotAlignable),
     wbMaxHeightDataWRLD,
     wbFULL,
     wbStruct(WCTR, 'Fixed Dimensions Center Cell', [
@@ -13337,16 +13768,16 @@ begin
     wbFormIDCK(NNAM, 'Visual Effect', [RFCT, NULL], False, cpNormal, True),
     wbByteArray(ONAM, 'Unused', 0, cpIgnore),
     wbRStruct('Cloud Speed', [
-      wbArray(RNAM, 'Y Speed', wbInteger('Layer', itU8, wbCloudSpeedToStr, wbCloudSpeedToInt)),
-      wbArray(QNAM, 'X Speed', wbInteger('Layer', itU8, wbCloudSpeedToStr, wbCloudSpeedToInt))
+      wbArray(RNAM, 'Y Speed', wbInteger('Layer', itU8, wbCloudSpeedToStr, wbCloudSpeedToInt)).IncludeFlag(dfNotAlignable),
+      wbArray(QNAM, 'X Speed', wbInteger('Layer', itU8, wbCloudSpeedToStr, wbCloudSpeedToInt)).IncludeFlag(dfNotAlignable)
     ], []),
-    wbArray(PNAM, 'Cloud Colors', wbWeatherColors('Layer')),
+    wbArray(PNAM, 'Cloud Colors', wbWeatherColors('Layer')).IncludeFlag(dfNotAlignable),
     wbArray(JNAM, 'Cloud Alphas', wbStruct('Layer', [
       wbFloat('Sunrise'),
       wbFloat('Day'),
       wbFloat('Sunset'),
       wbFloat('Night')
-    ])),
+    ])).IncludeFlag(dfNotAlignable),
     {>>> not as an array since last entries are omitted in skyrim.esm <<<}
     wbStruct(NAM0, 'Weather Colors', [
       wbWeatherColors('Sky-Upper'),
@@ -13505,9 +13936,34 @@ begin
   wbRecord(RGDL, 'RGDL', [
     wbEDID
   ]);
+  {
   wbRecord(SCOL, 'SCOL', [
     wbEDID
   ]);
+  }
+
+  wbRecord(SCOL, 'Static Collection', [
+    wbEDID,
+    wbOBNDReq,
+    wbMODLReq,
+    wbRStructs('Parts', 'Part', [
+      wbFormIDCk(ONAM, 'Static', [STAT]),
+      wbArrayS(DATA, 'Placements', wbStruct('Placement', [
+        wbStruct('Position', [
+          wbFloat('X'),
+          wbFloat('Y'),
+          wbFloat('Z')
+        ]),
+        wbStruct('Rotation', [
+          wbFloat('X', cpNormal, True, wbRotationFactor, wbRotationScale, nil, RadiansNormalize),
+          wbFloat('Y', cpNormal, True, wbRotationFactor, wbRotationScale, nil, RadiansNormalize),
+          wbFloat('Z', cpNormal, True, wbRotationFactor, wbRotationScale, nil, RadiansNormalize)
+        ]),
+        wbFloat('Scale')
+      ]), 0, cpNormal, True)
+    ], [], cpNormal, True)
+  ]);
+
   wbRecord(SCPT, 'SCPT', [
     wbEDID
   ]);
@@ -13557,6 +14013,7 @@ begin
    wbAddGroupOrder(WEAP);
    wbAddGroupOrder(AMMO);
    wbAddGroupOrder(NPC_);
+   wbAddGroupOrder(PLYR);
    wbAddGroupOrder(LVLN);
    wbAddGroupOrder(KEYM);
    wbAddGroupOrder(ALCH);
@@ -13638,6 +14095,16 @@ end;
 
 procedure DefineTES5;
 begin
+  if IsSSE then begin
+    wbNexusModsUrl := 'https://www.nexusmods.com/skyrimspecialedition/mods/164';
+    if wbToolMode = tmLODgen then
+      wbNexusModsUrl := 'https://www.nexusmods.com/skyrimspecialedition/mods/6642';
+  end else begin
+    wbNexusModsUrl := 'https://www.nexusmods.com/skyrim/mods/25859';
+    if wbToolMode = tmLODgen then
+      wbNexusModsUrl := 'https://www.nexusmods.com/skyrim/mods/62698';
+  end;
+
   DefineTES5a;
   DefineTES5b;
   DefineTES5c;
