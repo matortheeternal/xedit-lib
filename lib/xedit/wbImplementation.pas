@@ -54,7 +54,8 @@ function wbMastersForFile(const aFileName: string; out aMasters: TDynStrings; aI
 function wbFile(const aFileName: string; aLoadOrder: Integer = -1; aCompareTo: string = ''; aStates: TwbFileStates = []; const aData: TBytes = nil): IwbFile;
 function wbNewFile(const aFileName: string; aLoadOrder: Integer; aIsESL: Boolean): IwbFile; overload;
 function wbNewFile(const aFileName: string; aLoadOrder: Integer; aTemplate: PwbModuleInfo): IwbFile; overload;
-procedure wbFileForceClosed;
+procedure wbFileForceClosed; overload;
+procedure wbFileForceClosed(_File: IwbFile); overload
 
 function StartsWith(const s, t: string): Boolean;
 
@@ -18461,14 +18462,47 @@ procedure wbFileForceClosed;
 var
   i: Integer;
 begin
-  for i := Low(Files) to High(Files) do begin
-    (Files[i] as IwbFileInternal).ForceClosed;
-    wbProgressCallback;
+  try
+    for i := Low(Files) to High(Files) do begin
+      (Files[i] as IwbFileInternal).ForceClosed;
+      wbProgressCallback;
+    end;
+    Files := nil;
+    FilesMap.Clear;
+    _NextFullSlot := 0;
+    _NextLightSlot := 0;
+  except
+    on x: Exception do
+      raise Exception.Create('wbFileForceClosed failed, ' + x.Message);
   end;
-  Files := nil;
-  FilesMap.Clear;
-  _NextFullSlot := 0;
-  _NextLightSlot := 0;
+end;
+
+function IndexOfFile(_File: IwbFile): Integer;
+begin
+  for Result := Low(Files) to High(Files) do
+    if Files[Result] = _File then exit;
+  Result := -1;
+end;
+
+procedure wbFileForceClosed(_File: IwbFile);
+var
+  fileName: String;
+  aLength, index, i: Integer;
+begin
+  fileName := _File.FileName;
+  index := IndexOfFile(_File);
+  aLength := Length(Files);
+  Assert(index > -1);
+  Assert(index < aLength);
+  (_File as IwbFileInternal).ForceClosed;
+  for i := index + 1 to Pred(aLength) do
+    Files[i - 1] := Files[i];
+  SetLength(Files, aLength - 1);
+  for i := 0 to Pred(FilesMap.Count) do
+    if SameText(ExtractFileName(FilesMap[i]), fileName) then begin
+      FilesMap.Delete(i);
+      break;
+    end;
 end;
 
 function wbFile(const aFileName: string; aLoadOrder: Integer = -1; aCompareTo: string = ''; aStates: TwbFileStates = []; const aData: TBytes = nil): IwbFile;
