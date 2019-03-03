@@ -7150,7 +7150,8 @@ begin
     DoInit(True);
 
     for i := 0 to Pred(mrDef.MemberCount) do
-      if SameText(mrDef.Members[i].Name, aName) or SameText(mrDef.Members[i].DefaultSignature, aName) then begin
+      if SameText(mrDef.Members[i].Name, aName)
+      or SameText(mrDef.Members[i].DefaultSignature, s) then begin
         Result := GetElementBySortOrder(i + GetAdditionalElementCount);
         if not Assigned(Result) then begin
           Assign(i, nil, False);
