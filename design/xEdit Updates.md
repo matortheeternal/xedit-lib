@@ -36,4 +36,6 @@
 
 ## wbBSA.pas
 
-- [ ] Added `TwbContainerHandler.GetResourceContainer` - [ccf465](https://github.com/matortheeternal/xedit-lib/commit/ccf46582f7c3af4c7bf7b10c2277fbb87a3d3ec8#diff-884f2fb29b253fc525156c1bd50cd538)
+- [ ] Added `TwbContainerHandler.GetResourceContainer` - [ccf465](https://github.com/matortheeternal/xedit-lib/commit/ccf46582f7c3af4c7bf7b10c2277fbb87a3d3ec8#diff-884f2fb29b253fc525156c1bd50cd538), [68e618](https://github.com/matortheeternal/xedit-lib/commit/68e61813542d04b3df5ccad9ba60f6476d02c88f#diff-f56ae82a15344fb47d1e480de31553bb)
+- [ ] Fixed BA2 internal file path parsing (handling forward slashes) - [9d94e7](https://github.com/matortheeternal/xedit-lib/commit/9d94e72358d3ba1874db734a7c73e21a872fd38e#diff-f56ae82a15344fb47d1e480de31553bb)
+- [ ] Container order now properly corresponds to priority - [86393e](https://github.com/matortheeternal/xedit-lib/commit/86393e43b06031d64f9fac920e479e2f7218f501#diff-f56ae82a15344fb47d1e480de31553bb), [ec6e27](https://github.com/matortheeternal/xedit-lib/commit/ec6e279ef41fa8c08a9466b13161ee5ee1579500#diff-f56ae82a15344fb47d1e480de31553bb)
