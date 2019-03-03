@@ -11,7 +11,7 @@
 - [ ] Added `AddGroup` method to `IwbGroupRecord` - [149342](https://github.com/matortheeternal/xedit-lib/commit/149342425b1d8985195dbe1775e4ec0be0549032#diff-884f2fb29b253fc525156c1bd50cd538)
 - [x] Added `wbAllowErrors` - [271bbf](https://github.com/matortheeternal/xedit-lib/commit/271bbf77aa86682587a70f3750ae1935f8aac032#diff-884f2fb29b253fc525156c1bd50cd538)
 - [x] Improved handling of unordered subrecords - [ff0afb](https://github.com/matortheeternal/xedit-lib/commit/ff0afb3ea4cb13bfaf194e99e2976ed7694094b5#diff-884f2fb29b253fc525156c1bd50cd538), [ffaf14](https://github.com/matortheeternal/xedit-lib/commit/ffaf14ff474692acec310f4609931f1bfba2c172#diff-1c52c6c99b8608acd96b2af323687072)
-- [ ] Added `TwbFile.SetFileName` - [ccdf6f](https://github.com/matortheeternal/xedit-lib/commit/ccdf6fab0f5ae60aaf5f98053a7d95fb63f3cd01#diff-884f2fb29b253fc525156c1bd50cd538), [3153e9](https://github.com/matortheeternal/xedit-lib/commit/3153e9d2708e91b9920942c7633b80eb11b0676e#diff-1c52c6c99b8608acd96b2af323687072)
+- [x] Added `TwbFile.SetFileName` - [ccdf6f](https://github.com/matortheeternal/xedit-lib/commit/ccdf6fab0f5ae60aaf5f98053a7d95fb63f3cd01#diff-884f2fb29b253fc525156c1bd50cd538), [3153e9](https://github.com/matortheeternal/xedit-lib/commit/3153e9d2708e91b9920942c7633b80eb11b0676e#diff-1c52c6c99b8608acd96b2af323687072)
 - [x] Added `TwbFile.SetIsEditable` - [4b023f](https://github.com/matortheeternal/xedit-lib/commit/4b023f2ebef9e79a1ea83104b46f929da4173d3d#diff-884f2fb29b253fc525156c1bd50cd538)
 
 - [x] Fixed bug in `TwbFile.Create` which caused `fsIsHardcoded` to not be set in file states properly - [0eeb6e](https://github.com/matortheeternal/xedit-lib/commit/0eeb6e8b767820886d9e5df4809bd4ab58c5a9db#diff-884f2fb29b253fc525156c1bd50cd538) 

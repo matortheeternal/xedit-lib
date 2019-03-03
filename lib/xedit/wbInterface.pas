@@ -1201,6 +1201,7 @@ type
   IwbFile = interface(IwbContainer)
     ['{38AA15A6-F652-45C7-B875-9CB502E5DA92}']
     function GetFileName: string;
+    procedure SetFileName(const aNewName: string);
     function GetFileNameOnDisk: string;
     function GetModuleInfo: Pointer;
     function GetUnsavedSince: TDateTime;
@@ -1269,7 +1270,8 @@ type
     procedure RemoveIdenticalDeltaFast;
 
     property FileName: string
-      read GetFileName;
+      read GetFileName
+      write SetFileName;
     property FileNameOnDisk: string
       read GetFileNameOnDisk;
 

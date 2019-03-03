@@ -712,6 +712,7 @@ type
 
     {---IwbFile---}
     function GetFileName: string;
+    procedure SetFileName(const aNewName: String);
     function GetFileNameOnDisk: string;
     function GetModuleInfo: Pointer;
     function GetUnsavedSince: TDateTime; inline;
@@ -3484,6 +3485,17 @@ end;
 function TwbFile.GetFileName: string;
 begin
   Result := ExtractFileName(flFileName);
+end;
+
+procedure TwbFile.SetFileName(const aNewName: String);
+var
+  newFilePath: String;
+begin
+  newFilePath := ExtractFilePath(flFileName) + aNewName;
+  if FileExists(newFilePath) then
+    raise Exception.Create(Format('Cannot set filename to "%s", file ' +
+      'already exists with this name at "%s"', [aNewName, newFilePath]));
+  flFileName := newFilePath;
 end;
 
 function TwbFile.GetFileNameOnDisk: string;
