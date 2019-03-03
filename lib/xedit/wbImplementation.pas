@@ -1004,6 +1004,7 @@ type
     mrMasterAndLeafs    : array of Pointer{IwbMainRecord};
     mrEditorID          : string;
     mrFullName          : string;
+    mrSubrecordErrors   : string;
     mrStates            : TwbMainRecordStates;
     mrBaseRecordID      : TwbFormID;
     mrPrecombinedCellID : Cardinal;
@@ -1041,6 +1042,7 @@ type
     procedure ElementChanged(const aElement: IwbElement; aContainer: Pointer); override;
     function RemoveElement(aPos: Integer; aMarkModified: Boolean = False): IwbElement; overload; override;
     function ResolveElementName(aName: string; out aRemainingName: string; aCanCreate: Boolean = False): IwbElement; override;
+    procedure SubrecordError(sig: string);
 
     function GetIsInjected: Boolean; override;
     function GetReferencesInjected: Boolean; override;
@@ -1137,6 +1139,7 @@ type
     function GetReferencedBy(aIndex: Integer): IwbMainRecord;
     function GetReferencedByCount: Integer;
     function GetCheck: string; override;
+    function GetSubrecordErrors: string;
     function GetIsWinningOverride: Boolean;
     function GetWinningOverride: IwbMainRecord;
     function GetHighestOverrideOrSelf(aMaxLoadOrder: Integer): IwbMainRecord;
@@ -8174,6 +8177,7 @@ begin
 
   DecompressIfNeeded;
 
+  mrSubrecordErrors := '';
   FoundError := False;
 
   if not (mrsQuickInit in mrStates) then begin
@@ -8237,8 +8241,7 @@ begin
     if mrDef.AllowUnordered then begin
       CurrentDefPos := mrDef.GetMemberIndexFor(CurrentRec.Signature, CurrentRec);
       if CurrentDefPos < 0 then begin
-        if wbHasProgressCallback then
-          wbProgressCallback('Error: record '+ String(GetSignature) + ' contains unexpected (or out of order) subrecord ' + String(CurrentRec.Signature) + ' ' + IntToHex(Int64(Cardinal(CurrentRec.Signature)), 8) );
+        SubrecordError(String(CurrentRec.Signature));
         FoundError := True;
         Inc(CurrentRecPos);
         Continue;
@@ -8246,25 +8249,27 @@ begin
       CurrentDef := mrDef.Members[CurrentDefPos];
     end else begin
       if not mrDef.ContainsMemberFor(CurrentRec.Signature, CurrentRec) then begin
-        if wbHasProgressCallback then
-          wbProgressCallback('Error: record '+ String(GetSignature) + ' contains unexpected (or out of order) subrecord ' + String(CurrentRec.Signature) + ' ' + IntToHex(Int64(Cardinal(CurrentRec.Signature)), 8) );
+        SubrecordError(String(CurrentRec.Signature));
         FoundError := True;
         Inc(CurrentRecPos);
         Continue;
       end;
 
-      if (CurrentDefPos < mrDef.MemberCount) then begin
+      if (CurrentDefPos < mrDef.MemberCount) and not FoundError then begin
         CurrentDef := mrDef.Members[CurrentDefPos];
         if not CurrentDef.CanHandle(CurrentRec.Signature, CurrentRec) then begin
           Inc(CurrentDefPos);
           Continue;
         end;
       end else begin
-        if wbHasProgressCallback then
-          wbProgressCallback('Error: record '+ String(GetSignature) + ' contains unexpected (or out of order) subrecord ' + String(CurrentRec.Signature) );
+        SubrecordError(String(CurrentRec.Signature));
         FoundError := True;
-        Inc(CurrentRecPos);
-        Continue;
+        CurrentDefPos := mrDef.GetMemberIndexFor(CurrentRec.Signature, CurrentRec);
+        if CurrentDefPos < 0 then begin
+          Inc(CurrentRecPos);
+          Continue;
+        end;
+        CurrentDef := mrDef.Members[CurrentDefPos];
       end;
     end;
 
@@ -8334,8 +8339,7 @@ begin
       Continue;
     end;
 
-    if wbHasProgressCallback then
-      wbProgressCallback('Error: record '+ String(GetSignature) + ' contains unexpected (or out of order) subrecord ' + String(CurrentRec.Signature) );
+    SubrecordError(String(CurrentRec.Signature));
     FoundError := True;
 
     Inc(CurrentRecPos);
@@ -8751,6 +8755,19 @@ begin
       if Assigned(Group) then
         Supports(Group.ElementBySignature[aSignature], IwbMainRecord, Result);
     end;
+end;
+
+function TwbMainRecord.GetSubrecordErrors: String;
+begin
+  Result := mrSubrecordErrors;
+end;
+
+procedure TwbMainRecord.SubrecordError(sig: String);
+begin
+  if mrSubrecordErrors = '' then
+    mrSubrecordErrors := sig
+  else
+    mrSubrecordErrors := mrSubrecordErrors + ',' + sig;
 end;
 
 function TwbMainRecord.GetChildGroup: IwbGroupRecord;
