@@ -1465,6 +1465,7 @@ type
     function GetSubrecordErrors: string;
     function GetIsWinningOverride: Boolean;
     function GetWinningOverride: IwbMainRecord;
+    function GetInjectionTarget: IwbFile;
     function GetHighestOverrideOrSelf(aMaxLoadOrder: Integer): IwbMainRecord;
     function GetHighestOverrideVisibleForFile(const aFile: IwbFile): IwbMainRecord;
     function GetAllVisibleForFile(const aFile: IwbFile): TDynMainRecords;
@@ -1604,6 +1605,9 @@ type
       read GetChildByGridCell;
     property MasterAndLeafs: TDynMainRecords
       read GetMasterAndLeafs;
+
+    property InjectionTarget: IwbFile
+      read GetInjectionTarget;
 
     property ReferencedBy[aIndex: Integer]: IwbMainRecord
       read GetReferencedBy;

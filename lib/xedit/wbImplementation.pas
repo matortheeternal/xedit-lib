@@ -1143,6 +1143,7 @@ type
     function GetSubrecordErrors: string;
     function GetIsWinningOverride: Boolean;
     function GetWinningOverride: IwbMainRecord;
+    function GetInjectionTarget: IwbFile;
     function GetHighestOverrideOrSelf(aMaxLoadOrder: Integer): IwbMainRecord;
     function GetHighestOverrideVisibleForFile(const aFile: IwbFile): IwbMainRecord;
     function GetAllVisibleForFile(const aFile: IwbFile): TDynMainRecords;
@@ -9995,6 +9996,15 @@ begin
       Result := mrOverrides[High(mrOverrides)]
     else
       Result := Self;
+end;
+
+function TwbMainRecord.GetInjectionTarget: IwbFile;
+var
+  i: Integer;
+begin
+  if not GetIsInjected then exit;
+  i := GetFormID.FileID.FullSlot;
+  Result := GetFile.Masters[i];
 end;
 
 procedure TwbMainRecord.InformStorage(var aBasePtr: Pointer; aEndPtr: Pointer);
