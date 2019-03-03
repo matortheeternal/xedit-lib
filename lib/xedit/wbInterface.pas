@@ -1178,6 +1178,7 @@ type
     fsIsGameMaster,
     fsIsTemporary,
     fsHasNoFormID,
+    fsIsEditable,
     fsRefsBuild,
     fsRefsBuilding,
     fsIsGhost,
@@ -1216,6 +1217,7 @@ type
     function GetFileStates: TwbFileStates;
     function GetCRC32: TwbCRC32;
     procedure BuildReachable;
+    procedure SetIsEditable(state: Boolean);
     function BuildOrLoadRef(aOnlyLoad: Boolean): TwbBuildOrLoadRefResult;
 
     function LoadOrderFormIDtoFileFormID(aFormID: TwbFormID; aNew: Boolean): TwbFormID;

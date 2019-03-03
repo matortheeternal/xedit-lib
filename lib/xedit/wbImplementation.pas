@@ -698,6 +698,7 @@ type
     function IsElementRemoveable(const aElement: IwbElement): Boolean; override;
     function IsElementEditable(const aElement: IwbElement): Boolean; override;
     function GetIsEditable: Boolean; override;
+    procedure SetIsEditable(state: Boolean);
     function GetIsRemoveable: Boolean; override;
 
     procedure WriteToStream(aStream: TStream; aResetModified: TwbResetModified); override;
@@ -3556,11 +3557,21 @@ end;
 function TwbFile.GetIsEditable: Boolean;
 begin
   Result := wbIsInternalEdit or (
-        wbEditAllowed and
-    ((not (fsIsGameMaster in flStates)) or wbAllowEditGameMaster) and
-    not (fsIsHardcoded in flStates) and
-    ((not (fsIsCompareLoad in flStates)) or (fsIsDeltaPatch in flStates))
+    wbEditAllowed and (fsIsEditable in flStates) or (
+      not (fsIsGameMaster in flStates) and
+      not (fsIsHardCoded in flStates) and
+      ((not (fsIsCompareLoad in flStates))
+        or (fsIsDeltaPatch in flStates))
+    )
   );
+end;
+
+procedure TwbFile.SetIsEditable(state: Boolean);
+begin
+  if state then
+    Include(flStates, fsIsEditable)
+  else
+    Exclude(flStates, fsIsEditable);
 end;
 
 function TwbFile.GetIsESL: Boolean;
