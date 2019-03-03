@@ -1712,6 +1712,7 @@ type
     function GetMainRecordByFormID(const aFormID: TwbFormID): IwbMainRecord;
 
     procedure AddElement(const aElement: IwbElement);
+    function AddGroup(const aName: string): IwbGroupRecord;
 
     procedure Sort;
 
