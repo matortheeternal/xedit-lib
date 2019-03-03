@@ -400,6 +400,7 @@ end;
 {$endregion}
 
 {$region 'API functions'}
+// TODO: update to use TwbFormID
 function GetFormID(_id: Cardinal; formID: PCardinal; native: WordBool): WordBool; cdecl;
 var
   rec: IwbMainRecord;
@@ -418,6 +419,7 @@ begin
   end;
 end;
 
+// TODO: update to use TwbFormID
 function SetFormID(_id: Cardinal; formID: Cardinal; native, fixReferences: WordBool): WordBool; cdecl;
 var
   rec, mRec: IwbMainRecord;
@@ -453,6 +455,10 @@ begin
   end;
 end;
 
+// TODO: update to use MasterRecordByFormID if searchMasters is true
+// TODO: update to use TwbFormID
+// TODO: update to handle fileOrdinals larger than 1 byte (light plugin slots)
+// TODO: make tests for hardcoded forms injected into game ESM
 function GetRecord(_id: Cardinal; formID: Cardinal; searchMasters: WordBool; _res: PCardinal): WordBool; cdecl;
 var
   rec: IwbMainRecord;
@@ -593,6 +599,7 @@ begin
   end;
 end;
 
+// TODO: make tests
 function GetInjectionTarget(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
 var
   rec: IwbMainRecord;

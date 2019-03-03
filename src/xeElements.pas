@@ -1249,6 +1249,7 @@ end;
 // Has the functionality of FileByName, FileByIndex, GetFileHeader, GroupBySignature,
 // GroupByName, RecordByFormID, RecordByEditorID, RecordByName, RecordByIndex,
 // GetChildGroup, ElementByName, ElementByPath, ElementByIndex, and ElementBySignature.
+// TODO: make tests for resolving hardcoded forms injected into game ESM
 function GetElement(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
 var
   element: IwbElement;
