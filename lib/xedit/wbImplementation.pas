@@ -2742,10 +2742,11 @@ begin
   flLoadOrderFileID := TwbFileID.Create(-1, -1);
   if aCompareTo <> '' then begin
     Include(flStates, fsIsCompareLoad);
-    if SameText(ExtractFileName(aFileName), wbGameExeName) then
-      Include(flStates, fsIsHardcoded);
     flCompareTo := wbExpandFileName(aCompareTo);
-  end else if SameText(ExtractFileName(aFileName), wbGameMasterEsm) then begin
+  end
+  else if SameText(ExtractFileName(aFileName), wbGameExeName) then
+    Include(flStates, fsIsHardcoded)
+  else if SameText(ExtractFileName(aFileName), wbGameMasterEsm) then begin
     Include(flStates, fsIsGameMaster);
     Include(flStates, fsIsOfficial);
   end;
