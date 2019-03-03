@@ -178,6 +178,7 @@ var
   wbManualCleaningAllow    : Boolean  = False;
   wbManualCleaningHide     : Boolean  = False;
   wbShrinkButtons          : Boolean  = False;
+  wbAllowFormIDErrors            : Boolean  = True;
 
   wbGlobalModifedGeneration : UInt64;
 
@@ -14789,7 +14790,7 @@ var
   Error: string;
 begin
   Result := inherited FromEditValue(aValue, aElement);
-  if _FormIDErrorCheckLockCount < 1 then begin
+  if (not wbAllowFormIDErrors) and (_FormIDErrorCheckLockCount < 1) then begin
     Error := Check(Result, aElement);
     if Error <> '' then
       raise Exception.Create(Error);
