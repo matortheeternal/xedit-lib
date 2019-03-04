@@ -19720,8 +19720,8 @@ begin
   ToggleVisibleWhenDistant := False;
 
   if Supports(IInterface(eContainer) , IwbMainRecordInternal, MainRecordInternal) then begin
-    if SameText(aElement.Def.Name, 'Record Flags') then begin
-      if Supports(aElement, IwbDataContainer, DataContainer) then begin
+    if Supports(aElement, IwbDataContainer, DataContainer) then begin
+      if SameText(aElement.Def.Name, 'Record Flags') then begin
         Flags._Flags := PCardinal(DataContainer.DataBasePtr)^;
         UpdateStorageFromElements;
         dcDataStorage := nil;
@@ -19748,8 +19748,21 @@ begin
         end;
 
         MainRecordInternal.mrStruct.mrsFlags := Flags;
+      end
+      else if SameText(aElement.Def.Name, 'Version Control Info 1') then begin
+        UpdateStorageFromElements;
+        dcDataStorage := nil;
+        MainRecordInternal.MakeHeaderWriteable;
+        MainRecordInternal.mrStruct.mrsVCS1 := PWord(DataContainer.DataBasePtr)^;
+      end
+      else if SameText(aElement.Def.Name, 'Version Control Info 2') then begin
+        UpdateStorageFromElements;
+        dcDataStorage := nil;
+        MainRecordInternal.MakeHeaderWriteable;
+        MainRecordInternal.mrStruct.mrsVCS2 := PWord(DataContainer.DataBasePtr)^;
       end;
     end;
+
     p := MainRecordInternal.mrStruct;
     InformStorage(p, PByte(p) + wbSizeOfMainRecordStruct);
 
