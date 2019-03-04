@@ -10042,7 +10042,7 @@ var
 begin
   if not GetIsInjected then exit;
   i := GetFormID.FileID.FullSlot;
-  Result := GetFile.Masters[i];
+  Result := GetFile.Masters[i, GetMastersUpdated];
 end;
 
 procedure TwbMainRecord.InformStorage(var aBasePtr: Pointer; aEndPtr: Pointer);
