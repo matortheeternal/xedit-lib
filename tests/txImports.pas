@@ -49,7 +49,7 @@ type
   function UnloadPlugin(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
 
   // FILE HANDLING METHODS
-  function AddFile(filename: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
+  function AddFile(filename: PWideChar; ignoreExists: WordBool; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function FileByIndex(index: Integer; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function FileByLoadOrder(load_order: Integer; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function FileByName(name: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
