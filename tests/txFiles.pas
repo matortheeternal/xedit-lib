@@ -174,6 +174,11 @@ begin
 
       Describe('AddFile', procedure
         begin
+          BeforeAll(procedure
+            begin
+              CopyPlugins(['xtest-6.esp']);
+            end);
+
           AfterAll(procedure
             var
               i: Integer;
