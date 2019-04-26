@@ -581,7 +581,7 @@ function CreateFile(const fileName, nextPath: String): IInterface;
 begin
   Result := NativeFileByName(fileName);
   if not Assigned(Result) then
-    Result := NativeAddFile(fileName);
+    Result := NativeAddFile(fileName, False);
   if Assigned(Result) and (nextPath <> '') then
     Result := CreateFromFile(Result as IwbFile, nextPath);
 end;
