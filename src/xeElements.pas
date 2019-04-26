@@ -633,12 +633,12 @@ begin
     resultArray[i] := Store(xFiles[i]);
 end;
 
-function HasSparseElements(const element: IwbElement): Boolean;
+function HasSparseElements(const container: IwbContainerElementRef): Boolean;
 var
   SortableContainer: IwbSortableContainer;
 begin
-  Result := NativeIsSorted(element) or
-    (element.ElementType in [etMainRecord, etSubRecordStruct]);
+  Result := NativeIsSorted(container) or
+    (container.ElementType in [etMainRecord, etSubRecordStruct]);
 end;
 
 procedure GetContainerElements(const container: IwbContainerElementRef);
@@ -686,7 +686,7 @@ var
 begin
   if not Supports(element, IwbContainerElementRef, container) then
     raise Exception.Create('Interface must be a container.');
-  if sparse and HasSparseElements(element) then
+  if sparse and HasSparseElements(container) then
     GetSparseElements(container)
   else
     GetContainerElements(container);
