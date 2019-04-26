@@ -57,7 +57,7 @@ type
   function RemoveElement(_id: Cardinal; path: PWideChar): WordBool; cdecl;
   function RemoveElementOrParent(_id: Cardinal): WordBool; cdecl;
   function SetElement(_id, _id2: Cardinal): WordBool; cdecl;
-  function GetElements(_id: Cardinal; path: PWideChar; sort, filter: WordBool; len: PInteger): WordBool; cdecl;
+  function GetElements(_id: Cardinal; path: PWideChar; sort, filter, sparse: WordBool; len: PInteger): WordBool; cdecl;
   function GetDefNames(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function GetAddList(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function GetLinksTo(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
@@ -633,6 +633,14 @@ begin
     resultArray[i] := Store(xFiles[i]);
 end;
 
+function HasSparseElements(const element: IwbElement): Boolean;
+var
+  SortableContainer: IwbSortableContainer;
+begin
+  Result := NativeIsSorted(element) or
+    (element.ElementType in [etMainRecord, etSubRecordStruct]);
+end;
+
 procedure GetContainerElements(const container: IwbContainerElementRef);
 var
   i, n: Integer;
@@ -645,19 +653,43 @@ begin
     e := container.Elements[i];
     if Supports(e, IwbGroupRecord, g) and IsChildGroup(g)
     and Assigned(g.ChildrenOf) then continue;
-    resultArray[n] := Store(container.Elements[i]);
+    resultArray[n] := Store(e);
     Inc(n);
   end;
   SetLength(resultArray, n);
 end;
 
-procedure GetChildrenElements(const element: IInterface);
+procedure GetSparseElements(const container: IwbContainerElementRef);
+var
+  i, n: Integer;
+  e: IwbElement;
+  g: IwbGroupRecord;
+begin
+  SetLength(resultArray, container.ElementCount);
+  n := 0;
+  for i := 0 to Pred(container.ElementCount) do begin
+    e := container.ElementBySortOrder[i];
+    if Assigned(e) and Supports(e, IwbGroupRecord, g)
+    and IsChildGroup(g) and Assigned(g.ChildrenOf) then continue;
+    if Assigned(e) then
+      resultArray[n] := Store(e)
+    else
+      resultArray[n] := 0;
+    Inc(n);
+  end;
+  SetLength(resultArray, n);
+end;
+
+procedure GetChildrenElements(const element: IInterface; sparse: WordBool);
 var
   container: IwbContainerElementRef;
 begin
   if not Supports(element, IwbContainerElementRef, container) then
     raise Exception.Create('Interface must be a container.');
-  GetContainerElements(container);
+  if sparse and HasSparseElements(element) then
+    GetSparseElements(container)
+  else
+    GetContainerElements(container);
 end;
 {$endregion}
 
@@ -1369,7 +1401,7 @@ begin
 end;
 
 // returns an array of handles for the elements in a container
-function GetElements(_id: Cardinal; path: PWideChar; sort, filter: WordBool; len: PInteger): WordBool; cdecl;
+function GetElements(_id: Cardinal; path: PWideChar; sort, filter, sparse: WordBool; len: PInteger): WordBool; cdecl;
 var
   element: IwbElement;
 begin
@@ -1380,7 +1412,7 @@ begin
     else begin
       element := NativeGetElement(_id, path) as IwbElement;
       if ElementNotFound(element, path) then exit;
-      GetChildrenElements(element);
+      GetChildrenElements(element, sparse);
     end;
     if filter then FilterResultArray;
     if sort then SortResultArray;
