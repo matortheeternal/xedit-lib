@@ -46,6 +46,7 @@ type
   function GetFlagsDef(const element: IwbElement; var flagsDef: IwbFlagsDef): Boolean;
   function GetEnumDef(const element: IwbElement; var enumDef: IwbEnumDef): Boolean;
   function GetDefType(const element: IwbElement): TwbDefType;
+  function GetSmashTypeFromDef(def: IwbNamedDef): TSmashType;
   function GetSmashType(const element: IwbElement): TSmashType;
   {$endregion}
 
@@ -1175,17 +1176,27 @@ begin
     Result := element.Def.DefType;
 end;
 
-function GetSmashType(const element: IwbElement): TSmashType;
+function IsSortedDef(def: IwbNamedDef): boolean;
+var
+  sraDef: IwbSubRecordArrayDef;
+  arDef: IwbArrayDef;
+begin
+  Result := false;
+  if Supports(def, IwbSubRecordArrayDef, sraDef) then
+    Result := Supports(sraDef.Element, IwbHasSortKeyDef)
+  else if Supports(def, IwbArrayDef, arDef) then
+    Result := Supports(arDef.Element, IwbHasSortKeyDef);
+end;
+
+function GetSmashTypeFromDef(def: IwbNamedDef): TSmashType;
 var
   subDef: IwbSubRecordDef;
-  dt: TwbDefType;
   bIsSorted, bHasStructChildren: boolean;
 begin
-  dt := element.Def.DefType;
-  if Supports(element.Def, IwbSubRecordDef, subDef) then
-    dt := subDef.Value.DefType;
+  if Supports(def, IwbSubRecordDef, subDef) then
+    def := subDef.Value;
 
-  case dt of
+  case def.DefType of
     dtRecord:
       Result := stRecord;
     dtString, dtLString, dtLenString:
@@ -1199,8 +1210,8 @@ begin
     dtFloat:
       Result := stFloat;
     dtSubRecordArray, dtArray: begin
-      bIsSorted := NativeIsSorted(element);
-      bHasStructChildren := HasStructChildren(element);
+      bIsSorted := IsSortedDef(def);
+      bHasStructChildren := Supports(def, IwbSubRecordArrayDef);
       if bIsSorted then begin
         if bHasStructChildren then
           Result := stSortedStructArray
@@ -1221,6 +1232,11 @@ begin
     else
       Result := stUnknown;
   end;
+end;
+
+function GetSmashType(const element: IwbElement): TSmashType;
+begin
+  Result := GetSmashTypeFromDef(element.Def);
 end;
 
 function GetValueType(const element: IwbElement): TValueType;
