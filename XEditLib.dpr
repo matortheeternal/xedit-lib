@@ -86,7 +86,7 @@ exports
   GetReferencedBy, GetMasterRecord, GetPreviousOverride, GetWinningOverride,
   GetInjectionTarget, FindNextRecord, FindPreviousRecord, FindValidReferences,
   ExchangeReferences, IsMaster, IsInjected, IsOverride, IsWinningOverride,
-  GetNodes, GetConflictData, GetNodeElements,
+  GetRecordDef, GetNodes, GetConflictData, GetNodeElements,
   // FILTERING METHODS
   FilterRecord, ResetFilter;
 
