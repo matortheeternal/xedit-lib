@@ -75,7 +75,7 @@ exports
   // PLUGIN ERROR METHODS
   CheckForErrors, GetErrorThreadDone, GetErrors, RemoveIdenticalRecords,
   // SERIALIZATION METHODS
-  ElementToJson, ElementFromJson,
+  ElementToJson, ElementFromJson, DefToJson,
   // ELEMENT VALUE METHODS
   Name, LongName, DisplayName, Path, Signature, GetValue, SetValue, GetIntValue,
   SetIntValue, GetUIntValue, SetUIntValue, GetFloatValue, SetFloatValue,
