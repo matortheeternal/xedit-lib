@@ -13,11 +13,13 @@ uses
   procedure JsonToGroup(const group: IwbGroupRecord; obj: TJSONObject; const key: String); overload;
   function NativeElementToJson(const element: IwbElement): TJSONValue;
   function GroupToJson(const group: IwbGroupRecord; obj: TJSONObject): TJSONObject;
+  function ElementDefToJSON(def: IwbNamedDef): TJSONValue;
   {$endregion}
 
   {$region 'API functions'}
   function ElementToJson(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function ElementFromJson(_id: Cardinal; path: PWideChar; json: PWideChar): WordBool; cdecl;
+  function DefToJSON(_id: Cardinal; len: PInteger): WordBool; cdecl;
   {$endregion}
 
 implementation
@@ -539,6 +541,73 @@ begin
   end;
 end;
 {$endregion}
+
+{$region 'GetRecordDefJSON helpers'}
+procedure ChildDefsToJSON(def: IwbNamedDef; a: TJSONArray);
+var
+  i: Integer;
+  subDef: IwbSubRecordDef;
+  unionDef: IwbUnionDef;
+  structDef: IwbStructDef;
+  intDef: IwbIntegerDefFormaterUnion;
+  sraDef: IwbSubRecordArrayDef;
+  aDef: IwbArrayDef;
+begin
+  if Supports(def, IwbSubRecordDef, subDef) then
+    ChildDefsToJSON(subDef.Value as IwbNamedDef, a)
+  else if Supports(def, IwbUnionDef, unionDef) then begin
+    for i := 0 to Pred(unionDef.MemberCount) do
+      a.AddValue(ElementDefToJSON(unionDef.Members[i] as IwbNamedDef));
+  end
+  else if Supports(def, IwbStructDef, structDef) then begin
+    for i := 0 to Pred(structDef.MemberCount) do
+      a.AddValue(ElementDefToJSON(structDef.Members[i] as IwbNamedDef));
+  end
+  else if Supports(def, IwbIntegerDefFormaterUnion, intDef) then begin
+    for i := 0 to Pred(intDef.MemberCount) do
+      a.AddValue(ElementDefToJSON(intDef.Members[i] as IwbNamedDef));
+  end
+  else if Supports(def, IwbSubRecordArrayDef, sraDef) then
+    a.AddValue(ElementDefToJSON(sraDef.Element as IwbNamedDef))
+  else if Supports(def, IwbArrayDef, aDef) then
+    a.AddValue(ElementDefToJSON(aDef.Element as IwbNamedDef));
+end;
+
+function ElementDefToJSON(def: IwbNamedDef): TJSONValue;
+var
+  obj: TJSONObject;
+  elements: TJSONArray;
+begin
+  obj := TJSONObject.Create;
+  obj.S['name'] := def.Name;
+  // TODO: export signature(s)
+  obj.I['type'] := Ord(GetSmashTypeFromDef(def));
+  elements := TJSONArray.Create;
+  ChildDefsToJSON(def, elements);
+  if elements.Count > 0 then
+    obj.A['elements'] := elements;
+  Result := TJSONValue.Create;
+  Result.Put(obj);
+end;
+
+function RecordDefToJSON(recDef: IwbRecordDef): TJSONValue;
+var
+  obj: TJSONObject;
+  elements: TJSONArray;
+  i: Integer;
+  def: IwbNamedDef;
+begin
+  obj := TJSONObject.Create;
+  obj.S['name'] := recDef.Name;
+  elements := TJSONArray.Create;
+  for i := 0 to Pred(recDef.MemberCount) do
+    if Supports(recDef.Members[i], IwbNamedDef, def)  then
+      elements.AddValue(ElementDefToJSON(def));
+  obj.A['elements'] := elements;
+  Result := TJSONValue.Create;
+  Result.Put(obj);
+end;
+{$endregion}
 {$endregion}
 
 {$region 'API functions'}
@@ -609,6 +678,34 @@ begin
       obj.Free;
     end;
     Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function DefToJSON(_id: Cardinal; len: PInteger): WordBool; cdecl;
+var
+  e: IInterface;
+  def: IwbNamedDef;
+  recordDef: IwbRecordDef;
+  v: TJSONValue;
+begin
+  Result := False;
+  try
+    e := Resolve(_id);
+    if not Supports(e, IwbNamedDef, def) then
+      raise Exception.Create('Interface must be an IwbNamedDef.');
+    if Supports(def, IwbRecordDef, recordDef) then
+      v := RecordDefToJSON(recordDef)
+    else
+      v := ElementDefToJSON(def);
+    if Assigned(v) then try
+      resultStr := v.ToString;
+      len^ := Length(resultStr);
+      Result := True;
+    finally
+      v.Free;
+    end;
   except
     on x: Exception do ExceptionHandler(x);
   end;
