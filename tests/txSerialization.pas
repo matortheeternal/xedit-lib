@@ -688,7 +688,7 @@ begin
         begin
           Describe('Record Def Serialization', procedure
             const
-              ExpectedFields: array[0..25] of string = (
+              ExpectedRecordFields: array[0..25] of string = (
                 'Editor ID',
                 'Virtual Machine Adapter',
                 'Object Bounds',
@@ -716,6 +716,22 @@ begin
                 'Armor Rating',
                 'Template Armor'
               );
+              ExpectedStructFields: array[0..5] of string = (
+                'X1',
+                'Y1',
+                'Z1',
+                'X2',
+                'Y2',
+                'Z2'
+              );
+              ExpectedUnionFields: array[0..3] of string = (
+                'First Person Flags',
+                'General Flags',
+                'Unused',
+                'Armor Type'
+              );
+            var
+              elements: TJSONArray;
             begin
               AfterAll(procedure
                 begin
@@ -729,14 +745,34 @@ begin
                   WriteStringToFile(obj.ToString, 'ARMO.json');
                 end);
 
-              It('Should have expected elements', procedure
+              It('Should have expected record elements', procedure
                 var
                   i: Integer;
-                  elements: TJSONArray;
                 begin
                   elements := obj.A['elements'];
-                  for i := Low(ExpectedFields) to High(ExpectedFields) do
-                    ExpectEqual(elements.O[i].S['name'], ExpectedFields[i]);
+                  Expect(Assigned(elements));
+                  for i := Low(ExpectedRecordFields) to High(ExpectedRecordFields) do
+                    ExpectEqual(elements.O[i].S['name'], ExpectedRecordFields[i]);
+                end);
+
+              It('Should have subrecord struct elements', procedure
+                var
+                  i: Integer;
+                begin
+                  elements := obj.A['elements'].O[2].A['elements'];
+                  Expect(Assigned(elements));
+                  for i := Low(ExpectedStructFields) to High(ExpectedStructFields) do
+                    ExpectEqual(elements.O[i].S['name'], ExpectedStructFields[i]);
+                end);
+
+              It('Should have subrecord union elements', procedure
+                var
+                  i: Integer;
+                begin
+                  elements := obj.A['elements'].O[10].A['elements'];
+                  Expect(Assigned(elements));
+                  for i := Low(ExpectedUnionFields) to High(ExpectedUnionFields) do
+                    ExpectEqual(elements.O[i].S['name'], ExpectedUnionFields[i]);
                 end);
             end);
 
