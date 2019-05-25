@@ -213,6 +213,11 @@ begin
   end;
 end;
 
+function UnicodeEscape(var c: WideChar): string;
+begin
+  Result := '\u' + IntToHex(Ord(c), 4);
+end;
+
 function AsciiEscape(var c: WideChar): string;
 begin
   case c of
@@ -224,13 +229,8 @@ begin
     #12: Result := '\f';
     #13: Result := '\r';
     else
-      Result := '\x' + IntToHex(Ord(c), 2);
+      Result := UnicodeEscape(c);
   end;
-end;
-
-function UnicodeEscape(var c: WideChar): string;
-begin
-  Result := '\u' + IntToHex(Ord(c), 4);
 end;
 
 function Escape(s: String): String;
