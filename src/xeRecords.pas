@@ -709,6 +709,7 @@ begin
   try
     if not Supports(Resolve(_id), IwbMainRecord, rec) then
       raise Exception.Create('Interface must be a main record.');
+    rec := rec.MasterOrSelf;
     len^ := rec.ReferencedByCount;
     SetLength(resultArray, len^);
     for i := 0 to Pred(rec.ReferencedByCount) do
