@@ -145,6 +145,13 @@ begin
     formID := StrToInt('$' + key);
 end;
 
+function ParseLocalFormID(const key: String; const _file: IwbFile; var formID: Cardinal): Boolean;
+begin
+  Result := (key[1] = 'L') and (Length(key) = 7) and IsHexStr(key, 2);
+  if Result then
+    formID := $1000000 * _file.MasterCount + StrToInt('$' + Copy(key, 2, 6));
+end;
+
 function ParseFileFormID(const key: String; var formID: Cardinal): Boolean;
 begin
   Result := (key[1] = '&') and (Length(key) = 9) and IsHexStr(key, 2);
@@ -261,7 +268,9 @@ var
   rec: IwbMainRecord;
 begin
   Result := nil;
-  if ParseFileFormID(key, formID) then
+  if ParseLocalFormID(key, group._File, formID) then
+    Result := group._File.RecordByFormID[formID, True, False]
+  else if ParseFileFormID(key, formID) then
     Result := group._File.RecordByFormID[formID, True, False]
   else if ParseFormID(key, formID) then begin
     fixedFormID := group._File.LoadOrderFormIDtoFileFormID(formID);
