@@ -129,6 +129,7 @@ var
   group: IwbGroupRecord;
   rec: IwbMainRecord;
   parent: IwbElement;
+  e: IwbHasSignature;
 begin
   if Supports(element, IwbFile, _file) then
     Result := _file.FileName
@@ -150,6 +151,8 @@ begin
     end
     else if IsArray(parent) then
       Result := Format('[%d]', [element.Container.IndexOf(element)])
+    else if Supports(element, IwbHasSignature, e) then
+      Result := e.Signature
     else
       Result := element.Name;
   end;
