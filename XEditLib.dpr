@@ -77,8 +77,8 @@ exports
   // SERIALIZATION METHODS
   ElementToJson, ElementFromJson, DefToJson,
   // ELEMENT VALUE METHODS
-  Name, LongName, DisplayName, Path, Signature, GetValue, SetValue, GetIntValue,
-  SetIntValue, GetUIntValue, SetUIntValue, GetFloatValue, SetFloatValue,
+  Name, LongName, DisplayName, Path, PathName, Signature, GetValue, SetValue,
+  GetIntValue, SetIntValue, GetUIntValue, SetUIntValue, GetFloatValue, SetFloatValue,
   GetFlag, SetFlag, GetEnabledFlags, SetEnabledFlags, GetAllFlags, GetEnumOptions,
   SignatureFromName, NameFromSignature, GetSignatureNameMap,
   // RECORD HANDLING METHODS

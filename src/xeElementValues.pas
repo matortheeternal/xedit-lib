@@ -24,6 +24,7 @@ uses
   function LongName(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function DisplayName(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function Path(_id: Cardinal; short, local: WordBool; len: PInteger): WordBool; cdecl;
+  function PathName(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function Signature(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function GetValue(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
   function SetValue(_id: Cardinal; path, value: PWideChar): WordBool; cdecl;
@@ -359,6 +360,22 @@ begin
     if not Supports(Resolve(_id), IwbElement, element) then
       raise Exception.Create('Interface is not an element.');
     resultStr := GetPath(element, short, local);
+    len^ := Length(resultStr);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function PathName(_id: Cardinal; len: PInteger): WordBool; cdecl;
+var
+  element: IwbElement;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    resultStr := GetPathName(element);
     len^ := Length(resultStr);
     Result := True;
   except
