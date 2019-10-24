@@ -660,6 +660,18 @@ begin
   SetLength(resultArray, n);
 end;
 
+function GetMemberCount(const container: IwbContainerElementRef): Integer;
+var
+  recDef: IwbRecordDef;
+  structDef: IwbStructDef;
+begin
+  Result := 1;
+  if Supports(container.def, IwbRecordDef, recDef) then
+    Result := recDef.MemberCount + container.AdditionalElementCount
+  else if Supports(container.def, IwbStructDef, structDef) then
+    Result := structDef.MemberCount;
+end;
+
 procedure GetSparseElements(const container: IwbContainerElementRef);
 var
   i, n: Integer;
@@ -668,7 +680,7 @@ var
 begin
   SetLength(resultArray, container.ElementCount);
   n := 0;
-  for i := 0 to Pred(container.ElementCount) do begin
+  for i := 0 to Pred(GetMemberCount(container)) do begin
     e := container.ElementBySortOrder[i];
     if Assigned(e) and Supports(e, IwbGroupRecord, g)
     and IsChildGroup(g) and Assigned(g.ChildrenOf) then continue;
