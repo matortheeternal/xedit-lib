@@ -1199,14 +1199,11 @@ end;
 
 function IsSortedDef(def: IwbNamedDef): boolean;
 var
-  sraDef: IwbSubRecordArrayDef;
   arDef: IwbArrayDef;
 begin
   Result := false;
-  if Supports(def, IwbSubRecordArrayDef, sraDef) then
-    Result := Supports(sraDef.Element, IwbHasSortKeyDef)
-  else if Supports(def, IwbArrayDef, arDef) then
-    Result := Supports(arDef.Element, IwbHasSortKeyDef);
+  if Supports(def, IwbArrayDef, arDef) then
+    Result := arDef.Sorted;
 end;
 
 function GetSmashTypeFromDef(def: IwbNamedDef): TSmashType;
