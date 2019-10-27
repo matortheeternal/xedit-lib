@@ -218,64 +218,70 @@ begin
 
       Describe('Path', procedure
         begin
-          It('Should resolve file names', procedure
+          It('Should return file names', procedure
             begin
-              ExpectSuccess(Path(xt2, false, false, @len));
+              ExpectSuccess(Path(xt2, false, false, false, @len));
               ExpectEqual(grs(len), 'xtest-2.esp');
             end);
 
-          It('Should resolve group signatures', procedure
+          It('Should return group signatures', procedure
             begin
-              ExpectSuccess(Path(armo, false, false,  @len));
+              ExpectSuccess(Path(armo, false, false, false,  @len));
               ExpectEqual(grs(len), 'xtest-2.esp\ARMO');
             end);
 
-          It('Should resolve block names', procedure
+          It('Should return block names', procedure
             begin
-              ExpectSuccess(Path(block, false, false,  @len));
+              ExpectSuccess(Path(block, false, false, false,  @len));
               ExpectEqual(grs(len), 'xtest-2.esp\CELL\Block 0');
             end);
 
-          It('Should resolve sub-block names', procedure
+          It('Should return sub-block names', procedure
             begin
-              ExpectSuccess(Path(subBlock, false, false,  @len));
+              ExpectSuccess(Path(subBlock, false, false, false,  @len));
               ExpectEqual(grs(len), 'xtest-2.esp\CELL\Block 0\Sub-Block 0');
             end);
 
-          It('Should resolve child groups', procedure
+          It('Should return child groups', procedure
             begin
-              ExpectSuccess(Path(childGroup, true, false, @len));
+              ExpectSuccess(Path(childGroup, true, false, false, @len));
               ExpectEqual(grs(len), 'xtest-2.esp\00027D1C\Child Group');
             end);
 
-          It('Should resolve temporary/persistent groups', procedure
+          It('Should return temporary/persistent groups', procedure
             begin
-              ExpectSuccess(Path(persistentGroup, true, false,  @len));
+              ExpectSuccess(Path(persistentGroup, true, false, false,  @len));
               ExpectEqual(grs(len), 'xtest-2.esp\00027D1C\Child Group\Persistent');
             end);
 
-          It('Should resolve record FormIDs', procedure
+          It('Should return record FormIDs', procedure
             begin
-              ExpectSuccess(Path(refr, true, false, @len));
+              ExpectSuccess(Path(refr, true, false, false, @len));
               ExpectEqual(grs(len), 'xtest-2.esp\000170F0');
             end);
 
-          It('Should resolve file headers', procedure
+          It('Should return file headers', procedure
             begin
-              ExpectSuccess(Path(fileFlags, false, false,  @len));
+              ExpectSuccess(Path(fileFlags, false, false, false,  @len));
               ExpectEqual(grs(len), 'xtest-2.esp\File Header\Record Header\Record Flags');
             end);
 
-          It('Should resolve element names', procedure
+          It('Should return element names', procedure
             begin
-              ExpectSuccess(Path(element, true, false, @len));
-              ExpectEqual(grs(len), 'xtest-2.esp\00012E46\DNAM - Armor Rating');
+              ExpectSuccess(Path(element, true, false, false, @len));
+              ExpectEqual(grs(len), 'xtest-2.esp\00012E46\DNAM');
             end);
 
-          It('Should resolve array element indexes', procedure
+          It('Should return array element indexes', procedure
             begin
-              ExpectSuccess(Path(keyword, true, false, @len));
-              ExpectEqual(grs(len), 'xtest-2.esp\00012E46\KWDA - Keywords\[1]');
+              ExpectSuccess(Path(keyword, true, false, false, @len));
+              ExpectEqual(grs(len), 'xtest-2.esp\00012E46\KWDA\[1]');
+            end);
+
+          It('Should return sortkeys when sort is true', procedure
+            begin
+              ExpectSuccess(Path(keyword, false, true, true, @len));
+              ExpectEqual(grs(len), 'KWDA\<0006BBD2>');
             end);
         end);
         
