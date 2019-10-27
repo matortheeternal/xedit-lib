@@ -467,15 +467,18 @@ begin
   Result := False;
   try
     element := NativeGetElement(_id, path) as IwbElement;
-    if Supports(element, IwbFormID, formIdElement) then begin
+    if IsFormID(element) then begin
       rec := element.ContainingMainRecord.MasterOrSelf;
       fid := IntToHex(element.NativeValue and $00FFFFFF, 6);
     end
-    else if Supports(element, IwbMainRecord, rec) then
+    else if Supports(element, IwbMainRecord, rec) then begin
+      rec := rec.MasterOrSelf;
       fid := IntToHex(rec.FormID and $00FFFFFF, 6)
+    end
     else
       raise Exception.Create('Element must be a main record or form ID element.');
     resultStr := '{' + rec._File.FileName + ':' + fid + '}';
+    _len^ := Length(resultStr);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
