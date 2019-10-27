@@ -801,6 +801,7 @@ var
   rec: IwbMainRecord;
   fullName, v: String;
   e1, e2: Extended;
+  _file: IwbFile;
 begin
   Result := False;
   if IsFormID(element) then begin
@@ -809,6 +810,8 @@ begin
     else if Supports(element.LinksTo, IwbMainRecord, rec) then begin
       if ParseFullName(value, fullName) then
         Result := rec.FullName = fullName
+      else if ParseFileFormIDValue(value, _file, formID) then
+        Result := rec._File.Equals(_file) and ((rec.FormID and $00FFFFFF) = formID)
       else
         Result := rec.EditorID = value;
     end
