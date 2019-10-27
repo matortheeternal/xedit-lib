@@ -279,6 +279,12 @@ begin
               ExpectEqual(grs(len), 'xtest-2.esp\00012E46\KWDA\[1]');
             end);
 
+          It('Should return local paths when local is true', procedure
+            begin
+              ExpectSuccess(Path(keyword, false, true, false, @len));
+              ExpectEqual(grs(len), 'KWDA\[1]');
+            end);
+
           It('Should return sortkeys when sort is true', procedure
             begin
               ExpectSuccess(Path(keyword, false, true, true, @len));
