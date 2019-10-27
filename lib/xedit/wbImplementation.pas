@@ -478,6 +478,7 @@ type
     function GetElement(aIndex: Integer): IwbElement;
     function GetElementCount: Integer;
     function GetElementByName(const aName: string): IwbElement;
+    function GetElementBySortKey(const aSortKey: string): IwbElement;
     function GetRecordBySignature(const aSignature: TwbSignature): IwbRecord;
     function GetElementByMemoryOrder(aSortOrder: Integer): IwbElement;
     function GetElementBySignature(const aSignature: TwbSignature): IwbElement;
@@ -4502,6 +4503,21 @@ begin
     end;
 end;
 
+function TwbContainer.GetElementBySortKey(const aSortKey: string): IwbElement;
+var
+  i: integer;
+  SelfRef: IwbContainerElementRef;
+begin
+  SelfRef := Self as IwbContainerElementRef;
+  DoInit;
+  Result := nil;
+  for i := Low(cntElements) to High(cntElements) do
+    if cntElements[i].SortKey[False] = aSortKey then begin
+      Result := IInterface(cntElements[i]) as IwbElement;
+      Exit;
+    end;
+end;
+
 function TwbContainer.GetElementByPath(const aPath: string): IwbElement;
 var
   SelfRef   : IwbContainerElementRef;
@@ -5322,6 +5338,10 @@ begin
     else
       while not Assigned(Result) and (aName <> '') do
         Result := ResolveFirstElement(aName);
+  end
+  else if (len > 2) and (aName[1] = '<') and (aName[len] = '>') then begin
+    aName := Copy(aName, 2, len - 2);
+    Result := GetElementBySortKey(aName);
   end
   else if len = 4 then begin
     Result := GetElementBySignature(StrToSignature(aName));
