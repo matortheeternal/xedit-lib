@@ -437,6 +437,31 @@ begin
             end);}
         end);
 
+      Describe('GetRefValue', procedure
+        begin
+          It('Should return ref values for records', procedure
+            begin
+              ExpectSuccess(GetRefValue(rec, '', @len));
+              ExpectEqual(grs(len), '{Skyrim.esm:012E46}');
+            end);
+
+          It('Should return ref values for FormID elements', procedure
+            begin
+              ExpectSuccess(GetRefValue(rec, 'KWDA\[1]', @len));
+              ExpectEqual(grs(len), '{Skyrim.esm:06BBD2}');
+            end);
+
+          It('Should fail if path does not exist', procedure
+            begin
+              ExpectFailure(GetRefValue(rec, 'Non\Existent\Path', @len));
+            end);
+
+          It('Should fail if element is not supported', procedure
+            begin
+              ExpectFailure(GetRefValue(rec, 'OBND\Y1', @len));
+            end);
+        end);
+
       Describe('GetIntValue', procedure
         begin
           It('Should resolve element integer values', procedure
