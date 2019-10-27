@@ -87,7 +87,7 @@ end;
 
 procedure BuildElementValueTests;
 var
-  xt2, fileFlags, block, subBlock, childGroup, persistentGroup, refr, armo, rec,
+  xt2, fileHeader, fileFlags, block, subBlock, childGroup, persistentGroup, refr, armo, rec,
   refrFlags, element, keyword, h, c: Cardinal;
   expectedName, str: String;
   b: WordBool;
@@ -99,7 +99,8 @@ begin
       BeforeAll(procedure
         begin
           ExpectSuccess(GetElement(0, 'xtest-2.esp', @xt2));
-          ExpectSuccess(GetElement(xt2, 'File Header\Record Header\Record Flags', @fileFlags));
+          ExpectSuccess(GetElement(xt2, 'File Header', @fileHeader));
+          ExpectSuccess(GetElement(fileHeader, 'Record Header\Record Flags', @fileFlags));
           ExpectSuccess(GetElement(xt2, 'ARMO', @armo));
           ExpectSuccess(GetElement(armo, '00012E46', @rec));
           ExpectSuccess(GetElement(rec, 'DNAM', @element));
@@ -262,8 +263,8 @@ begin
 
           It('Should return file headers', procedure
             begin
-              ExpectSuccess(Path(fileFlags, false, false, false,  @len));
-              ExpectEqual(grs(len), 'xtest-2.esp\File Header\Record Header\Record Flags');
+              ExpectSuccess(Path(fileHeader, false, false, false,  @len));
+              ExpectEqual(grs(len), 'xtest-2.esp\File Header');
             end);
 
           It('Should return element names', procedure
@@ -282,6 +283,75 @@ begin
             begin
               ExpectSuccess(Path(keyword, false, true, true, @len));
               ExpectEqual(grs(len), 'KWDA\<0006BBD2>');
+            end);
+        end);
+
+      Describe('PathName', procedure
+        begin
+          It('Should return file names', procedure
+            begin
+              ExpectSuccess(PathName(xt2, false, @len));
+              ExpectEqual(grs(len), 'xtest-2.esp');
+            end);
+
+          It('Should return group signatures', procedure
+            begin
+              ExpectSuccess(PathName(armo, false,  @len));
+              ExpectEqual(grs(len), 'ARMO');
+            end);
+
+          It('Should return block names', procedure
+            begin
+              ExpectSuccess(PathName(block, false,  @len));
+              ExpectEqual(grs(len), 'Block 0');
+            end);
+
+          It('Should return sub-block names', procedure
+            begin
+              ExpectSuccess(PathName(subBlock, false,  @len));
+              ExpectEqual(grs(len), 'Sub-Block 0');
+            end);
+
+          It('Should return child groups', procedure
+            begin
+              ExpectSuccess(PathName(childGroup, false, @len));
+              ExpectEqual(grs(len), 'Child Group');
+            end);
+
+          It('Should return temporary/persistent groups', procedure
+            begin
+              ExpectSuccess(PathName(persistentGroup, false,  @len));
+              ExpectEqual(grs(len), 'Persistent');
+            end);
+
+          It('Should return record FormIDs', procedure
+            begin
+              ExpectSuccess(PathName(refr, false, @len));
+              ExpectEqual(grs(len), '000170F0');
+            end);
+
+          It('Should return file headers', procedure
+            begin
+              ExpectSuccess(PathName(fileHeader, false,  @len));
+              ExpectEqual(grs(len), 'File Header');
+            end);
+
+          It('Should return element names', procedure
+            begin
+              ExpectSuccess(PathName(element, false, @len));
+              ExpectEqual(grs(len), 'DNAM');
+            end);
+
+          It('Should return array element indexes', procedure
+            begin
+              ExpectSuccess(PathName(keyword, false, @len));
+              ExpectEqual(grs(len), '[1]');
+            end);
+
+          It('Should return sortkeys when sort is true', procedure
+            begin
+              ExpectSuccess(PathName(keyword, true, @len));
+              ExpectEqual(grs(len), '<0006BBD2>');
             end);
         end);
         
