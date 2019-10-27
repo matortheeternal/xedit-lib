@@ -7,8 +7,9 @@ uses
   xeTypes;
 
   {$region 'Native functions'}
-  function GetPath(const element: IwbElement; short: WordBool = False; local: WordBool = False; curPath: String = ''): String;
-  function GetPathName(const element: IwbElement): String;
+  function GetPath(const element: IwbElement; short: WordBool = False; local: WordBool = False;
+    sort: WordBool = False; curPath: String = ''): String;
+  function GetPathName(const element: IwbElement; sort: WordBool = False): String;
   function NativeName(const e: IwbElement; quoteFull: Boolean = False): String;
   function ParseFormIDValue(const value: String; var formID: Int64): Boolean;
   procedure SetElementValue(const element: IwbElement; const value: String);
@@ -23,8 +24,8 @@ uses
   function Name(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function LongName(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function DisplayName(_id: Cardinal; len: PInteger): WordBool; cdecl;
-  function Path(_id: Cardinal; short, local: WordBool; len: PInteger): WordBool; cdecl;
-  function PathName(_id: Cardinal; len: PInteger): WordBool; cdecl;
+  function Path(_id: Cardinal; short, local, sort: WordBool; len: PInteger): WordBool; cdecl;
+  function PathName(_id: Cardinal; sort: WordBool; len: PInteger): WordBool; cdecl;
   function Signature(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function GetValue(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
   function SetValue(_id: Cardinal; path, value: PWideChar): WordBool; cdecl;
@@ -124,7 +125,7 @@ begin
   Result := IntToHex(rec.LoadOrderFormID, 8);
 end;
 
-function GetPathName(const element: IwbElement): String;
+function GetPathName(const element: IwbElement; sort: WordBool = False): String;
 var
   _file: IwbFile;
   group: IwbGroupRecord;
@@ -150,8 +151,12 @@ begin
       else
         Result := HexFormID(rec);
     end
-    else if IsArray(parent) then
-      Result := Format('[%d]', [element.Container.IndexOf(element)])
+    else if IsArray(parent) then begin
+      if sort and NativeIsSorted(parent) then
+        Result := '<' + element.SortKey[False] + '>'
+      else
+        Result := Format('[%d]', [element.Container.IndexOf(element)]);
+    end
     else if Supports(element, IwbHasSignature, e) then
       Result := e.Signature
     else
@@ -159,19 +164,20 @@ begin
   end;
 end;
 
-function GetPath(const element: IwbElement; short: WordBool = False; local: WordBool = False; curPath: String = ''): String;
+function GetPath(const element: IwbElement; short: WordBool = False;
+  local: WordBool = False; sort: WordBool = False; curPath: String = ''): String;
 var
   container: IwbContainer;
 begin
-  Result := GetPathName(element);
+  Result := GetPathName(element, sort);
   if curPath <> '' then
     Result := Format('%s\%s', [Result, curPath]);
   if Supports(element, IwbMainRecord) and short then
-    Result := GetPath(element._File as IwbElement, short, local, Result)
+    Result := GetPath(element._File as IwbElement, short, local, sort, Result)
   else if not Supports(element, IwbFile) then begin
     container := NativeContainer(element);
     if Supports(container, IwbMainRecord) and local then exit;
-    Result := GetPath(container as IwbElement, short, local, Result);
+    Result := GetPath(container as IwbElement, short, local, sort, Result);
   end;
 end;
 {$endregion}
@@ -351,7 +357,7 @@ begin
 end;
 {$endregion}
 
-function Path(_id: Cardinal; short, local: WordBool; len: PInteger): WordBool; cdecl;
+function Path(_id: Cardinal; short, local, sort: WordBool; len: PInteger): WordBool; cdecl;
 var
   element: IwbElement;
 begin
@@ -359,7 +365,7 @@ begin
   try
     if not Supports(Resolve(_id), IwbElement, element) then
       raise Exception.Create('Interface is not an element.');
-    resultStr := GetPath(element, short, local);
+    resultStr := GetPath(element, short, local, sort);
     len^ := Length(resultStr);
     Result := True;
   except
@@ -367,7 +373,7 @@ begin
   end;
 end;
 
-function PathName(_id: Cardinal; len: PInteger): WordBool; cdecl;
+function PathName(_id: Cardinal; sort: WordBool; len: PInteger): WordBool; cdecl;
 var
   element: IwbElement;
 begin
@@ -375,7 +381,7 @@ begin
   try
     if not Supports(Resolve(_id), IwbElement, element) then
       raise Exception.Create('Interface is not an element.');
-    resultStr := GetPathName(element);
+    resultStr := GetPathName(element, sort);
     len^ := Length(resultStr);
     Result := True;
   except
