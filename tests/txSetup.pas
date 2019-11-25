@@ -2,7 +2,10 @@ unit txSetup;
 
 interface
 
-  // PUBLIC TESTING API
+uses
+  txMeta;
+
+  // PUBLIC TESTING INTERFACE
   procedure BuildSetupTests;
 
 implementation
@@ -11,12 +14,11 @@ uses
   Windows, SysUtils, Classes,
   Mahogany,
 {$IFDEF USE_DLL}
-  txImports,
+  txImports;
 {$ENDIF}
 {$IFNDEF USE_DLL}
-  xeSetup, xeMeta, xeMessages, xeFiles,
+  xeSetup, xeMeta, xeMessages, xeFiles;
 {$ENDIF}
-  txMeta;
 
 const
   TestLoadOrder =
@@ -74,7 +76,7 @@ end;
 procedure TestLoadPlugins(loadOrder: PWideChar; expectedTime: Double);
 begin
   WriteLn(' ');
-  ExpectSuccess(LoadPlugins(loadOrder, True));
+  ExpectSuccess(LoadPlugins(loadOrder, True, False));
   TestLoader(expectedTime);
   WriteMessages;
   WriteLn(' ');
@@ -133,6 +135,7 @@ begin
         begin
           BeforeAll(procedure
             begin
+              CopyPlugins(['xtest-1.esp', 'xtest-2.esp', 'xtest-3.esp', 'xtest-4.esp', 'xtest-5.esp']);
               BackupFile(appDataPath + 'loadorder.txt');
             end);
 

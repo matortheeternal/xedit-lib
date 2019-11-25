@@ -7,10 +7,12 @@ uses
   xeTypes;
 
   {$region 'Native functions'}
-  function GetPath(const element: IwbElement; short: WordBool = False; local: WordBool = False; curPath: String = ''): String;
-  function GetPathName(const element: IwbElement): String;
+  function GetPath(const element: IwbElement; short: WordBool = False; local: WordBool = False;
+    sort: WordBool = False; curPath: String = ''): String;
+  function GetPathName(const element: IwbElement; sort: WordBool = False): String;
   function NativeName(const e: IwbElement; quoteFull: Boolean = False): String;
   function ParseFormIDValue(const value: String; var formID: Int64): Boolean;
+  function ParseFileFormIDValue(const value: String; var _file: IwbFile; var formID: Int64): Boolean;
   procedure SetElementValue(const element: IwbElement; const value: String);
   function IndexOfFlag(const flagsDef: IwbFlagsDef; const name: String): Integer;
   procedure NativeSetFlag(const element: IwbElement; index: Integer; enabled: WordBool);
@@ -23,10 +25,12 @@ uses
   function Name(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function LongName(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function DisplayName(_id: Cardinal; len: PInteger): WordBool; cdecl;
-  function Path(_id: Cardinal; short, local: WordBool; len: PInteger): WordBool; cdecl;
+  function Path(_id: Cardinal; short, local, sort: WordBool; len: PInteger): WordBool; cdecl;
+  function PathName(_id: Cardinal; sort: WordBool; len: PInteger): WordBool; cdecl;
   function Signature(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function GetValue(_id: Cardinal; path: PWideChar; len: PInteger): WordBool; cdecl;
   function SetValue(_id: Cardinal; path, value: PWideChar): WordBool; cdecl;
+  function GetRefValue(_id: Cardinal; path: PWideChar; _len: PInteger): WordBool; cdecl;
   function GetIntValue(_id: Cardinal; path: PWideChar; value: PInteger): WordBool; cdecl;
   function SetIntValue(_id: Cardinal; path: PWideChar; value: Integer): WordBool; cdecl;
   function GetUIntValue(_id: Cardinal; path: PWideChar; value: PCardinal): WordBool; cdecl;
@@ -55,7 +59,7 @@ uses
   // xedit modules
   wbImplementation,
   // xelib modules
-  xeMeta, xeMessages, xeElements, xeRecords;
+  xeMeta, xeFiles, xeMessages, xeElements, xeRecords;
 
 {$region 'Native functions'}
 {$region 'Name helpers'}
@@ -123,12 +127,13 @@ begin
   Result := IntToHex(rec.LoadOrderFormID, 8);
 end;
 
-function GetPathName(const element: IwbElement): String;
+function GetPathName(const element: IwbElement; sort: WordBool = False): String;
 var
   _file: IwbFile;
   group: IwbGroupRecord;
   rec: IwbMainRecord;
   parent: IwbElement;
+  e: IwbHasSignature;
 begin
   if Supports(element, IwbFile, _file) then
     Result := _file.FileName
@@ -148,26 +153,33 @@ begin
       else
         Result := HexFormID(rec);
     end
-    else if IsArray(parent) then
-      Result := Format('[%d]', [element.Container.IndexOf(element)])
+    else if IsArray(parent) then begin
+      if sort and NativeIsSorted(parent) then
+        Result := '<' + element.SortKey[False] + '>'
+      else
+        Result := Format('[%d]', [element.Container.IndexOf(element)]);
+    end
+    else if Supports(element, IwbHasSignature, e) then
+      Result := e.Signature
     else
       Result := element.Name;
   end;
 end;
 
-function GetPath(const element: IwbElement; short: WordBool = False; local: WordBool = False; curPath: String = ''): String;
+function GetPath(const element: IwbElement; short: WordBool = False;
+  local: WordBool = False; sort: WordBool = False; curPath: String = ''): String;
 var
   container: IwbContainer;
 begin
-  Result := GetPathName(element);
+  Result := GetPathName(element, sort);
   if curPath <> '' then
     Result := Format('%s\%s', [Result, curPath]);
   if Supports(element, IwbMainRecord) and short then
-    Result := GetPath(element._File as IwbElement, short, local, Result)
+    Result := GetPath(element._File as IwbElement, short, local, sort, Result)
   else if not Supports(element, IwbFile) then begin
     container := NativeContainer(element);
     if Supports(container, IwbMainRecord) and local then exit;
-    Result := GetPath(container as IwbElement, short, local, Result);
+    Result := GetPath(container as IwbElement, short, local, sort, Result);
   end;
 end;
 {$endregion}
@@ -221,15 +233,33 @@ begin
   Result := TryStrToInt64('$' + value, formID);
 end;
 
+function ParseFileFormIDValue(const value: String; var _file: IwbFile; var formID: Int64): Boolean;
+var
+  len, n: Integer;
+  filename, fidStr: String;
+begin
+  Result := False;
+  len := Length(value);
+  if (value[1] <> '{') or (value[len] <> '}') then exit;
+  n := Pos(value, ':');
+  filename := Copy(value, 2, n - 1);
+  _file := NativeFileByName(filename);
+  fidStr := Copy(value, n + 1, len - n - 1);
+  Result := Assigned(_file) and TryStrToInt64('$' + fidStr, formID);
+end;
+
 procedure SetElementValue(const element: IwbElement; const value: String);
 var
   formID: Int64;
+  _file: IwbFile;
 begin
   if IsFormID(element) then begin
     if value = '' then
       element.NativeValue := 0
     else if ParseFormIDValue(value, formID) then
       element.NativeValue := element._File.LoadOrderFormIDtoFileFormID(formID)
+    else if ParseFileFormIDValue(value, _file, formID) then
+       element.NativeValue := _file.RecordByFormID[formID, false, false]
     else
       element.NativeValue := EditorIDToFormID(element._File, value);
   end
@@ -347,7 +377,7 @@ begin
 end;
 {$endregion}
 
-function Path(_id: Cardinal; short, local: WordBool; len: PInteger): WordBool; cdecl;
+function Path(_id: Cardinal; short, local, sort: WordBool; len: PInteger): WordBool; cdecl;
 var
   element: IwbElement;
 begin
@@ -355,7 +385,23 @@ begin
   try
     if not Supports(Resolve(_id), IwbElement, element) then
       raise Exception.Create('Interface is not an element.');
-    resultStr := GetPath(element, short, local);
+    resultStr := GetPath(element, short, local, sort);
+    len^ := Length(resultStr);
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function PathName(_id: Cardinal; sort: WordBool; len: PInteger): WordBool; cdecl;
+var
+  element: IwbElement;
+begin
+  Result := False;
+  try
+    if not Supports(Resolve(_id), IwbElement, element) then
+      raise Exception.Create('Interface is not an element.');
+    resultStr := GetPathName(element, sort);
     len^ := Length(resultStr);
     Result := True;
   except
@@ -405,6 +451,34 @@ begin
     element := NativeGetElement(_id, path) as IwbElement;
     if ElementNotFound(element, path) then exit;
     SetElementValue(element, string(value));
+    Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetRefValue(_id: Cardinal; path: PWideChar; _len: PInteger): WordBool; cdecl;
+var
+  element: IwbElement;
+  rec: IwbMainRecord;
+  formIdElement: IwbFormID;
+  fid: String;
+begin
+  Result := False;
+  try
+    element := NativeGetElement(_id, path) as IwbElement;
+    if IsFormID(element) then begin
+      rec := element.ContainingMainRecord.MasterOrSelf;
+      fid := IntToHex(element.NativeValue and $00FFFFFF, 6);
+    end
+    else if Supports(element, IwbMainRecord, rec) then begin
+      rec := rec.MasterOrSelf;
+      fid := IntToHex(rec.FormID and $00FFFFFF, 6)
+    end
+    else
+      raise Exception.Create('Element must be a main record or form ID element.');
+    resultStr := '{' + rec._File.FileName + ':' + fid + '}';
+    _len^ := Length(resultStr);
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);

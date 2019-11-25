@@ -6,7 +6,6 @@ uses
   Classes, wbInterface;
 
   {$region 'Native functions'}
-  function NativeAddFile(const filename: string): IwbFile;
   function NativeFileByIndex(index: Integer): IwbFile;
   function NativeFileByLoadOrder(loadOrder: Integer): IwbFile;
   function NativeFileByName(const name: String): IwbFile;
@@ -16,7 +15,7 @@ uses
   {$endregion}
 
   {$region 'API functions'}
-  function AddFile(filename: PWideChar; _res: PCardinal): WordBool; cdecl;
+  function AddFile(filename: PWideChar; ignoreExists: WordBool; _res: PCardinal): WordBool; cdecl;
   function FileByIndex(index: Integer; _res: PCardinal): WordBool; cdecl;
   function FileByLoadOrder(loadOrder: Integer; _res: PCardinal): WordBool; cdecl;
   function FileByName(name: PWideChar; _res: PCardinal): WordBool; cdecl;
@@ -43,38 +42,6 @@ uses
   xeHelpers, xeMessages, xeMeta, xeSetup;
 
 {$region 'Native functions'}
-function NextLoadOrder: Integer;
-begin
-  Result := 0;
-  if Length(xFiles) > 0 then
-    Result := Succ(xFiles[High(xFiles)].LoadOrder);
-end;
-
-function NativeAddFile(const filename: string): IwbFile;
-var
-  LoadOrder : Integer;
-  _file: IwbFile;
-  filePath: String;
-begin
-  // fail if the file already exists
-  filePath := wbDataPath + string(filename);
-  if FileExists(filePath) then
-    raise Exception.Create(Format('File with name %s already exists.', [filename]));
-
-  // fail if maximum load order reached
-  LoadOrder := NextLoadOrder;
-  if LoadOrder > 254 then
-    raise Exception.Create('Maximum plugin count of 254 reached.');
-
-  // create new file
-  _file := wbNewFile(filePath, LoadOrder);
-  SetLength(xFiles, Succ(Length(xFiles)));
-  xFiles[High(xFiles)] := _file;
-  _file._AddRef;
-  UpdateFileCount;
-  Result := _file;
-end;
-
 function NativeFileByIndex(index: Integer): IwbFile;
 begin
   if (index >= Length(xFiles)) or (index < 0) then
@@ -145,11 +112,11 @@ end;
 {$endregion}
 
 {$region 'API functions'}
-function AddFile(filename: PWideChar; _res: PCardinal): WordBool; cdecl;
+function AddFile(filename: PWideChar; ignoreExists: WordBool; _res: PCardinal): WordBool; cdecl;
 begin
   Result := False;
   try
-    _res^ := Store(NativeAddFile(string(filename)));
+    _res^ := Store(NativeAddFile(string(filename), ignoreExists));
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);

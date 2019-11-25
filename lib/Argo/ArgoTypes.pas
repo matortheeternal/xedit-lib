@@ -8,7 +8,7 @@ uses
 type
   TFastStringList = class(TStringList)
   protected
-    function CompareStrings(const S1, S2: String): Integer; override;
+    function CompareStrings(const S1, S2: string): Integer; override;
   end;
 
   PArgoTreeNode = ^TArgoTreeNode;

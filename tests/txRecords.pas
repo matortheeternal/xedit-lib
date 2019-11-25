@@ -455,6 +455,22 @@ begin
             end);
         end);
 
+      Describe('GetRecordDef', procedure
+        begin
+          It('Should return a handle if signature is valid', procedure
+            begin
+              ExpectSuccess(GetRecordDef('ARMO', @h));
+              ExpectSuccess(Release(h));
+              ExpectSuccess(GetRecordDef('REFR', @h));
+              ExpectSuccess(Release(h));
+            end);
+
+          It('Should fail is signature is invalid', procedure
+            begin
+              ExpectFailure(GetRecordDef('ABCD', @h));
+            end);
+        end);
+
       Describe('GetNodes', procedure
         begin
           It('Should return a handle if argument is record', procedure

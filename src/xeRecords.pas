@@ -35,6 +35,7 @@ type
   function IsInjected(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
   function IsOverride(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
   function IsWinningOverride(_id: Cardinal; bool: PWordBool): WordBool; cdecl;
+  function GetRecordDef(sig: PWideChar; _res: PCardinal): WordBool; cdecl;
   function GetNodes(_id: Cardinal; _res: PCardinal): WordBool; cdecl;
   function GetConflictData(_id: Cardinal; _id2: Cardinal; conflictAll, conflictThis: PByte): WordBool; cdecl;
   function GetNodeElements(_id: Cardinal; _id2: Cardinal; len: PInteger): WordBool; cdecl;
@@ -715,6 +716,7 @@ begin
   try
     if not Supports(Resolve(_id), IwbMainRecord, rec) then
       raise Exception.Create('Interface must be a main record.');
+    rec := rec.MasterOrSelf;
     len^ := rec.ReferencedByCount;
     SetLength(resultArray, len^);
     for i := 0 to Pred(rec.ReferencedByCount) do
@@ -796,6 +798,28 @@ begin
       raise Exception.Create('Interface must be a main record.');
     bool^ := rec.IsWinningOverride;
     Result := True;
+  except
+    on x: Exception do ExceptionHandler(x);
+  end;
+end;
+
+function GetRecordDef(sig: PWideChar; _res: PCardinal): WordBool; cdecl;
+var
+  _sig: TwbSignature;
+  i: Integer;
+  def: TwbRecordDefEntry;
+begin
+  Result := False;
+  try
+    _sig := StrToSignature(string(sig));
+    for i := Low(wbRecordDefs) to High(wbRecordDefs) do begin
+      def := wbRecordDefs[i];
+      if def.rdeSignature = _sig then begin
+        _res^ := Store(def.rdeDef);
+        Result := True;
+        exit;
+      end;
+    end;
   except
     on x: Exception do ExceptionHandler(x);
   end;

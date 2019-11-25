@@ -46,6 +46,7 @@ type
   function GetFlagsDef(const element: IwbElement; var flagsDef: IwbFlagsDef): Boolean;
   function GetEnumDef(const element: IwbElement; var enumDef: IwbEnumDef): Boolean;
   function GetDefType(const element: IwbElement): TwbDefType;
+  function GetSmashTypeFromDef(def: IwbNamedDef): TSmashType;
   function GetSmashType(const element: IwbElement): TSmashType;
   {$endregion}
 
@@ -57,7 +58,7 @@ type
   function RemoveElement(_id: Cardinal; path: PWideChar): WordBool; cdecl;
   function RemoveElementOrParent(_id: Cardinal): WordBool; cdecl;
   function SetElement(_id, _id2: Cardinal): WordBool; cdecl;
-  function GetElements(_id: Cardinal; path: PWideChar; sort, filter: WordBool; len: PInteger): WordBool; cdecl;
+  function GetElements(_id: Cardinal; path: PWideChar; sort, filter, sparse: WordBool; len: PInteger): WordBool; cdecl;
   function GetDefNames(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function GetAddList(_id: Cardinal; len: PInteger): WordBool; cdecl;
   function GetLinksTo(_id: Cardinal; path: PWideChar; _res: PCardinal): WordBool; cdecl;
@@ -142,6 +143,13 @@ begin
   Result := (Length(key) = 8) and IsHexStr(key);
   if Result then
     formID := StrToInt('$' + key);
+end;
+
+function ParseLocalFormID(const key: String; const _file: IwbFile; var formID: Cardinal): Boolean;
+begin
+  Result := (key[1] = 'L') and (Length(key) = 7) and IsHexStr(key, 2);
+  if Result then
+    formID := $1000000 * _file.MasterCount + StrToInt('$' + Copy(key, 2, 6));
 end;
 
 function ParseFileFormID(const key: String; var formID: Cardinal): Boolean;
@@ -260,7 +268,9 @@ var
   rec: IwbMainRecord;
 begin
   Result := nil;
-  if ParseFileFormID(key, formID) then
+  if ParseLocalFormID(key, group._File, formID) then
+    Result := group._File.RecordByFormID[formID, True, False]
+  else if ParseFileFormID(key, formID) then
     Result := group._File.RecordByFormID[formID, True, False]
   else if ParseFormID(key, formID) then begin
     fixedFormID := group._File.LoadOrderFormIDtoFileFormID(formID);
@@ -581,7 +591,7 @@ function CreateFile(const fileName, nextPath: String): IInterface;
 begin
   Result := NativeFileByName(fileName);
   if not Assigned(Result) then
-    Result := NativeAddFile(fileName);
+    Result := NativeAddFile(fileName, False);
   if Assigned(Result) and (nextPath <> '') then
     Result := CreateFromFile(Result as IwbFile, nextPath);
 end;
@@ -633,6 +643,14 @@ begin
     resultArray[i] := Store(xFiles[i]);
 end;
 
+function HasSparseElements(const container: IwbContainerElementRef): Boolean;
+var
+  SortableContainer: IwbSortableContainer;
+begin
+  Result := NativeIsSorted(container) or
+    (container.ElementType in [etMainRecord, etSubRecordStruct]);
+end;
+
 procedure GetContainerElements(const container: IwbContainerElementRef);
 var
   i, n: Integer;
@@ -645,19 +663,55 @@ begin
     e := container.Elements[i];
     if Supports(e, IwbGroupRecord, g) and IsChildGroup(g)
     and Assigned(g.ChildrenOf) then continue;
-    resultArray[n] := Store(container.Elements[i]);
+    resultArray[n] := Store(e);
     Inc(n);
   end;
   SetLength(resultArray, n);
 end;
 
-procedure GetChildrenElements(const element: IInterface);
+function GetMemberCount(const container: IwbContainerElementRef): Integer;
+var
+  recDef: IwbRecordDef;
+  structDef: IwbStructDef;
+begin
+  Result := 1;
+  if Supports(container.def, IwbRecordDef, recDef) then
+    Result := recDef.MemberCount + container.AdditionalElementCount
+  else if Supports(container.def, IwbStructDef, structDef) then
+    Result := structDef.MemberCount;
+end;
+
+procedure GetSparseElements(const container: IwbContainerElementRef);
+var
+  i, n: Integer;
+  e: IwbElement;
+  g: IwbGroupRecord;
+begin
+  SetLength(resultArray, container.ElementCount);
+  n := 0;
+  for i := 0 to Pred(GetMemberCount(container)) do begin
+    e := container.ElementBySortOrder[i];
+    if Assigned(e) and Supports(e, IwbGroupRecord, g)
+    and IsChildGroup(g) and Assigned(g.ChildrenOf) then continue;
+    if Assigned(e) then
+      resultArray[n] := Store(e)
+    else
+      resultArray[n] := 0;
+    Inc(n);
+  end;
+  SetLength(resultArray, n);
+end;
+
+procedure GetChildrenElements(const element: IInterface; sparse: WordBool);
 var
   container: IwbContainerElementRef;
 begin
   if not Supports(element, IwbContainerElementRef, container) then
     raise Exception.Create('Interface must be a container.');
-  GetContainerElements(container);
+  if sparse and HasSparseElements(container) then
+    GetSparseElements(container)
+  else
+    GetContainerElements(container);
 end;
 {$endregion}
 
@@ -747,6 +801,7 @@ var
   rec: IwbMainRecord;
   fullName, v: String;
   e1, e2: Extended;
+  _file: IwbFile;
 begin
   Result := False;
   if IsFormID(element) then begin
@@ -755,6 +810,8 @@ begin
     else if Supports(element.LinksTo, IwbMainRecord, rec) then begin
       if ParseFullName(value, fullName) then
         Result := rec.FullName = fullName
+      else if ParseFileFormIDValue(value, _file, formID) then
+        Result := rec._File.Equals(_file) and ((rec.FormID and $00FFFFFF) = formID)
       else
         Result := rec.EditorID = value;
     end
@@ -1143,17 +1200,24 @@ begin
     Result := element.Def.DefType;
 end;
 
-function GetSmashType(const element: IwbElement): TSmashType;
+function IsSortedDef(def: IwbNamedDef): boolean;
+var
+  arDef: IwbArrayDef;
+begin
+  Result := false;
+  if Supports(def, IwbArrayDef, arDef) then
+    Result := arDef.Sorted;
+end;
+
+function GetSmashTypeFromDef(def: IwbNamedDef): TSmashType;
 var
   subDef: IwbSubRecordDef;
-  dt: TwbDefType;
   bIsSorted, bHasStructChildren: boolean;
 begin
-  dt := element.Def.DefType;
-  if Supports(element.Def, IwbSubRecordDef, subDef) then
-    dt := subDef.Value.DefType;
+  if Supports(def, IwbSubRecordDef, subDef) then
+    def := subDef.Value;
 
-  case dt of
+  case def.DefType of
     dtRecord:
       Result := stRecord;
     dtString, dtLString, dtLenString:
@@ -1167,8 +1231,8 @@ begin
     dtFloat:
       Result := stFloat;
     dtSubRecordArray, dtArray: begin
-      bIsSorted := NativeIsSorted(element);
-      bHasStructChildren := HasStructChildren(element);
+      bIsSorted := IsSortedDef(def);
+      bHasStructChildren := Supports(def, IwbSubRecordArrayDef);
       if bIsSorted then begin
         if bHasStructChildren then
           Result := stSortedStructArray
@@ -1189,6 +1253,11 @@ begin
     else
       Result := stUnknown;
   end;
+end;
+
+function GetSmashType(const element: IwbElement): TSmashType;
+begin
+  Result := GetSmashTypeFromDef(element.Def);
 end;
 
 function GetValueType(const element: IwbElement): TValueType;
@@ -1370,7 +1439,7 @@ begin
 end;
 
 // returns an array of handles for the elements in a container
-function GetElements(_id: Cardinal; path: PWideChar; sort, filter: WordBool; len: PInteger): WordBool; cdecl;
+function GetElements(_id: Cardinal; path: PWideChar; sort, filter, sparse: WordBool; len: PInteger): WordBool; cdecl;
 var
   element: IwbElement;
 begin
@@ -1381,7 +1450,7 @@ begin
     else begin
       element := NativeGetElement(_id, path) as IwbElement;
       if ElementNotFound(element, path) then exit;
-      GetChildrenElements(element);
+      GetChildrenElements(element, sparse);
     end;
     if filter then FilterResultArray;
     if sort then SortResultArray;

@@ -62,19 +62,19 @@ begin
             begin
               It('Should filter files', procedure
                 begin
-                  ExpectSuccess(GetElements(0, '', False, True, @len));
+                  ExpectSuccess(GetElements(0, '', False, True, False, @len));
                   ExpectEqual(len, 1);
                 end);
 
               It('Should filter groups', procedure
                 begin
-                  ExpectSuccess(GetElements(testFile, '', False, True, @len));
+                  ExpectSuccess(GetElements(testFile, '', False, True, False, @len));
                   ExpectEqual(len, 2);
                 end);
 
               It('Should filter records', procedure
                 begin
-                  ExpectSuccess(GetElements(armo, '', False, True, @len));
+                  ExpectSuccess(GetElements(armo, '', False, True, False, @len));
                   ExpectEqual(len, 1);
                 end);
             end);
@@ -91,19 +91,19 @@ begin
             begin
               It('Should reset files', procedure
                 begin
-                  ExpectSuccess(GetElements(0, '', False, True, @len));
+                  ExpectSuccess(GetElements(0, '', False, True, False, @len));
                   ExpectEqual(len, 0);
                 end);
 
               It('Should reset groups', procedure
                 begin
-                  ExpectSuccess(GetElements(testFile, '', False, True, @len));
+                  ExpectSuccess(GetElements(testFile, '', False, True, False, @len));
                   ExpectEqual(len, 0);
                 end);
 
               It('Should reset records', procedure
                 begin
-                  ExpectSuccess(GetElements(armo, '', False, True, @len));
+                  ExpectSuccess(GetElements(armo, '', False, True, False, @len));
                   ExpectEqual(len, 0);
                 end);
             end);

@@ -23,6 +23,22 @@ begin
   Expect(obj.HasKey(key), key + ' should exist');
 end;
 
+procedure ExpectElementExists(obj: TJSONObject; name: string);
+var
+  elements: TJSONArray;
+  i: Integer;
+  element: TJSONObject;
+  b: Boolean;
+begin
+  elements := obj.A['elements'];
+  for i := 0 to Pred(elements.Count) do begin
+    element := elements.O[i];
+    b := element.S['name'] = name;
+    if b then break;
+  end;
+  Expect(b, name + ' should exist');
+end;
+
 procedure ExportFileToJSON(filename: PWideChar);
 var
   h: Cardinal;
@@ -33,9 +49,11 @@ begin
   WriteStringToFile(grs(len), filename + '.json');
 end;
 
+
+
 procedure BuildSerializationTests;
 var
-  testFile, armo, rec, cell, refr, keywords, keyword, dnam, h: Cardinal;
+  testFile, armo, rec, recDef, cell, refr, keywords, keyword, dnam, h: Cardinal;
   obj, obj2, obj3: TJSONObject;
   len, i, count: Integer;
   d: Double;
@@ -49,6 +67,7 @@ begin
           ExpectSuccess(GetElement(0, 'xtest-2.esp', @testFile));
           ExpectSuccess(GetElement(testFile, 'ARMO', @armo));
           ExpectSuccess(GetElement(armo, '00012E46', @rec));
+          ExpectSuccess(GetRecordDef('ARMO', @recDef));
           ExpectSuccess(GetElement(testFile, 'CELL', @cell));
           ExpectSuccess(GetElement(testFile, '000170F0', @refr));
           ExpectSuccess(GetElement(rec, 'KWDA', @keywords));
@@ -662,6 +681,103 @@ begin
                   ExpectSuccess(GetFlag(rec, 'Record Header\Record Flags', 'Non-Playable', @b));
                   ExpectEqual(b, False);
                 end);
+            end);
+        end);
+
+      Describe('DefToJSON', procedure
+        begin
+          Describe('Record Def Serialization', procedure
+            const
+              ExpectedRecordFields: array[0..25] of string = (
+                'Editor ID',
+                'Virtual Machine Adapter',
+                'Object Bounds',
+                'Name',
+                'Object Effect',
+                'Enchantment Amount',
+                'Male world model',
+                'Icon',
+                'Female world model',
+                'Icon 2 (female)',
+                'Biped Body Template',
+                'Destructible',
+                'Sound - Pick Up',
+                'Sound - Put Down',
+                'Ragdoll Constraint Template',
+                'Equipment Type',
+                'Bash Impact Data Set',
+                'Alternate Block Material',
+                'Race',
+                'Keyword Count',
+                'Keywords',
+                'Description',
+                'Armature',
+                'Data',
+                'Armor Rating',
+                'Template Armor'
+              );
+              ExpectedStructFields: array[0..5] of string = (
+                'X1',
+                'Y1',
+                'Z1',
+                'X2',
+                'Y2',
+                'Z2'
+              );
+              ExpectedUnionFields: array[0..3] of string = (
+                'First Person Flags',
+                'General Flags',
+                'Unused',
+                'Armor Type'
+              );
+            var
+              elements: TJSONArray;
+            begin
+              AfterAll(procedure
+                begin
+                  obj.Free;
+                end);
+
+              It('Should succeed', procedure
+                begin
+                  ExpectSuccess(DefToJSON(recDef, @len));
+                  obj := TJSONObject.Create(grs(len));
+                  WriteStringToFile(obj.ToString, 'ARMO.json');
+                end);
+
+              It('Should have expected record elements', procedure
+                var
+                  i: Integer;
+                begin
+                  elements := obj.A['elements'];
+                  Expect(Assigned(elements));
+                  for i := Low(ExpectedRecordFields) to High(ExpectedRecordFields) do
+                    ExpectEqual(elements.O[i].S['name'], ExpectedRecordFields[i]);
+                end);
+
+              It('Should have subrecord struct elements', procedure
+                var
+                  i: Integer;
+                begin
+                  elements := obj.A['elements'].O[2].A['elements'];
+                  Expect(Assigned(elements));
+                  for i := Low(ExpectedStructFields) to High(ExpectedStructFields) do
+                    ExpectEqual(elements.O[i].S['name'], ExpectedStructFields[i]);
+                end);
+
+              It('Should have subrecord union elements', procedure
+                var
+                  i: Integer;
+                begin
+                  elements := obj.A['elements'].O[10].A['elements'];
+                  Expect(Assigned(elements));
+                  for i := Low(ExpectedUnionFields) to High(ExpectedUnionFields) do
+                    ExpectEqual(elements.O[i].S['name'], ExpectedUnionFields[i]);
+                end);
+            end);
+
+          Describe('Element Def Serialization', procedure
+            begin
             end);
         end);
     end);

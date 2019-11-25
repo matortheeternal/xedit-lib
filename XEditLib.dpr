@@ -60,35 +60,37 @@ exports
   GetLoadedContainers, LoadContainer, BuildArchive, GetTextureData,
   // FILE HANDLING METHODS
   AddFile, FileByIndex, FileByLoadOrder, FileByName, FileByAuthor, NukeFile,
-  RenameFile, SaveFile, GetRecordCount, GetOverrideRecordCount, MD5Hash, CRCHash,
-  SortEditorIDs, SortNames, GetFileLoadOrder,
+  RenameFile, SaveFile, GetRecordCount, GetOverrideRecordCount, MD5Hash,
+  CRCHash, SortEditorIDs, SortNames, GetFileLoadOrder,
   // MASTER HANDLING METHODS
-  CleanMasters, SortMasters, AddMaster, AddMasters, AddRequiredMasters, GetMasters,
-  GetRequiredBy, GetMasterNames,
+  CleanMasters, SortMasters, AddMaster, AddMasters, AddRequiredMasters,
+  GetMasters, GetRequiredBy, GetMasterNames,
   // ELEMENT HANDLING METHODS
   HasElement, GetElement, AddElement, AddElementValue, RemoveElement,
   RemoveElementOrParent, SetElement, GetElements, GetDefNames, GetAddList,
   GetContainer, GetElementFile, GetElementGroup, GetElementRecord, GetLinksTo,
   SetLinksTo, ElementCount, ElementEquals, ElementMatches, HasArrayItem,
   GetArrayItem, AddArrayItem, RemoveArrayItem, MoveArrayItem, CopyElement,
-  FindNextElement, FindPreviousElement, GetSignatureAllowed, GetAllowedSignatures,
-  GetIsModified, GetIsEditable, SetIsEditable, GetIsRemoveable, GetCanAdd, SortKey,
-  ElementType, DefType, SmashType, ValueType, IsSorted, IsFixed,
+  FindNextElement, FindPreviousElement, GetSignatureAllowed,
+  GetAllowedSignatures, GetIsModified, GetIsEditable, SetIsEditable,
+  GetIsRemoveable, GetCanAdd, SortKey, ElementType, DefType, SmashType,
+  ValueType, IsSorted, IsFixed,
   // PLUGIN ERROR METHODS
   CheckForErrors, GetErrorThreadDone, GetErrors, RemoveIdenticalRecords,
   // SERIALIZATION METHODS
-  ElementToJson, ElementFromJson,
+  ElementToJson, ElementFromJson, DefToJson,
   // ELEMENT VALUE METHODS
-  Name, LongName, DisplayName, Path, Signature, GetValue, SetValue, GetIntValue,
-  SetIntValue, GetUIntValue, SetUIntValue, GetFloatValue, SetFloatValue,
-  GetFlag, SetFlag, GetEnabledFlags, SetEnabledFlags, GetAllFlags, GetEnumOptions,
-  SignatureFromName, NameFromSignature, GetSignatureNameMap,
+  Name, LongName, DisplayName, Path, PathName, Signature, GetValue, GetRefValue,
+  SetValue, GetIntValue, SetIntValue, GetUIntValue, SetUIntValue, GetFloatValue,
+  SetFloatValue, GetFlag, SetFlag, GetEnabledFlags, SetEnabledFlags,
+  GetAllFlags, GetEnumOptions, SignatureFromName, NameFromSignature,
+  GetSignatureNameMap,
   // RECORD HANDLING METHODS
   GetFormID, SetFormID, GetRecord, GetRecords, GetREFRs, GetOverrides,
   GetReferencedBy, GetMasterRecord, GetPreviousOverride, GetWinningOverride,
   GetInjectionTarget, FindNextRecord, FindPreviousRecord, FindValidReferences,
   ExchangeReferences, IsMaster, IsInjected, IsOverride, IsWinningOverride,
-  GetNodes, GetConflictData, GetNodeElements,
+  GetRecordDef, GetNodes, GetConflictData, GetNodeElements,
   // FILTERING METHODS
   FilterRecord, ResetFilter;
 

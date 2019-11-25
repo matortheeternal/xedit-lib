@@ -19,6 +19,9 @@ type
   procedure ExpectSuccess(b: WordBool);
   procedure ExpectFailure(b: WordBool);
   function GetDataPath: String;
+  function GetProgramPath: String;
+  procedure CopyPlugins(filenames: TStringArray);
+  procedure DeletePlugins(filenames: TStringArray);
   procedure BuildMetaTests;
   procedure BuildFinalTests;
   function grs(len: Integer): WideString;
@@ -178,6 +181,14 @@ begin
   Result := grs(len);
 end;
 
+function GetProgramPath: String;
+var
+  len: Integer;
+begin
+  ExpectSuccess(GetGlobal('ProgramPath', @len));
+  Result := grs(len);
+end;
+
 function GetBackupPath(fileName: String): String;
 var
   BackupFolder: String;
@@ -205,6 +216,30 @@ begin
   filePath := GetDataPath + fileName;
   Expect(not FileExists(filePath + '.save'), fileName + '.save should no longer be present');
   Expect(FileExists(filePath), fileName + ' should exist');
+end;
+
+procedure CopyPlugins(filenames: TStringArray);
+var
+  dataPath, programPath, oldPath, newPath: String;
+  i: Integer;
+begin
+  dataPath := GetDataPath;
+  programPath := GetProgramPath;
+  for i := Low(filenames) to High(filenames) do begin
+    oldPath := programPath + 'plugins\' + filenames[i];
+    newPath := dataPath + filenames[i];
+    CopyFile(PWideChar(oldPath), PWideChar(newPath), False);
+  end;
+end;
+
+procedure DeletePlugins(filenames: TStringArray);
+var
+  dataPath: String;
+  i: Integer;
+begin
+  dataPath := GetDataPath;
+  for i := Low(filenames) to High(filenames) do
+    DeleteFile(dataPath + filenames[i]);
 end;
 
 procedure BuildMetaTests;
@@ -375,9 +410,8 @@ begin
       {$IFDEF SKYRIM}
       AfterAll(procedure
         begin
-          DeleteFile(GetDataPath + 'xtest-6.esp');
-          //DeleteFile(GetDataPath + 'xtest-5.esp');
-          //SysUtils.RenameFile(GetBackupPath('xtest-5.esp'), GetDataPath + 'xtext-5.esp');
+          DeletePlugins(['xtest-1.esp', 'xtest-2.esp', 'xtest-3.esp',
+            'xtest-4.esp', 'xtest-5.esp', 'xtest-6.esp']);
         end);
 
       It('Should rename .save files', procedure

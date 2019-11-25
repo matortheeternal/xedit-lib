@@ -174,6 +174,11 @@ begin
 
       Describe('AddFile', procedure
         begin
+          BeforeAll(procedure
+            begin
+              CopyPlugins(['xtest-6.esp']);
+            end);
+
           AfterAll(procedure
             var
               i: Integer;
@@ -183,18 +188,31 @@ begin
                   ExpectSuccess(UnloadPlugin(h))
                 else
                   Break;
+              ExpectSuccess(FileByName('xtest-6.esp', @h));
+              ExpectSuccess(UnloadPlugin(h));
               ExpectSuccess(FileByName('abc.esp', @h));
               ExpectSuccess(UnloadPlugin(h));
+              DeletePlugins(['xtest-6.esp']);
             end);
 
           It('Should return true if it succeeds', procedure
             begin
-              ExpectSuccess(AddFile('abc.esp', @h));
+              ExpectSuccess(AddFile('abc.esp', False, @h));
             end);
 
-          It('Should return false if the file already exists', procedure
+          It('Should return false if the file is already loaded', procedure
             begin
-              ExpectFailure(AddFile('Dawnguard.esm', @h));
+              ExpectFailure(AddFile('Skyrim.esm', False, @h));
+            end);
+
+          It('Should return false if the file exists and ignoreExists is false', procedure
+            begin
+              ExpectFailure(AddFile('xtest-6.esp', False, @h));
+            end);
+
+          It('Should return true if the file exists and ignoreExists is true', procedure
+            begin
+              ExpectSuccess(AddFile('xtest-6.esp', True, @h));
             end);
 
           It('Should return false if the load order is already full', procedure
@@ -204,8 +222,8 @@ begin
               ExpectSuccess(GetGlobal('FileCount', @len));
               start := StrToInt(grs(len));
               for i := start to 254 do
-                ExpectSuccess(AddFile(PWideChar(IntToStr(i) + '.esp'), @h));
-              ExpectFailure(AddFile('255.esp', @h));
+                ExpectSuccess(AddFile(PWideChar(IntToStr(i) + '.esp'), False, @h));
+              ExpectFailure(AddFile('255.esp', False, @h));
             end);
         end);
 
@@ -213,7 +231,7 @@ begin
         begin
           BeforeAll(procedure
             begin
-              ExpectSuccess(AddFile('xtest-6.esp', @h));
+              ExpectSuccess(AddFile('xtest-6.esp', False, @h));
             end);
 
           AfterAll(procedure

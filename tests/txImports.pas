@@ -49,7 +49,7 @@ type
   function UnloadPlugin(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
 
   // FILE HANDLING METHODS
-  function AddFile(filename: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
+  function AddFile(filename: PWideChar; ignoreExists: WordBool; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function FileByIndex(index: Integer; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function FileByLoadOrder(load_order: Integer; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
   function FileByName(name: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';
@@ -92,7 +92,7 @@ type
   function RemoveElement(_id: Cardinal; key: PWideChar): WordBool; cdecl; external 'XEditLib.dll';
   function RemoveElementOrParent(_id: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
   function SetElement(_id, _id2: Cardinal): WordBool; cdecl; external 'XEditLib.dll';
-  function GetElements(_id: Cardinal; key: PWideChar; sort, filter: WordBool; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
+  function GetElements(_id: Cardinal; key: PWideChar; sort, filter, sparse: WordBool; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetDefNames(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetAddList(_id: Cardinal; len: PInteger): WordBool; cdecl; external 'XEditLib.dll';
   function GetLinksTo(_id: Cardinal; key: PWideChar; _res: PCardinal): WordBool; cdecl; external 'XEditLib.dll';

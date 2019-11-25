@@ -10,6 +10,9 @@ uses
 type
   {$region 'Types'}
   TLoaderThread = class(TThread)
+  public
+    useDummies: Boolean;
+    constructor Create(useDummies: WordBool);
   protected
     procedure Execute; override;
   end;
@@ -22,9 +25,10 @@ type
   {$endregion}
 
   {$region 'Native functions}
+  function NativeAddFile(const filename: string; ignoreExistence: Boolean): IwbFile;
   procedure SetLoaderState(state: TLoaderState);
   procedure UpdateFileCount;
-  procedure LoadPluginFiles;
+  procedure LoadPluginFiles(useDummies: Boolean);
   procedure LoadResources;
   procedure LoadPluginsList(const sLoadPath: String; var sl: TStringList; noDelete: Boolean = False);
   procedure LoadLoadOrder(const sLoadPath: String; var slLoadOrder, slPlugins: TStringList);
@@ -46,7 +50,7 @@ type
   function SetGameMode(mode: Integer): WordBool; cdecl;
   function GetLoadOrder(len: PInteger): WordBool; cdecl;
   function GetActivePlugins(len: PInteger): WordBool; cdecl;
-  function LoadPlugins(loadOrder: PWideChar; smartLoad: WordBool): WordBool; cdecl;
+  function LoadPlugins(loadOrder: PWideChar; smartLoad, useDummies: WordBool): WordBool; cdecl;
   function LoadPlugin(filename: PWideChar): WordBool; cdecl;
   function LoadPluginHeader(fileName: PWideChar; _res: PCardinal): WordBool; cdecl;
   function BuildReferences(_id: Cardinal; synchronous: WordBool): WordBool; cdecl;
@@ -70,11 +74,17 @@ uses
   xeHelpers, xeMeta, xeConfiguration, xeMessages, xeMasters;
 
 {$region 'TLoaderThread'}
+constructor TLoaderThread.Create(useDummies: WordBool);
+begin
+  self.useDummies := useDummies;
+  inherited Create;
+end;
+
 procedure TLoaderThread.Execute;
 begin
   try
     LoadResources;
-    LoadPluginFiles;
+    LoadPluginFiles(useDummies);
     UpdateFileCount;
 
     // done loading
@@ -117,6 +127,38 @@ end;
 {$endregion}
 
 {$region 'Native functions'}
+function NextLoadOrder: Integer;
+begin
+  Result := 0;
+  if Length(xFiles) > 0 then
+    Result := Succ(xFiles[High(xFiles)].LoadOrder);
+end;
+
+function NativeAddFile(const filename: string; ignoreExistence: Boolean): IwbFile;
+var
+  LoadOrder : Integer;
+  _file: IwbFile;
+  filePath: String;
+begin
+  // fail if the file already exists
+  filePath := wbDataPath + string(filename);
+  if (not ignoreExistence) and FileExists(filePath) then
+    raise Exception.Create(Format('File with name %s already exists.', [filename]));
+
+  // fail if maximum load order reached
+  LoadOrder := NextLoadOrder;
+  if LoadOrder > 254 then
+    raise Exception.Create('Maximum plugin count of 254 reached.');
+
+  // create new file
+  _file := wbNewFile(filePath, LoadOrder);
+  SetLength(xFiles, Succ(Length(xFiles)));
+  xFiles[High(xFiles)] := _file;
+  _file._AddRef;
+  UpdateFileCount;
+  Result := _file;
+end;
+
 procedure SetLoaderState(state: TLoaderState);
 begin
   LoaderState := state;
@@ -197,7 +239,7 @@ begin
   raise Exception.Create(msg);
 end;
 
-procedure LoadPluginFiles;
+procedure LoadPluginFiles(useDummies: Boolean);
 var
   i: Integer;
   sFileName: String;
@@ -209,7 +251,10 @@ begin
 
     // load plugin
     try
-      LoadFile(wbDataPath + sFileName, BaseFileIndex + i);
+      if useDummies then
+        NativeAddFile(sFileName, true)
+      else
+        LoadFile(wbDataPath + sFileName, BaseFileIndex + i);
     except
       on x: Exception do
         ThreadException('Exception loading ' + sFileName + ': ' + x.Message);
@@ -846,7 +891,7 @@ begin
   end;
 end;
 
-function LoadPlugins(loadOrder: PWideChar; smartLoad: WordBool): WordBool; cdecl;
+function LoadPlugins(loadOrder: PWideChar; smartLoad, useDummies: WordBool): WordBool; cdecl;
 begin
   Result := False;
   try
@@ -863,7 +908,7 @@ begin
 
     // start loader thread
     SetLoaderState(lsActive);
-    LoaderThread := TLoaderThread.Create;
+    LoaderThread := TLoaderThread.Create(useDummies);
     LoaderThread.FreeOnTerminate := True;
     Result := True;
   except
@@ -885,7 +930,7 @@ begin
 
     // start loader thread
     SetLoaderState(lsActive);
-    LoaderThread := TLoaderThread.Create;
+    LoaderThread := TLoaderThread.Create(False);
     LoaderThread.FreeOnTerminate := True;
     Result := True;
   except
