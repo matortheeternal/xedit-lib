@@ -52,6 +52,7 @@ type
     procedure ContainerResourceList(const aContainerName: string; const aList: TStrings;
       const aFolder: string = '');
     function ResourceExists(const aFileName: string): Boolean;
+    function GetResourceContainer(const aFileName: string): String;
     function ResolveHash(const aHash: Int64): TDynStrings;
     function ResourceCount(const aFileName: string; aContainers: TStrings = nil): Integer;
     procedure ResourceCopy(const aContainerName, aFileName, aPathOut: string);
@@ -138,9 +139,18 @@ end;
 { TwbContainerHandler }
 
 procedure TwbContainerHandler.AddContainer(aContainer: IwbResourceContainer);
+var
+  i: Integer;
 begin
   SetLength(chContainers, Succ(Length(chContainers)));
-  chContainers[High(chContainers)] := aContainer;
+  i := High(chContainers);
+  if not Supports(aContainer, IwbFolder) then
+    while i > 0 do begin
+      if not Supports(chContainers[i - 1], IwbFolder) then break;
+      chContainers[i] := chContainers[i - 1];
+      Dec(i);
+    end;
+  chContainers[i] := aContainer;
 end;
 
 function TwbContainerHandler.ContainerExists(aContainerName: string): Boolean;
@@ -237,6 +247,18 @@ begin
       Result := True;
       Exit;
     end;
+end;
+
+function TwbContainerHandler.GetResourceContainer(const aFileName: string): String;
+var
+  i: Integer;
+begin
+  for i := High(chContainers) downto Low(chContainers) do
+    if chContainers[i].ResourceExists(aFileName) then begin
+      Result := chContainers[i].Name;
+      Exit;
+    end;
+  raise Exception.Create('Resource ' + aFileName + ' does not exist.');
 end;
 
 function TwbContainerHandler.ResolveHash(const aHash: Int64): TDynStrings;

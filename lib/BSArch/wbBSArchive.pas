@@ -20,6 +20,7 @@ uses
   SysUtils,
   Classes,
   Windows,
+  Threading,
   wbStreams,
   tfTypes,
   tfMD5;
@@ -188,6 +189,7 @@ type
   PDDSHeaderDX10 = ^TDDSHeaderDX10;
 
   TwbBSArchive = class;
+
   TBSArchiveType = (baNone, baTES3, baTES4, baFO3, baSSE, baFO4, baFO4dds);
   TBSArchiveState = (stReading, stWriting);
   TBSArchiveStates = set of TBSArchiveState;
@@ -315,7 +317,6 @@ type
 
     fDataOffset: Int64;
 
-    fMD5: TMD5Alg;
     fPackedData: array of TPackedDataInfo;
     fPackedDataCount: Integer;
 
@@ -325,13 +326,13 @@ type
     function FindFileRecordTES3(const aFileName: string; var aFileIdx: Integer): Boolean;
     function FindFileRecordTES4(const aFileName: string; var aFolderIdx, aFileIdx: Integer): Boolean;
     function FindFileRecordFO4(const aFileName: string; var aFileIdx: Integer): Boolean;
-    function FindFileRecord(const aFileName: string): Pointer;
     function GetDDSMipChunkNum(var aDDSInfo: TDDSInfo): Integer;
     function CalcDataHash(aData: Pointer; aLen: Cardinal): TPackedDataHash;
     function FindPackedData(aSize: Cardinal; aHash: TPackedDataHash; aFileRecord: Pointer): Boolean;
     procedure AddPackedData(aSize: Cardinal; aHash: TPackedDataHash; aFileRecord: Pointer);
 
   public
+    Sync: IReadWriteSync;
     constructor Create;
     destructor Destroy; override;
     procedure LoadFromFile(const aFileName: string);
@@ -340,12 +341,15 @@ type
     procedure Save;
     procedure AddFile(const aRootDir, aFileName: string); overload;
     procedure AddFile(const aFileName: string; const aData: TBytes); overload;
+    function FindFileRecord(const aFileName: string): Pointer;
     function ExtractFileData(aFileRecord: Pointer): TBytes; overload;
     function ExtractFileData(const aFileName: string): TBytes; overload;
     procedure ExtractFileToStream(const aFileName: string; aStream: TStream);
     procedure ExtractFile(const aFileName, aSaveAs: string);
     procedure IterateFiles(aProc: TBSFileIterationProc);
     function FileExists(const aFileName: string): Boolean;
+    procedure ResourceList(const aList: TStrings; aFolder: string = '');
+    procedure ResolveHash(const aHash: UInt64; var Results: TArray<string>);
     //procedure IterateFolders(aProc: TBSFileIterationProc);
     procedure Close;
 
@@ -366,7 +370,6 @@ function SplitNameExt(const aFileName: string; var Name, Ext: string): Integer;
 function CreateHashTES3(const aFileName: string): UInt64;
 function CreateHashTES4(const aFileName: string): UInt64; overload;
 function CreateHashFO4(const aFileName: string): Cardinal;
-
 
 implementation
 
@@ -395,8 +398,12 @@ const
   MAGIC_DXT1: TMagic4 = 'DXT1';
   MAGIC_DXT3: TMagic4 = 'DXT3';
   MAGIC_DXT5: TMagic4 = 'DXT5';
+  MAGIC_ATI1: TMagic4 = 'ATI1';
   MAGIC_ATI2: TMagic4 = 'ATI2';
-  MAGIC_BC7: TMagic4 = 'BC7';
+  MAGIC_BC4S: TMagic4 = 'BC4S';
+  MAGIC_BC4U: TMagic4 = 'BC4U';
+  MAGIC_BC5S: TMagic4 = 'BC5S';
+  MAGIC_BC5U: TMagic4 = 'BC5U';
 
   iFileFO4Unknown = $00100100;
   iFileFO4Tail = $BAADF00D;
@@ -443,6 +450,7 @@ const
   DDSD_MIPMAPCOUNT     = $00020000;
   DDSD_LINEARSIZE      = $00080000;
   DDSD_DEPTH           = $00800000;
+  DDSCAPS_COMPLEX      = $00000008;
   DDSCAPS_TEXTURE      = $00001000;
   DDSCAPS_MIPMAP       = $00400000;
   DDSCAPS2_CUBEMAP     = $00000200;
@@ -454,8 +462,15 @@ const
   DDSCAPS2_NEGATIVEZ   = $00008000;
   DDSCAPS2_VOLUME      = $00200000;
   DDPF_ALPHAPIXELS     = $00000001;
+  DDPF_ALPHA           = $00000002;
   DDPF_FOURCC          = $00000004;
   DDPF_RGB             = $00000040;
+  DDPF_YUV             = $00000200;
+  DDPF_LUMINANCE       = $00020000;
+
+  // DX10
+  DDS_DIMENSION_TEXTURE2D       = $00000003;
+  DDS_RESOURCE_MISC_TEXTURECUBE = $00000004;
 
   crc32table : array [0..255] of Cardinal = (
     $00000000, $77073096, $ee0e612c, $990951ba, $076dc419, $706af48f,
@@ -503,14 +518,12 @@ const
     $b40bbe37, $c30c8ea1, $5a05df1b, $2d02ef8d
   );
 
-
 type
   TPreallocatedMemoryStream = class(TCustomMemoryStream)
   public
     constructor Create(Ptr: Pointer; Size: Int64);
     function Write(const Buffer; Count: Longint): Longint; override;
   end;
-
 
 constructor TPreallocatedMemoryStream.Create(Ptr: Pointer; Size: Int64);
 begin
@@ -539,7 +552,7 @@ end;
 
 function String2Magic(const aStr: string): TMagic4;
 begin
-  Result := '    ';
+  Result := #0#0#0#0;
   if Length(aStr) > 0 then Result[0] := AnsiChar(aStr[1]);
   if Length(aStr) > 1 then Result[1] := AnsiChar(aStr[2]);
   if Length(aStr) > 2 then Result[2] := AnsiChar(aStr[3]);
@@ -781,7 +794,7 @@ var
   i, j: integer;
 begin
   if SplitDirName(aFileName, fdir, fname) = 0 then
-    raise Exception.Create('File is missing the folder part: ' + aFileName);
+    Exit(False);
 
   Result := False;
   h := CreateHashTES4(fdir, '');
@@ -818,7 +831,7 @@ var
   i: integer;
 begin
   if SplitDirName(aFileName, fdir, fname) = 0 then
-    raise Exception.Create('File is missing the folder part: ' + aFileName);
+    Exit(False);
 
   SplitNameExt(fname, name, ext);
   hdir := CreateHashFO4(fdir);
@@ -871,7 +884,10 @@ begin
 end;
 
 function TwbBSArchive.CalcDataHash(aData: Pointer; aLen: Cardinal): TPackedDataHash;
+var
+  fMD5: TMD5Alg;
 begin
+  fMD5.Init(@fMD5);
   fMD5.Update(@fMD5, aData, aLen);
   fMD5.Done(@fMD5, @Result);
 end;
@@ -936,7 +952,7 @@ begin
   if fStates * [stReading, stWriting] <> [] then
     Close;
 
-  fStream := TwbReadOnlyCachedFileStream.Create(aFileName);
+  fStream := TwbReadOnlyCachedFileStream.Create(aFileName, fmOpenRead or fmShareDenyWrite);
 
   // magic
   fMagic := Int2Magic(fStream.ReadCardinal);
@@ -1035,7 +1051,7 @@ begin
       // read file names
       fStream.Position := fHeaderFO4.FileTableOffset;
       for i := Low(fFilesFO4) to High(fFilesFO4) do
-        fFilesFO4[i].Name := fStream.ReadStringLen16;
+        fFilesFO4[i].Name := StringReplace(fStream.ReadStringLen16, '/', '\', [rfReplaceAll]);
     end;
 
     //--------------------------------------------------
@@ -1349,16 +1365,13 @@ begin
   end;
 
 
-  fStream := TwbWriteCachedFileStream.Create(aFileName);
+  fStream := TwbWriteCachedFileStream.Create(aFileName, fmCreate);
   fFileName := aFileName;
   Include(fStates, stWriting);
 
   // reserve space for the header
   SetLength(Buffer, fDataOffset);
   fStream.Write(Buffer[0], Length(Buffer));
-
-  if fShareData then
-    fMD5.Init(@fMD5);
 end;
 
 procedure TwbBSArchive.Save;
@@ -1543,6 +1556,7 @@ var
   i, j, Off, MipSize, BitsPerPixel: integer;
   fdir, fname, name, ext: string;
   msData: TPreallocatedMemoryStream;
+  MemoryStream: TBytesStream;
   wasCompressed: Boolean;
   DataHash: TPackedDataHash;
   DDSHeader: PDDSHeader;
@@ -1556,221 +1570,287 @@ begin
   if fShareData and (fType <> baFO4dds) then
     DataHash := CalcDataHash(@aData[0], Length(aData));
 
-  case fType of
-    baTES3: begin
-      if not FindFileRecordTES3(aFileName, i) then
-        raise Exception.Create('File not found in files table: ' + aFileName);
+  MemoryStream := nil;
+  if Assigned(Sync) then
+    Sync.BeginWrite;
+  try
+    case fType of
+      baTES3: begin
+        if not FindFileRecordTES3(aFileName, i) then
+          raise Exception.Create('File not found in files table: ' + aFileName);
 
-      if FindPackedData(Length(aData), DataHash, @fFilesTES3[i]) then
-        Exit;
+        if FindPackedData(Length(aData), DataHash, @fFilesTES3[i]) then
+          Exit;
 
-      fFilesTES3[i].Size := Length(aData);
-      fFilesTES3[i].Offset := fStream.Position;
-      fStream.Write(aData[0], Length(aData));
-      AddPackedData(Length(aData), DataHash, @fFilesTES3[i]);
-    end;
-
-    baTES4, baFO3, baSSE: begin
-      if not FindFileRecordTES4(aFileName, i, j) then
-        raise Exception.Create('File not found in files table: ' + aFileName);
-
-      if FindPackedData(Length(aData), DataHash, @fFoldersTES4[i].Files[j]) then
-        Exit;
-
-      fFoldersTES4[i].Files[j].Offset := fStream.Position;
-
-      if fHeaderTES4.Flags and ARCHIVE_EMBEDNAME <> 0 then
-        fStream.WriteStringLen(fFoldersTES4[i].Name + '\' + fFoldersTES4[i].Files[j].Name, False);
-
-      if fCompress and (Length(aData) >= 32) then begin
-        msData := TPreallocatedMemoryStream.Create(@aData[0], Length(aData));
-        try
-          // store uncompressed length
-          fStream.WriteCardinal(Length(aData));
-          // store compressed data
-          if fType = baSSE then
-            lz4CompressStream(msData, fStream)
-          else
-            ZCompressStream(msData, fStream);
-        finally
-          msData.Free;
-        end;
-        wasCompressed := True;
-      end
-      else begin
+        fFilesTES3[i].Size := Length(aData);
+        fFilesTES3[i].Offset := fStream.Position;
         fStream.Write(aData[0], Length(aData));
-        wasCompressed := False;
+        AddPackedData(Length(aData), DataHash, @fFilesTES3[i]);
       end;
 
-      fFoldersTES4[i].Files[j].Size := fStream.Position - fFoldersTES4[i].Files[j].Offset;
+      baTES4, baFO3, baSSE: begin
+        if not FindFileRecordTES4(aFileName, i, j) then
+          raise Exception.Create('File not found in files table: ' + aFileName);
 
-      // compress flag in Size inverts compression status from the header
-      // set it if archive is flagged as compressed but file was not compressed
-      if fCompress and not WasCompressed then
-        fFoldersTES4[i].Files[j].Size := fFoldersTES4[i].Files[j].Size or FILE_SIZE_COMPRESS;
+        if FindPackedData(Length(aData), DataHash, @fFoldersTES4[i].Files[j]) then
+          Exit;
 
-      AddPackedData(Length(aData), DataHash, @fFoldersTES4[i].Files[j]);
-    end;
-
-    baFO4: begin
-      if SplitDirName(aFileName, fdir, fname) = 0 then
-        raise Exception.Create('File is missing the folder part: ' + aFileName);
-
-      SplitNameExt(fname, name, ext);
-      if Length(ext) > 1 then Delete(ext, 1, 1); // no dot in extension
-
-      i := fHeaderFO4.FileCount;
-      Inc(fHeaderFO4.FileCount);
-      fFilesFO4[i].Name := aFileName;
-      fFilesFO4[i].DirHash := CreateHashFO4(fdir);
-      fFilesFO4[i].NameHash := CreateHashFO4(name);
-      fFilesFO4[i].Ext := Int2Magic(Str2MagicInt(ext));
-      fFilesFO4[i].Unknown := iFileFO4Unknown;
-      fFilesFO4[i].Offset := fStream.Position;
-      fFilesFO4[i].Size := Length(aData);
-
-      if FindPackedData(Length(aData), DataHash, @fFilesFO4[i]) then
-        Exit;
-
-      if fCompress and (Length(aData) >= 32) then begin
-        msData := TPreallocatedMemoryStream.Create(@aData[0], Length(aData));
-        try
-          ZCompressStream(msData, fStream);
-          fFilesFO4[i].PackedSize := fStream.Position - fFilesFO4[i].Offset;
-          // rare case: if packed size matches original, then rewrite with original data
-          if fFilesFO4[i].PackedSize = fFilesFO4[i].Size then begin
-            fFilesFO4[i].PackedSize := 0;
-            fStream.Position := fFilesFO4[i].Offset;
-            fStream.Write(aData[0], Length(aData));
-          end;
-        finally
-          msData.Free;
-        end;
-      end
-      else
-        fStream.Write(aData[0], Length(aData));
-
-      AddPackedData(Length(aData), DataHash, @fFilesFO4[i]);
-    end;
-
-    baFO4dds: begin
-      if SplitDirName(aFileName, fdir, fname) = 0 then
-        raise Exception.Create('File is missing the folder part: ' + aFileName);
-
-      SplitNameExt(fname, name, ext);
-      if Length(ext) > 1 then Delete(ext, 1, 1); // no dot in extension
-
-      // filling common part
-      i := fHeaderFO4.FileCount;
-      Inc(fHeaderFO4.FileCount);
-      fFilesFO4[i].Name := aFileName;
-      fFilesFO4[i].DirHash := CreateHashFO4(fdir);
-      fFilesFO4[i].NameHash := CreateHashFO4(name);
-      fFilesFO4[i].Ext := Int2Magic(Str2MagicInt(ext));
-      fFilesFO4[i].UnknownTex := 0;
-
-      // DDS file parameters
-      DDSHeader := @aData[0];
-      Off := SizeOf(DDSHeader^); // offset to image data
-      fFilesFO4[i].Width := DDSHeader.dwWidth;
-      fFilesFO4[i].Height := DDSHeader.dwHeight;
-      fFilesFO4[i].NumMips := DDSHeader.dwMipMapCount;
-      // no mipmaps is equal to a single one
-      if fFilesFO4[i].NumMips = 0 then
-        fFilesFO4[i].NumMips := 1;
-
-      // DXGI detection
-      if DDSHeader.ddspf.dwFourCC = MAGIC_DXT1 then
-        fFilesFO4[i].DXGIFormat := Byte(DXGI_FORMAT_BC1_UNORM)
-      else if DDSHeader.ddspf.dwFourCC = MAGIC_DXT3 then
-        fFilesFO4[i].DXGIFormat := Byte(DXGI_FORMAT_BC2_UNORM)
-      else if DDSHeader.ddspf.dwFourCC = MAGIC_DXT5 then
-        fFilesFO4[i].DXGIFormat := Byte(DXGI_FORMAT_BC3_UNORM)
-      else if DDSHeader.ddspf.dwFourCC = MAGIC_ATI2 then
-        fFilesFO4[i].DXGIFormat := Byte(DXGI_FORMAT_BC5_UNORM)
-      else if DDSHeader.ddspf.dwFourCC = MAGIC_BC7 then
-        fFilesFO4[i].DXGIFormat := Byte(DXGI_FORMAT_BC7_UNORM)
-      else if DDSHeader.ddspf.dwFourCC = MAGIC_DX10 then begin
-        DDSHeaderDX10 := @aData[Off];
-        Off := Off + SizeOf(DDSHeaderDX10^);
-        fFilesFO4[i].DXGIFormat := Byte(DDSHeaderDX10.dxgiFormat);
-      end
-      else if DDSHeader.ddspf.dwFlags and DDPF_RGB <> 0 then begin
-        if DDSHeader.ddspf.dwRGBBitCount = 32 then
-          if DDSHeader.ddspf.dwFlags and DDPF_ALPHAPIXELS <> 0 then
-            fFilesFO4[i].DXGIFormat := Byte(DXGI_FORMAT_B8G8R8A8_UNORM)
-          else
-            fFilesFO4[i].DXGIFormat := Byte(DXGI_FORMAT_B8G8R8X8_UNORM)
-        else if DDSHeader.ddspf.dwRGBBitCount = 8 then
-          fFilesFO4[i].DXGIFormat := Byte(DXGI_FORMAT_R8_UNORM)
-        else
-          raise Exception.Create('Unsupported uncompressed DDS format');
-      end;
-
-      // MipMap size detection
-      case TDXGI(fFilesFO4[i].DXGIFormat) of
-        DXGI_FORMAT_BC1_UNORM, DXGI_FORMAT_BC1_UNORM_SRGB:
-          BitsPerPixel := 4;
-        DXGI_FORMAT_BC2_UNORM, DXGI_FORMAT_BC2_UNORM_SRGB,
-        DXGI_FORMAT_BC3_UNORM, DXGI_FORMAT_BC3_UNORM_SRGB,
-        DXGI_FORMAT_BC5_UNORM,
-        DXGI_FORMAT_BC7_UNORM, DXGI_FORMAT_BC7_UNORM_SRGB:
-          BitsPerPixel := 8;
-        DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
-        DXGI_FORMAT_B8G8R8X8_UNORM, DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
-          BitsPerPixel := 32;
-        DXGI_FORMAT_R8_UNORM:
-          BitsPerPixel := 8;
-        else
-          raise Exception.Create('Unsupported DDS format');
-      end;
-      MipSize := (fFilesFO4[i].Width * fFilesFO4[i].Height * BitsPerPixel) shr 3;
-
-      // cubemaps detection
-      fFilesFO4[i].CubeMaps := $800;
-      if DDSHeader.dwCaps2 and DDSCAPS2_CUBEMAP <> 0 then
-        fFilesFO4[i].CubeMaps := fFilesFO4[i].CubeMaps or 1;
-
-      // number of chunks to store in file record
-      DDSInfo.Width := fFilesFO4[i].Width;
-      DDSInfo.Height := fFilesFO4[i].Height;
-      DDSInfo.MipMaps := fFilesFO4[i].NumMips;
-      SetLength(fFilesFO4[i].TexChunks, GetDDSMipChunkNum(DDSInfo));
-
-      // storing chunks
-      for j := Low(fFilesFO4[i].TexChunks) to High(fFilesFO4[i].TexChunks) do begin
-        fFilesFO4[i].TexChunks[j].StartMip := j;
-        if j < High(fFilesFO4[i].TexChunks) then
-          fFilesFO4[i].TexChunks[j].EndMip := j
-        else begin
-          // last chunk stores all remaining mipmaps
-          fFilesFO4[i].TexChunks[j].EndMip := Pred(fFilesFO4[i].NumMips);
-          MipSize := Length(aData) - Off;
-        end;
-
-        DataHash := CalcDataHash(@aData[Off], MipSize);
-        if not FindPackedData(MipSize, DataHash, @fFilesFO4[i].TexChunks[j]) then begin
-          fFilesFO4[i].TexChunks[j].Offset := fStream.Position;
-          fFilesFO4[i].TexChunks[j].Size := MipSize;
-          if fCompress then begin
-            msData := TPreallocatedMemoryStream.Create(@aData[Off], MipSize);
+        if Assigned(Sync) and fCompress and (Length(aData) >= 32) then begin
+          Sync.EndWrite;
+          try
+            MemoryStream := TBytesStream.Create;
+            msData := TPreallocatedMemoryStream.Create(@aData[0], Length(aData));
             try
-              ZCompressStream(msData, fStream);
-              fFilesFO4[i].TexChunks[j].PackedSize := fStream.Position - fFilesFO4[i].TexChunks[j].Offset;
+              // store compressed data
+              if fType = baSSE then
+                lz4CompressStream(msData, MemoryStream)
+              else
+                ZCompressStream(msData, MemoryStream);
             finally
               msData.Free;
             end;
-          end
-          else
-            fStream.Write(aData[Off], MipSize);
-
-          AddPackedData(MipSize, DataHash, @fFilesFO4[i].TexChunks[j]);
+          finally
+            Sync.BeginWrite;
+          end;
+          if FindPackedData(Length(aData), DataHash, @fFoldersTES4[i].Files[j]) then
+            Exit;
         end;
-        Inc(Off, MipSize);
-        MipSize := MipSize div 4;
-      end;
-    end;
 
+        fFoldersTES4[i].Files[j].Offset := fStream.Position;
+
+        if (fType in [baFO3, baSSE]) and (fHeaderTES4.Flags and ARCHIVE_EMBEDNAME <> 0) then
+          fStream.WriteStringLen(fFoldersTES4[i].Name + '\' + fFoldersTES4[i].Files[j].Name, False);
+
+        if Assigned(MemoryStream) then begin
+          fStream.WriteCardinal(Length(aData));
+          fStream.Write(MemoryStream.Bytes[0], MemoryStream.Size);
+          wasCompressed := True;
+        end else if fCompress and (Length(aData) >= 32) then begin
+          msData := TPreallocatedMemoryStream.Create(@aData[0], Length(aData));
+          try
+            // store uncompressed length
+            fStream.WriteCardinal(Length(aData));
+            // store compressed data
+            if fType = baSSE then
+              lz4CompressStream(msData, fStream)
+            else
+              ZCompressStream(msData, fStream);
+          finally
+            msData.Free;
+          end;
+          wasCompressed := True;
+        end
+        else begin
+          fStream.Write(aData[0], Length(aData));
+          wasCompressed := False;
+        end;
+
+        fFoldersTES4[i].Files[j].Size := fStream.Position - fFoldersTES4[i].Files[j].Offset;
+
+        // compress flag in Size inverts compression status from the header
+        // set it if archive is flagged as compressed but file was not compressed
+        if fCompress and not WasCompressed then
+          fFoldersTES4[i].Files[j].Size := fFoldersTES4[i].Files[j].Size or FILE_SIZE_COMPRESS;
+
+        AddPackedData(Length(aData), DataHash, @fFoldersTES4[i].Files[j]);
+      end;
+
+      baFO4: begin
+        if SplitDirName(aFileName, fdir, fname) = 0 then
+          raise Exception.Create('File is missing the folder part: ' + aFileName);
+
+        SplitNameExt(fname, name, ext);
+        if Length(ext) > 1 then Delete(ext, 1, 1); // no dot in extension
+
+        i := fHeaderFO4.FileCount;
+        Inc(fHeaderFO4.FileCount);
+        // archive2.exe uses /
+        fFilesFO4[i].Name := StringReplace(aFileName, '\', '/', [rfReplaceAll]);
+        fFilesFO4[i].DirHash := CreateHashFO4(fdir);
+        fFilesFO4[i].NameHash := CreateHashFO4(name);
+        fFilesFO4[i].Ext := Int2Magic(Str2MagicInt(ext));
+        fFilesFO4[i].Unknown := iFileFO4Unknown;
+        fFilesFO4[i].Offset := fStream.Position;
+        fFilesFO4[i].Size := Length(aData);
+
+        if FindPackedData(Length(aData), DataHash, @fFilesFO4[i]) then
+          Exit;
+
+        if fCompress and (Length(aData) >= 32) then begin
+          msData := TPreallocatedMemoryStream.Create(@aData[0], Length(aData));
+          try
+            ZCompressStream(msData, fStream);
+            fFilesFO4[i].PackedSize := fStream.Position - fFilesFO4[i].Offset;
+            // rare case: if packed size matches original, then rewrite with original data
+            if fFilesFO4[i].PackedSize = fFilesFO4[i].Size then begin
+              fFilesFO4[i].PackedSize := 0;
+              fStream.Position := fFilesFO4[i].Offset;
+              fStream.Write(aData[0], Length(aData));
+            end;
+          finally
+            msData.Free;
+          end;
+        end
+        else
+          fStream.Write(aData[0], Length(aData));
+
+        AddPackedData(Length(aData), DataHash, @fFilesFO4[i]);
+      end;
+
+      baFO4dds: begin
+        if SplitDirName(aFileName, fdir, fname) = 0 then
+          raise Exception.Create('File is missing the folder part: ' + aFileName);
+
+        SplitNameExt(fname, name, ext);
+        if Length(ext) > 1 then Delete(ext, 1, 1); // no dot in extension
+
+        // filling common part
+        i := fHeaderFO4.FileCount;
+        Inc(fHeaderFO4.FileCount);
+        // archive2.exe uses /
+        fFilesFO4[i].Name := StringReplace(aFileName, '\', '/', [rfReplaceAll]);
+        fFilesFO4[i].DirHash := CreateHashFO4(fdir);
+        fFilesFO4[i].NameHash := CreateHashFO4(name);
+        fFilesFO4[i].Ext := Int2Magic(Str2MagicInt(ext));
+        fFilesFO4[i].UnknownTex := 0;
+
+        // DDS file parameters
+        DDSHeader := @aData[0];
+        Off := SizeOf(DDSHeader^); // offset to image data
+        fFilesFO4[i].Width := DDSHeader.dwWidth;
+        fFilesFO4[i].Height := DDSHeader.dwHeight;
+        fFilesFO4[i].NumMips := DDSHeader.dwMipMapCount;
+        // no mipmaps is equal to a single one
+        if fFilesFO4[i].NumMips = 0 then
+          fFilesFO4[i].NumMips := 1;
+
+        // DXGI detection
+        if DDSHeader.ddspf.dwFourCC = MAGIC_DXT1 then
+          fFilesFO4[i].DXGIFormat := Byte(DXGI_FORMAT_BC1_UNORM)
+        else if DDSHeader.ddspf.dwFourCC = MAGIC_DXT3 then
+          fFilesFO4[i].DXGIFormat := Byte(DXGI_FORMAT_BC2_UNORM)
+        else if DDSHeader.ddspf.dwFourCC = MAGIC_DXT5 then
+          fFilesFO4[i].DXGIFormat := Byte(DXGI_FORMAT_BC3_UNORM)
+        else if DDSHeader.ddspf.dwFourCC = MAGIC_ATI1 then
+          fFilesFO4[i].DXGIFormat := Byte(DXGI_FORMAT_BC4_UNORM)
+        else if DDSHeader.ddspf.dwFourCC = MAGIC_BC4U then
+          fFilesFO4[i].DXGIFormat := Byte(DXGI_FORMAT_BC4_UNORM)
+        else if DDSHeader.ddspf.dwFourCC = MAGIC_BC4S then
+          fFilesFO4[i].DXGIFormat := Byte(DXGI_FORMAT_BC4_SNORM)
+        else if DDSHeader.ddspf.dwFourCC = MAGIC_ATI2 then
+          fFilesFO4[i].DXGIFormat := Byte(DXGI_FORMAT_BC5_UNORM)
+        else if DDSHeader.ddspf.dwFourCC = MAGIC_BC5U then
+          fFilesFO4[i].DXGIFormat := Byte(DXGI_FORMAT_BC5_UNORM)
+        else if DDSHeader.ddspf.dwFourCC = MAGIC_BC5S then
+          fFilesFO4[i].DXGIFormat := Byte(DXGI_FORMAT_BC5_SNORM)
+        else if DDSHeader.ddspf.dwFourCC = MAGIC_DX10 then begin
+          DDSHeaderDX10 := @aData[Off];
+          Off := Off + SizeOf(DDSHeaderDX10^);
+          fFilesFO4[i].DXGIFormat := Byte(DDSHeaderDX10.dxgiFormat);
+        end
+        else begin
+          if DDSHeader.ddspf.dwRGBBitCount = 32 then
+            if DDSHeader.ddspf.dwFlags and DDPF_ALPHAPIXELS = 0 then
+              fFilesFO4[i].DXGIFormat := Byte(DXGI_FORMAT_B8G8R8X8_UNORM)
+            else if DDSHeader.ddspf.dwRBitMask = $000000FF then
+              fFilesFO4[i].DXGIFormat := Byte(DXGI_FORMAT_R8G8B8A8_UNORM)
+            else
+              fFilesFO4[i].DXGIFormat := Byte(DXGI_FORMAT_B8G8R8A8_UNORM)
+          else if DDSHeader.ddspf.dwRGBBitCount = 16 then
+            if (DDSHeader.ddspf.dwRBitMask = $F800) and (DDSHeader.ddspf.dwGBitMask = $07E0) and
+               (DDSHeader.ddspf.dwBBitMask = $001F) and (DDSHeader.ddspf.dwABitMask = $0000) then
+              fFilesFO4[i].DXGIFormat := Byte(DXGI_FORMAT_B5G6R5_UNORM)
+            else if (DDSHeader.ddspf.dwRBitMask = $7C00) and (DDSHeader.ddspf.dwGBitMask = $03E0) and
+                    (DDSHeader.ddspf.dwBBitMask = $001F) and (DDSHeader.ddspf.dwABitMask = $8000) then
+              fFilesFO4[i].DXGIFormat := Byte(DXGI_FORMAT_B5G5R5A1_UNORM)
+            else
+              fFilesFO4[i].DXGIFormat := Byte(DXGI_FORMAT_R8G8_UNORM)
+          else if DDSHeader.ddspf.dwRGBBitCount = 8 then
+            if DDSHeader.ddspf.dwFlags and DDPF_ALPHA <> 0 then
+              fFilesFO4[i].DXGIFormat := Byte(DXGI_FORMAT_A8_UNORM)
+            else
+              fFilesFO4[i].DXGIFormat := Byte(DXGI_FORMAT_R8_UNORM)
+          else
+            raise Exception.Create('Unsupported uncompressed DDS format');
+        end;
+
+        // MipMap size detection
+        case TDXGI(fFilesFO4[i].DXGIFormat) of
+          DXGI_FORMAT_BC1_UNORM, DXGI_FORMAT_BC1_UNORM_SRGB,
+          DXGI_FORMAT_BC4_UNORM, DXGI_FORMAT_BC4_SNORM:
+            BitsPerPixel := 4;
+          DXGI_FORMAT_BC2_UNORM, DXGI_FORMAT_BC2_UNORM_SRGB,
+          DXGI_FORMAT_BC3_UNORM, DXGI_FORMAT_BC3_UNORM_SRGB,
+          DXGI_FORMAT_BC5_UNORM, DXGI_FORMAT_BC5_SNORM,
+          DXGI_FORMAT_BC6H_SF16, DXGI_FORMAT_BC6H_UF16,
+          DXGI_FORMAT_BC7_UNORM, DXGI_FORMAT_BC7_UNORM_SRGB,
+          DXGI_FORMAT_A8_UNORM,
+          DXGI_FORMAT_R8_SINT, DXGI_FORMAT_R8_SNORM,
+          DXGI_FORMAT_R8_UINT, DXGI_FORMAT_R8_UNORM:
+            BitsPerPixel := 8;
+          DXGI_FORMAT_B5G6R5_UNORM, DXGI_FORMAT_B5G5R5A1_UNORM,
+          DXGI_FORMAT_R8G8_SINT, DXGI_FORMAT_R8G8_UINT, DXGI_FORMAT_R8G8_UNORM:
+            BitsPerPixel := 16;
+          DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
+          DXGI_FORMAT_B8G8R8X8_UNORM, DXGI_FORMAT_B8G8R8X8_UNORM_SRGB,
+          DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_SINT,
+          DXGI_FORMAT_R8G8B8A8_UINT, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+            BitsPerPixel := 32;
+          else
+            raise Exception.Create('Unsupported DDS format');
+        end;
+        MipSize := (fFilesFO4[i].Width * fFilesFO4[i].Height * BitsPerPixel) shr 3;
+
+        // cubemaps detection
+        fFilesFO4[i].CubeMaps := $800;
+        if DDSHeader.dwCaps2 and DDSCAPS2_CUBEMAP <> 0 then
+          fFilesFO4[i].CubeMaps := fFilesFO4[i].CubeMaps or 1;
+
+        // number of chunks to store in file record
+        DDSInfo.Width := fFilesFO4[i].Width;
+        DDSInfo.Height := fFilesFO4[i].Height;
+        DDSInfo.MipMaps := fFilesFO4[i].NumMips;
+        SetLength(fFilesFO4[i].TexChunks, GetDDSMipChunkNum(DDSInfo));
+
+        // storing chunks
+        for j := Low(fFilesFO4[i].TexChunks) to High(fFilesFO4[i].TexChunks) do begin
+          fFilesFO4[i].TexChunks[j].StartMip := j;
+          if j < High(fFilesFO4[i].TexChunks) then
+            fFilesFO4[i].TexChunks[j].EndMip := j
+          else begin
+            // last chunk stores all remaining mipmaps
+            fFilesFO4[i].TexChunks[j].EndMip := Pred(fFilesFO4[i].NumMips);
+            MipSize := Length(aData) - Off;
+          end;
+
+          DataHash := CalcDataHash(@aData[Off], MipSize);
+          if not FindPackedData(MipSize, DataHash, @fFilesFO4[i].TexChunks[j]) then begin
+            fFilesFO4[i].TexChunks[j].Offset := fStream.Position;
+            fFilesFO4[i].TexChunks[j].Size := MipSize;
+            if fCompress then begin
+              msData := TPreallocatedMemoryStream.Create(@aData[Off], MipSize);
+              try
+                ZCompressStream(msData, fStream);
+                fFilesFO4[i].TexChunks[j].PackedSize := fStream.Position - fFilesFO4[i].TexChunks[j].Offset;
+              finally
+                msData.Free;
+              end;
+            end
+            else
+              fStream.Write(aData[Off], MipSize);
+
+            AddPackedData(MipSize, DataHash, @fFilesFO4[i].TexChunks[j]);
+          end;
+          Inc(Off, MipSize);
+          MipSize := MipSize div 4;
+        end;
+      end;
+
+    end;
+  finally
+    if Assigned(Sync) then
+      Sync.EndWrite;
+    FreeAndNil(MemoryStream);
   end;
 end;
 
@@ -1780,6 +1860,7 @@ var
   FileTES4: PwbBSFileTES4;
   FileFO4: PwbBSFileFO4;
   DDSHeader: PDDSHeader;
+  DDSHeaderDX10: PDDSHeaderDX10;
   i, size, TexSize: integer;
   bCompressed: Boolean;
   Buffer: TBytes;
@@ -1790,152 +1871,304 @@ begin
   if aFileRecord = nil then
     Exit;
 
-  case fType of
-    baTES3: begin
-      FileTES3 := aFileRecord;
-      fStream.Position := fDataOffset + FileTES3.Offset;
-      SetLength(Result, FileTES3.Size);
-      fStream.ReadBuffer(Result[0], Length(Result));
-    end;
-
-    baTES4, baFO3, baSSE: begin
-      FileTES4 := aFileRecord;
-      fStream.Position := FileTES4.Offset;
-      size := FileTES4.Size;
-      bCompressed := size and FILE_SIZE_COMPRESS <> 0;
-      if bCompressed then
-        size := size and not FILE_SIZE_COMPRESS;
-      if fHeaderTES4.Flags and ARCHIVE_COMPRESS <> 0 then
-        bCompressed := not bCompressed;
-
-      // skip embedded file name + length prefix
-      if (fType in [baFO3, baSSE]) and (fHeaderTES4.Flags and fHeaderTES4.Flags and ARCHIVE_EMBEDNAME <> 0) then
-        size := size - (Length(fStream.ReadStringLen(False)) + 1);
-
-      if bCompressed then begin
-        // reading uncompressed size
-        SetLength(Result, fStream.ReadCardinal);
-        dec(size, SizeOf(Cardinal));
-        if (Length(Result) > 0) and (size > 0) then begin
-          SetLength(Buffer, size);
-          fStream.ReadBuffer(Buffer[0], Length(Buffer));
-          if fType = baSSE then
-            lz4DecompressToUserBuf(@Buffer[0], Length(Buffer), @Result[0], Length(Result))
-          else try
-            DecompressToUserBuf(@Buffer[0], Length(Buffer), @Result[0], Length(Result));
-          except
-            // ignore zlib's Buffer error since it happens in vanilla "Fallout - Misc.bsa"
-            // Bethesda probably used old buggy zlib version when packing it
-            on E: Exception do if E.Message <> 'Buffer error' then raise;
-          end;
-        end;
-      end
-      else begin
-        SetLength(Result, size);
-        if size > 0 then
-          fStream.ReadBuffer(Result[0], size);
-      end;
-    end;
-
-    baFO4: begin
-      FileFO4 := aFileRecord;
-      fStream.Position := FileFO4.Offset;
-      if FileFO4.PackedSize <> 0 then begin
-        SetLength(Buffer, FileFO4.PackedSize);
-        fStream.ReadBuffer(Buffer[0], Length(Buffer));
-        SetLength(Result, FileFO4.Size);
-        DecompressToUserBuf(@Buffer[0], Length(Buffer), @Result[0], Length(Result));
-      end
-      else begin
-        SetLength(Result, FileFO4.Size);
+  if Assigned(Sync) then
+    Sync.BeginWrite;
+  try
+    case fType of
+      baTES3: begin
+        FileTES3 := aFileRecord;
+        fStream.Position := fDataOffset + FileTES3.Offset;
+        SetLength(Result, FileTES3.Size);
         fStream.ReadBuffer(Result[0], Length(Result));
       end;
-    end;
 
-    baFO4dds: begin
-      FileFO4 := aFileRecord;
+      baTES4, baFO3, baSSE: begin
+        FileTES4 := aFileRecord;
+        fStream.Position := FileTES4.Offset;
+        size := FileTES4.Size;
+        bCompressed := size and FILE_SIZE_COMPRESS <> 0;
+        if bCompressed then
+          size := size and not FILE_SIZE_COMPRESS;
+        if fHeaderTES4.Flags and ARCHIVE_COMPRESS <> 0 then
+          bCompressed := not bCompressed;
 
-      TexSize := SizeOf(TDDSHeader);
-      for i := Low(FileFO4.TexChunks) to High(FileFO4.TexChunks) do
-        Inc(TexSize, FileFO4.TexChunks[i].Size);
-      SetLength(Result, TexSize);
+        // skip embedded file name + length prefix
+        if (fType in [baFO3, baSSE]) and (fHeaderTES4.Flags and ARCHIVE_EMBEDNAME <> 0) then
+          size := size - (Length(fStream.ReadStringLen(False)) + 1);
 
-      DDSHeader := @Result[0];
-      DDSHeader.Magic := MAGIC_DDS;
-      DDSHeader.dwSize := SizeOf(TDDSHeader) - SizeOf(TMagic4);
-      DDSHeader.dwWidth := FileFO4.Width;
-      DDSHeader.dwHeight := FileFO4.Height;
-      DDSHeader.dwFlags := DDSD_CAPS or DDSD_PIXELFORMAT or
-                           DDSD_WIDTH or DDSD_HEIGHT or
-                           DDSD_LINEARSIZE or DDSD_MIPMAPCOUNT;
-      DDSHeader.dwCaps := DDSCAPS_TEXTURE or DDSCAPS_MIPMAP;
-      DDSHeader.dwMipMapCount := FileFO4.NumMips;
-      if FileFO4.CubeMaps = 2049 then
-        DDSHeader.dwCaps2 := DDSCAPS2_POSITIVEX or DDSCAPS2_NEGATIVEX
-                          or DDSCAPS2_POSITIVEY or DDSCAPS2_NEGATIVEY
-                          or DDSCAPS2_POSITIVEZ or DDSCAPS2_NEGATIVEZ
-                          or DDSCAPS2_CUBEMAP;
-      DDSHeader.ddspf.dwSize := SizeOf(DDSHeader.ddspf);
-      case TDXGI(FileFO4.DXGIFormat) of
-        DXGI_FORMAT_BC1_UNORM, DXGI_FORMAT_BC1_UNORM_SRGB: begin
-          DDSHeader.ddspf.dwFlags := DDPF_FOURCC;
-          DDSHeader.ddspf.dwFourCC := MAGIC_DXT1;
-          DDSHeader.dwPitchOrLinearSize := FileFO4.Width * FileFO4.Height div 4;
-        end;
-        DXGI_FORMAT_BC2_UNORM, DXGI_FORMAT_BC2_UNORM_SRGB: begin
-          DDSHeader.ddspf.dwFlags := DDPF_FOURCC;
-          DDSHeader.ddspf.dwFourCC := MAGIC_DXT3;
-          DDSHeader.dwPitchOrLinearSize := FileFO4.Width * FileFO4.Height;
-        end;
-        DXGI_FORMAT_BC3_UNORM, DXGI_FORMAT_BC3_UNORM_SRGB: begin
-          DDSHeader.ddspf.dwFlags := DDPF_FOURCC;
-          DDSHeader.ddspf.dwFourCC := MAGIC_DXT5;
-          DDSHeader.dwPitchOrLinearSize := FileFO4.Width * FileFO4.Height;
-        end;
-        DXGI_FORMAT_BC5_UNORM: begin
-          DDSHeader.ddspf.dwFlags := DDPF_FOURCC;
-          DDSHeader.ddspf.dwFourCC := MAGIC_ATI2;
-          DDSHeader.dwPitchOrLinearSize := FileFO4.Width * FileFO4.Height;
-        end;
-        DXGI_FORMAT_BC7_UNORM, DXGI_FORMAT_BC7_UNORM_SRGB: begin
-          DDSHeader.ddspf.dwFlags := DDPF_FOURCC;
-          DDSHeader.ddspf.dwFourCC := MAGIC_BC7;
-          DDSHeader.dwPitchOrLinearSize := FileFO4.Width * FileFO4.Height;
-        end;
-        DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_B8G8R8A8_UNORM_SRGB: begin
-          DDSHeader.ddspf.dwFlags := DDPF_RGB;
-          DDSHeader.ddspf.dwRGBBitCount := 32;
-          DDSHeader.ddspf.dwRBitMask := $00FF0000;
-          DDSHeader.ddspf.dwGBitMask := $0000FF00;
-          DDSHeader.ddspf.dwBBitMask := $000000FF;
-          DDSHeader.dwPitchOrLinearSize := FileFO4.Width * FileFO4.Height * 4;
-        end;
-        DXGI_FORMAT_R8_UNORM: begin
-          DDSHeader.ddspf.dwFlags := DDPF_RGB;
-          DDSHeader.ddspf.dwRGBBitCount := 8;
-          DDSHeader.ddspf.dwRBitMask := $000000FF;
-          DDSHeader.dwPitchOrLinearSize := FileFO4.Width * FileFO4.Height * 4;
-        end;
-      end;
-      // append chunks
-      TexSize := SizeOf(TDDSHeader);
-      for i := Low(FileFO4.TexChunks) to High(FileFO4.TexChunks) do with FileFO4.TexChunks[i] do begin
-        fStream.Position := Offset;
-        // compressed chunk
-        if PackedSize <> 0 then begin
-          SetLength(Buffer, PackedSize);
-          fStream.ReadBuffer(Buffer[0], Length(Buffer));
-          DecompressToUserBuf(@Buffer[0], Length(Buffer), @Result[TexSize], Size);
+        if bCompressed then begin
+          // reading uncompressed size
+          SetLength(Result, fStream.ReadCardinal);
+          dec(size, SizeOf(Cardinal));
+          if (Length(Result) > 0) and (size > 0) then begin
+            SetLength(Buffer, size);
+            fStream.ReadBuffer(Buffer[0], Length(Buffer));
+            if Assigned(Sync) then
+              Sync.EndWrite;
+            try
+              if fType = baSSE then
+                lz4DecompressToUserBuf(@Buffer[0], Length(Buffer), @Result[0], Length(Result))
+              else try
+                DecompressToUserBuf(@Buffer[0], Length(Buffer), @Result[0], Length(Result));
+              except
+                // ignore zlib's Buffer error since it happens in vanilla "Fallout - Misc.bsa"
+                // Bethesda probably used old buggy zlib version when packing it
+                on E: Exception do if E.Message <> 'Buffer error' then raise;
+              end;
+            finally
+              if Assigned(Sync) then
+                Sync.BeginWrite;
+            end;
+          end;
         end
-        // uncompressed chunk
-        else
-          fStream.ReadBuffer(Result[TexSize], Size);
-        Inc(TexSize, Size);
+        else begin
+          SetLength(Result, size);
+          if size > 0 then
+            fStream.ReadBuffer(Result[0], size);
+        end;
       end;
-    end
 
-    else
-      raise Exception.Create('Extraction is not supported for this archive');
+      baFO4: begin
+        FileFO4 := aFileRecord;
+        fStream.Position := FileFO4.Offset;
+        if FileFO4.PackedSize <> 0 then begin
+          SetLength(Buffer, FileFO4.PackedSize);
+          fStream.ReadBuffer(Buffer[0], Length(Buffer));
+          SetLength(Result, FileFO4.Size);
+          if Assigned(Sync) then
+            Sync.EndWrite;
+          try
+            DecompressToUserBuf(@Buffer[0], Length(Buffer), @Result[0], Length(Result));
+          finally
+            if Assigned(Sync) then
+              Sync.BeginWrite;
+          end;
+        end
+        else begin
+          SetLength(Result, FileFO4.Size);
+          fStream.ReadBuffer(Result[0], Length(Result));
+        end;
+      end;
+
+      baFO4dds: begin
+        FileFO4 := aFileRecord;
+
+        TexSize := SizeOf(TDDSHeader);
+        for i := Low(FileFO4.TexChunks) to High(FileFO4.TexChunks) do
+          Inc(TexSize, FileFO4.TexChunks[i].Size);
+        SetLength(Result, TexSize);
+
+        DDSHeader := @Result[0];
+        DDSHeader.Magic := MAGIC_DDS;
+        DDSHeader.dwSize := SizeOf(TDDSHeader) - SizeOf(TMagic4);
+        DDSHeader.dwWidth := FileFO4.Width;
+        DDSHeader.dwHeight := FileFO4.Height;
+        DDSHeader.dwFlags := DDSD_CAPS or DDSD_PIXELFORMAT or
+                             DDSD_WIDTH or DDSD_HEIGHT or DDSD_MIPMAPCOUNT;
+        DDSHeader.dwCaps := DDSCAPS_TEXTURE;
+        DDSHeader.dwMipMapCount := FileFO4.NumMips;
+        if DDSHeader.dwMipMapCount > 1 then
+         DDSHeader.dwCaps := DDSHeader.dwCaps or DDSCAPS_MIPMAP or DDSCAPS_COMPLEX;
+        DDSHeader.dwDepth := 1;
+
+        DDSHeaderDX10 := @Result[SizeOf(TDDSHeader)];
+        DDSHeaderDX10.resourceDimension := DDS_DIMENSION_TEXTURE2D;
+        DDSHeaderDX10.arraySize := 1;
+
+        if FileFO4.CubeMaps = 2049 then begin
+          DDSHeader.dwCaps := DDSHeader.dwCaps or DDSCAPS2_CUBEMAP or DDSCAPS_COMPLEX
+                           or DDSCAPS2_POSITIVEX or DDSCAPS2_NEGATIVEX
+                           or DDSCAPS2_POSITIVEY or DDSCAPS2_NEGATIVEY
+                           or DDSCAPS2_POSITIVEZ or DDSCAPS2_NEGATIVEZ;
+          DDSHeaderDX10.miscFlags := DDS_RESOURCE_MISC_TEXTURECUBE;
+        end;
+        DDSHeader.ddspf.dwSize := SizeOf(DDSHeader.ddspf);
+        case TDXGI(FileFO4.DXGIFormat) of
+          DXGI_FORMAT_BC1_UNORM: begin
+            DDSHeader.dwFlags := DDSHeader.dwFlags or DDSD_LINEARSIZE;
+            DDSHeader.ddspf.dwFlags := DDPF_FOURCC;
+            DDSHeader.ddspf.dwFourCC := MAGIC_DXT1;
+            DDSHeader.dwPitchOrLinearSize := FileFO4.Width * FileFO4.Height div 2;
+          end;
+          DXGI_FORMAT_BC2_UNORM: begin
+            DDSHeader.dwFlags := DDSHeader.dwFlags or DDSD_LINEARSIZE;
+            DDSHeader.ddspf.dwFlags := DDPF_FOURCC;
+            DDSHeader.ddspf.dwFourCC := MAGIC_DXT3;
+            DDSHeader.dwPitchOrLinearSize := FileFO4.Width * FileFO4.Height;
+          end;
+          DXGI_FORMAT_BC3_UNORM: begin
+            DDSHeader.dwFlags := DDSHeader.dwFlags or DDSD_LINEARSIZE;
+            DDSHeader.ddspf.dwFlags := DDPF_FOURCC;
+            DDSHeader.ddspf.dwFourCC := MAGIC_DXT5;
+            DDSHeader.dwPitchOrLinearSize := FileFO4.Width * FileFO4.Height;
+          end;
+          DXGI_FORMAT_BC4_SNORM: begin
+            DDSHeader.dwFlags := DDSHeader.dwFlags or DDSD_LINEARSIZE;
+            DDSHeader.ddspf.dwFlags := DDPF_FOURCC;
+            DDSHeader.ddspf.dwFourCC := MAGIC_BC4S;
+            DDSHeader.dwPitchOrLinearSize := FileFO4.Width * FileFO4.Height div 2;
+          end;
+          DXGI_FORMAT_BC4_UNORM: begin
+            DDSHeader.dwFlags := DDSHeader.dwFlags or DDSD_LINEARSIZE;
+            DDSHeader.ddspf.dwFlags := DDPF_FOURCC;
+            DDSHeader.ddspf.dwFourCC := MAGIC_BC4U;
+            DDSHeader.dwPitchOrLinearSize := FileFO4.Width * FileFO4.Height div 2;
+          end;
+          DXGI_FORMAT_BC5_SNORM: begin
+            DDSHeader.dwFlags := DDSHeader.dwFlags or DDSD_LINEARSIZE;
+            DDSHeader.ddspf.dwFlags := DDPF_FOURCC;
+            DDSHeader.ddspf.dwFourCC := MAGIC_BC5S;
+            DDSHeader.dwPitchOrLinearSize := FileFO4.Width * FileFO4.Height;
+          end;
+          DXGI_FORMAT_BC5_UNORM: begin
+            DDSHeader.dwFlags := DDSHeader.dwFlags or DDSD_LINEARSIZE;
+            DDSHeader.ddspf.dwFlags := DDPF_FOURCC;
+            DDSHeader.ddspf.dwFourCC := MAGIC_BC5U;
+            DDSHeader.dwPitchOrLinearSize := FileFO4.Width * FileFO4.Height;
+          end;
+          DXGI_FORMAT_BC1_UNORM_SRGB: begin
+            DDSHeader.dwFlags := DDSHeader.dwFlags or DDSD_LINEARSIZE;
+            DDSHeader.ddspf.dwFlags := DDPF_FOURCC;
+            DDSHeader.ddspf.dwFourCC := MAGIC_DX10;
+            DDSHeaderDX10.dxgiFormat := Integer(FileFO4.DXGIFormat);
+            DDSHeader.dwPitchOrLinearSize := FileFO4.Width * FileFO4.Height div 2;
+          end;
+          DXGI_FORMAT_BC2_UNORM_SRGB, DXGI_FORMAT_BC3_UNORM_SRGB,
+          DXGI_FORMAT_BC6H_UF16, DXGI_FORMAT_BC6H_SF16,
+          DXGI_FORMAT_BC7_UNORM, DXGI_FORMAT_BC7_UNORM_SRGB: begin
+            DDSHeader.dwFlags := DDSHeader.dwFlags or DDSD_LINEARSIZE;
+            DDSHeader.ddspf.dwFlags := DDPF_FOURCC;
+            DDSHeader.ddspf.dwFourCC := MAGIC_DX10;
+            DDSHeaderDX10.dxgiFormat := Integer(FileFO4.DXGIFormat);
+            DDSHeader.dwPitchOrLinearSize := FileFO4.Width * FileFO4.Height;
+          end;
+          DXGI_FORMAT_B8G8R8A8_UNORM_SRGB, DXGI_FORMAT_B8G8R8X8_UNORM_SRGB,
+          DXGI_FORMAT_R8G8B8A8_SINT, DXGI_FORMAT_R8G8B8A8_UINT, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB: begin
+            DDSHeader.dwFlags := DDSHeader.dwFlags or DDSD_PITCH;
+            DDSHeader.ddspf.dwFlags := DDPF_FOURCC;
+            DDSHeader.ddspf.dwFourCC := MAGIC_DX10;
+            DDSHeaderDX10.dxgiFormat := Integer(FileFO4.DXGIFormat);
+            DDSHeader.dwPitchOrLinearSize := FileFO4.Width * 4;
+          end;
+          DXGI_FORMAT_R8G8_SINT, DXGI_FORMAT_R8G8_UINT: begin
+            DDSHeader.dwFlags := DDSHeader.dwFlags or DDSD_PITCH;
+            DDSHeader.ddspf.dwFlags := DDPF_FOURCC;
+            DDSHeader.ddspf.dwFourCC := MAGIC_DX10;
+            DDSHeaderDX10.dxgiFormat := Integer(FileFO4.DXGIFormat);
+            DDSHeader.dwPitchOrLinearSize := FileFO4.Width * 2;
+          end;
+          DXGI_FORMAT_R8_SINT, DXGI_FORMAT_R8_SNORM, DXGI_FORMAT_R8_UINT: begin
+            DDSHeader.dwFlags := DDSHeader.dwFlags or DDSD_PITCH;
+            DDSHeader.ddspf.dwFlags := DDPF_FOURCC;
+            DDSHeader.ddspf.dwFourCC := MAGIC_DX10;
+            DDSHeaderDX10.dxgiFormat := Integer(FileFO4.DXGIFormat);
+            DDSHeader.dwPitchOrLinearSize := FileFO4.Width;
+          end;
+            DXGI_FORMAT_R8G8B8A8_UNORM: begin
+            DDSHeader.dwFlags := DDSHeader.dwFlags or DDSD_PITCH;
+            DDSHeader.ddspf.dwFlags := DDPF_RGB or DDPF_ALPHAPIXELS;
+            DDSHeader.ddspf.dwRGBBitCount := 32;
+            DDSHeader.ddspf.dwRBitMask := $000000FF;
+            DDSHeader.ddspf.dwGBitMask := $0000FF00;
+            DDSHeader.ddspf.dwBBitMask := $00FF0000;
+            DDSHeader.ddspf.dwABitMask := $FF000000;
+            DDSHeader.dwPitchOrLinearSize := FileFO4.Width * 4;
+          end;
+            DXGI_FORMAT_B8G8R8A8_UNORM: begin
+            DDSHeader.dwFlags := DDSHeader.dwFlags or DDSD_PITCH;
+            DDSHeader.ddspf.dwFlags := DDPF_RGB or DDPF_ALPHAPIXELS;
+            DDSHeader.ddspf.dwRGBBitCount := 32;
+            DDSHeader.ddspf.dwRBitMask := $00FF0000;
+            DDSHeader.ddspf.dwGBitMask := $0000FF00;
+            DDSHeader.ddspf.dwBBitMask := $000000FF;
+            DDSHeader.ddspf.dwABitMask := $FF000000;
+            DDSHeader.dwPitchOrLinearSize := FileFO4.Width * 4;
+          end;
+          DXGI_FORMAT_B8G8R8X8_UNORM: begin
+            DDSHeader.dwFlags := DDSHeader.dwFlags or DDSD_PITCH;
+            DDSHeader.ddspf.dwFlags := DDPF_RGB;
+            DDSHeader.ddspf.dwRGBBitCount := 32;
+            DDSHeader.ddspf.dwRBitMask := $00FF0000;
+            DDSHeader.ddspf.dwGBitMask := $0000FF00;
+            DDSHeader.ddspf.dwBBitMask := $000000FF;
+            DDSHeader.dwPitchOrLinearSize := FileFO4.Width * 4;
+          end;
+          DXGI_FORMAT_B5G6R5_UNORM: begin
+            DDSHeader.dwFlags := DDSHeader.dwFlags or DDSD_PITCH;
+            DDSHeader.ddspf.dwFlags := DDPF_RGB;
+            DDSHeader.ddspf.dwRGBBitCount := 16;
+            DDSHeader.ddspf.dwRBitMask := $0000F800;
+            DDSHeader.ddspf.dwGBitMask := $000007E0;
+            DDSHeader.ddspf.dwBBitMask := $0000001F;
+            DDSHeader.dwPitchOrLinearSize := FileFO4.Width * 2;
+          end;
+          DXGI_FORMAT_B5G5R5A1_UNORM: begin
+            DDSHeader.dwFlags := DDSHeader.dwFlags or DDSD_PITCH;
+            DDSHeader.ddspf.dwFlags := DDPF_RGB or DDPF_ALPHAPIXELS;
+            DDSHeader.ddspf.dwRGBBitCount := 16;
+            DDSHeader.ddspf.dwRBitMask := $00007C00;
+            DDSHeader.ddspf.dwGBitMask := $000003E0;
+            DDSHeader.ddspf.dwBBitMask := $0000001F;
+            DDSHeader.ddspf.dwABitMask := $00008000;
+            DDSHeader.dwPitchOrLinearSize := FileFO4.Width * 2;
+          end;
+          DXGI_FORMAT_R8G8_UNORM: begin
+            DDSHeader.dwFlags := DDSHeader.dwFlags or DDSD_PITCH;
+            DDSHeader.ddspf.dwFlags := DDPF_LUMINANCE OR DDPF_ALPHAPIXELS;
+            DDSHeader.ddspf.dwRGBBitCount := 16;
+            DDSHeader.ddspf.dwRBitMask := $000000FF;
+            DDSHeader.ddspf.dwABitMask := $0000FF00;
+            DDSHeader.dwPitchOrLinearSize := FileFO4.Width * 2;
+          end;
+          DXGI_FORMAT_A8_UNORM: begin
+            DDSHeader.dwFlags := DDSHeader.dwFlags or DDSD_PITCH;
+            DDSHeader.ddspf.dwFlags := DDPF_ALPHA;
+            DDSHeader.ddspf.dwRGBBitCount := 8;
+            DDSHeader.ddspf.dwABitMask := $000000FF;
+            DDSHeader.dwPitchOrLinearSize := FileFO4.Width;
+          end;
+          DXGI_FORMAT_R8_UNORM: begin
+            DDSHeader.dwFlags := DDSHeader.dwFlags or DDSD_PITCH;
+            DDSHeader.ddspf.dwFlags := DDPF_LUMINANCE;
+            DDSHeader.ddspf.dwRGBBitCount := 8;
+            DDSHeader.ddspf.dwRBitMask := $000000FF;
+            DDSHeader.dwPitchOrLinearSize := FileFO4.Width;
+          end;
+        end;
+        TexSize := SizeOf(TDDSHeader);
+        if DDSHeader.ddspf.dwFourCC = MAGIC_DX10 then begin
+          SetLength(Result, Length(Result) + SizeOf(TDDSHeaderDX10));
+          Inc(TexSize, SizeOf(TDDSHeaderDX10));
+        end;
+        // append chunks
+        for i := Low(FileFO4.TexChunks) to High(FileFO4.TexChunks) do with FileFO4.TexChunks[i] do begin
+          fStream.Position := Offset;
+          // compressed chunk
+          if PackedSize <> 0 then begin
+            SetLength(Buffer, PackedSize);
+            fStream.ReadBuffer(Buffer[0], Length(Buffer));
+            if Assigned(Sync) then
+              Sync.EndWrite;
+            try
+              DecompressToUserBuf(@Buffer[0], Length(Buffer), @Result[TexSize], Size);
+            finally
+              if Assigned(Sync) then
+                Sync.BeginWrite;
+            end;
+          end
+          // uncompressed chunk
+          else
+            fStream.ReadBuffer(Result[TexSize], Size);
+          Inc(TexSize, Size);
+        end;
+      end
+
+      else
+        raise Exception.Create('Extraction is not supported for this archive');
+    end;
+  finally
+    if Assigned(Sync) then
+      Sync.EndWrite;
   end;
 end;
 
@@ -1984,21 +2217,44 @@ begin
   if not Assigned(aProc) then
     Exit;
 
-  case fType of
-    baTES3:
-      for i := Low(fFilesTES3) to High(fFilesTES3) do
-        if aProc(Self, fFilesTES3[i].Name, @fFilesTES3[i], nil) then
-          Break;
-    baTES4, baFO3, baSSE:
-      for i := Low(fFoldersTES4) to High(fFoldersTES4) do
-        for j := Low(fFoldersTES4[i].Files) to High(fFoldersTES4[i].Files) do
-          if aProc(Self, fFoldersTES4[i].Name + '\' + fFoldersTES4[i].Files[j].Name, @fFoldersTES4[i].Files[j], @fFoldersTES4[i]) then
+  if Assigned(Sync) then
+    case fType of
+      baTES3:
+        TParallel.&For(Low(fFilesTES3), High(fFilesTES3), procedure(i: Integer; LoopState: TParallel.TLoopState) begin
+          if aProc(Self, fFilesTES3[i].Name, @fFilesTES3[i], nil) then
+            LoopState.Stop;
+        end);
+      baTES4, baFO3, baSSE:
+        TParallel.&For(Low(fFoldersTES4), High(fFoldersTES4), procedure(i: Integer; OuterLoopState: TParallel.TLoopState) begin
+          TParallel.&For(Low(fFoldersTES4[i].Files), High(fFoldersTES4[i].Files), procedure(j: Integer; InnerLoopState: TParallel.TLoopState) begin
+            if aProc(Self, fFoldersTES4[i].Name + '\' + fFoldersTES4[i].Files[j].Name, @fFoldersTES4[i].Files[j], @fFoldersTES4[i]) then begin
+              OuterLoopState.Stop;
+              InnerLoopState.Stop;
+            end;
+          end);
+        end);
+      baFO4, baFO4dds:
+        TParallel.&For(Low(fFilesFO4), High(fFilesFO4), procedure(i: Integer; LoopState: TParallel.TLoopState) begin
+          if aProc(Self, fFilesFO4[i].Name, @fFilesFO4[i], nil) then
+            LoopState.Stop;
+        end);
+    end
+  else
+    case fType of
+      baTES3:
+        for i := Low(fFilesTES3) to High(fFilesTES3) do
+          if aProc(Self, fFilesTES3[i].Name, @fFilesTES3[i], nil) then
             Break;
-    baFO4, baFO4dds:
-      for i := Low(fFilesFO4) to High(fFilesFO4) do
-        if aProc(Self, fFilesFO4[i].Name, @fFilesFO4[i], nil) then
-          Break;
-  end;
+      baTES4, baFO3, baSSE:
+        for i := Low(fFoldersTES4) to High(fFoldersTES4) do
+          for j := Low(fFoldersTES4[i].Files) to High(fFoldersTES4[i].Files) do
+            if aProc(Self, fFoldersTES4[i].Name + '\' + fFoldersTES4[i].Files[j].Name, @fFoldersTES4[i].Files[j], @fFoldersTES4[i]) then
+              Break;
+      baFO4, baFO4dds:
+        for i := Low(fFilesFO4) to High(fFilesFO4) do
+          if aProc(Self, fFilesFO4[i].Name, @fFilesFO4[i], nil) then
+            Break;
+    end;
 end;
 
 {procedure TwbBSArchive.IterateFolders(aProc: TBSFileIterationProc);
@@ -2043,5 +2299,82 @@ begin
   end;
 end;
 
+procedure TwbBSArchive.ResourceList(const aList: TStrings; aFolder: string = '');
+var
+  Folder : string;
+  i, j   : Integer;
+begin
+  if not Assigned(aList) then
+    Exit;
+
+  Folder := ExcludeTrailingPathDelimiter(aFolder);
+  case fType of
+    baTES3:
+      for i := Low(fFilesTES3) to High(fFilesTES3) do
+        with fFilesTES3[i] do
+          if (Folder = '') or Name.StartsWith(Folder, True) then
+            aList.Add(Name);
+    baTES4, baFO3, baSSE:
+      for i := Low(fFoldersTES4) to High(fFoldersTES4) do
+        with fFoldersTES4[i] do begin
+          if (Folder = '') or Name.StartsWith(Folder, True) then
+            for j := Low(Files) to High(Files) do
+              aList.Add(Name + '\' + Files[j].Name);
+        end;
+    baFO4, baFO4dds:
+      for i := Low(fFilesFO4) to High(fFilesFO4) do
+        with fFilesFO4[i] do
+          if (Folder = '') or Name.StartsWith(Folder, True) then
+            aList.Add(Name);
+  end;
+
+end;
+
+procedure TwbBSArchive.ResolveHash(const aHash: UInt64; var Results: TArray<string>);
+var
+  Len  : Integer;
+  i, j : Integer;
+begin
+  case fType of
+    baTES3:
+      for i := Low(fFilesTES3) to High(fFilesTES3) do
+        with fFilesTES3[i] do
+          if aHash = Hash then begin
+            SetLength(Results, Succ(Len));
+            Results[Len] := Name;
+            Inc(Len);
+          end;
+    baTES4, baFO3, baSSE:
+      for i := Low(fFoldersTES4) to High(fFoldersTES4) do
+        with fFoldersTES4[i] do begin
+          if aHash = Hash then begin
+            SetLength(Results, Succ(Len));
+            Results[Len] := Name;
+            Inc(Len);
+          end;
+          for j := Low(Files) to High(Files) do
+            with Files[j] do
+              if aHash = Hash then begin
+                SetLength(Results, Succ(Len));
+                Results[Len] := Name;
+                Inc(Len);
+              end;
+        end;
+    {
+    baFO4, baFO4dds:
+      for i := Low(fFilesFO4) to High(fFilesFO4) do
+        with fFilesFO4[i] do begin
+          if aHash = NameHash then begin
+            SetLength(Results, Succ(Len));
+            Results[Len] := Name;
+            Inc(Len);
+          end;
+        end;
+    }
+  end;
+end;
+
+
 
 end.
+
