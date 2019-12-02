@@ -5,7 +5,7 @@ interface
 uses
   Classes,
   // xedit units
-  wbHelpers, wbInterface, wbImplementation;
+  wbHelpers, wbInterface, wbImplementation, wbHardcoded;
 
 type
   {$region 'Types'}
@@ -65,6 +65,9 @@ var
   RefThread: TRefThread;
   LoaderState: TLoaderState;
   BaseFileIndex: Integer;
+
+const
+  wbHardcodedDat = '.Hardcoded.dat';
 
 implementation
 
@@ -151,7 +154,7 @@ begin
     raise Exception.Create('Maximum plugin count of 254 reached.');
 
   // create new file
-  _file := wbNewFile(filePath, LoadOrder);
+  _file := wbNewFile(filePath, LoadOrder, False);
   SetLength(xFiles, Succ(Length(xFiles)));
   xFiles[High(xFiles)] := _file;
   _file._AddRef;
@@ -215,20 +218,18 @@ procedure LoadFile(const filePath: String; loadOrder: Integer);
 var
   _file: IwbFile;
 begin
-  _file := wbFile(filePath, loadOrder, '', False, False);
+  _file := wbFile(filePath, loadOrder, '');
   SetLength(xFiles, Length(xFiles) + 1);
   xFiles[High(xFiles)] := _file;
 end;
 
-procedure LoadHardcodedDat(const filePath: String);
+procedure LoadHardcodedDat(bytes: TBytes);
 var
   _file: IwbFile;
+  gameEsmPath: String;
 begin
-  if not FileExists(filePath) then begin
-    AddMessage('File not found: ' + filePath);
-    exit;
-  end;
-  _file := wbFile(filePath, 0);
+  gameEsmPath := wbDataPath + wbGameMasterEsm;
+  _file := wbFile(wbGameExeName, 0, gameEsmPath, [fsIsHardcoded], bytes);
   SetLength(xFiles, Length(xFiles) + 1);
   xFiles[High(xFiles)] := _file;
 end;
@@ -243,6 +244,7 @@ procedure LoadPluginFiles(useDummies: Boolean);
 var
   i: Integer;
   sFileName: String;
+  hardcodedBytes: TBytes;
 begin
   BaseFileIndex := Length(xFiles);
   for i := 0 to Pred(slLoadOrder.Count) do begin
@@ -261,9 +263,10 @@ begin
     end;
 
     // load hardcoded dat
-    if (i = 0) and (sFileName = wbGameName + '.esm') then try
-      sFileName := Globals.Values['ProgramPath'] + wbGameName + wbHardcodedDat;
-      LoadHardCodedDat(sFileName);
+    if (i = 0) and (sFileName = wbGameMasterEsm) then try
+      hardcodedBytes := TwbHardcodedContainer.GetHardCodedDat;
+      if Length(hardcodedBytes) = 0 then continue;
+      LoadHardcodedDat(hardcodedBytes);
     except
       on x: Exception do
         ThreadException('Exception loading ' + sFileName + ': ' + x.Message);
@@ -355,7 +358,7 @@ end;
 function LoadFileHeader(const filePath: String): IwbFile;
 begin
   try
-    Result := wbFile(filePath, -1, '', False, True);
+    Result := wbFile(filePath, -1, '', [fsOnlyHeader]);
   except
     on x: Exception do
       raise Exception.CreateFmt('Failed to load file header %s, %s',
@@ -534,6 +537,21 @@ begin
     FindClose(F);
   end else
     Result := 0;
+end;
+
+function IsFileESM(const aFileName: string): Boolean;
+begin
+  Result := StrEndsWith(aFileName, '.esm');
+end;
+
+function IsFileESP(const aFileName: string): Boolean;
+begin
+  Result := StrEndsWith(aFileName, '.esp');
+end;
+
+function IsFileESL(const aFileName: string): Boolean;
+begin
+  Result := StrEndsWith(aFileName, '.esl');
 end;
 
 { Add missing *.esp and *.esm files to list }
