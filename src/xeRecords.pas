@@ -468,10 +468,10 @@ var
 begin
   Result := False;
   try
+    formID := TwbFormID.FromCardinal(_formID);
     if _id = 0 then begin
       fileOrdinal := _formID shr 24;
       _file := NativeFileByLoadOrder(fileOrdinal);
-      formID := TwbFormID.FromCardinal(_formID);
       formID := _file.LoadOrderFormIDtoFileFormID(formID, False);
     end
     else
