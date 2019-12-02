@@ -258,7 +258,7 @@ var
   SortableContainer: IwbSortableContainer;
   Element: IwbElement;
   i, j, k, SortedCount, NonSortedCount, DupCounter: Integer;
-  SortedKeys: array of TnxFastStringListCS;
+  SortedKeys: array of TwbFastStringListCS;
   Sortables: array of IwbSortableContainer;
   SortKey, LastSortKey: string;
 begin
@@ -288,7 +288,7 @@ begin
 
     SetLength(SortedKeys, Succ(aNodeCount));
     for i := Low(SortedKeys) to High(SortedKeys) do begin
-      SortedKeys[i] := TnxFastStringListCS.Create;
+      SortedKeys[i] := TwbFastStringListCS.Create;
       SortedKeys[i].Sorted := True;
       SortedKeys[i].Duplicates := dupError;
     end;
@@ -517,7 +517,7 @@ var
   Element                : IwbElement;
   CompareElement         : IwbElement;
   i, j                   : Integer;
-  UniqueValues           : TnxFastStringListCS;
+  UniqueValues           : TwbFastStringListCS;
 
   MasterPosition         : Integer;
   FirstElement           : IwbElement;
@@ -555,7 +555,7 @@ begin
     LastElement := aNodeDatas[Pred(aNodeCount)].Element;
     FirstElement := aNodeDatas[0].Element;
 
-    UniqueValues := TnxFastStringListCS.Create;
+    UniqueValues := TwbFastStringListCS.Create;
     UniqueValues.Sorted := True;
     UniqueValues.Duplicates := dupIgnore;
     Priority := cpNormal;
