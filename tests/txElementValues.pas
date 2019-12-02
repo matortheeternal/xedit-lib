@@ -210,9 +210,9 @@ begin
 
               It('Should format hardcoded dat names properly', procedure
                 begin
-                  ExpectSuccess(GetElement(0, 'Skyrim.Hardcoded.dat', @h));
+                  ExpectSuccess(GetElement(0, 'TESV.exe', @h));
                   ExpectSuccess(DisplayName(h, @len));
-                  ExpectEqual(grs(len), '[00] Skyrim.exe');
+                  ExpectEqual(grs(len), '[00] TESV.exe');
                 end);
             end);
         end);
