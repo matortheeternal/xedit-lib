@@ -19,6 +19,7 @@ type
     exeName: string;
     appIDs: string;
     abbrName: string;
+    esmName: string;
   end;
   {$endregion}
 
@@ -40,22 +41,22 @@ const
   GameArray: array[0..5] of TGameMode = (
     ( longName: 'Fallout New Vegas'; gameName: 'FalloutNV'; gameMode: gmFNV;
       regName: 'FalloutNV'; appName: 'FNV'; exeName: 'FalloutNV.exe';
-      appIDs: '22380,2028016'; ),
+      appIDs: '22380,2028016'; esmName: 'FalloutNV.esm'; ),
     ( longName: 'Fallout 3'; gameName: 'Fallout3'; gameMode: gmFO3;
       regName: 'Fallout3'; appName: 'FO3'; exeName: 'Fallout3.exe';
-      appIDs: '22300,22370'; ),
+      appIDs: '22300,22370'; esmName: 'Fallout3.esm'; ),
     ( longName: 'Oblivion'; gameName: 'Oblivion'; gameMode: gmTES4;
       regName: 'Oblivion'; appName: 'TES4'; exeName: 'Oblivion.exe';
-      appIDs: '22330,900883'; ),
+      appIDs: '22330,900883'; esmName: 'Oblivion.esm'; ),
     ( longName: 'Skyrim'; gameName: 'Skyrim'; gameMode: gmTES5;
       regName: 'Skyrim'; appName: 'TES5'; exeName: 'TESV.exe';
-      appIDs: '72850'; ),
+      appIDs: '72850'; esmName: 'Skyrim.esm'; ),
     ( longName: 'Skyrim Special Edition'; gameName: 'Skyrim'; gameMode: gmSSE;
       regName: 'Skyrim Special Edition'; appName: 'SSE';
-      exeName: 'SkyrimSE.exe'; appIDs: '489830'; ),
+      exeName: 'SkyrimSE.exe'; appIDs: '489830'; esmName: 'Skyrim.esm'; ),
     ( longName: 'Fallout 4'; gameName: 'Fallout4'; gameMode: gmFO4;
       regName: 'Fallout4'; appName: 'FO4'; exeName: 'Fallout4.exe';
-      appIDs: '377160'; )
+      appIDs: '377160'; esmName: 'Fallout4.esm'; )
   );
   {$endregion}
   {$region 'TES4Languages'}
@@ -109,14 +110,6 @@ begin
     Result := slLanguageMap.Values[Result];
 end;
 
-function GetLanguageEncoding: TwbStringEncoding;
-begin
-  Result := seCP1252;
-  if (slUTF8Languages.IndexOf(Language) > -1)
-  or ((wbGameMode in [gmSSE, gmFO4]) and (Language <> 'English')) then
-    Result := seUTF8;
-end;
-
 { Sets the game mode in the TES5Edit API }
 procedure SetGame(id: integer);
 var
@@ -141,6 +134,7 @@ begin
   wbGameName2 := GameMode.regName;
   wbGameMode := GameMode.gameMode;
   wbAppName := GameMode.appName;
+  wbGameMasterEsm := GameMode.esmName;
   wbDataPath := dataPath;
   wbVWDInTemporary := wbGameMode in [gmSSE, gmTES5, gmFO3, gmFNV];
   wbVWDAsQuestChildren := wbGameMode = gmFO4;
@@ -161,7 +155,6 @@ begin
   wbMyGamesPath := GetMyGamesPath;
   wbTheGameIniFileName := GetGameIniPath(wbMyGamesPath, GameMode);
   wbLanguage := GetLanguage;
-  wbStringEncoding := GetLanguageEncoding;
 
   // load definitions
   case wbGameMode of
