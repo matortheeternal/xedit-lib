@@ -178,7 +178,8 @@ var
   wbManualCleaningAllow    : Boolean  = False;
   wbManualCleaningHide     : Boolean  = False;
   wbShrinkButtons          : Boolean  = False;
-  wbAllowFormIDErrors            : Boolean  = True;
+  wbAllowFormIDErrors      : Boolean  = True;
+  wbSortOnDemand           : Boolean  = True;
 
   wbGlobalModifedGeneration : UInt64;
 
@@ -1198,6 +1199,9 @@ type
   TwbFileStates = set of TwbFileState;
   TwbPluginExtensions = TDynStrings;
 
+  TDynMainRecords = TArray<IwbMainRecord>;
+  TConditionFunc = reference to function(rec: IwbMainRecord): Boolean;
+
   TwbBuildOrLoadRefResult = (blrNone, blrBuilt, blrBuiltAndSaved, blrLoaded);
 
   IwbFile = interface(IwbContainer)
@@ -1210,7 +1214,8 @@ type
     function GetMaster(aIndex: Integer; aNew: Boolean): IwbFile;
     function GetMasterCount(aNew: Boolean): Integer;
     function GetRecordByFormID(aFormID: TwbFormID; aAllowInjected, aNewMasters: Boolean): IwbMainRecord;
-    function GetRecordByEditorID(const aEditorID: string): IwbMainRecord;
+    function GetRecordByEditorID(const aEditorID: string; aSearchMasters: Boolean): IwbMainRecord;
+    function GetRecordByName(const aName: string; aSearchMasters: Boolean): IwbMainRecord;
     function GetContainedRecordByLoadOrderFormID(aFormID: TwbFormID; aAllowInjected: Boolean): IwbMainRecord;
     function GetLoadOrder: Integer;
     function GetLoadOrderFileID: TwbFileID;
@@ -1265,6 +1270,14 @@ type
     function GetHasNoFormID: Boolean;
     procedure SetHasNoFormID(Value: Boolean);
 
+    procedure RecordsBySignature(var aList: TDynMainRecords; aSignature: String; var len: Integer; aCondition: TConditionFunc = nil);
+
+    procedure SortEditorIDs(aSignature: String);
+    function EditorIDSorted(aSignature: String): Boolean;
+
+     procedure SortNames(aSignature: String);
+    function NamesSorted(aSignature: String): Boolean;
+
     function GetEncoding(aTranslatable: Boolean): TEncoding;
 
     function GetCompareToFile: IwbFile;
@@ -1291,8 +1304,10 @@ type
 
     property RecordByFormID[aFormID: TwbFormID; aAllowInjected, aNewMasters: Boolean]: IwbMainRecord
       read GetRecordByFormID;
-    property RecordByEditorID[const aEditorID: string]: IwbMainRecord
+    property RecordByEditorID[const aEditorID: string; aSearchMasters: Boolean]: IwbMainRecord
       read GetRecordByEditorID;
+    property RecordByName[const aName: string; aSearchMasters: Boolean]: IwbMainRecord
+      read GetRecordByName;
      property GroupBySignature[const aSignature: TwbSignature]: IwbGroupRecord
       read GetGroupBySignature;
     property ContainedRecordByLoadOrderFormID[aFormID: TwbFormID; aAllowInjected: Boolean]: IwbMainRecord
@@ -1433,8 +1448,6 @@ type
     x, y: Integer;
     class operator Equal(const a, b: TwbGridCell): Boolean; static;
   end;
-
-  TDynMainRecords = TArray<IwbMainRecord>;
 
   TDynMainRecordsHelper = record helper for TDynMainRecords
     procedure Add(const aMainRecord: IwbMainRecord);
@@ -1710,6 +1723,7 @@ type
     function FindChildGroup(aType: Integer; const aMainRecord: IwbMainRecord): IwbGroupRecord; overload;
     function FindChildGroup(aType: Integer; const aLabel : Cardinal): IwbGroupRecord; overload;
 
+    function GetMainRecordByName(const aName: string): IwbMainRecord;
     function GetMainRecordByEditorID(const aEditorID: string): IwbMainRecord;
     function GetMainRecordByFormID(const aFormID: TwbFormID): IwbMainRecord;
 
@@ -1729,6 +1743,8 @@ type
     property ChildrenOf: IwbMainRecord
       read GetChildrenOf;
 
+    property MainRecordByName[const aName: string]: IwbMainRecord
+      read GetMainRecordByName;
     property MainRecordByEditorID[const aEditorID: string]: IwbMainRecord
       read GetMainRecordByEditorID;
     property MainRecordByFormID[const aFormID: TwbFormID]: IwbMainRecord
@@ -2400,6 +2416,7 @@ type
     procedure ContainerResourceList(const aContainerName: string; const aList: TStrings;
       const aFolder: string = '');
     function ResourceExists(const aFileName: string): Boolean;
+    function GetResourceContainer(const aFileName: string): String;
     function ResourceCount(const aFileName: string; aContainers: TStrings = nil): Integer;
     procedure ResourceCopy(const aContainerName, aFileName, aPathOut: string);
   end;
@@ -12577,7 +12594,7 @@ begin
 
   _File := aElement._File;
   if Assigned(_File) then begin
-    Rec := _File.RecordByEditorID[PwbSignature(@U32)^];
+    Rec := _File.RecordByEditorID[PwbSignature(@U32)^, True];
     if Assigned(Rec) then
       aElement.AddReferencedFromID(Rec.LoadOrderFormID); // should always be 00, these are only defined in Oblivion.esm
   end;
@@ -12633,7 +12650,7 @@ begin
   U32 := aInt;
   _File := aElement._File;
   if Assigned(_File) then
-    Result := _File.RecordByEditorID[PwbSignature(@U32)^];
+    Result := _File.RecordByEditorID[PwbSignature(@U32)^, True];
 end;
 
 function TwbChar4.ToEditValue(aInt: Int64; const aElement: IwbElement): string;
@@ -12660,7 +12677,7 @@ begin
 
   _File := aElement._File;
   if Assigned(_File) then begin
-    Rec := _File.RecordByEditorID[Result];
+    Rec := _File.RecordByEditorID[Result, True];
     if Assigned(Rec) then begin
       Result := Rec.Name;
       Used(aElement, Result);
@@ -16047,10 +16064,12 @@ procedure TwbStringMgefCodeDef.BuildRef(aBasePtr, aEndPtr: Pointer; const aEleme
 var
   _File : IwbFile;
   Rec   : IwbMainRecord;
+  editorId: String;
 begin
   _File := aElement._File;
   if Assigned(_File) then begin
-    Rec := _File.RecordByEditorID[ToStringTransform(aBasePtr, aEndPtr, aElement, ttToSortKey)];
+    editorId := ToStringTransform(aBasePtr, aEndPtr, aElement, ttToSortKey);
+    Rec := _File.RecordByEditorID[editorId, True];
     if Assigned(Rec) then
       aElement.AddReferencedFromID(Rec.LoadOrderFormID);
   end;
@@ -16215,14 +16234,17 @@ end;
 function TwbStringMgefCodeDef.GetLinksTo(aBasePtr, aEndPtr: Pointer; const aElement: IwbElement): IwbElement;
 var
   _File : IwbFile;
+  editorId: String;
 begin
   if Assigned(vdLinksToCallback) then
     Exit(vdLinksToCallback(aElement));
 
   Result := nil;
   _File := aElement._File;
-  if Assigned(_File) then
-    Result := _File.RecordByEditorID[ToStringTransform(aBasePtr, aEndPtr, aElement, ttToSortKey)];
+  if Assigned(_File) then begin
+    editorId := ToStringTransform(aBasePtr, aEndPtr, aElement, ttToSortKey);
+    Result := _File.RecordByEditorID[editorId, True];
+  end;
 end;
 
 function TwbStringMgefCodeDef.MastersUpdated(aBasePtr, aEndPtr: Pointer; const aElement: IwbElement; const aOld, aNew: TwbFileIDs; aOldCount, aNewCount: Byte): Boolean;
