@@ -87,7 +87,6 @@ end;
 function GetContainerFiles(name, path: PWideChar; len: PInteger): WordBool; cdecl;
 var
   ResourceList: TStringList;
-  i: Integer;
 begin
   Result := False;
   try
