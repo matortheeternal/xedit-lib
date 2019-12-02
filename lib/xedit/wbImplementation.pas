@@ -6956,11 +6956,11 @@ var
 begin
   aRemainingName := '';
   i := Pos('\', aName);
-  len := Length(aName);
   if i > 0 then begin
     aRemainingName := Copy(aName, Succ(i), High(Integer));
     Delete(aName, i, High(Integer));
   end;
+  len := Length(aName);
   if aName = '..' then
     Result := GetContainer
   else if (len > 2) and (aName[1] = '[') and (aName[len] = ']') then begin
