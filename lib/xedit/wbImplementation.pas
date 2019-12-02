@@ -20014,6 +20014,8 @@ var
   DataContainer            : IwbDataContainer;
   Flags                    : TwbMainRecordStructFlags;
   p                        : Pointer;
+  newCardinal              : Cardinal;
+  newWord                  : Word;
 
   ToggleDeleted            : Boolean;
   TogglePersistent         : Boolean;
@@ -20057,14 +20059,16 @@ begin
       else if SameText(aElement.Def.Name, 'Version Control Info 1') then begin
         UpdateStorageFromElements;
         dcDataStorage := nil;
+        newCardinal := PCardinal(DataContainer.DataBasePtr)^;
         MainRecordInternal.MakeHeaderWriteable;
-        MainRecordInternal.mrStruct.mrsVCS1 := PWord(DataContainer.DataBasePtr)^;
+        MainRecordInternal.mrStruct.mrsVCS1 := newCardinal;
       end
       else if SameText(aElement.Def.Name, 'Version Control Info 2') then begin
         UpdateStorageFromElements;
         dcDataStorage := nil;
+        newWord := PWord(DataContainer.DataBasePtr)^;
         MainRecordInternal.MakeHeaderWriteable;
-        MainRecordInternal.mrStruct.mrsVCS2 := PWord(DataContainer.DataBasePtr)^;
+        MainRecordInternal.mrStruct.mrsVCS2 := newWord;
       end;
     end;
 
