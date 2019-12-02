@@ -135,6 +135,7 @@ begin
   wbGameMode := GameMode.gameMode;
   wbAppName := GameMode.appName;
   wbGameMasterEsm := GameMode.esmName;
+  wbGameExeName := GameMode.exeName;
   wbDataPath := dataPath;
   wbVWDInTemporary := wbGameMode in [gmSSE, gmTES5, gmFO3, gmFNV];
   wbVWDAsQuestChildren := wbGameMode = gmFO4;

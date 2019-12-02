@@ -228,6 +228,7 @@ var
   _file: IwbFile;
   gameEsmPath: String;
 begin
+  if Length(bytes) = 0 then exit;
   gameEsmPath := wbDataPath + wbGameMasterEsm;
   _file := wbFile(wbGameExeName, 0, gameEsmPath, [fsIsHardcoded], bytes);
   SetLength(xFiles, Length(xFiles) + 1);

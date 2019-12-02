@@ -139,7 +139,7 @@ begin
         begin
           It('Should get required by file handles', procedure
             begin
-              TestGetRequiredBy(skyrim, ['Update.esm','xtest-1.esp','xtest-2.esp','xtest-3.esp','xtest-4.esp','xtest-5.esp']);
+              TestGetRequiredBy(skyrim, ['TESV.exe', 'Update.esm','xtest-1.esp','xtest-2.esp','xtest-3.esp','xtest-4.esp','xtest-5.esp']);
             end);
         end);
 

@@ -478,6 +478,11 @@ begin
 
           Describe('File record resolution by EditorID', procedure
             begin
+              BeforeAll(procedure
+                begin
+                  SortEditorIDs(xt3, 'ARMO');
+                end);
+
               It('Should return a handle if the record exists', procedure
                 begin
                   TestGetElement(xt3, 'ArmorIronGauntlets');
@@ -491,6 +496,11 @@ begin
 
           Describe('File record resolution by Name', procedure
             begin
+              BeforeAll(procedure
+                begin
+                  SortNames(xt3, 'ARMO');
+                end);
+
               It('Should return a handle if the record exists', procedure
                 begin
                   TestGetElement(xt3, '"Iron Gauntlets"');
@@ -836,13 +846,14 @@ begin
             begin
               TestGetDefNames(ar1, TStringArray.Create('Record Header', 'EDID - Editor ID',
                 'VMAD - Virtual Machine Adapter', 'OBND - Object Bounds', 'FULL - Name',
-                'EITM - Object Effect', 'EAMT - Enchantment Amount', 'Male world model',
-                'Icon', 'Female world model', 'Icon 2 (female)', 'Biped Body Template',
-                'Destructible', 'YNAM - Sound - Pick Up', 'ZNAM - Sound - Put Down',
-                'BMCT - Ragdoll Constraint Template', 'ETYP - Equipment Type',
-                'BIDS - Bash Impact Data Set', 'BAMT - Alternate Block Material', 'RNAM - Race',
-                'KSIZ - Keyword Count', 'KWDA - Keywords', 'DESC - Description', 'Armature',
-                'DATA - Data', 'DNAM - Armor Rating', 'TNAM - Template Armor'));
+                'EITM - Object Effect', 'EAMT - Enchantment Amount', 'MOD2 - Male world model',
+                'ICON - Icon', 'MOD4 - Female world model', 'ICO2 - Icon 2 (female)',
+                'BOD2 - Biped Body Template', 'DEST - Destructible', 'YNAM - Sound - Pick Up',
+                'ZNAM - Sound - Put Down', 'BMCT - Ragdoll Constraint Template',
+                'ETYP - Equipment Type', 'BIDS - Bash Impact Data Set',
+                'BAMT - Alternate Block Material', 'RNAM - Race', 'KSIZ - Keyword Count',
+                'KWDA - Keywords', 'DESC - Description', 'MODL - Armature', 'DATA - Data',
+                'DNAM - Armor Rating', 'TNAM - Template Armor'));
             end);
 
           It('Should include additional elements', procedure
@@ -854,7 +865,7 @@ begin
                 'LTMP - Lighting Template', 'LNAM - Unknown', 'XCLW - Water Height',
                 'XNAM - Water Noise Texture', 'XCLR - Regions', 'XLCN - Location',
                 'XWCN - Unknown', 'XWCS - Unknown', 'XWCU - Water Velocity', 'XCWT - Water',
-                'Ownership', 'XILL - Lock List', 'XWEM - Water Environment Map',
+                'XOWN - Ownership', 'XILL - Lock List', 'XWEM - Water Environment Map',
                 'XCCM - Sky/Weather from Region', 'XCAS - Acoustic Space',
                 'XEZN - Encounter Zone', 'XCMO - Music Type', 'XCIM - Image Space'));
             end);
