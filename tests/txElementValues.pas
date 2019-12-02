@@ -539,6 +539,12 @@ begin
               TestSetValue(rec, 'Female world model\MOD4', 'Armor\Iron\F\GauntletsGND.nif');
             end);
 
+          It('Should work with version control info', procedure
+            begin
+              TestSetValue(rec, 'Record Header\Version Control Info 1', '00 00 12 34');
+              TestSetValue(rec, 'Record Header\Version Control Info 2', '12 34');
+            end);
+
           It('Should fail if path does not exist', procedure
             begin
               ExpectFailure(SetValue(rec, 'Non\Existent\Path', 'Test'));
@@ -578,12 +584,6 @@ begin
           It('Should set element unsigned integer values at paths', procedure
             begin
               TestSetUIntValue(rec, 'KWDA\[0]', $2C177)
-            end);
-
-          It('Should work with version control info', procedure
-            begin
-              TestSetUIntValue(rec, 'Record Header\Version Control Info 1', $1234);
-              TestSetUIntValue(rec, 'Record Header\Version Control Info 2', $1234);
             end);
 
           It('Should fail if path does not exist', procedure
