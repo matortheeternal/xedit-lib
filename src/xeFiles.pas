@@ -42,6 +42,13 @@ uses
   xeHelpers, xeMessages, xeMeta, xeSetup;
 
 {$region 'Native functions'}
+function NextLoadOrder: Integer;
+begin
+  Result := 0;
+  if Length(xFiles) > 0 then
+    Result := Succ(xFiles[High(xFiles)].LoadOrder);
+end;
+
 function NativeFileByIndex(index: Integer): IwbFile;
 begin
   if (index >= Length(xFiles)) or (index < 0) then
@@ -225,7 +232,7 @@ begin
     end;
     FileStream := TFileStream.Create(path, fmCreate);
     try
-      _file.WriteToStream(FileStream, False);
+      _file.WriteToStream(FileStream, rmNo);
       if (filePath = '') and (slSavedFiles.IndexOf(path) = -1) then
         slSavedFiles.Add(path);
       Result := True;

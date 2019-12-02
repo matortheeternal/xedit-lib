@@ -76,8 +76,8 @@ var
   i: Integer;
 begin
   Result := False;
-  for i := 0 to Pred(_file.MasterCount) do
-    if _file.Masters[i].FileName = _master.FileName then begin
+  for i := 0 to Pred(_file.MasterCount[False]) do
+    if _file.Masters[i, False].FileName = _master.FileName then begin
       Result := True;
       break;
     end;
@@ -181,10 +181,10 @@ begin
   Result := False;
   try
     if Supports(Resolve(_id), IwbFile, _file) then begin
-      len^ := _file.MasterCount;
+      len^ := _file.MasterCount[False];
       SetLength(resultArray, len^);
-      for i := 0 to Pred(_file.MasterCount) do
-        resultArray[i] := Store(_file.Masters[i]);
+      for i := 0 to Pred(_file.MasterCount[False]) do
+        resultArray[i] := Store(_file.Masters[i, False]);
       Result := True;
     end;
   except
