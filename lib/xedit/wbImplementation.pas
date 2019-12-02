@@ -18796,12 +18796,13 @@ begin
   fileName := _File.FileName;
   index := IndexOfFile(_File);
   aLength := Length(Files);
-  Assert(index > -1);
   Assert(index < aLength);
   (_File as IwbFileInternal).ForceClosed;
-  for i := index + 1 to Pred(aLength) do
-    Files[i - 1] := Files[i];
-  SetLength(Files, aLength - 1);
+  if index > -1 then begin
+    for i := index + 1 to Pred(aLength) do
+      Files[i - 1] := Files[i];
+    SetLength(Files, aLength - 1);
+  end;
   for i := 0 to Pred(FilesMap.Count) do
     if SameText(ExtractFileName(FilesMap[i]), fileName) then begin
       FilesMap.Delete(i);
