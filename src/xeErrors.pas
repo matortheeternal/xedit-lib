@@ -23,7 +23,7 @@ type
     &type: TErrorType;
     handle: Cardinal;
     signature: TwbSignature;
-    formID: integer;
+    formID: Cardinal;
     name: string;
     path: string;
     data: string;
@@ -263,7 +263,7 @@ procedure TRecordError.Init(const rec: IwbMainRecord);
 begin
   handle := Store(rec);
   signature := rec.signature;
-  formID := rec.FixedFormID;
+  formID := rec.FixedFormID.ToCardinal;
   name := rec.Name;
 end;
 {$endregion}

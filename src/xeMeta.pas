@@ -20,6 +20,7 @@ type
   function Store(const x: IInterface): Cardinal;
   function StoreNodes(nodes: TDynViewNodeDatas): Cardinal;
   function xStrCopy(source: WideString; dest: PWideChar; maxLen: Integer): WordBool;
+  function TryStrToFormID(const s: String; out formID: TwbFormID): WordBool;
   procedure SetResultFromList(var sl: TStringList; len: PInteger);
   {$endregion}
 
@@ -81,6 +82,15 @@ begin
   end;
 end;
 
+function TryStrToFormID(const s: String; out formID: TwbFormID): WordBool;
+var
+  n: Int64;
+begin
+  Result := TryStrToInt64(s, n);
+  if Result then
+    formID := TwbFormID.FromCardinal(n);
+end;
+
 procedure SetResultFromList(var sl: TStringList; len: PInteger);
 begin
   resultStr := sl.Text;
@@ -134,11 +144,11 @@ var
   rec: IwbMainRecord;
 begin
   if Supports(e, IwbFile, _file) then
-    Result := _file.DisplayName
+    Result := _file.DisplayName[False]
   else if Supports(e, IwbGroupRecord, group) then
     Result := String(TwbSignature(group.GroupLabel))
   else if Supports(e, IwbMainRecord, rec) then
-    Result := IntToHex(rec.LoadOrderFormID, 8)
+    Result := rec.LoadOrderFormID.ToString
   else
     Result := '';
 end;

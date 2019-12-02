@@ -18,7 +18,7 @@ type
   {$region 'API functions'}
   function GetFormID(_id: Cardinal; formID: PCardinal; native: WordBool): WordBool; cdecl;
   function SetFormID(_id: Cardinal; formID: Cardinal; native, fixReferences: WordBool): WordBool; cdecl;
-  function GetRecord(_id: Cardinal; formID: Cardinal; searchMasters: WordBool; _res: PCardinal): WordBool; cdecl;
+  function GetRecord(_id: Cardinal; _formID: Cardinal; searchMasters: WordBool; _res: PCardinal): WordBool; cdecl;
   function GetRecords(_id: Cardinal; search: PWideChar; includeOverrides: WordBool; len: PInteger): WordBool; cdecl;
   function GetREFRs(_id: Cardinal; search: PWideChar; flags: Cardinal; len: PInteger): WordBool; cdecl;
   function GetOverrides(_id: Cardinal; count: PInteger): WordBool; cdecl;
@@ -53,10 +53,10 @@ function EditorIDToFormID(const _file: IwbFile; const editorID: String): Cardina
 var
   rec: IwbMainRecord;
 begin
-  rec := _file.RecordByEditorID[editorID];
+  rec := _file.RecordByEditorID[editorID, False];
   if not Assigned(rec) then
     raise Exception.Create('Failed to find record with Editor ID: ' + editorID + ' in file ' + _file.FileName);
-  Result := _file.LoadOrderFormIDtoFileFormID(rec.LoadOrderFormID);
+  Result := _file.LoadOrderFormIDtoFileFormID(rec.LoadOrderFormID, False).ToCardinal;
 end;
 
 function NativeGetPreviousOverride(rec: IwbMainRecord; const targetFile: IwbFile): IwbMainRecord;
@@ -332,11 +332,11 @@ function GetFilesArray(const _file: IwbFile): TDynFiles;
 var
   count, i: Integer;
 begin
-  count := _file.MasterCount;
+  count := _file.MasterCount[False];
   SetLength(Result, count + 1);
   Result[0] := _file;
   for i := 0 to Pred(count) do
-    Result[count - i] := _file.Masters[i];
+    Result[count - i] := _file.Masters[i, False];
 end;
 
 function SignatureInArray(sig: TwbSignature; ary: TDynSignatures): Boolean;
@@ -411,9 +411,9 @@ begin
     if not Supports(Resolve(_id), IwbMainRecord, rec) then
       raise Exception.Create('Interface must be a main record.');
     if native then
-      formID^ := rec.FixedFormID
+      formID^ := rec.FixedFormID.ToCardinal
     else
-      formID^ := rec.LoadOrderFormID;
+      formID^ := rec.LoadOrderFormID.ToCardinal;
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
@@ -424,7 +424,7 @@ end;
 function SetFormID(_id: Cardinal; formID: Cardinal; native, fixReferences: WordBool): WordBool; cdecl;
 var
   rec, mRec: IwbMainRecord;
-  oldFormID, newFormID: Cardinal;
+  oldFormID, newFormID: TwbFormID;
   i: Integer;
 begin
   Result := False;
@@ -432,10 +432,9 @@ begin
     if not Supports(Resolve(_id), IwbMainRecord, rec) then
       raise Exception.Create('Interface must be a main record.');
     oldFormID := rec.LoadOrderFormID;
+    newFormID := TwbFormID.FromCardinal(formID);
     if native then
-      newFormID := rec._File.FileFormIDtoLoadOrderFormID(formID)
-    else
-      newFormID := formID;
+      newFormID := rec._File.FileFormIDtoLoadOrderFormID(newFormID, False);
     if fixReferences then begin
       mRec := rec.MasterOrSelf;
       for i := Pred(mRec.ReferencedByCount) downto 0 do
@@ -460,25 +459,27 @@ end;
 // TODO: update to use TwbFormID
 // TODO: update to handle fileOrdinals larger than 1 byte (light plugin slots)
 // TODO: make tests for hardcoded forms injected into game ESM
-function GetRecord(_id: Cardinal; formID: Cardinal; searchMasters: WordBool; _res: PCardinal): WordBool; cdecl;
+function GetRecord(_id: Cardinal; _formID: Cardinal; searchMasters: WordBool; _res: PCardinal): WordBool; cdecl;
 var
   rec: IwbMainRecord;
   fileOrdinal: Cardinal;
+  formID: TwbFormID;
   _file: IwbFile;
 begin
   Result := False;
   try
     if _id = 0 then begin
-      fileOrdinal := formID shr 24;
+      fileOrdinal := _formID shr 24;
       _file := NativeFileByLoadOrder(fileOrdinal);
-      formID := _file.LoadOrderFormIDtoFileFormID(formID);
+      formID := TwbFormID.FromCardinal(_formID);
+      formID := _file.LoadOrderFormIDtoFileFormID(formID, False);
     end
     else
       if not Supports(Resolve(_id), IwbFile, _file) then
         raise Exception.Create('Interface must be a file.');
-    rec := _file.RecordByFormID[formID, True, searchMasters];
+    rec := _file.RecordByFormID[formID, True, False]; //, searchMasters
     if not Assigned(rec) then
-      raise Exception.Create('Failed to find record with FormID: ' + IntToHex(formID, 8));
+      raise Exception.Create('Failed to find record with FormID: ' + IntToHex(_formID, 8));
     _res^ := Store(rec);
     Result := True;
   except
@@ -736,7 +737,10 @@ begin
   try
     if not Supports(Resolve(_id), IwbMainRecord, rec) then
       raise Exception.Create('Interface must be a main record.');
-    rec.CompareExchangeFormID(oldFormID, newFormID);
+    rec.CompareExchangeFormID(
+      TwbFormID.FromCardinal(oldFormID),
+      TwbFormID.FromCardinal(newFormID)
+    );
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);

@@ -328,6 +328,7 @@ var
   container: IwbContainerElementRef;
   recordSig, objSig: String;
   recordFormID, objFormID: Cardinal;
+  formID: TwbFormID;
 begin
   if not Supports(header, IwbContainerElementRef, container)
   or not Assigned(obj) then
@@ -339,8 +340,10 @@ begin
       'signatures do not match, %s != %s', [recordSig, objSig]));
   // set load order formID if different
   recordFormID := container.ElementNativeValues['FormID'];
-  if GetObjFormID(obj, objFormID) and (recordFormID <> objFormID) then
-    header.ContainingMainRecord.SetLoadOrderFormID(objFormID);
+  if GetObjFormID(obj, objFormID) and (recordFormID <> objFormID) then begin
+    formID := TwbFormID.FromCardinal(objFormID);
+    header.ContainingMainRecord.SetLoadOrderFormID(formID);
+  end;
   // assign to whitelisted paths
   JsonToElements(container, obj, ['Signature', 'Data Size', 'FormID', 'Form Version']);
 end;

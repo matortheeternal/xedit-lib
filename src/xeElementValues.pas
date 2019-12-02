@@ -11,8 +11,8 @@ uses
     sort: WordBool = False; curPath: String = ''): String;
   function GetPathName(const element: IwbElement; sort: WordBool = False): String;
   function NativeName(const e: IwbElement; quoteFull: Boolean = False): String;
-  function ParseFormIDValue(const value: String; var formID: Int64): Boolean;
-  function ParseFileFormIDValue(const value: String; var _file: IwbFile; var formID: Int64): Boolean;
+  function ParseFormIDValue(const value: String; var formID: TwbFormID): Boolean;
+  function ParseFileFormIDValue(const value: String; var _file: IwbFile; var formID: TwbFormID): Boolean;
   procedure SetElementValue(const element: IwbElement; const value: String);
   function IndexOfFlag(const flagsDef: IwbFlagsDef; const name: String): Integer;
   procedure NativeSetFlag(const element: IwbElement; index: Integer; enabled: WordBool);
@@ -67,7 +67,7 @@ function FormString(const rec: IwbMainRecord): String;
 begin
   Result := Format('[%s:%s]', [
     AnsiString(rec.Signature),
-    IntToHex(rec.LoadOrderFormID, 8)
+    IntToHex(rec.LoadOrderFormID.ToCardinal, 8)
   ]);
 end;
 
@@ -124,7 +124,7 @@ end;
 {$region 'Path helpers'}
 function HexFormID(const rec: IwbMainRecord): String;
 begin
-  Result := IntToHex(rec.LoadOrderFormID, 8);
+  Result := IntToHex(rec.LoadOrderFormID.ToCardinal, 8);
 end;
 
 function GetPathName(const element: IwbElement; sort: WordBool = False): String;
@@ -202,7 +202,7 @@ begin
 end;
 
 {$region 'SetValue helpers'}
-function ParseFormIDValue(const value: String; var formID: Int64): Boolean;
+function ParseFormIDValue(const value: String; var formID: TwbFormID): Boolean;
 var
   n, len, open: Integer;
 begin
@@ -224,19 +224,20 @@ begin
           open := 0;
       ']':
         if (open <> 0) and (n - open = 9)
-        and TryStrToInt64('$' + Copy(value, open + 1, 8), formID) then
+        and TryStrToFormID('$' + Copy(value, open + 1, 8), formID) then
           exit;
     end;
     Inc(n);
   end;
-  // attempts to convert entire key to integer
-  Result := TryStrToInt64('$' + value, formID);
+  // attempts to convert entire key to formID
+  Result := TryStrToFormID('$' + value, formID);
 end;
 
-function ParseFileFormIDValue(const value: String; var _file: IwbFile; var formID: Int64): Boolean;
+function ParseFileFormIDValue(const value: String; var _file: IwbFile; var formID: TwbFormID): Boolean;
 var
   len, n: Integer;
   filename, fidStr: String;
+  fid: Int64;
 begin
   Result := False;
   len := Length(value);
@@ -245,19 +246,24 @@ begin
   filename := Copy(value, 2, n - 1);
   _file := NativeFileByName(filename);
   fidStr := Copy(value, n + 1, len - n - 1);
-  Result := Assigned(_file) and TryStrToInt64('$' + fidStr, formID);
+  if not Assigned(_file) or not TryStrToInt64('$' + fidStr, fid) then exit;
+  formID := TwbFormID.FromCardinal(Cardinal(fid));
+  Result := True;
 end;
 
 procedure SetElementValue(const element: IwbElement; const value: String);
 var
-  formID: Int64;
+  formIdValue: Int64;
+  formID: TwbFormID;
   _file: IwbFile;
 begin
   if IsFormID(element) then begin
     if value = '' then
       element.NativeValue := 0
-    else if ParseFormIDValue(value, formID) then
-      element.NativeValue := element._File.LoadOrderFormIDtoFileFormID(formID)
+    else if ParseFormIDValue(value, formID) then begin
+      formID := element._File.LoadOrderFormIDtoFileFormID(formID, False);
+      element.NativeValue := formID.ToCardinal;
+    end
     else if ParseFileFormIDValue(value, _file, formID) then
        element.NativeValue := _file.RecordByFormID[formID, false, false]
     else
@@ -368,7 +374,7 @@ begin
   try
     if not Supports(Resolve(_id), IwbElement, element) then
       raise Exception.Create('Interface is not an element.');
-    resultStr := element.DisplayName;
+    resultStr := element.DisplayName[False];
     len^ := Length(resultStr);
     Result := True;
   except
@@ -473,7 +479,7 @@ begin
     end
     else if Supports(element, IwbMainRecord, rec) then begin
       rec := rec.MasterOrSelf;
-      fid := IntToHex(rec.FormID and $00FFFFFF, 6)
+      fid := IntToHex(rec.FormID.ToCardinal and $00FFFFFF, 6)
     end
     else
       raise Exception.Create('Element must be a main record or form ID element.');

@@ -28,7 +28,7 @@ type
   function AddGroupIfMissing(const _file: IwbFile; const sig: String): IwbGroupRecord;
   function CreateFromContainer(const container: IwbContainerElementRef; const path: String): IInterface;
   function CreateFromRecord(const rec: IwbMainRecord; const path: String): IInterface;
-  function CreateRecord(const group: IwbGroupRecord; formID: Cardinal; const nextPath: String): IInterface; overload;
+  function CreateRecord(const group: IwbGroupRecord; formID: TwbFormID; const nextPath: String): IInterface; overload;
   function CreateGroupOrRecord(const group: IwbGroupRecord; key, nextPath: String): IInterface; overload;
   function CreateFromGroup(const group: IwbGroupRecord; const path: String): IInterface;
   function CreateFile(const fileName, nextPath: String): IInterface;
@@ -138,25 +138,29 @@ begin
   Result := True;
 end;
 
-function ParseFormID(const key: String; var formID: Cardinal): Boolean;
+function ParseFormID(const key: String; var formID: TwbFormID): Boolean;
 begin
   Result := (Length(key) = 8) and IsHexStr(key);
   if Result then
-    formID := StrToInt('$' + key);
+    formID := TwbFormID.FromCardinal(StrToInt('$' + key));
 end;
 
-function ParseLocalFormID(const key: String; const _file: IwbFile; var formID: Cardinal): Boolean;
+function ParseLocalFormID(const key: String; const _file: IwbFile; var formID: TwbFormID): Boolean;
+var
+  c: Cardinal;
 begin
   Result := (key[1] = 'L') and (Length(key) = 7) and IsHexStr(key, 2);
-  if Result then
-    formID := $1000000 * _file.MasterCount + StrToInt('$' + Copy(key, 2, 6));
+  if Result then begin
+    c := $1000000 * _file.MasterCount[False] + StrToInt('$' + Copy(key, 2, 6));
+    formID := TwbFormID.FromCardinal(c);
+  end;
 end;
 
-function ParseFileFormID(const key: String; var formID: Cardinal): Boolean;
+function ParseFileFormID(const key: String; var formID: TwbFormID): Boolean;
 begin
   Result := (key[1] = '&') and (Length(key) = 9) and IsHexStr(key, 2);
   if Result then
-    formID := StrToInt('$' + Copy(key, 2, 8));
+    formID := TwbFormID.FromCardinal(StrToInt('$' + Copy(key, 2, 8)));
 end;
 
 function ParseFullName(const value: String; var fullName: String): Boolean;
@@ -263,7 +267,7 @@ end;
 function ResolveGroupOrRecord(const group: IwbGroupRecord; const key, nextPath: String): IInterface; overload;
 var
   name, sig: String;
-  formID, fixedFormID: Cardinal;
+  formID, fixedFormID: TwbFormID;
   grp: IwbGroupRecord;
   rec: IwbMainRecord;
 begin
@@ -273,15 +277,15 @@ begin
   else if ParseFileFormID(key, formID) then
     Result := group._File.RecordByFormID[formID, True, False]
   else if ParseFormID(key, formID) then begin
-    fixedFormID := group._File.LoadOrderFormIDtoFileFormID(formID);
-    Result := group._File.RecordByFormID[fixedFormID, True, False];
+    fixedFormID := group._File.LoadOrderFormIDtoFileFormID(formID, False);
+    Result := group._File.RecordByFormID[fixedFormID, True, False]; // , False
   end
   else if ParseFullName(key, name) then
     Result := group.MainRecordByName[name]
   else begin
     sig := String(TwbSignature(group.GroupLabel));
     if group._File.EditorIDSorted(sig) then
-      Result := group._File.RecordByEditorID[key];
+      Result := group._File.RecordByEditorID[key, False];
     if not Assigned(Result) then
       Result := FindRecordOrGroup(group, key);
   end;
@@ -309,29 +313,25 @@ end;
 
 function ResolveGroupOrRecord(const _file: IwbFile; const key, nextPath: String): IInterface; overload;
 var
-  formID: Cardinal;
+  formID: TwbFormID;
   name: String;
   sig: TwbSignature;
   rec: IwbMainRecord;
   group: IwbGroupRecord;
 begin
   if ParseFileFormID(key, formID) then
-    Result := _file.RecordByFormID[formID, True, False]
+    Result := _file.RecordByFormID[formID, True, False]  // , False
   else if ParseFormID(key, formID) then begin
-    formID := _file.LoadOrderFormIDtoFileFormID(formID);
-    Result := _file.RecordByFormID[formID, True, False];
+    formID := _file.LoadOrderFormIDtoFileFormID(formID, False);
+    Result := _file.RecordByFormID[formID, True, False]; // , False
   end
-  else if ParseFullName(key, name) then begin
-    _file.FindName(name, rec);
-    Result := rec;
-  end
+  else if ParseFullName(key, name) then
+    Result := _file.RecordByName[name, False]
   else if Length(key) > 4 then begin
     if GetSignatureFromName(key, sig) then
       Result := _file.GroupBySignature[sig]
-    else begin
-      _file.FindEditorID(key, rec);
-      Result := rec;
-    end;
+    else
+      Result := _file.RecordByEditorID[key, False];
   end
   else
     Result := _file.GroupBySignature[StrToSignature(key)];
@@ -497,7 +497,7 @@ begin
   end;
 end;
 
-function CreateRecord(const group: IwbGroupRecord; formID: Cardinal; const nextPath: String): IInterface; overload;
+function CreateRecord(const group: IwbGroupRecord; formID: TwbFormID; const nextPath: String): IInterface; overload;
 var
   sig: TwbSignature;
   rec: IwbMainRecord;
@@ -538,7 +538,7 @@ end;
 function CreateFromGroup(const group: IwbGroupRecord; const path: String): IInterface;
 var
   key, nextPath: String;
-  formID: Cardinal;
+  formID: TwbFormID;
 begin
   SplitPath(path, key, nextPath);
   // resolve/override record by formID
@@ -558,12 +558,12 @@ begin
     Result := CreateFromGroup(Result as IwbGroupRecord, nextPath);
 end;
 
-function CreateRecord(const _file: IwbFile; formID: Cardinal; const nextPath: String): IInterface; overload;
+function CreateRecord(const _file: IwbFile; formID: TwbFormID; const nextPath: String): IInterface; overload;
 var
   rec: IwbMainRecord;
 begin
-  formID := _file.LoadOrderFormIDToFileFormID(formID);
-  Result := _file.RecordByFormID[formID, True, True];
+  formID := _file.LoadOrderFormIDToFileFormID(formID, False);
+  Result := _file.RecordByFormID[formID, True, False]; // , True
   if not Supports(Result, IwbMainRecord, rec) then exit;
   OverrideRecordIfNecessary(rec, _file, Result);
   if Assigned(Result) and (nextPath <> '') then
@@ -573,7 +573,7 @@ end;
 function CreateFromFile(const _file: IwbFile; const path: String): IInterface;
 var
   key, nextPath: String;
-  formID: Cardinal;
+  formID: TwbFormID;
 begin
   SplitPath(path, key, nextPath);
   // resolve record by formID if key is a formID
@@ -731,7 +731,7 @@ var
   d: IwbDataContainer;
 begin
   d := e as IwbDataContainer;
-  Result := unionDef.Decide(d.DataBasePtr, d.DataEndPtr, e);
+  Result := unionDef.ResolveDef(d.DataBasePtr, d.DataEndPtr, e);
 end;
 
 procedure NativeGetDefNames(const element: IwbElement; var sl: TStringList);
@@ -797,7 +797,7 @@ end;
 {$region 'Element matching'}
 function ElementValueMatches(element: IwbElement; value: string): WordBool;
 var
-  formID: Int64;
+  formID: TwbFormID;
   rec: IwbMainRecord;
   fullName, v: String;
   e1, e2: Extended;
@@ -806,12 +806,12 @@ begin
   Result := False;
   if IsFormID(element) then begin
     if ParseFormIDValue(value, formID) then
-      Result := element.NativeValue = formID
+      Result := element.NativeValue = formID.ToCardinal
     else if Supports(element.LinksTo, IwbMainRecord, rec) then begin
       if ParseFullName(value, fullName) then
         Result := rec.FullName = fullName
       else if ParseFileFormIDValue(value, _file, formID) then
-        Result := rec._File.Equals(_file) and ((rec.FormID and $00FFFFFF) = formID)
+        Result := rec._File.Equals(_file) and (rec.FormID = formID)
       else
         Result := rec.EditorID = value;
     end
@@ -914,7 +914,7 @@ begin
       Container := MainRecord.HighestOverrideOrSelf[aFile.LoadOrder];
     Target := CopyElementToFile(Container, aFile, False, False);
     if Assigned(Target) then
-      Result := Target.AddIfMissing(aSource, aAsNew, aDeepCopy, '', '', '');
+      Result := Target.AddIfMissing(aSource, aAsNew, aDeepCopy, '', '', '', False);
   end
   else
     Result := aFile;
@@ -937,7 +937,7 @@ begin
   Target := CopyElementToRecord(Container, aMainRecord, False, False);
 
   if Assigned(Target) then
-    Result := Target.AddIfMissing(aSource, aAsNew, aDeepCopy, '', '', '');
+    Result := Target.AddIfMissing(aSource, aAsNew, aDeepCopy, '', '', '', False);
 end;
 
 function CopyElementToArray(const aSource: IwbElement; const aArray: IwbElement): IwbElement;
@@ -1536,6 +1536,7 @@ function SetLinksTo(_id: Cardinal; path: PWideChar; _id2: Cardinal): WordBool; c
 var
   element: IwbElement;
   rec: IwbMainRecord;
+  formID: TwbFormID;
 begin
   Result := False;
   try
@@ -1545,7 +1546,9 @@ begin
       raise Exception.Create('Second interface is not a record.');
     if not IsFormID(element) then
       raise Exception.Create('Element cannot hold references.');
-    element.NativeValue := element._File.LoadOrderFormIDtoFileFormID(rec.LoadOrderFormID);
+    formID := rec.LoadOrderFormID;
+    formID := element._File.LoadOrderFormIDtoFileFormID(formID, False);
+    element.NativeValue := formID.ToCardinal;
     Result := True;
   except
     on x: Exception do ExceptionHandler(x);
