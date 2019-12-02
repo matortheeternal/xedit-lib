@@ -23,6 +23,8 @@ implementation
 uses
   wbInterface;
 
+{$R *.dfm}
+
 { TwbHardcodedContainer }
 
 class function TwbHardcodedContainer.GetHardCodedDat: TBytes;
