@@ -79,7 +79,7 @@
         <Base>true</Base>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base)'!=''">
-        <DCC_UnitSearchPath>src;lib\mahogany;lib\Argo;lib\xedit;lib\xedit\lz4;lib\xedit\zlib;lib\imaging;lib\mte;lib\imaging\zlib;lib\BSArch;lib\TForge;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+        <DCC_UnitSearchPath>src;lib\mahogany;lib\Argo;lib\xedit;lib\xedit\lz4;lib\xedit\zlib;lib\imaging;lib\mte;lib\imaging\zlib;lib\BSArch;lib\TForge;lib\FileContainer;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <DCC_ImageBase>00400000</DCC_ImageBase>
         <DCC_DcuOutput>.\$(Config)\$(Platform)\units</DCC_DcuOutput>
         <DCC_ExeOutput>.\$(Config)\$(Platform)</DCC_ExeOutput>
@@ -240,6 +240,7 @@
         <DCCReference Include="lib\xedit\wbHelpers.pas"/>
         <DCCReference Include="lib\xedit\wbLocalization.pas"/>
         <DCCReference Include="lib\xedit\wbStreams.pas"/>
+        <DCCReference Include="lib\xedit\wbHardcoded.pas"/>
         <DCCReference Include="tests\txMeta.pas"/>
         <DCCReference Include="tests\txMessages.pas"/>
         <DCCReference Include="tests\txSetup.pas"/>

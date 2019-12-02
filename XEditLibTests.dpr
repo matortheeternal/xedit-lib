@@ -35,6 +35,7 @@ uses
   wbHelpers in 'lib\xedit\wbHelpers.pas',
   wbLocalization in 'lib\xedit\wbLocalization.pas',
   wbStreams in 'lib\xedit\wbStreams.pas',
+  wbHardcoded in 'lib\xedit\wbHardcoded.pas',
   {$ENDIF }
   txMeta in 'tests\txMeta.pas',
   txMessages in 'tests\txMessages.pas',
