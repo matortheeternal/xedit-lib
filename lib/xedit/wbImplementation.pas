@@ -2533,12 +2533,6 @@ begin
     CloseHandle(flFileHandle);
     flFileHandle := INVALID_HANDLE_VALUE;
   end;
-  if fsIsTemporary in flStates then
-    try
-      DeleteFile(Self.flFileName);
-    except
-      wbProgressCallback('Could not delete temporary file '+flFileName);
-    end;
 end;
 
 procedure TwbFile.flOpenFile;
