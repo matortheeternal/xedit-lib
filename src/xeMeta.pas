@@ -291,6 +291,8 @@ end;
 
 {$region 'API functions'}
 procedure InitXEdit; cdecl;
+var
+  ProgramPath: String;
 begin
   // initialize variables
   _store := TInterfaceList.Create;
@@ -302,8 +304,24 @@ begin
   // add welcome message
   AddMessage('XEditLib v' + ProgramVersion);
 
+  // resolve program path; we allow the program path default value to be
+  // overridden with an `XEDITLIB_PROGRAM_PATH` environment variable. If
+  // not provided or value is empty, the program path will default to the
+  // directory of the first parameter of the command line, which is typically
+  // the path of the program executable
+  //
+  // overriding the program path is useful for scenarios where XEditLib.dll
+  // is being wrapped by an interpreted language, in which case the program
+  // executable may be the path to the interpreter, which can be located in
+  // some system folder where data files related to XEditLib.dll cannot and
+  // should not be expected to be located at.
+  ProgramPath := GetEnvironmentVariable('XEDITLIB_PROGRAM_PATH');
+  if ProgramPath = '' then begin
+    ProgramPath := ExtractFilePath(ParamStr(0));
+  end;
+
   // store global values
-  Globals.Values['ProgramPath'] := ExtractFilePath(ParamStr(0));
+  Globals.Values['ProgramPath'] := ProgramPath;
   Globals.Values['Version'] := ProgramVersion;
   Globals.Values['FileCount'] := '0';
 end;
