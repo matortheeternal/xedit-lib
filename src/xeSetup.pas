@@ -303,7 +303,7 @@ var
 begin
   wbContainerHandler.AddFolder(wbDataPath);
   bExact := wbGameMode in [gmTES5];
-  bModIni := wbGameMode in [gmTES5, gmSSE];
+  bModIni := wbGameMode in [gmTES5, gmSSE, gmTES5VR];
   slBSAFileNames := TStringList.Create;
   try
     slErrors := TStringList.Create;
@@ -465,7 +465,7 @@ begin
   sPath := sLoadPath + 'plugins.txt';
   if FileExists(sPath) then begin
     sl.LoadFromFile(sPath);
-    if (wbGameMode = gmSSE) or (wbGameMode = gmFO4) then
+    if wbGameMode in [gmFO4VR, gmFO4, gmTES5VR, gmSSE] then
       ProcessPluginsFormat(sl, noDelete);
   end
   else
@@ -481,7 +481,7 @@ var
   sPath: String;
 begin
   sPath := sLoadPath + 'loadorder.txt';
-  if (wbGameMode <> gmSSE) and (wbGameMode <> gmFO4)
+  if not (wbGameMode in [gmFO4VR, gmFO4, gmTES5VR, gmSSE])
   and FileExists(sPath) then
     slLoadOrder.LoadFromFile(sPath)
   else
@@ -621,7 +621,26 @@ begin
     FixLoadOrder(sl, 'Dragonborn.esm', index);
     AddCCPlugins(sl, index);
   end
+  else if (wbGameMode = gmTES5VR) then begin
+    FixLoadOrder(sl, 'Update.esm', index);
+    FixLoadOrder(sl, 'Dawnguard.esm', index);
+    FixLoadOrder(sl, 'HearthFires.esm', index);
+    FixLoadOrder(sl, 'Dragonborn.esm', index);
+    FixLoadOrder(sl, 'SkyrimVR.esm', index);
+    AddCCPlugins(sl, index);
+  end
   else if (wbGameMode = gmFO4) then begin
+    FixLoadOrder(sl, 'DLCRobot.esm', index);
+    FixLoadOrder(sl, 'DLCworkshop01.esm', index);
+    FixLoadOrder(sl, 'DLCCoast.esm', index);
+    FixLoadOrder(sl, 'DLCworkshop02.esm', index);
+    FixLoadOrder(sl, 'DLCworkshop03.esm', index);
+    FixLoadOrder(sl, 'DLCNukaWorld.esm', index);
+    FixLoadOrder(sl, 'DLCUltraHighResolution.esm', index);
+    AddCCPlugins(sl, index);
+  end
+  else if (wbGameMode = gmFO4VR) then begin
+    FixLoadOrder(sl, 'Fallout4_VR.esm', index);
     FixLoadOrder(sl, 'DLCRobot.esm', index);
     FixLoadOrder(sl, 'DLCworkshop01.esm', index);
     FixLoadOrder(sl, 'DLCCoast.esm', index);
