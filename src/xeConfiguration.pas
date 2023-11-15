@@ -37,7 +37,7 @@ var
 
 const
   {$region 'Game modes'}
-  GameArray: array[0..5] of TGameMode = (
+  GameArray: array[0..7] of TGameMode = (
     ( longName: 'Fallout New Vegas'; gameName: 'FalloutNV'; gameMode: gmFNV;
       regName: 'FalloutNV'; appName: 'FNV'; exeName: 'FalloutNV.exe';
       appIDs: '22380,2028016'; ),
@@ -55,7 +55,13 @@ const
       exeName: 'SkyrimSE.exe'; appIDs: '489830'; ),
     ( longName: 'Fallout 4'; gameName: 'Fallout4'; gameMode: gmFO4;
       regName: 'Fallout4'; appName: 'FO4'; exeName: 'Fallout4.exe';
-      appIDs: '377160'; )
+      appIDs: '377160'; ),
+    ( longName: 'Skyrim VR'; gameName: 'Skyrim'; gameMode: gmTES5VR;
+      regName: 'Skyrim VR'; appName: 'TES5VR';
+      exeName: 'SkyrimVR.exe'; appIDs: '611670'; ),
+    ( longName: 'Fallout 4 VR'; gameName: 'Fallout4'; gameMode: gmFO4VR;
+      regName: 'Fallout 4 VR'; appName: 'FO4VR';
+      exeName: 'Fallout4VR.exe'; appIDs: '611660'; )
   );
   {$endregion}
   {$region 'TES4Languages'}
@@ -105,7 +111,7 @@ end;
 function GetLanguage: String;
 begin
   Result := Language;
-  if (wbGameMode = gmFO4) and (slLanguageMap.IndexOfName(Result) > -1) then
+  if (wbGameMode in [gmFO4, gmFO4VR]) and (slLanguageMap.IndexOfName(Result) > -1) then
     Result := slLanguageMap.Values[Result];
 end;
 
@@ -113,7 +119,7 @@ function GetLanguageEncoding: TwbStringEncoding;
 begin
   Result := seCP1252;
   if (slUTF8Languages.IndexOf(Language) > -1)
-  or ((wbGameMode in [gmSSE, gmFO4]) and (Language <> 'English')) then
+  or ((wbGameMode in [gmSSE, gmFO4, gmTES5VR, gmFO4VR]) and (Language <> 'English')) then
     Result := seUTF8;
 end;
 
@@ -142,10 +148,10 @@ begin
   wbGameMode := GameMode.gameMode;
   wbAppName := GameMode.appName;
   wbDataPath := dataPath;
-  wbVWDInTemporary := wbGameMode in [gmSSE, gmTES5, gmFO3, gmFNV];
-  wbVWDAsQuestChildren := wbGameMode = gmFO4;
-  wbArchiveExtension := IfThen(wbGameMode = gmFO4, '.ba2', '.bsa');
-  wbLoadBSAs := wbGameMode in [gmFO4, gmSSE, gmTES5, gmTES4];
+  wbVWDInTemporary := wbGameMode in [gmTES5VR, gmSSE, gmTES5, gmFO3, gmFNV];
+  wbVWDAsQuestChildren := wbGameMode in [gmFO4VR, gmFO4];
+  wbArchiveExtension := IfThen(wbGameMode in [gmFO4VR, gmFO4], '.ba2', '.bsa');
+  wbLoadBSAs := wbGameMode in [gmFO4VR, gmFO4, gmTES5VR, gmSSE, gmTES5, gmTES4];
   wbSimpleRecords := False;
   wbDisplayLoadOrderFormID := True;
   wbSortSubRecords := True;
@@ -165,8 +171,10 @@ begin
 
   // load definitions
   case wbGameMode of
-    gmSSE: DefineTES5;
+    gmFO4VR: DefineFO4;
     gmFO4: DefineFO4;
+    gmTES5VR: DefineTES5;
+    gmSSE: DefineTES5;
     gmTES5: DefineTES5;
     gmFNV: DefineFNV;
     gmTES4: DefineTES4;
