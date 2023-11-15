@@ -173,7 +173,7 @@ begin
   case wbGameMode of
     gmFO4VR: DefineFO4;
     gmFO4: DefineFO4;
-    gmTES5VR: DefineTES5
+    gmTES5VR: DefineTES5;
     gmSSE: DefineTES5;
     gmTES5: DefineTES5;
     gmFNV: DefineFNV;
